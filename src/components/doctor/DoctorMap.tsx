@@ -1,336 +1,193 @@
 
-import React, { useEffect, useRef, useState } from 'react';
-import { MapPin, Navigation } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { getMapboxToken } from '@/services/mapbox';
-import { toast } from '@/components/ui/use-toast';
-
-// Fallback token in case the Edge Function fails
-const FALLBACK_TOKEN = 'pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA';
-
-// Default coordinates for Luxembourg
-const DEFAULT_COORDINATES = { lat: 49.8153, lng: 6.1296 };
+import { calculateDistance } from '@/lib/utils/distance';
 
 interface Doctor {
   id: string;
   full_name: string;
-  address?: string;
-  city?: string | null;
   coordinates?: { lat: number; lon: number } | null;
 }
 
-export interface DoctorMapProps {
-  doctors: Array<Doctor>;
-  userCoordinates?: { lat: number; lon: number } | null;
+interface DoctorMapProps {
+  doctors: Doctor[];
+  userCoordinates: { lat: number; lon: number } | null;
   showUserLocation?: boolean;
-  onDoctorSelect?: (doctorId: string) => void;
+  onDoctorSelect: (doctorId: string) => void;
 }
 
-// Additional prop types for the single doctor use case
-export interface SingleDoctorMapProps {
-  doctor: {
-    id: string;
-    name: string;
-    address: string;
-    city: string;
-    postal_code: string;
-  };
-}
-
-// Type guard to check if props are SingleDoctorMapProps
-function isSingleDoctorProps(props: DoctorMapProps | SingleDoctorMapProps): props is SingleDoctorMapProps {
-  return 'doctor' in props && props.doctor !== undefined;
-}
-
-const DoctorMap = (props: DoctorMapProps | SingleDoctorMapProps) => {
+const DoctorMap = ({
+  doctors,
+  userCoordinates,
+  showUserLocation = false,
+  onDoctorSelect
+}: DoctorMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markers = useRef<mapboxgl.Marker[]>([]);
-  const userMarker = useRef<mapboxgl.Marker | null>(null);
 
-  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
-  const [isMapLoaded, setIsMapLoaded] = useState(false);
-  const [mapError, setMapError] = useState<string | null>(null);
-  const [mapInitialized, setMapInitialized] = useState(false);
-  
-  // Process props based on which interface we're using
-  const { doctorsArray, userCoordinates, showUserLocation, onDoctorSelect } = React.useMemo(() => {
-    if (isSingleDoctorProps(props)) {
-      // Single doctor case
-      const { doctor } = props;
-      return {
-        doctorsArray: [{ 
-          id: doctor.id, 
-          full_name: doctor.name,
-          address: doctor.address,
-          city: doctor.city
-        }],
-        userCoordinates: null,
-        showUserLocation: false,
-        onDoctorSelect: undefined
-      };
-    } else {
-      // Multiple doctors case
-      return {
-        doctorsArray: props.doctors || [],
-        userCoordinates: props.userCoordinates,
-        showUserLocation: props.showUserLocation,
-        onDoctorSelect: props.onDoctorSelect
-      };
-    }
-  }, [props]);
-
-  // Get Mapbox token
+  // Initialize and render map
   useEffect(() => {
-    const fetchMapboxToken = async () => {
-      try {
-        console.log('Fetching Mapbox token...');
-        const token = await getMapboxToken();
-        
-        if (token) {
-          setMapboxToken(token);
-          mapboxgl.accessToken = token;
-        } else {
-          // Use fallback token
-          console.warn('Using fallback Mapbox token');
-          setMapboxToken(FALLBACK_TOKEN);
-          mapboxgl.accessToken = FALLBACK_TOKEN;
-        }
-      } catch (error) {
-        console.error('Error fetching Mapbox token:', error);
-        // Use fallback token on error
-        setMapboxToken(FALLBACK_TOKEN);
-        mapboxgl.accessToken = FALLBACK_TOKEN;
-      }
-    };
+    // Check for mapbox token - without it, we can't show the map
+    mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || '';
     
-    fetchMapboxToken();
-  }, []);
-
-  // Initialize map once token is available
-  useEffect(() => {
-    if (!mapboxToken || !mapContainer.current || map.current || mapInitialized) {
+    if (!mapboxgl.accessToken) {
+      console.error('Mapbox token is missing. Map cannot be displayed.');
       return;
     }
 
-    const initializeMap = () => {
-      if (!mapContainer.current) return;
-      
-      try {
-        console.log('Initializing map with token:', mapboxToken);
-        
-        // Set explicit height/width to ensure container is visible
-        mapContainer.current.style.height = '400px';
-        mapContainer.current.style.minHeight = '400px';
-        mapContainer.current.style.width = '100%';
-        
-        // Initialize map with default center
-        map.current = new mapboxgl.Map({
-          container: mapContainer.current,
-          style: 'mapbox://styles/mapbox/streets-v12',
-          center: [DEFAULT_COORDINATES.lng, DEFAULT_COORDINATES.lat],
-          zoom: 12,
-          attributionControl: false,
-        });
-        
-        // Add navigation controls
-        map.current.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
-        
-        // Handle map load
-        map.current.on('load', () => {
-          console.log('Map loaded successfully');
-          setIsMapLoaded(true);
-          setMapError(null);
-          
-          // Force resize to ensure proper rendering
-          setTimeout(() => {
-            if (map.current) map.current.resize();
-          }, 200);
-        });
-        
-        // Handle map errors
-        map.current.on('error', (e) => {
-          console.error('Map error:', e);
-          setMapError('Error loading map');
-        });
-        
-        setMapInitialized(true);
-      } catch (error) {
-        console.error('Error initializing map:', error);
-        setMapError('Failed to initialize map');
-      }
+    if (!mapContainer.current) return;
+
+    // Initialize map
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: 'mapbox://styles/mapbox/streets-v11',
+      center: userCoordinates 
+        ? [userCoordinates.lon, userCoordinates.lat]
+        : [6.1296, 49.8153], // Default to Luxembourg
+      zoom: userCoordinates ? 12 : 9
+    });
+
+    // Add navigation controls
+    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+    // Add user location marker if available
+    if (showUserLocation && userCoordinates?.lat && userCoordinates?.lon) {
+      const userLocationMarker = document.createElement('div');
+      userLocationMarker.className = 'absolute w-6 h-6 bg-blue-500 border-2 border-white rounded-full pulse';
+
+      new mapboxgl.Marker({ 
+        element: userLocationMarker,
+        anchor: 'center' 
+      })
+        .setLngLat([userCoordinates.lon, userCoordinates.lat])
+        .addTo(map.current);
+    }
+
+    return () => {
+      // Clean up map instance
+      map.current?.remove();
     };
+  }, [userCoordinates]);
 
-    initializeMap();
-  }, [mapboxToken, mapInitialized]);
-
-  // Update markers when doctors or user location changes
+  // Add doctor markers to map
   useEffect(() => {
-    if (!map.current || !isMapLoaded) return;
-    
+    if (!map.current) return;
+
     // Clear existing markers
     markers.current.forEach(marker => marker.remove());
     markers.current = [];
-    
-    if (userMarker.current) {
-      userMarker.current.remove();
-      userMarker.current = null;
+
+    // Don't try to add markers until the map has loaded
+    if (!map.current.loaded()) {
+      map.current.on('load', addDoctorMarkers);
+      return;
     }
-    
-    // Coordinates for map bounds
-    const bounds = new mapboxgl.LngLatBounds();
-    
-    // Add doctor markers
-    doctorsArray.forEach(doctor => {
-      if (doctor.coordinates?.lat && doctor.coordinates?.lon) {
-        try {
-          const popupContent = document.createElement('div');
-          popupContent.className = 'p-2';
-          popupContent.innerHTML = `
-            <div class="text-sm font-medium">${doctor.full_name}</div>
-            ${doctor.address ? `<div class="text-xs">${doctor.address}</div>` : ''}
-            ${doctor.city ? `<div class="text-xs">${doctor.city}</div>` : ''}
-          `;
+
+    addDoctorMarkers();
+
+    function addDoctorMarkers() {
+      if (!map.current) return;
+      
+      // Add markers for doctors with coordinates
+      doctors.forEach(doctor => {
+        if (doctor.coordinates?.lat && doctor.coordinates?.lon) {
+          const doctorLat = parseFloat(String(doctor.coordinates.lat));
+          const doctorLon = parseFloat(String(doctor.coordinates.lon));
           
-          // Add button if onDoctorSelect is provided
-          if (onDoctorSelect) {
-            const button = document.createElement('button');
-            button.className = 'mt-2 px-2 py-1 bg-blue-500 text-white text-xs rounded';
-            button.innerText = 'Select';
-            button.onclick = () => onDoctorSelect(doctor.id);
-            popupContent.appendChild(button);
+          if (isNaN(doctorLat) || isNaN(doctorLon)) return;
+          
+          // Calculate distance if user location is available
+          let distanceStr = '';
+          if (userCoordinates?.lat && userCoordinates?.lon) {
+            const distance = calculateDistance(
+              userCoordinates.lat,
+              userCoordinates.lon,
+              doctorLat,
+              doctorLon
+            );
+            distanceStr = `(${distance.toFixed(1)} km)`;
           }
           
-          const popup = new mapboxgl.Popup({ offset: 25 }).setDOMContent(popupContent);
-          
-          const marker = new mapboxgl.Marker()
-            .setLngLat([doctor.coordinates.lon, doctor.coordinates.lat])
+          // Create marker element
+          const markerElement = document.createElement('div');
+          markerElement.className = 'cursor-pointer';
+          markerElement.innerHTML = `
+            <div class="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white relative group">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+              </svg>
+            </div>
+          `;
+
+          // Create popup
+          const popup = new mapboxgl.Popup({ 
+            offset: 25,
+            closeButton: false
+          }).setHTML(`
+            <div class="p-2">
+              <h3 class="text-sm font-medium">${doctor.full_name}</h3>
+              <p class="text-xs text-gray-500">${distanceStr}</p>
+            </div>
+          `);
+
+          // Create and add marker
+          const marker = new mapboxgl.Marker({ element: markerElement })
+            .setLngLat([doctorLon, doctorLat])
             .setPopup(popup)
-            .addTo(map.current!);
-          
-          markers.current.push(marker);
-          
-          // Add to bounds
-          bounds.extend([doctor.coordinates.lon, doctor.coordinates.lat]);
-        } catch (error) {
-          console.error('Error creating doctor marker:', error);
-        }
-      } else if (isSingleDoctorProps(props) && map.current) {
-        // For single doctor view without coordinates, center on default location
-        // You could potentially call a geocoding service here to get coordinates from the address
-        map.current.flyTo({
-          center: [DEFAULT_COORDINATES.lng, DEFAULT_COORDINATES.lat],
-          zoom: 13
-        });
-      }
-    });
-    
-    // Add user location marker if available
-    if (showUserLocation && userCoordinates) {
-      try {
-        const el = document.createElement('div');
-        el.className = 'user-location-marker';
-        el.style.width = '20px';
-        el.style.height = '20px';
-        el.style.borderRadius = '50%';
-        el.style.backgroundColor = '#3b82f6';
-        el.style.border = '2px solid white';
-        
-        userMarker.current = new mapboxgl.Marker(el)
-          .setLngLat([userCoordinates.lon, userCoordinates.lat])
-          .setPopup(new mapboxgl.Popup({ offset: 25 }).setText('Your location'))
-          .addTo(map.current!);
-        
-        // Add user location to bounds
-        bounds.extend([userCoordinates.lon, userCoordinates.lat]);
-      } catch (error) {
-        console.error('Error creating user marker:', error);
-      }
-    }
-    
-    // Fit bounds if we have markers
-    if (!bounds.isEmpty() && map.current) {
-      try {
-        map.current.fitBounds(bounds, {
-          padding: 50,
-          maxZoom: 15
-        });
-      } catch (error) {
-        console.error('Error fitting bounds:', error);
-        
-        // Fallback to center on user or default
-        if (userCoordinates) {
-          map.current.flyTo({
-            center: [userCoordinates.lon, userCoordinates.lat],
-            zoom: 12
+            .addTo(map.current);
+            
+          // Add click handler
+          markerElement.addEventListener('click', () => {
+            onDoctorSelect(doctor.id);
           });
+          
+          // Store marker for later cleanup
+          markers.current.push(marker);
         }
-      }
+      });
     }
-  }, [doctorsArray, userCoordinates, showUserLocation, isMapLoaded, onDoctorSelect, props]);
-
-  // Recenter map on user button
-  const handleCenterOnUser = () => {
-    if (!map.current || !userCoordinates) return;
     
-    map.current.flyTo({
-      center: [userCoordinates.lon, userCoordinates.lat],
-      zoom: 13,
-      essential: true
-    });
-    
-    toast({
-      title: "Map Centered",
-      description: "The map has been centered on your location",
-    });
-  };
-
-  // Clean up on unmount
-  useEffect(() => {
-    return () => {
-      if (map.current) {
-        map.current.remove();
-        map.current = null;
-      }
-    };
-  }, []);
+    // Fit map to markers
+    if (markers.current.length > 0 && !userCoordinates) {
+      const bounds = new mapboxgl.LngLatBounds();
+      markers.current.forEach(marker => {
+        bounds.extend(marker.getLngLat());
+      });
+      map.current.fitBounds(bounds, { padding: 70, maxZoom: 13 });
+    }
+  }, [doctors, userCoordinates, onDoctorSelect]);
 
   return (
-    <div className="w-full h-[400px] rounded-lg overflow-hidden relative border border-gray-200">
-      {mapError ? (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 p-4">
-          <MapPin className="h-8 w-8 text-gray-400" />
-          <p className="mt-2 text-gray-600">{mapError}</p>
-          <Button 
-            variant="outline" 
-            className="mt-4" 
-            onClick={() => setMapInitialized(false)}
-          >
-            Retry Loading Map
-          </Button>
-        </div>
-      ) : (
-        <>
-          <div 
-            ref={mapContainer} 
-            className="absolute inset-0"
-            style={{ width: '100%', height: '100%' }}
-          />
-          
-          {showUserLocation && userCoordinates && (
-            <Button
-              className="absolute bottom-4 right-4 z-10"
-              size="sm"
-              onClick={handleCenterOnUser}
-            >
-              <Navigation className="mr-2 h-4 w-4" />
-              Center on Me
-            </Button>
-          )}
-        </>
-      )}
+    <div className="w-full h-full rounded-lg overflow-hidden border">
+      <div ref={mapContainer} className="w-full h-full" />
+      
+      {/* User location pulse animation */}
+      <style jsx>{`
+        .pulse::before {
+          content: "";
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          background-color: rgba(59, 130, 246, 0.5);
+          animation: pulse 2s infinite;
+          z-index: -1;
+        }
+        
+        @keyframes pulse {
+          0% {
+            transform: scale(1);
+            opacity: 1;
+          }
+          100% {
+            transform: scale(3);
+            opacity: 0;
+          }
+        }
+      `}</style>
     </div>
   );
 };

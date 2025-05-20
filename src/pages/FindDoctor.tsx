@@ -17,6 +17,9 @@ import { LocationToggle } from "@/components/shared/LocationToggle";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { RefreshCcw } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 const FindDoctor = () => {
   const { isAuthenticated } = useAuth();
@@ -41,6 +44,8 @@ const FindDoctor = () => {
   
   const [searchRadius, setSearchRadius] = useState(2000);
   const [initialLocationSet, setInitialLocationSet] = useState(false);
+  const [viewMode, setViewMode] = useState<string>("list");
+  const [showLocation, setShowLocation] = useState(false);
 
   const { coordinates, handleCitySearch, isSearching } = useLocationSearch();
 
@@ -60,7 +65,10 @@ const FindDoctor = () => {
           lon: Number(LUXEMBOURG_COORDINATES.lon)
         };
 
-  const { doctors, isLoading: isDoctorsLoading } = useDoctorSearch(searchCoordinates, searchRadius);
+  const { doctors, isLoading: isDoctorsLoading } = useDoctorSearch(
+    isAuthenticated && showLocation ? searchCoordinates : null, 
+    searchRadius
+  );
   
   // Initialize location based on session/profile
   useEffect(() => {
@@ -101,27 +109,19 @@ const FindDoctor = () => {
       doctors.length === 0 && 
       searchRadius < 10000 &&
       !isSearching && 
-      !isDoctorsLoading
+      !isDoctorsLoading &&
+      showLocation // Only auto-expand when in location mode
     ) {
       const newRadius = Math.min(searchRadius + 2000, 10000);
       console.log(`Increasing radius from ${searchRadius} to ${newRadius}`);
       setSearchRadius(newRadius);
     }
-  }, [doctors, searchRadius, isDoctorsLoading, isSearching]);
+  }, [doctors, searchRadius, isDoctorsLoading, isSearching, showLocation]);
 
   // Handle location toggle
-  const handleLocationToggle = useCallback((checked: boolean) => {
-    if (!checked) {
-      // When disabling location
-      setUserLocation(LUXEMBOURG_COORDINATES);
-      setIsUsingLocation(false);
-      if (userProfile?.city) {
-        handleCitySearch(userProfile.city);
-      } else {
-        handleCitySearch("Luxembourg City");
-      }
-    } else {
-      // When enabling location
+  const toggleLocationDisplay = useCallback((checked: boolean) => {
+    setShowLocation(checked);
+    if (checked) {
       if ("geolocation" in navigator) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
@@ -147,11 +147,14 @@ const FindDoctor = () => {
           }
         );
       }
+      
+      // Reset search radius when enabling location
+      setSearchRadius(2000);
+    } else {
+      // When disabling location-based search
+      setIsUsingLocation(false);
     }
-    
-    // Reset search radius
-    setSearchRadius(2000);
-  }, [handleCitySearch, setIsUsingLocation, setUserLocation, userProfile?.city]);
+  }, [setIsUsingLocation, setUserLocation]);
 
   // Function to manually retry search with a wider radius
   const handleExpandSearch = () => {
@@ -174,11 +177,18 @@ const FindDoctor = () => {
             <SearchHeader onSearch={handleCitySearch} title="Find a Doctor Near You" />
             
             <div className="flex flex-col md:flex-row gap-4 items-start justify-between mb-4">
-              <div className="flex-1">
-                <LocationToggle
-                  showDefaultLocation={isUsingLocation}
-                  onLocationToggle={handleLocationToggle}
+              <div className="flex items-center space-x-2 mb-6">
+                <Switch
+                  id="location-toggle"
+                  checked={showLocation}
+                  onCheckedChange={toggleLocationDisplay}
+                  disabled={!isAuthenticated}
                 />
+                <Label htmlFor="location-toggle">
+                  {isAuthenticated 
+                    ? "Search within 2km of my location" 
+                    : "Login to search near your location"}
+                </Label>
               </div>
               
               <div className="flex items-center gap-2">
@@ -186,15 +196,17 @@ const FindDoctor = () => {
                   {selectedCountry ? `Showing doctors in ${selectedCountry}` : 'Select a country on the home page'}
                 </span>
                 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleExpandSearch}
-                  disabled={isSearching || isDoctorsLoading || searchRadius >= 20000}
-                >
-                  <RefreshCcw className="h-4 w-4 mr-2" />
-                  Expand Search
-                </Button>
+                {showLocation && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExpandSearch}
+                    disabled={isSearching || isDoctorsLoading || searchRadius >= 20000}
+                  >
+                    <RefreshCcw className="h-4 w-4 mr-2" />
+                    Expand Search
+                  </Button>
+                )}
               </div>
             </div>
             
@@ -204,33 +216,77 @@ const FindDoctor = () => {
                   <Skeleton className="h-64 w-full" />
                 </div>
               ) : (
-                <DoctorListSection
-                  doctors={doctors || []}
-                  isLoading={isDoctorsLoading}
-                  coordinates={searchCoordinates}
-                  showUserLocation={isUsingLocation}
-                  onConnect={(doctorId, source) => {
-                    try {
-                      if (!isAuthenticated) {
-                        toast({
-                          title: "Login Required",
-                          description: "Please login to connect with doctors.",
-                        });
-                        return;
-                      }
+                <div className="grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-6">
+                  <div className="space-y-4 overflow-y-auto pr-2 h-[calc(100vh-220px)]">
+                    {Array.isArray(doctors) && doctors.length > 0 ? doctors.map((doctor) => (
+                      <Card key={doctor.id} className="overflow-hidden">
+                        <CardContent className="p-4">
+                          <div className="space-y-2">  
+                            <h3 className="font-semibold text-lg">{doctor.full_name}</h3>
+                            <p className="text-sm text-gray-500">{doctor.city || "Unknown location"}</p>
+                            {doctor.license_number && (
+                              <p className="text-sm">{doctor.license_number}</p>
+                            )}
+                            
+                            {isAuthenticated && doctor.source === 'database' && (
+                              <Button
+                                onClick={() => {
+                                  toast({
+                                    title: "Connect with Doctor",
+                                    description: `Request sent to ${doctor.full_name}`,
+                                  });
+                                }}
+                                className="w-full mt-4"
+                                size="sm"
+                              >
+                                Connect
+                              </Button>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )) : (
+                      <p className="text-center py-8">
+                        {showLocation
+                          ? "No doctors found nearby. Try expanding your search radius."
+                          : `No doctors found in ${selectedCountry || 'selected country'}.`}
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div className="h-[calc(100vh-220px)]">
+                    <DoctorMap 
+                      doctors={doctors || []} 
+                      userCoordinates={showLocation ? searchCoordinates : null}
+                      showUserLocation={showLocation}
+                      onDoctorSelect={(doctorId) => {
+                        const doctor = doctors?.find(d => d.id === doctorId);
+                        if (doctor) {
+                          if (!isAuthenticated) {
+                            toast({
+                              title: "Login Required",
+                              description: "Please login to connect with doctors.",
+                            });
+                            return;
+                          }
 
-                      if (source === 'overpass') {
-                        toast({
-                          title: "Information",
-                          description: "Connection requests are only available for registered doctors.",
-                        });
-                        return;
-                      }
-                    } catch (error) {
-                      console.error("Error in onConnect handler:", error);
-                    }
-                  }}
-                />
+                          if (doctor.source === 'overpass') {
+                            toast({
+                              title: "Information",
+                              description: "Connection requests are only available for registered doctors.",
+                            });
+                            return;
+                          }
+                          
+                          toast({
+                            title: "Connect with Doctor",
+                            description: `Request sent to ${doctor.full_name}`,
+                          });
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
               )}
             </div>
           </div>

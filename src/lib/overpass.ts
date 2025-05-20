@@ -1,4 +1,3 @@
-
 import { LocalCache } from './cache';
 import { calculateDistance } from './utils/distance';
 import type { OverpassResult, Pharmacy, Doctor } from './types/overpass.types';
@@ -123,41 +122,65 @@ export const searchPharmacies = async (lat: number, lon: number, radius: number 
 };
 
 export const searchDoctors = async (
-  lat: number, 
-  lon: number, 
+  lat: number | null, 
+  lon: number | null, 
   radius: number = 5000,
   countryCode: string = 'LU'
 ): Promise<Doctor[]> => {
-  const cacheKey = `doctors-${countryCode}-${lat}-${lon}-${radius}`;
+  const cacheKey = lat && lon 
+    ? `doctors-${countryCode}-${lat}-${lon}-${radius}` 
+    : `doctors-${countryCode}`;
+    
   const cached = LocalCache.get<Doctor[]>(cacheKey);
   if (cached) return cached;
 
-  // More comprehensive query that searches both by radius and within the country
-  const query = `
-    [out:json][timeout:60];
-    // First search within specific radius
-    (
-      node["healthcare"="doctor"](around:${radius},${lat},${lon});
-      node["amenity"="doctors"](around:${radius},${lat},${lon});
-      way["healthcare"="doctor"](around:${radius},${lat},${lon});
-      way["amenity"="doctors"](around:${radius},${lat},${lon});
-    )->.nearby;
-    
-    // Then search within the country (if country code is provided)
-    area["ISO3166-1"="${countryCode}"][admin_level=2]->.country;
-    (
-      node["healthcare"="doctor"](area.country);
-      node["amenity"="doctors"](area.country);
-      way["healthcare"="doctor"](area.country);
-      way["amenity"="doctors"](area.country);
-    )->.incountry;
-    
-    // Combine results and output
-    (.nearby; .incountry;);
-    out body;
-    >;
-    out skel qt;
-  `;
+  // Choose query based on whether coordinates are provided
+  let query;
+  
+  if (lat && lon) {
+    // Coordinate-based query with both radius and country
+    query = `
+      [out:json][timeout:60];
+      // First search within specific radius
+      (
+        node["healthcare"="doctor"](around:${radius},${lat},${lon});
+        node["amenity"="doctors"](around:${radius},${lat},${lon});
+        way["healthcare"="doctor"](around:${radius},${lat},${lon});
+        way["amenity"="doctors"](around:${radius},${lat},${lon});
+      )->.nearby;
+      
+      // Then search within the country (if country code is provided)
+      area["ISO3166-1"="${countryCode}"][admin_level=2]->.country;
+      (
+        node["healthcare"="doctor"](area.country);
+        node["amenity"="doctors"](area.country);
+        way["healthcare"="doctor"](area.country);
+        way["amenity"="doctors"](area.country);
+      )->.incountry;
+      
+      // Combine results and output
+      (.nearby; .incountry;);
+      out body;
+      >;
+      out skel qt;
+    `;
+  } else {
+    // Country-only query when no coordinates are provided
+    query = `
+      [out:json][timeout:60];
+      // Search within the country
+      area["ISO3166-1"="${countryCode}"][admin_level=2]->.country;
+      (
+        node["healthcare"="doctor"](area.country);
+        node["amenity"="doctors"](area.country);
+        way["healthcare"="doctor"](area.country);
+        way["amenity"="doctors"](area.country);
+      );
+      out body;
+      >;
+      out skel qt;
+    `;
+  }
 
   try {
     const data = await fetchFromOverpass(query);
@@ -180,12 +203,12 @@ export const searchDoctors = async (
         if (doctorMap.has(String(element.id))) return;
         
         // Make sure all required properties exist with fallbacks
-        const lat = typeof element.lat === 'number' ? element.lat : null;
-        const lon = typeof element.lon === 'number' ? element.lon : null;
+        const elementLat = typeof element.lat === 'number' ? element.lat : null;
+        const elementLon = typeof element.lon === 'number' ? element.lon : null;
         const tags = element.tags || {};
         
         // Only process elements with coordinates
-        if (lat !== null && lon !== null) {
+        if (elementLat !== null && elementLon !== null) {
           const doctor = {
             id: String(element.id || ''),
             full_name: tags?.name || 'Unnamed Doctor',
@@ -200,8 +223,8 @@ export const searchDoctors = async (
             license_number: tags?.['healthcare:speciality'] || 'General Practice',
             email: tags?.['contact:email'] || tags?.email || '',
             coordinates: {
-              lat: lat,
-              lon: lon
+              lat: elementLat,
+              lon: elementLon
             },
             source: 'overpass' as const
           };
