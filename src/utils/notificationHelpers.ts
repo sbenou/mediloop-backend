@@ -106,7 +106,9 @@ export function useTenantNotifications() {
     
     try {
       // Get doctor profile from tenant schema
-      const { data: doctorProfile, error } = await tenantTable<any>('profiles')
+      const { data: doctorProfile, error } = await supabase
+        .from(`${currentTenant.schema}.profiles`)
+        .select('id, full_name, email')
         .eq('id', doctorId)
         .single();
       
@@ -116,7 +118,8 @@ export function useTenantNotifications() {
       }
       
       // Create notification in tenant schema
-      const { data: notification, error: notifError } = await tenantTable<any>('notifications')
+      const { data: notification, error: notifError } = await supabase
+        .from(`${currentTenant.schema}.notifications`)
         .insert({
           user_id: doctorId,
           type: "patient_connected",
@@ -152,7 +155,8 @@ export function useTenantNotifications() {
     }
     
     try {
-      const { data: notification, error } = await tenantTable<any>('notifications')
+      const { data: notification, error } = await supabase
+        .from(`${currentTenant.schema}.notifications`)
         .insert({
           user_id: userId,
           type: "payment_successful",

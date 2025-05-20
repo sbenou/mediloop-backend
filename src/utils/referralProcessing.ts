@@ -100,7 +100,9 @@ export function useTenantReferralProcessing() {
       }
       
       // Find the referral record in the tenant schema
-      const { data: referral, error: referralError } = await tenantTable<any>('referrals')
+      const { data: referral, error: referralError } = await supabase
+        .from(`${currentTenant.schema}.referrals`)
+        .select('id, referrer_id')
         .eq('referral_email', referralEmail)
         .eq('status', 'pending')
         .order('created_at', { ascending: false })
@@ -113,7 +115,9 @@ export function useTenantReferralProcessing() {
       }
       
       // Get referrer information
-      const { data: referrerProfile, error: profileError } = await tenantTable<any>('profiles')
+      const { data: referrerProfile, error: profileError } = await supabase
+        .from(`${currentTenant.schema}.profiles`)
+        .select('full_name, email')
         .eq('id', referral.referrer_id)
         .single();
         
@@ -123,7 +127,8 @@ export function useTenantReferralProcessing() {
       }
         
       // Update referral status
-      await tenantTable<any>('referrals')
+      await supabase
+        .from(`${currentTenant.schema}.referrals`)
         .update({
           status: 'converted',
           converted_at: new Date().toISOString()
@@ -134,7 +139,8 @@ export function useTenantReferralProcessing() {
       const REFERRAL_POINTS = 100;
       
       // Add notification in app
-      await tenantTable<any>('notifications')
+      await supabase
+        .from(`${currentTenant.schema}.notifications`)
         .insert({
           user_id: referral.referrer_id,
           type: 'new_subscription',
