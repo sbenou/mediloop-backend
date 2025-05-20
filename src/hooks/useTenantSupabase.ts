@@ -17,11 +17,11 @@ export function useTenantSupabase() {
     if (!currentTenant) {
       console.warn('Attempting to access tenant table without an active tenant');
       // Return a query that will likely return no results (empty tenant name)
-      return supabase.from(tableName) as unknown as PostgrestFilterBuilder<any, any, T[], unknown>;
+      return supabase.from(tableName);
     }
     
     // Use the tenant's schema for the table
-    return supabase.from(`${currentTenant.schema}.${tableName}`) as unknown as PostgrestFilterBuilder<any, any, T[], unknown>;
+    return supabase.from(`${currentTenant.schema}.${tableName}`);
   }, [currentTenant]);
   
   /**
