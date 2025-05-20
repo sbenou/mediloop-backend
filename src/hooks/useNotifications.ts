@@ -22,14 +22,14 @@ export const useNotifications = () => {
         // Fetch notifications from tenant schema
         query = tenantTable<Notification>('notifications')
           .select('*')
-          .eq('deleted_at', null)
+          .is('deleted_at', null)
           .order('created_at', { ascending: false });
       } else {
         // Fetch notifications from public schema
         query = supabase
           .from('notifications')
           .select('*')
-          .eq('deleted_at', null)
+          .is('deleted_at', null)
           .order('created_at', { ascending: false });
       }
 
@@ -59,14 +59,18 @@ export const useNotifications = () => {
     try {
       if (currentTenant) {
         // Use tenant schema for marking read
-        await tenantTable('notifications')
-          .eq('id', id)
-          .update({ read: true });
+        const { error } = await tenantTable('notifications')
+          .update({ read: true })
+          .match({ id });
+          
+        if (error) throw error;
       } else {
         // Use public schema function
-        await supabase.rpc('mark_notification_read', {
+        const { error } = await supabase.rpc('mark_notification_read', {
           notification_id: id
         });
+        
+        if (error) throw error;
       }
 
       // Update local state
@@ -94,12 +98,16 @@ export const useNotifications = () => {
     try {
       if (currentTenant) {
         // Use tenant schema for marking all read
-        await tenantTable('notifications')
-          .eq('read', false)
-          .update({ read: true });
+        const { error } = await tenantTable('notifications')
+          .update({ read: true })
+          .match({ read: false });
+          
+        if (error) throw error;
       } else {
         // Use public schema function
-        await supabase.rpc('mark_all_notifications_read');
+        const { error } = await supabase.rpc('mark_all_notifications_read');
+        
+        if (error) throw error;
       }
 
       // Update local state
