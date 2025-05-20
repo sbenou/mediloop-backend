@@ -32,9 +32,7 @@ const UnifiedHeader = () => {
               className="h-8 w-auto"
             />
           </Link>
-          <div className="ml-4">
-            <TenantDisplay />
-          </div>
+          <TenantDisplay />
         </div>
         <div className="flex items-center gap-2">
           <div className="hidden md:flex">

@@ -9,14 +9,13 @@ const ProtectedDoctorDashboard = () => {
   const { userRole, isLoading } = useAuth();
   const navigate = useNavigate();
   
-  // If the user is not a doctor, they should be redirected to the regular dashboard
+  // Only redirect if we're not loading and the user role is confirmed to be neither doctor nor superadmin
   useEffect(() => {
     if (!isLoading && userRole && userRole !== 'doctor' && userRole !== 'superadmin') {
       navigate('/dashboard', { replace: true });
     }
   }, [userRole, isLoading, navigate]);
   
-  // For doctors, show the doctor dashboard with the ProtectedRoute wrapper
   return (
     <ProtectedRoute allowedRoles={['doctor', 'superadmin']}>
       <DoctorDashboard />

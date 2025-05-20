@@ -26,9 +26,8 @@ export const TenantDisplay = () => {
     );
   }
   
-  // If no current tenant is found or we're in preview mode
+  // If no current tenant is found or we're in preview mode, return null (render nothing)
   if (!currentTenant || isPreviewMode) {
-    // Return nothing
     return null;
   }
   
