@@ -2,16 +2,11 @@
 import React from 'react';
 import { useTenant } from '@/contexts/TenantContext';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 
 export const TenantDisplay = () => {
   const { currentTenant, isLoading, error, isPreviewMode } = useTenant();
-  
-  if (isLoading) {
-    return <Skeleton className="h-4 w-32" />;
-  }
   
   // Only show error in development mode
   if (error && process.env.NODE_ENV === 'development') {
@@ -26,8 +21,8 @@ export const TenantDisplay = () => {
     );
   }
   
-  // If no current tenant is found or we're in preview mode, return null (render nothing)
-  if (!currentTenant || isPreviewMode) {
+  // If loading, no tenant, or in preview mode, return null (render nothing)
+  if (isLoading || !currentTenant || isPreviewMode) {
     return null;
   }
   
