@@ -10,6 +10,7 @@ import { CurrencySelector } from '@/components/CurrencySelector';
 import LanguageSelector from '@/components/LanguageSelector';
 import NotificationBell from '@/components/NotificationBell';
 import { TenantDisplay } from '@/components/tenant/TenantDisplay';
+import { NavigationMenu } from "@/components/ui/navigation-menu";
 
 const UnifiedHeader = () => {
   const { isAuthenticated } = useAuth();

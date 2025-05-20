@@ -1,11 +1,6 @@
 
 import { ReactNode } from "react";
 import UnifiedSidebar from "../sidebar/UnifiedSidebar";
-import NotificationBell from "../NotificationBell";
-import UserMenu from "../UserMenu";
-import { NavigationMenu, NavigationMenuList } from "@/components/ui/navigation-menu";
-import { MainNavigation } from "./navigation/MainNavigation";
-import CartButton from "./navigation/CartButton";
 import UnifiedLayoutTemplate from "./UnifiedLayoutTemplate";
 
 interface UnifiedLayoutProps {
