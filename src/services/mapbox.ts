@@ -175,7 +175,7 @@ export const getCoordinatesWithMapbox = async (
 export const getDistanceFromUserToPharmacy = (
   userLocation: { lat: number; lon: number } | null,
   pharmacyCoordinates: { lat: number; lng: number } | null
-): string | null => {
+): string | number | null => {
   if (!userLocation || !pharmacyCoordinates) return null;
   
   return calculateDistance(
@@ -185,3 +185,4 @@ export const getDistanceFromUserToPharmacy = (
     pharmacyCoordinates.lng
   );
 };
+

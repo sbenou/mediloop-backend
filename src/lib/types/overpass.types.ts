@@ -1,3 +1,4 @@
+
 export interface OverpassResult {
   elements: Array<{
     id: number;
@@ -32,7 +33,7 @@ export interface Location {
 }
 
 export interface Pharmacy extends Location {
-  distance: string;
+  distance: string | number;
   hours: string;
   phone?: string;
   email?: string;
