@@ -2,6 +2,7 @@
 import { initializeApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { toast } from '@/components/ui/use-toast';
+import { supabase } from '@/lib/supabase';
 
 // Firebase configuration - replace with your actual Firebase config
 const firebaseConfig = {
@@ -54,7 +55,7 @@ export const saveFcmTokenToProfile = async (userId: string, token: string) => {
   try {
     if (!token) return;
     
-    const { error } = await window.supabase
+    const { error } = await supabase
       .from('profiles')
       .update({ fcm_token: token })
       .eq('id', userId);
