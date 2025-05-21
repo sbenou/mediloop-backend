@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { useNotifications } from "@/hooks/useNotifications";
 import NotificationTabs from "./notifications/NotificationTabs";
 import { useNavigate } from "react-router-dom";
+import { useFirebaseNotifications } from "@/hooks/useFirebaseNotifications";
 
 const NotificationBell = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,12 +19,17 @@ const NotificationBell = () => {
     fetchNotifications, 
     markAsRead, 
     markAllAsRead,
-    setupRealtimeSubscription 
+    setupRealtimeSubscription,
+    fetchError
   } = useNotifications();
+  
+  // Use Firebase notifications
+  useFirebaseNotifications();
   
   // Use ref to track initialization
   const hasInitialized = useRef(false);
   const errorCountRef = useRef(0);
+  const maxRetries = useRef(3);
 
   // Fetch notifications when authenticated - only once
   useEffect(() => {
@@ -33,12 +39,15 @@ const NotificationBell = () => {
       const fetchData = async () => {
         try {
           await fetchNotifications();
+          errorCountRef.current = 0; // Reset error count on success
         } catch (err) {
           console.error("NotificationBell: Error fetching initial data", err);
-          if (errorCountRef.current < 3) {
+          if (errorCountRef.current < maxRetries.current) {
             errorCountRef.current++;
             // Retry with exponential backoff
-            setTimeout(fetchData, 1000 * Math.pow(2, errorCountRef.current));
+            const delay = 1000 * Math.pow(2, errorCountRef.current);
+            console.log(`Retrying in ${delay}ms (attempt ${errorCountRef.current} of ${maxRetries.current})`);
+            setTimeout(fetchData, delay);
           }
         }
       };
@@ -60,6 +69,10 @@ const NotificationBell = () => {
     });
   };
 
+  // If there was an error fetching notifications and we've exceeded max retries,
+  // still render the bell but show an error state in the popover
+  const hasEncounteredError = fetchError && errorCountRef.current >= maxRetries.current;
+
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
@@ -77,9 +90,15 @@ const NotificationBell = () => {
           notifications={notifications}
           unreadCount={unreadCount}
           isLoading={isLoading}
+          hasError={hasEncounteredError}
           onMarkRead={markAsRead}
           onMarkAllRead={markAllAsRead}
           onViewAll={handleViewAllClick}
+          onRetry={() => {
+            errorCountRef.current = 0;
+            hasInitialized.current = false;
+            fetchNotifications();
+          }}
         />
       </PopoverContent>
     </Popover>

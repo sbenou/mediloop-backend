@@ -1,10 +1,11 @@
 
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Notification } from '@/types/supabase';
 import { toast } from '@/components/ui/use-toast';
 import { useTenant } from '@/contexts/TenantContext';
 import { useTenantSupabase } from './useTenantSupabase';
+import { useAuth } from '@/hooks/auth/useAuth';
 
 export const useNotifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -13,11 +14,31 @@ export const useNotifications = () => {
   const [fetchError, setFetchError] = useState<Error | null>(null);
   const { currentTenant } = useTenant();
   const { tenantTable } = useTenantSupabase();
+  const { isAuthenticated } = useAuth();
+  
+  // Refs for tracking subscription status
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const hasSubscribed = useRef(false);
+  const abortController = useRef<AbortController | null>(null);
 
   // Function to fetch notifications from database
   const fetchNotifications = useCallback(async () => {
+    // Don't fetch if not authenticated
+    if (!isAuthenticated) {
+      return;
+    }
+    
+    // Cancel any in-progress fetch
+    if (abortController.current) {
+      abortController.current.abort();
+    }
+    
+    // Create new abort controller for this request
+    abortController.current = new AbortController();
+    
     setIsLoading(true);
     try {
+      console.log("Fetching notifications...", { tenant: currentTenant?.name || 'public' });
       let response;
       
       if (currentTenant) {
@@ -41,24 +62,36 @@ export const useNotifications = () => {
         throw error;
       }
 
+      console.log("Notifications fetched:", data?.length || 0);
+      
       if (data) {
         setNotifications(data);
-        setUnreadCount(data.filter(n => !n.read).length);
+        const unread = data.filter(n => !n.read).length;
+        setUnreadCount(unread);
+        console.log(`Found ${unread} unread notifications`);
         setFetchError(null);
       }
     } catch (error) {
       console.error('Error fetching notifications:', error);
       setFetchError(error as Error);
-      // Don't show toast for initial fetch to prevent error loops
+      // Show toast only for network errors, not for cancellations
+      if (!(error instanceof DOMException && error.name === 'AbortError')) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load notifications"
+        });
+      }
     } finally {
       setIsLoading(false);
+      abortController.current = null;
     }
-  }, [currentTenant, tenantTable]);
+  }, [isAuthenticated, currentTenant, tenantTable]);
 
   // Clear fetch error when dependencies change
   useEffect(() => {
     setFetchError(null);
-  }, [currentTenant, tenantTable]);
+  }, [currentTenant, tenantTable, isAuthenticated]);
 
   const markAsRead = useCallback(async (id: string) => {
     try {
@@ -85,16 +118,12 @@ export const useNotifications = () => {
         )
       );
       setUnreadCount((prevCount) => Math.max(0, prevCount - 1));
-
-      toast({
-        title: 'Notification marked as read',
-      });
     } catch (error) {
       console.error('Error marking notification as read:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to mark notification as read',
-        variant: 'destructive',
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to mark notification as read"
       });
     }
   }, [currentTenant, tenantTable]);
@@ -120,25 +149,35 @@ export const useNotifications = () => {
         prevNotifications.map((notification) => ({ ...notification, read: true }))
       );
       setUnreadCount(0);
-
-      toast({
-        title: 'All notifications marked as read',
-      });
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to mark all notifications as read',
-        variant: 'destructive',
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to mark all notifications as read"
       });
     }
   }, [currentTenant, tenantTable]);
 
   const setupRealtimeSubscription = useCallback(() => {
-    let channelToCleanup = null;
+    // If already subscribed, don't do it again
+    if (hasSubscribed.current) {
+      console.log("Notification subscription already active");
+      return () => {};
+    }
+    
+    console.log("Setting up notification subscription");
+    
+    // Clean up any existing channel before creating a new one
+    if (channelRef.current) {
+      console.log("Cleaning up existing notification channel");
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
     
     // If we have a tenant, subscribe to tenant-specific table
     if (currentTenant?.schema) {
+      console.log(`Setting up tenant notification channel for ${currentTenant.schema}`);
       const tenantChannel = supabase
         .channel(`${currentTenant.schema}_notifications`)
         .on('postgres_changes', {
@@ -150,15 +189,19 @@ export const useNotifications = () => {
           // Use setTimeout to prevent potential deadlocks with Supabase client
           setTimeout(() => {
             fetchNotifications();
-          }, 0);
+          }, 100);
         })
         .subscribe((status) => {
           console.log(`Tenant notification channel status: ${status}`);
+          if (status === 'SUBSCRIBED') {
+            hasSubscribed.current = true;
+          }
         });
         
-      channelToCleanup = tenantChannel;
+      channelRef.current = tenantChannel;
     } else {
       // Default public schema subscription
+      console.log("Setting up public notification channel");
       const channel = supabase
         .channel('notifications_changes')
         .on('postgres_changes', {
@@ -166,24 +209,49 @@ export const useNotifications = () => {
           schema: 'public',
           table: 'notifications'
         }, (payload) => {
+          console.log('Public notification change:', payload);
           // Use setTimeout to prevent potential deadlocks with Supabase client
           setTimeout(() => {
             fetchNotifications();
-          }, 0);
+          }, 100);
         })
         .subscribe((status) => {
           console.log(`Public notification channel status: ${status}`);
+          if (status === 'SUBSCRIBED') {
+            hasSubscribed.current = true;
+          }
         });
 
-      channelToCleanup = channel;  
+      channelRef.current = channel;  
     }
     
     return () => { 
-      if (channelToCleanup) {
-        supabase.removeChannel(channelToCleanup);
+      if (channelRef.current) {
+        console.log("Cleaning up notification subscription");
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+        hasSubscribed.current = false;
       }
     };
   }, [currentTenant, fetchNotifications]);
+  
+  // Clean up subscription when component unmounts or tenant changes
+  useEffect(() => {
+    return () => {
+      if (channelRef.current) {
+        console.log("Component unmounting - cleaning up notification subscription");
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+        hasSubscribed.current = false;
+      }
+      
+      // Also abort any pending fetch
+      if (abortController.current) {
+        abortController.current.abort();
+        abortController.current = null;
+      }
+    };
+  }, [currentTenant]);
 
   return {
     notifications,

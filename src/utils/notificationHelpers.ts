@@ -3,6 +3,7 @@ import { createNotification, NotificationType } from "@/utils/notifications";
 import { supabase } from "@/lib/supabase";
 import { useTenantSupabase } from "@/hooks/useTenantSupabase";
 import { useCallback } from "react";
+import { sendDoctorConnectionFirebaseNotification } from "./firebaseNotifications";
 
 // Helper function to send doctor connection notifications
 export async function sendDoctorConnectionNotification(doctorId: string, patientName: string) {
@@ -16,8 +17,8 @@ export async function sendDoctorConnectionNotification(doctorId: string, patient
     
     if (!doctorProfile) return null;
     
-    // Create notification for doctor in the app
-    return createNotification({
+    // Create notification for doctor in the app database
+    const notification = await createNotification({
       userId: doctorId,
       type: "patient_connected",
       title: "New Patient Connection Request",
@@ -28,6 +29,11 @@ export async function sendDoctorConnectionNotification(doctorId: string, patient
         timestamp: new Date().toISOString()
       }
     });
+    
+    // Also send Firebase notification
+    await sendDoctorConnectionFirebaseNotification(doctorId, patientName);
+    
+    return notification;
   } catch (error) {
     console.error('Error sending doctor connection notification:', error);
     return null;
@@ -141,6 +147,9 @@ export function useTenantNotifications() {
         console.error(`Error creating notification in tenant ${currentTenant.name}:`, notifError);
         return null;
       }
+      
+      // Also send Firebase notification
+      await sendDoctorConnectionFirebaseNotification(doctorId, patientName);
       
       return notification;
     } catch (error) {
