@@ -11,6 +11,7 @@ import LanguageSelector from '@/components/LanguageSelector';
 import NotificationBell from '@/components/NotificationBell';
 import { TenantDisplay } from '@/components/tenant/TenantDisplay';
 import { useIsMobile } from '@/hooks/use-mobile';
+import UserMenu from '@/components/UserMenu';
 
 const UnifiedHeader = () => {
   const { isAuthenticated } = useAuth();
@@ -52,19 +53,7 @@ const UnifiedHeader = () => {
             isOpen={isCartOpen} 
             onOpenChange={setIsCartOpen} 
           />
-          {isAuthenticated ? (
-            <Link to="/dashboard">
-              <Button variant="default" size="sm">
-                Dashboard
-              </Button>
-            </Link>
-          ) : (
-            <Link to="/login">
-              <Button variant="default" size="sm">
-                Log In
-              </Button>
-            </Link>
-          )}
+          <UserMenu />
         </div>
       </div>
     </header>

@@ -6,7 +6,6 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { useNotifications } from "@/hooks/useNotifications";
 import NotificationTabs from "./notifications/NotificationTabs";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 
 const NotificationBell = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -24,12 +23,27 @@ const NotificationBell = () => {
   
   // Use ref to track initialization
   const hasInitialized = useRef(false);
+  const errorCountRef = useRef(0);
 
   // Fetch notifications when authenticated - only once
   useEffect(() => {
     if (isAuthenticated && !hasInitialized.current) {
       console.log("NotificationBell: Initial data fetch");
-      fetchNotifications();
+      
+      const fetchData = async () => {
+        try {
+          await fetchNotifications();
+        } catch (err) {
+          console.error("NotificationBell: Error fetching initial data", err);
+          if (errorCountRef.current < 3) {
+            errorCountRef.current++;
+            // Retry with exponential backoff
+            setTimeout(fetchData, 1000 * Math.pow(2, errorCountRef.current));
+          }
+        }
+      };
+      
+      fetchData();
       hasInitialized.current = true;
       
       // Only set up subscription once

@@ -1,5 +1,5 @@
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Notification } from '@/types/supabase';
 import { toast } from '@/components/ui/use-toast';
@@ -10,9 +10,11 @@ export const useNotifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [fetchError, setFetchError] = useState<Error | null>(null);
   const { currentTenant } = useTenant();
   const { tenantTable } = useTenantSupabase();
 
+  // Function to fetch notifications from database
   const fetchNotifications = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -42,13 +44,20 @@ export const useNotifications = () => {
       if (data) {
         setNotifications(data);
         setUnreadCount(data.filter(n => !n.read).length);
+        setFetchError(null);
       }
     } catch (error) {
       console.error('Error fetching notifications:', error);
+      setFetchError(error as Error);
       // Don't show toast for initial fetch to prevent error loops
     } finally {
       setIsLoading(false);
     }
+  }, [currentTenant, tenantTable]);
+
+  // Clear fetch error when dependencies change
+  useEffect(() => {
+    setFetchError(null);
   }, [currentTenant, tenantTable]);
 
   const markAsRead = useCallback(async (id: string) => {
@@ -126,6 +135,8 @@ export const useNotifications = () => {
   }, [currentTenant, tenantTable]);
 
   const setupRealtimeSubscription = useCallback(() => {
+    let channelToCleanup = null;
+    
     // If we have a tenant, subscribe to tenant-specific table
     if (currentTenant?.schema) {
       const tenantChannel = supabase
@@ -141,9 +152,11 @@ export const useNotifications = () => {
             fetchNotifications();
           }, 0);
         })
-        .subscribe();
+        .subscribe((status) => {
+          console.log(`Tenant notification channel status: ${status}`);
+        });
         
-      return () => { supabase.removeChannel(tenantChannel); };
+      channelToCleanup = tenantChannel;
     } else {
       // Default public schema subscription
       const channel = supabase
@@ -158,10 +171,18 @@ export const useNotifications = () => {
             fetchNotifications();
           }, 0);
         })
-        .subscribe();
+        .subscribe((status) => {
+          console.log(`Public notification channel status: ${status}`);
+        });
 
-      return () => { supabase.removeChannel(channel); };
+      channelToCleanup = channel;  
     }
+    
+    return () => { 
+      if (channelToCleanup) {
+        supabase.removeChannel(channelToCleanup);
+      }
+    };
   }, [currentTenant, fetchNotifications]);
 
   return {
@@ -171,6 +192,7 @@ export const useNotifications = () => {
     fetchNotifications,
     markAsRead,
     markAllAsRead,
-    setupRealtimeSubscription
+    setupRealtimeSubscription,
+    fetchError
   };
 };
