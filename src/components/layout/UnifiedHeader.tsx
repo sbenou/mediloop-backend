@@ -32,7 +32,7 @@ const UnifiedHeader = () => {
             <img
               src="/lovable-uploads/187ef6ec-1e9e-4364-af00-215ade5361d3.png"
               alt="Mediloop"
-              className="h-10 w-auto object-contain" 
+              className="h-10 w-auto max-w-[140px] object-contain" 
             />
           </Link>
           <TenantDisplay />
