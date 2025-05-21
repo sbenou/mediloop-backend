@@ -45,11 +45,7 @@ export const useNotifications = () => {
       }
     } catch (error) {
       console.error('Error fetching notifications:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load notifications',
-        variant: 'destructive',
-      });
+      // Don't show toast for initial fetch to prevent error loops
     } finally {
       setIsLoading(false);
     }
@@ -140,7 +136,10 @@ export const useNotifications = () => {
           table: 'notifications'
         }, (payload) => {
           console.log('Tenant notification change:', payload);
-          fetchNotifications();
+          // Use setTimeout to prevent potential deadlocks with Supabase client
+          setTimeout(() => {
+            fetchNotifications();
+          }, 0);
         })
         .subscribe();
         
@@ -154,7 +153,10 @@ export const useNotifications = () => {
           schema: 'public',
           table: 'notifications'
         }, (payload) => {
-          fetchNotifications();
+          // Use setTimeout to prevent potential deadlocks with Supabase client
+          setTimeout(() => {
+            fetchNotifications();
+          }, 0);
         })
         .subscribe();
 

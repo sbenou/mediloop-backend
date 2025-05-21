@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Bell } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -21,12 +21,16 @@ const NotificationBell = () => {
     markAllAsRead,
     setupRealtimeSubscription 
   } = useNotifications();
+  
+  // Use ref to track initialization
+  const hasInitialized = useRef(false);
 
   // Fetch notifications when authenticated - only once
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !hasInitialized.current) {
       console.log("NotificationBell: Initial data fetch");
       fetchNotifications();
+      hasInitialized.current = true;
       
       // Only set up subscription once
       const cleanup = setupRealtimeSubscription();

@@ -21,7 +21,6 @@ const Dashboard = () => {
   const [searchParams] = useSearchParams();
   const hasInitializedRef = useRef(false);
   const redirectedRef = useRef(false);
-  const renderCountRef = useRef(0);
   
   // Activity drawer state
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
@@ -29,18 +28,6 @@ const Dashboard = () => {
 
   // Add more detailed logging to help debug
   useEffect(() => {
-    renderCountRef.current += 1;
-    
-    console.log("✅ Dashboard mounted", { 
-      isAuthenticated, 
-      userRole, 
-      profileRole: profile?.role,
-      isPharmacist: profile?.role === 'pharmacist',
-      pathname: window.location.pathname,
-      search: window.location.search,
-      renderCount: renderCountRef.current
-    });
-    
     // Only perform redirect once and only if needed
     if (!isLoading && !isAuthenticated && !redirectedRef.current) {
       console.warn("🔒 Not authenticated — redirecting to login");
@@ -49,24 +36,20 @@ const Dashboard = () => {
       return; // Early return to prevent further rendering
     }
     
-    // Track mount count to detect repeated mounts
-    const mountCount = parseInt(sessionStorage.getItem('dashboard_mount_count') || '0') + 1;
-    sessionStorage.setItem('dashboard_mount_count', mountCount.toString());
-    console.log("✅ Dashboard mount count:", mountCount);
-    
-    // Log the navigator.userAgent to detect browser/environment
-    console.log("✅ User agent:", navigator.userAgent);
-    
-    // Capture full search params for debugging
-    console.log("✅ Dashboard search parameters:", Object.fromEntries(searchParams.entries()));
-    
     // Mark as initialized to prevent multiple redirects
-    hasInitializedRef.current = true;
-    
-    return () => {
-      console.log("❌ Dashboard unmounted");
-    };
-  }, [isAuthenticated, navigate, isLoading, userRole, profile, searchParams]);
+    if (!hasInitializedRef.current) {
+      hasInitializedRef.current = true;
+      
+      console.log("✅ Dashboard initialized", { 
+        isAuthenticated, 
+        userRole, 
+        profileRole: profile?.role,
+        isPharmacist: profile?.role === 'pharmacist',
+        pathname: window.location.pathname,
+        search: window.location.search
+      });
+    }
+  }, [isAuthenticated, navigate, isLoading, userRole, profile]);
   
   // Force recalculation of chart dimensions when drawer state changes
   useEffect(() => {
