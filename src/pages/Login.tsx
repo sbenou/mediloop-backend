@@ -24,7 +24,7 @@ const Login = () => {
     }
   }, [isAuthenticated, profile, navigate]);
 
-  // Show loading state during initial load
+  // Show loading state only briefly during initial load
   if (isLoading) {
     return (
       <div className="container mx-auto flex items-center justify-center min-h-screen p-4">

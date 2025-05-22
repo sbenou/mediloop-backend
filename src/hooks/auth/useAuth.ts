@@ -1,72 +1,39 @@
 
-import { useRecoilState } from 'recoil';
+import { useRecoilValue } from 'recoil';
 import { authState } from '@/store/auth/atoms';
-import { supabase } from '@/lib/supabase';
-import { useState, useEffect } from 'react';
+import { isAuthenticatedSelector, userRoleSelector, userPermissionsSelector, isLoadingSelector } from '@/store/auth/selectors';
+import { PERMISSIONS } from '@/config/permissions';
+import { useCallback } from 'react';
 
-export function useAuth() {
-  const [state, setState] = useRecoilState(authState);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+export const useAuth = () => {
+  const auth = useRecoilValue(authState);
+  const isAuthenticated = useRecoilValue(isAuthenticatedSelector);
+  const userRole = useRecoilValue(userRoleSelector);
+  const permissions = useRecoilValue(userPermissionsSelector);
+  const isLoading = useRecoilValue(isLoadingSelector);
   
-  const { user, profile, permissions = [] } = state;
-  
-  // Determine if the user is authenticated
-  const isAuthenticated = !!state.user && !!profile;
-  
-  // Get the user role from the profile if available
-  const userRole = profile?.role || null;
-  
-  // Special helper for checking if the user is a pharmacist
-  const isPharmacist = userRole === 'pharmacist';
-  
-  // Check if user has a specific permission
-  const hasPermission = (permission: string): boolean => {
-    if (!permissions) return false;
-    return permissions.includes(permission);
-  };
-  
-  // Fetch the profile when the user changes
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        if (!user) {
-          setIsLoading(false);
-          return;
-        }
-        
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .maybeSingle();
-          
-        if (error) {
-          console.error('Error fetching profile:', error);
-        } else if (data) {
-          setState(prev => ({
-            ...prev,
-            profile: data
-          }));
-        }
-        
-        setIsLoading(false);
-      } catch (err) {
-        console.error('Error in fetchProfile:', err);
-        setIsLoading(false);
-      }
-    };
+  /**
+   * Check if the user has a specific permission
+   */
+  const hasPermission = useCallback((permission: string) => {
+    // Super admins have all permissions
+    if (auth.profile?.role === 'superadmin') {
+      return true;
+    }
     
-    fetchProfile();
-  }, [user, setState]);
-  
+    // Check if the user has the specific permission
+    return permissions.includes(permission);
+  }, [permissions, auth.profile]);
+
   return {
-    user,
-    profile,
-    permissions,
+    user: auth.user,
+    profile: auth.profile,
     isAuthenticated,
+    isLoading,
     userRole,
-    isPharmacist,
-    hasPermission,
-    isLoading
+    permissions,
+    hasPermission
   };
-}
+};
+
+export default useAuth;

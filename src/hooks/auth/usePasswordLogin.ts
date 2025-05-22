@@ -3,10 +3,9 @@ import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { AuthError } from '@supabase/supabase-js';
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from 'sonner';
 import { useSetRecoilState } from 'recoil';
 import { authState } from '@/store/auth/atoms';
-import { storeSession } from '@/lib/auth/sessionUtils';
 import { getDashboardRouteByRole } from '@/utils/auth/getDashboardRouteByRole';
 
 interface UsePasswordLoginResult {
@@ -32,15 +31,14 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
     setError(null);
     console.log(`[usePasswordLogin] Attempting login for email: ${email}`);
 
-    // Global timeout to prevent hanging
-    const loginTimeout = setTimeout(() => {
+    // Create a login timeout to prevent hanging
+    const loginTimeoutId = setTimeout(() => {
       console.error('[usePasswordLogin] Login process timed out after 15 seconds');
       setIsLoading(false);
       toast({
         variant: "destructive",
         title: "Login timed out",
         description: "The login process took too long. Please try again.",
-        duration: 5000,
       });
     }, 15000);
 
@@ -51,17 +49,18 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         password: password,
       });
 
+      // Clear timeout as soon as we get a response
+      clearTimeout(loginTimeoutId);
+
       if (authError) {
         console.error('[usePasswordLogin] Auth error:', authError);
         setError(authError);
         toast({
           variant: "destructive",
           title: "Login failed",
-          description: authError.message,
-          duration: 5000,
+          description: authError.message || "Invalid email or password",
         });
         setIsLoading(false);
-        clearTimeout(loginTimeout);
         return;
       }
 
@@ -71,58 +70,29 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
           variant: "destructive",
           title: "Login failed",
           description: "Unable to establish a session. Please try again.",
-          duration: 5000,
         });
         setIsLoading(false);
-        clearTimeout(loginTimeout);
         return;
       }
         
-      // 2. Store the session
-      storeSession(data.session);
-      console.log("[usePasswordLogin] Login successful, session stored");
-      
-      // 3. Success notification
+      // 2. Success notification
       toast({
         title: "Login successful",
         description: "You've been logged in successfully",
-        duration: 3000,
       });
 
-      // 4. Get user role from metadata
+      // 3. Get user role from metadata or default to patient
       const userRole = data.user.user_metadata?.role || 'patient';
       
-      // 5. Create minimal profile with defaults
+      // 4. Create minimal profile with defaults (actual profile will be fetched by AuthProvider)
       const minimalProfile = {
         id: data.user.id,
         role: userRole,
         email: data.user.email,
-        full_name: data.user.user_metadata?.full_name || 'User',
-        role_id: null,
-        avatar_url: null,
-        date_of_birth: null,
-        city: null,
-        auth_method: 'password',
-        is_blocked: false,
-        doctor_stamp_url: null,
-        doctor_signature_url: null,
-        pharmacist_stamp_url: null,
-        pharmacist_signature_url: null,
-        cns_card_front: null,
-        cns_card_back: null,
-        cns_number: null,
-        deleted_at: null,
-        created_at: null,
-        updated_at: null,
-        license_number: data.user.user_metadata?.license_number || null,
-        phone_number: null,
-        address: null,
-        pharmacy_id: null,
-        pharmacy_name: null,
-        pharmacy_logo_url: null
+        full_name: data.user.user_metadata?.full_name || null,
       };
 
-      // 6. Update auth state with minimal profile
+      // 5. Update auth state with minimal profile
       setAuth({
         user: data.user,
         profile: minimalProfile,
@@ -130,16 +100,15 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         isLoading: false,
       });
       
-      // 7. Invoke success callback
+      // 6. Invoke success callback
       if (onSuccess) {
         onSuccess();
       }
 
-      // 8. Cleanup
+      // 7. Cleanup
       setIsLoading(false);
-      clearTimeout(loginTimeout);
       
-      // 9. Role-based redirection using getDashboardRouteByRole to ensure consistent routing
+      // 8. Role-based redirection
       const dashboardRoute = getDashboardRouteByRole(userRole);
       console.log(`[usePasswordLogin] Redirecting user with role ${userRole} to: ${dashboardRoute}`);
       
@@ -149,14 +118,13 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
       });
       
     } catch (err: any) {
-      clearTimeout(loginTimeout);
+      clearTimeout(loginTimeoutId);
       console.error('[usePasswordLogin] Unexpected error during login:', err);
       setError(err);
       toast({
         variant: "destructive",
         title: "Login failed",
         description: err.message || "An unexpected error occurred",
-        duration: 5000,
       });
       setIsLoading(false);
     }
