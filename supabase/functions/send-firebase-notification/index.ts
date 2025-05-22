@@ -11,14 +11,25 @@ interface FirebaseMessage {
 }
 
 const API_KEY = Deno.env.get("FIREBASE_SERVER_KEY");
+const PROJECT_ID = "mediloop-6b3d3";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+  
   try {
     // Make sure the request is authorized
     if (!req.headers.get("Authorization")) {
       return new Response(JSON.stringify({ error: "No authorization header" }), {
         status: 401,
-        headers: { "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -28,14 +39,14 @@ serve(async (req) => {
     if (!token) {
       return new Response(JSON.stringify({ error: "No FCM token provided" }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     if (!API_KEY) {
       return new Response(JSON.stringify({ error: "Firebase server key not configured" }), {
         status: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -56,9 +67,11 @@ serve(async (req) => {
       },
     };
 
+    console.log("Sending Firebase notification to token:", token.substring(0, 10) + "...");
+
     // Send to Firebase
     const response = await fetch(
-      "https://fcm.googleapis.com/v1/projects/mediloop-6b3d3/messages:send",
+      `https://fcm.googleapis.com/v1/projects/${PROJECT_ID}/messages:send`,
       {
         method: "POST",
         headers: {
@@ -71,19 +84,21 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
+      console.error(`Firebase error ${response.status}:`, errorText);
       throw new Error(`Firebase error ${response.status}: ${errorText}`);
     }
 
     const result = await response.json();
+    console.log("Firebase notification sent successfully:", result);
 
     return new Response(JSON.stringify({ success: true, result }), {
-      headers: { "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
     console.error("Error sending Firebase notification:", error);
     return new Response(JSON.stringify({ error: error.message || "Unknown error" }), {
       status: 500,
-      headers: { "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
