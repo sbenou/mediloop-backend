@@ -17,11 +17,18 @@ export const useFirebaseNotifications = () => {
     let cleanupFn = () => {};
 
     const initializeFirebase = async () => {
+      // Skip initialization if conditions aren't met
       if (!isAuthenticated || !user || initialized.current) return;
       
       try {
         console.log('Initializing Firebase notifications');
         initialized.current = true;
+        
+        // Browser compatibility check
+        if (!('Notification' in window)) {
+          console.log('This browser does not support desktop notification');
+          return;
+        }
         
         // Request permission and get token
         const token = await requestNotificationPermission();
@@ -45,9 +52,13 @@ export const useFirebaseNotifications = () => {
       }
     };
 
-    initializeFirebase();
+    // Attempt to initialize with a slight delay to ensure other parts are loaded
+    const timer = setTimeout(() => {
+      initializeFirebase();
+    }, 1500);
     
     return () => {
+      clearTimeout(timer);
       cleanupFn();
     };
   }, [isAuthenticated, user]);

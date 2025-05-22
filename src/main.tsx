@@ -15,14 +15,16 @@ import "./index.css";
 
 // Register service worker for Firebase notifications
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker
-    .register('/firebase-messaging-sw.js')
-    .then(registration => {
-      console.log('Firebase SW registered:', registration);
-    })
-    .catch(error => {
-      console.error('Firebase SW registration failed:', error);
-    });
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/firebase-messaging-sw.js')
+      .then(registration => {
+        console.log('Firebase SW registered:', registration);
+      })
+      .catch(error => {
+        console.error('Firebase SW registration failed:', error);
+      });
+  });
 }
 
 // Create a client for React Query

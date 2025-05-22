@@ -15,16 +15,31 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "placeholder-measurement-id"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Initialize Firebase only in browser environment
+let app;
+let messaging = null;
 
-// Get messaging instance
-export const messaging = typeof window !== 'undefined' ? getMessaging(app) : null;
+try {
+  // Only initialize Firebase in browser environment
+  if (typeof window !== 'undefined') {
+    app = initializeApp(firebaseConfig);
+    // Only try to get messaging in supported browsers
+    if ('serviceWorker' in navigator) {
+      messaging = getMessaging(app);
+      console.log('Firebase messaging initialized');
+    }
+  }
+} catch (error) {
+  console.error('Firebase initialization error:', error);
+}
 
 // Request permission and get token
 export const requestNotificationPermission = async () => {
   try {
-    if (!messaging) return null;
+    if (!messaging) {
+      console.log('Messaging not available');
+      return null;
+    }
     
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') {
@@ -70,22 +85,30 @@ export const saveFcmTokenToProfile = async (userId: string, token: string) => {
 
 // Setup onMessage listener for foreground messages
 export const setupFirebaseMessaging = () => {
-  if (!messaging) return () => {};
+  if (!messaging) {
+    console.log('Messaging not available for foreground messages');
+    return () => {};
+  }
   
-  const unsubscribe = onMessage(messaging, (payload) => {
-    console.log('Message received in foreground:', payload);
+  try {
+    const unsubscribe = onMessage(messaging, (payload) => {
+      console.log('Message received in foreground:', payload);
+      
+      // Display notification as toast
+      if (payload.notification) {
+        toast({
+          title: payload.notification.title || 'New Notification',
+          description: payload.notification.body || '',
+          duration: 5000,
+        });
+      }
+    });
     
-    // Display notification as toast
-    if (payload.notification) {
-      toast({
-        title: payload.notification.title || 'New Notification',
-        description: payload.notification.body || '',
-        duration: 5000,
-      });
-    }
-  });
-  
-  return unsubscribe;
+    return unsubscribe;
+  } catch (error) {
+    console.error('Error setting up message listener:', error);
+    return () => {};
+  }
 };
 
 export { app };
