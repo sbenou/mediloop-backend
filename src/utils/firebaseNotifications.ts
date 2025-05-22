@@ -121,34 +121,40 @@ export const sendOrderStatusFirebaseNotification = async (
 ) => {
   let title: string;
   let body: string;
+  let notificationType: NotificationType;
   
   switch (status) {
     case 'processing':
       title = 'Order Processing';
       body = `Your order #${orderId} is now being processed.`;
+      notificationType = 'delivery_processing';
       break;
     case 'shipped':
       title = 'Order Shipped';
       body = `Your order #${orderId} has been shipped.`;
+      notificationType = 'delivery_shipped';
       break;
     case 'delivered':
       title = 'Order Delivered';
       body = `Your order #${orderId} has been delivered.`;
+      notificationType = 'delivery_delivered';
       break;
     case 'cancelled':
       title = 'Order Cancelled';
       body = `Your order #${orderId} has been cancelled.`;
+      notificationType = 'delivery_cancelled';
       break;
     default:
       title = 'Order Update';
       body = `There is an update on your order #${orderId}.`;
+      notificationType = 'delivery_incoming';
   }
   
   return sendFirebaseNotification({
     userId: recipientId,
     title,
     body,
-    type: 'delivery_' + status,
+    type: notificationType,
     data: {
       orderId,
       status,
