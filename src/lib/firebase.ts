@@ -4,15 +4,15 @@ import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/supabase';
 
-// Firebase configuration - replace with your actual Firebase config values
+// Firebase configuration
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",              // Replace with your actual API key
-  authDomain: "YOUR_AUTH_DOMAIN",      // Replace with your actual auth domain
-  projectId: "YOUR_PROJECT_ID",        // Replace with your actual project ID
-  storageBucket: "YOUR_STORAGE_BUCKET",// Replace with your actual storage bucket
-  messagingSenderId: "YOUR_SENDER_ID", // Replace with your actual sender ID
-  appId: "YOUR_APP_ID",                // Replace with your actual app ID
-  measurementId: "YOUR_MEASUREMENT_ID" // Replace with your actual measurement ID
+  apiKey: "AIzaSyB33prcKnth3KakMlCEKlQETT-LzPr5yZM",
+  authDomain: "mediloop-test-4f9ea.firebaseapp.com",
+  projectId: "mediloop-test-4f9ea",
+  storageBucket: "mediloop-test-4f9ea.appspot.com",
+  messagingSenderId: "1056108254776",
+  appId: "1:1056108254776:web:0ff671d7c82010895b35c1",
+  measurementId: "G-XKD3B00TQ0"
 };
 
 // Initialize Firebase only in browser environment
@@ -49,7 +49,7 @@ export const requestNotificationPermission = async () => {
     
     // Get the token
     const currentToken = await getToken(messaging, {
-      vapidKey: "YOUR_VAPID_KEY"  // Replace with your actual VAPID key
+      vapidKey: "BLuTOOXpZMy0DUO3rsZ7vDD5wVLZGTtbMJMtplYI7_snBGBw9kaP80tCCq41EeHRWp92BP7BkihXEBf6kgG6nDw"
     });
     
     if (currentToken) {
