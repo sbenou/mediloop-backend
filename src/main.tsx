@@ -41,6 +41,10 @@ const queryClient = new QueryClient({
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <RecoilRoot>
+      {/* 
+        Important: BrowserRouter should only be declared once in the application.
+        It wraps the entire app here and should not be included in App.tsx or other components.
+      */}
       <BrowserRouter>
         <QueryClientProvider client={queryClient}>
           <ThemeProvider defaultTheme="light" storageKey="mediloop-theme">

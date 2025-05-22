@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from 'react'
 import './App.css'
-import { BrowserRouter } from 'react-router-dom';
 import AppRoutes from './AppRoutes';
 import { RecoilRoot } from 'recoil';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -26,10 +25,8 @@ function App() {
         <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
           <AuthProvider>
             <TenantProvider>
-              <BrowserRouter>
-                <AppRoutes />
-                <Toaster />
-              </BrowserRouter>
+              <AppRoutes />
+              <Toaster />
             </TenantProvider>
           </AuthProvider>
         </ThemeProvider>
