@@ -4,15 +4,15 @@ import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/supabase';
 
-// Firebase configuration - replace with your actual Firebase config
+// Firebase configuration - replace with your actual Firebase config values
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "placeholder-api-key",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "placeholder-auth-domain",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "placeholder-project-id",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "placeholder-storage-bucket",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "placeholder-messaging-sender-id",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "placeholder-app-id",
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "placeholder-measurement-id"
+  apiKey: "YOUR_API_KEY",              // Replace with your actual API key
+  authDomain: "YOUR_AUTH_DOMAIN",      // Replace with your actual auth domain
+  projectId: "YOUR_PROJECT_ID",        // Replace with your actual project ID
+  storageBucket: "YOUR_STORAGE_BUCKET",// Replace with your actual storage bucket
+  messagingSenderId: "YOUR_SENDER_ID", // Replace with your actual sender ID
+  appId: "YOUR_APP_ID",                // Replace with your actual app ID
+  measurementId: "YOUR_MEASUREMENT_ID" // Replace with your actual measurement ID
 };
 
 // Initialize Firebase only in browser environment
@@ -49,7 +49,7 @@ export const requestNotificationPermission = async () => {
     
     // Get the token
     const currentToken = await getToken(messaging, {
-      vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY || "placeholder-vapid-key"
+      vapidKey: "YOUR_VAPID_KEY"  // Replace with your actual VAPID key
     });
     
     if (currentToken) {
