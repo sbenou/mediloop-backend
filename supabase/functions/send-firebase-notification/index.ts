@@ -58,7 +58,7 @@ serve(async (req) => {
 
     // Send to Firebase
     const response = await fetch(
-      "https://fcm.googleapis.com/v1/projects/YOUR_FIREBASE_PROJECT_ID/messages:send",
+      "https://fcm.googleapis.com/v1/projects/REPLACE_WITH_YOUR_PROJECT_ID/messages:send",
       {
         method: "POST",
         headers: {

@@ -6,13 +6,13 @@ import { supabase } from '@/lib/supabase';
 
 // Firebase configuration - replace with your own Firebase config values
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",              // Replace with your actual API key
-  authDomain: "YOUR_AUTH_DOMAIN",      // Replace with your actual auth domain
-  projectId: "YOUR_PROJECT_ID",        // Replace with your actual project ID
-  storageBucket: "YOUR_STORAGE_BUCKET",// Replace with your actual storage bucket
-  messagingSenderId: "YOUR_SENDER_ID", // Replace with your actual sender ID
-  appId: "YOUR_APP_ID",                // Replace with your actual app ID
-  measurementId: "YOUR_MEASUREMENT_ID" // Replace with your actual measurement ID
+  apiKey: "REPLACE_WITH_YOUR_API_KEY",              // Replace with your actual API key
+  authDomain: "REPLACE_WITH_YOUR_AUTH_DOMAIN",      // Replace with your actual auth domain
+  projectId: "REPLACE_WITH_YOUR_PROJECT_ID",        // Replace with your actual project ID
+  storageBucket: "REPLACE_WITH_YOUR_STORAGE_BUCKET",// Replace with your actual storage bucket
+  messagingSenderId: "REPLACE_WITH_YOUR_SENDER_ID", // Replace with your actual sender ID
+  appId: "REPLACE_WITH_YOUR_APP_ID",                // Replace with your actual app ID
+  measurementId: "REPLACE_WITH_YOUR_MEASUREMENT_ID" // Replace with your actual measurement ID
 };
 
 // Initialize Firebase only in browser environment
@@ -49,7 +49,7 @@ export const requestNotificationPermission = async () => {
     
     // Get the token
     const currentToken = await getToken(messaging, {
-      vapidKey: "YOUR_VAPID_KEY"  // Replace with your actual VAPID key
+      vapidKey: "REPLACE_WITH_YOUR_VAPID_KEY"  // Replace with your actual VAPID key
     });
     
     if (currentToken) {
