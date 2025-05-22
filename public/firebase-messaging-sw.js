@@ -1,18 +1,17 @@
-
 // Firebase Cloud Messaging Service Worker
 
 importScripts('https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.9.0/firebase-messaging-compat.js');
 
-// Firebase configuration
+// Firebase configuration - replace with your own Firebase config values
 firebase.initializeApp({
-  apiKey: "AIzaSyB33prcKnth3KakMlCEKlQETT-LzPr5yZM",
-  authDomain: "mediloop-test-4f9ea.firebaseapp.com",
-  projectId: "mediloop-test-4f9ea",
-  storageBucket: "mediloop-test-4f9ea.appspot.com",
-  messagingSenderId: "1056108254776",
-  appId: "1:1056108254776:web:0ff671d7c82010895b35c1",
-  measurementId: "G-XKD3B00TQ0"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID",
+  measurementId: "YOUR_MEASUREMENT_ID"
 });
 
 const messaging = firebase.messaging();
