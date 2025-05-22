@@ -93,3 +93,66 @@ export const sendPrescriptionFirebaseNotification = async (
     }
   });
 };
+
+// Helper to send teleconsultation notifications
+export const sendTeleconsultationFirebaseNotification = async (
+  recipientId: string, 
+  doctorName: string,
+  appointmentTime: string
+) => {
+  return sendFirebaseNotification({
+    userId: recipientId,
+    title: 'New Teleconsultation',
+    body: `Dr. ${doctorName} has scheduled a teleconsultation for ${appointmentTime}.`,
+    type: 'new_teleconsultation',
+    data: {
+      doctorName,
+      appointmentTime,
+      action: 'VIEW_TELECONSULTATIONS'
+    }
+  });
+};
+
+// Helper to send order status notifications 
+export const sendOrderStatusFirebaseNotification = async (
+  recipientId: string,
+  orderId: string,
+  status: string
+) => {
+  let title: string;
+  let body: string;
+  
+  switch (status) {
+    case 'processing':
+      title = 'Order Processing';
+      body = `Your order #${orderId} is now being processed.`;
+      break;
+    case 'shipped':
+      title = 'Order Shipped';
+      body = `Your order #${orderId} has been shipped.`;
+      break;
+    case 'delivered':
+      title = 'Order Delivered';
+      body = `Your order #${orderId} has been delivered.`;
+      break;
+    case 'cancelled':
+      title = 'Order Cancelled';
+      body = `Your order #${orderId} has been cancelled.`;
+      break;
+    default:
+      title = 'Order Update';
+      body = `There is an update on your order #${orderId}.`;
+  }
+  
+  return sendFirebaseNotification({
+    userId: recipientId,
+    title,
+    body,
+    type: 'delivery_' + status,
+    data: {
+      orderId,
+      status,
+      action: 'VIEW_ORDERS'
+    }
+  });
+};

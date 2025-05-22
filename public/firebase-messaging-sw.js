@@ -24,7 +24,7 @@ messaging.onBackgroundMessage((payload) => {
   const notificationOptions = {
     body: payload.notification?.body || '',
     icon: '/favicon.ico',
-    data: payload.data
+    data: payload.data || {}
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
@@ -34,8 +34,27 @@ self.addEventListener('notificationclick', event => {
   const clickedNotification = event.notification;
   clickedNotification.close();
   
-  // Handle notification click - navigate to appropriate page
-  const urlToOpen = new URL('/notifications', self.location.origin).href;
+  // Get any custom data from the notification
+  const data = clickedNotification.data || {};
+  
+  // Determine the URL to open based on notification data or default to notifications page
+  let urlToOpen = new URL('/notifications', self.location.origin).href;
+  
+  // If notification has specific page to navigate to
+  if (data && data.action) {
+    switch (data.action) {
+      case 'VIEW_PRESCRIPTIONS':
+        urlToOpen = new URL('/dashboard?view=prescriptions', self.location.origin).href;
+        break;
+      case 'VIEW_CONNECTIONS':
+        urlToOpen = new URL('/doctor-connections', self.location.origin).href;
+        break;
+      case 'VIEW_TELECONSULTATIONS':
+        urlToOpen = new URL('/teleconsultations', self.location.origin).href;
+        break;
+      // Add more actions as needed
+    }
+  }
   
   event.waitUntil(
     clients.matchAll({
