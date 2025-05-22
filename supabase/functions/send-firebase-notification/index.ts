@@ -1,5 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createRemoteJWTCredential } from "https://cdn.jsdelivr.net/npm/firebase-admin@11.10.1/lib/esm/app/credential.js";
 
 interface FirebaseMessage {
   token: string;
@@ -10,8 +11,10 @@ interface FirebaseMessage {
   data?: Record<string, string>;
 }
 
-const API_KEY = Deno.env.get("FIREBASE_SERVER_KEY");
 const PROJECT_ID = "mediloop-6b3d3";
+
+// Get credentials from environment variables
+const SERVICE_ACCOUNT = JSON.parse(Deno.env.get("FIREBASE_SERVICE_ACCOUNT") || "{}");
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -43,11 +46,20 @@ serve(async (req) => {
       });
     }
 
-    if (!API_KEY) {
-      return new Response(JSON.stringify({ error: "Firebase server key not configured" }), {
+    // Check if service account is configured
+    if (!SERVICE_ACCOUNT.private_key) {
+      return new Response(JSON.stringify({ error: "Firebase service account not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Get an access token using the service account
+    const credential = createRemoteJWTCredential(SERVICE_ACCOUNT);
+    const accessToken = await credential.getAccessToken();
+
+    if (!accessToken) {
+      throw new Error("Failed to get access token from Firebase credentials");
     }
 
     // Create the FCM message
@@ -76,7 +88,7 @@ serve(async (req) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${API_KEY}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify(message),
       },
