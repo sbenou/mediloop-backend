@@ -1,7 +1,6 @@
 
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import UnifiedHeader from '@/components/layout/UnifiedHeader';
 import Footer from '@/components/layout/Footer';
 import { HeroSection } from '@/components/home/HeroSection';
@@ -25,9 +24,6 @@ const Home = () => {
     console.log("Home page mounted");
     console.log("Current URL:", window.location.href);
   }, []);
-
-  // Log when components are about to render
-  console.log("Home page rendering components");
 
   return (
     <CurrencyProvider>
