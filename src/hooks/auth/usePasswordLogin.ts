@@ -35,9 +35,8 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
     const loginTimeoutId = setTimeout(() => {
       console.error('[usePasswordLogin] Login process timed out after 15 seconds');
       setIsLoading(false);
-      toast({
-        title: "Login timed out",
-        description: "The login process took too long. Please try again.",
+      toast("Login timed out", {
+        description: "The login process took too long. Please try again."
       });
     }, 15000);
 
@@ -54,9 +53,8 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
       if (authError) {
         console.error('[usePasswordLogin] Auth error:', authError);
         setError(authError);
-        toast({
-          title: "Login failed",
-          description: authError.message || "Invalid email or password",
+        toast("Login failed", {
+          description: authError.message || "Invalid email or password"
         });
         setIsLoading(false);
         return;
@@ -64,18 +62,16 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
 
       if (!data?.session) {
         console.error('[usePasswordLogin] No session data returned');
-        toast({
-          title: "Login failed",
-          description: "Unable to establish a session. Please try again.",
+        toast("Login failed", {
+          description: "Unable to establish a session. Please try again."
         });
         setIsLoading(false);
         return;
       }
         
       // 2. Success notification
-      toast({
-        title: "Login successful",
-        description: "You've been logged in successfully",
+      toast("Login successful", {
+        description: "You've been logged in successfully"
       });
 
       // 3. Get user role from metadata or default to patient
@@ -118,13 +114,12 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
       clearTimeout(loginTimeoutId);
       console.error('[usePasswordLogin] Unexpected error during login:', err);
       setError(err);
-      toast({
-        title: "Login failed",
-        description: err.message || "An unexpected error occurred",
+      toast("Login failed", {
+        description: err.message || "An unexpected error occurred"
       });
       setIsLoading(false);
     }
-  }, [email, setAuth, toast, onSuccess, navigate]);
+  }, [email, setAuth, navigate, onSuccess]);
 
   return { isLoading, error, handleLogin };
 };
