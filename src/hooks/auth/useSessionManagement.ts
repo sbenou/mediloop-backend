@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { authState } from '@/store/auth/atoms';
 import { Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
+import { UserProfile } from '@/types/user';
 
 export const useSessionManagement = () => {
   const setAuth = useSetRecoilState(authState);
@@ -53,7 +54,7 @@ export const useSessionManagement = () => {
       }
       
       // Set minimal profile data if none exists
-      const profile = profileData || {
+      const profile: Partial<UserProfile> = profileData || {
         id: session.user.id,
         role: session.user.user_metadata?.role || 'patient',
         email: session.user.email,
@@ -64,7 +65,7 @@ export const useSessionManagement = () => {
       setAuth(prev => ({
         ...prev,
         user: session.user,
-        profile,
+        profile: profile as UserProfile,
         isLoading: false,
         permissions: prev.permissions, // Keep existing permissions
       }));
@@ -82,7 +83,7 @@ export const useSessionManagement = () => {
             role: session.user.user_metadata?.role || 'patient',
             email: session.user.email,
             full_name: session.user.user_metadata?.full_name || null,
-          },
+          } as UserProfile,
           permissions: [],
           isLoading: false,
         });

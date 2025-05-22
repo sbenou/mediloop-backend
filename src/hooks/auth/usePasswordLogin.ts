@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { useSetRecoilState } from 'recoil';
 import { authState } from '@/store/auth/atoms';
 import { getDashboardRouteByRole } from '@/utils/auth/getDashboardRouteByRole';
+import { UserProfile } from '@/types/user';
 
 interface UsePasswordLoginResult {
   isLoading: boolean;
@@ -22,7 +23,6 @@ interface UsePasswordLoginProps {
 export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): UsePasswordLoginResult => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<AuthError | null>(null);
-  const { toast } = useToast();
   const setAuth = useSetRecoilState(authState);
   const navigate = useNavigate();
 
@@ -36,7 +36,6 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
       console.error('[usePasswordLogin] Login process timed out after 15 seconds');
       setIsLoading(false);
       toast({
-        variant: "destructive",
         title: "Login timed out",
         description: "The login process took too long. Please try again.",
       });
@@ -56,7 +55,6 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         console.error('[usePasswordLogin] Auth error:', authError);
         setError(authError);
         toast({
-          variant: "destructive",
           title: "Login failed",
           description: authError.message || "Invalid email or password",
         });
@@ -67,7 +65,6 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
       if (!data?.session) {
         console.error('[usePasswordLogin] No session data returned');
         toast({
-          variant: "destructive",
           title: "Login failed",
           description: "Unable to establish a session. Please try again.",
         });
@@ -85,7 +82,7 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
       const userRole = data.user.user_metadata?.role || 'patient';
       
       // 4. Create minimal profile with defaults (actual profile will be fetched by AuthProvider)
-      const minimalProfile = {
+      const minimalProfile: Partial<UserProfile> = {
         id: data.user.id,
         role: userRole,
         email: data.user.email,
@@ -95,7 +92,7 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
       // 5. Update auth state with minimal profile
       setAuth({
         user: data.user,
-        profile: minimalProfile,
+        profile: minimalProfile as UserProfile,
         permissions: [],
         isLoading: false,
       });
@@ -122,7 +119,6 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
       console.error('[usePasswordLogin] Unexpected error during login:', err);
       setError(err);
       toast({
-        variant: "destructive",
         title: "Login failed",
         description: err.message || "An unexpected error occurred",
       });
