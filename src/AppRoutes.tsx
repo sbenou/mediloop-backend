@@ -42,10 +42,11 @@ const EditProfile = () => <PlaceholderPage title="Edit Profile" />;
 const Appointments = () => <PlaceholderPage title="Appointments" />;
 
 export default function AppRoutes() {
-  console.log("AppRoutes component rendered");
+  console.log("AppRoutes component rendered - checking routes");
   
   return (
-    <TestDataLoader>
+    <div className="app-root">
+      {console.log("AppRoutes rendering routes")}
       <Routes>
         {/* Public routes that don't require authentication */}
         <Route path="/" element={<Home />} />
@@ -151,6 +152,6 @@ export default function AppRoutes() {
           </ProtectedRoute>
         } />
       </Routes>
-    </TestDataLoader>
+    </div>
   );
 }

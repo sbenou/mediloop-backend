@@ -21,38 +21,47 @@ const Home = () => {
   
   // Add detailed logging to help debug
   useEffect(() => {
-    console.log("Home page mounted");
+    console.log("Home page mounted - debugging blank page issue");
     console.log("Current URL:", window.location.href);
+    console.log("Starting to render Home sections");
     
-    // Make sure we can see components rendering
-    console.log("Rendering Home component with all sections");
-  }, []);
+    // Force a re-render after a short delay to see if that helps
+    const timer = setTimeout(() => {
+      console.log("Forcing re-render of Home component");
+      // This will trigger a re-render
+      navigate('/', { replace: true });
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [navigate]);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <CurrencyProvider>
-        <CartProvider>
-          <UnifiedHeader />
-          <CountrySelector />
-          <main className="flex-1">
-            <HeroSection />
-            <div className="container mx-auto px-4">
-              <FeaturesGrid />
-              <GetStartedSteps />
-            </div>
-            <StatsSection />
-            <div className="container mx-auto px-4">
-              <TestimonialsSection />
-            </div>
-            <PartnerSection />
-            <DeliveryPersonSection />
-          </main>
-          <Footer />
-          <ScrollToTopButton />
-          <CookieConsent />
-        </CartProvider>
-      </CurrencyProvider>
-    </div>
+    <>
+      {console.log("Rendering Home JSX")}
+      <div className="min-h-screen flex flex-col bg-white">
+        <CurrencyProvider>
+          <CartProvider>
+            <UnifiedHeader />
+            <main className="flex-1">
+              <HeroSection />
+              <div className="container mx-auto px-4">
+                <FeaturesGrid />
+                <GetStartedSteps />
+              </div>
+              <StatsSection />
+              <div className="container mx-auto px-4">
+                <TestimonialsSection />
+              </div>
+              <PartnerSection />
+              <DeliveryPersonSection />
+            </main>
+            <Footer />
+            <ScrollToTopButton />
+            <CookieConsent />
+          </CartProvider>
+        </CurrencyProvider>
+      </div>
+    </>
   );
 };
 
