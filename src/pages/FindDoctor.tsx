@@ -1,28 +1,31 @@
 
 import React, { useState, useEffect } from 'react';
-import { useRecoilValue } from 'recoil';
-import { userLocationState } from '@/store/location/atoms';
+import { useRecoilValue, useRecoilState } from 'recoil';
+import { userLocationState, isUsingLocationState } from '@/store/location/atoms';
 import UnifiedHeader from '@/components/layout/UnifiedHeader';
 import Footer from '@/components/layout/Footer';
 import { toast } from '@/components/ui/use-toast';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, Search } from "lucide-react";
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useDoctorFinder } from '@/hooks/useDoctorFinder';
 import { DoctorFinderMap } from '@/components/doctor/finder/DoctorFinderMap';
-import { DoctorFinderList } from '@/components/doctor/finder/DoctorFinderList';
 import { DoctorSearch } from '@/components/doctor/finder/DoctorSearch';
 import type { Doctor } from '@/lib/types/overpass.types';
+import { useQuery } from '@tanstack/react-query';
 
 const FindDoctor = () => {
   console.log('FindDoctor component rendering');
-  const userLocation = useRecoilValue(userLocationState);
-  console.log('User location from state:', userLocation);
-  const { isAuthenticated } = useAuth();
+  const [userLocation, setUserLocation] = useRecoilState(userLocationState);
+  const [isUsingLocation, setIsUsingLocation] = useRecoilState(isUsingLocationState);
   
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
-  const [leafletFilteredDoctors, setLeafletFilteredDoctors] = useState<Doctor[]>([]);
+  console.log('User location from state:', userLocation);
+  const { isAuthenticated, profile } = useAuth();
+  const [showLocation, setShowLocation] = useState(false);
+  const [selectedDoctorId, setSelectedDoctorId] = useState<string | null>(null);
   
   // Use our custom hook for doctor finding logic
   const { 
@@ -41,14 +44,6 @@ const FindDoctor = () => {
   console.log('Loading state:', isLoading);
   console.log('Error state:', error);
 
-  // Initialize filtered doctors with all doctors
-  useEffect(() => {
-    if (filteredDoctors && filteredDoctors.length > 0) {
-      console.log('Setting filtered doctors:', filteredDoctors.length);
-      setLeafletFilteredDoctors(filteredDoctors);
-    }
-  }, [filteredDoctors]);
-
   // Show error if API fails
   useEffect(() => {
     if (error) {
@@ -60,12 +55,6 @@ const FindDoctor = () => {
       });
     }
   }, [error]);
-
-  // Handle doctors filtered by map shape
-  const handleDoctorsInShape = (shapeFilteredDoctors: Doctor[]) => {
-    console.log("Doctors in shape:", shapeFilteredDoctors.length);
-    setLeafletFilteredDoctors(shapeFilteredDoctors);
-  };
 
   const handleConnectDoctor = (doctorId: string, source?: string) => {
     if (!isAuthenticated) {
@@ -90,21 +79,28 @@ const FindDoctor = () => {
     });
   };
 
-  console.log('Rendering FindDoctor with view mode:', viewMode);
+  const toggleLocationDisplay = (checked: boolean) => {
+    setShowLocation(checked);
+    console.log("Location display toggled:", checked);
+  };
+
+  // Fetch user's default doctor (could be implemented later)
+  const { data: defaultDoctor } = useQuery({
+    queryKey: ['defaultDoctor', profile?.id],
+    enabled: !!profile?.id,
+    queryFn: async () => {
+      // This could fetch the user's default doctor in the future
+      return null;
+    },
+  });
+
+  const currentCoordinates = userLocation || { lat: 49.8153, lon: 6.1296 };
 
   return (
     <div className="min-h-screen flex flex-col">
       <UnifiedHeader />
       
-      <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Find a Doctor Near You</h1>
-          <p className="text-muted-foreground">
-            Browse doctor locations and find one that meets your needs
-          </p>
-        </div>
-        
-        {/* Search and filter controls */}
+      <main className="flex-1 w-full">
         <DoctorSearch 
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
@@ -113,44 +109,91 @@ const FindDoctor = () => {
           userLocation={userLocation}
         />
         
-        {/* View mode tabs */}
-        <Tabs defaultValue="list" className="mt-6" onValueChange={(value) => {
-          console.log('Changing view mode to:', value);
-          setViewMode(value as 'list' | 'map');
-        }}>
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="list" className="flex items-center gap-2">
-              <Search className="h-4 w-4" />
-              List View
-            </TabsTrigger>
-            <TabsTrigger value="map" className="flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
-              Map View
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="list" className="mt-4">
-            <DoctorFinderList 
-              doctors={filteredDoctors}
-              isLoading={isLoading}
-              userLocation={userLocation}
-              onConnect={handleConnectDoctor}
-            />
-          </TabsContent>
-          
-          <TabsContent value="map" className="mt-4">
-            <Card className="p-1 shadow-sm">
-              <CardContent className="p-0 h-[600px] relative">
-                <DoctorFinderMap 
-                  doctors={filteredDoctors}
-                  userLocation={userLocation}
-                  useLocationFilter={useLocationFilter}
-                  onDoctorSelect={(doctorId, source) => handleConnectDoctor(doctorId, source)}
-                />
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        <div className="container mx-auto py-8 px-4">
+          <div className="w-full max-w-6xl mx-auto">
+            <div className="flex items-center space-x-2 mb-6">
+              <Switch
+                id="location-toggle"
+                checked={showLocation}
+                onCheckedChange={toggleLocationDisplay}
+              />
+              <Label htmlFor="location-toggle">Show my location</Label>
+            </div>
+            
+            {isLoading ? (
+              <div className="flex justify-center items-center h-64">
+                <p className="text-gray-500">Loading doctors...</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-6 h-[calc(100vh-200px)]">
+                {/* Doctor List */}
+                <div className="space-y-4 overflow-y-auto pr-2">
+                  {filteredDoctors.length === 0 ? (
+                    <p className="text-center py-8">No doctors found</p>
+                  ) : (
+                    filteredDoctors.map((doctor) => (
+                      <Card key={doctor.id} className="overflow-hidden">
+                        <CardContent className="p-4">
+                          <div className="space-y-2">
+                            <h3 className="font-semibold text-lg">{doctor.full_name}</h3>
+                            {doctor.license_number && (
+                              <p className="font-medium">License: {doctor.license_number}</p>
+                            )}
+                            
+                            {(doctor.address || doctor.city) && (
+                              <p className="text-sm text-gray-500">
+                                📍 {doctor.address || doctor.city}
+                              </p>
+                            )}
+                            
+                            {doctor.phone && (
+                              <p className="text-sm">📞 {doctor.phone}</p>
+                            )}
+                            
+                            {doctor.email && (
+                              <p className="text-sm">✉️ {doctor.email}</p>
+                            )}
+                            
+                            {doctor.hours && (
+                              <p className="text-sm">⏰ {doctor.hours}</p>
+                            )}
+                            
+                            {doctor.distance !== undefined && (
+                              <p className="text-sm font-medium">
+                                📍 {typeof doctor.distance === 'number' ? `${doctor.distance.toFixed(1)} km` : doctor.distance}
+                              </p>
+                            )}
+                            
+                            <Button
+                              onClick={() => handleConnectDoctor(doctor.id, doctor.source)}
+                              className="w-full mt-4"
+                            >
+                              Connect
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
+                </div>
+                
+                {/* Map */}
+                <div className="h-full">
+                  <Card className="p-1 shadow-sm h-full">
+                    <CardContent className="p-0 h-full relative">
+                      <DoctorFinderMap
+                        doctors={filteredDoctors}
+                        userLocation={showLocation ? currentCoordinates : null}
+                        useLocationFilter={useLocationFilter}
+                        onDoctorSelect={(doctorId, source) => handleConnectDoctor(doctorId, source)}
+                      />
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </main>
       
       <Footer />
