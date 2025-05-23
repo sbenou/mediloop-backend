@@ -40,6 +40,3 @@ export default defineConfig(({ mode }) => ({
     force: true
   }
 }));
-
-// Delete the duplicate vite.config.ts in src directory
-<lov-delete file_path="src/vite.config.ts" />
