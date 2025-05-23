@@ -5,9 +5,6 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import { Button } from '@/components/ui/button';
 import { UserPlus } from 'lucide-react';
-import { toast } from '@/components/ui/use-toast';
-import { useRecoilValue } from 'recoil';
-import { userLocationState } from '@/store/location/atoms';
 import L from 'leaflet';
 import type { Doctor } from '@/lib/types/overpass.types';
 
@@ -60,7 +57,6 @@ export const DoctorFinderMap = ({
   onDoctorSelect
 }: DoctorFinderMapProps) => {
   const mapRef = useRef<L.Map | null>(null);
-  const recoilUserLocation = useRecoilValue(userLocationState);
   
   // Default to Luxembourg coordinates
   const defaultCenter = { lat: 49.8153, lng: 6.1296 };
@@ -68,19 +64,11 @@ export const DoctorFinderMap = ({
   // Determine center based on available data
   const mapCenter = userLocation
     ? { lat: userLocation.lat, lng: userLocation.lon }
-    : recoilUserLocation
-    ? { lat: recoilUserLocation.lat, lng: recoilUserLocation.lon }
     : defaultCenter;
 
   const setMap = (map: L.Map) => {
     mapRef.current = map;
   };
-
-  // Log map initialization
-  useEffect(() => {
-    console.log('Doctor Map initializing with center:', mapCenter);
-    console.log('Doctor count:', doctors?.length || 0);
-  }, []);
 
   // Update map view when user toggles location
   useEffect(() => {
@@ -117,7 +105,7 @@ export const DoctorFinderMap = ({
       }
       
       // Fit bounds if we have valid markers
-      if (hasValidMarkers) {
+      if (hasValidMarkers && mapRef.current) {
         mapRef.current.fitBounds(bounds, { 
           padding: [50, 50],
           maxZoom: 14
@@ -131,7 +119,7 @@ export const DoctorFinderMap = ({
   // Map events component
   function MapEvents() {
     useMapEvents({
-      load: (e) => {
+      load: () => {
         console.log('Map loaded');
       },
     });
@@ -143,8 +131,6 @@ export const DoctorFinderMap = ({
   const doctorsWithCoordinates = doctors?.filter(
     doctor => doctor.coordinates?.lat && doctor.coordinates?.lon
   ) || [];
-  
-  console.log('Doctors with coordinates:', doctorsWithCoordinates.length);
 
   return (
     <MapContainer

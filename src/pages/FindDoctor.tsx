@@ -9,7 +9,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useDoctorFinder } from '@/hooks/useDoctorFinder';
 import { DoctorFinderMap } from '@/components/doctor/finder/DoctorFinderMap';
@@ -18,14 +17,11 @@ import type { Doctor } from '@/lib/types/overpass.types';
 import { useQuery } from '@tanstack/react-query';
 
 const FindDoctor = () => {
-  console.log('FindDoctor component rendering');
   const [userLocation, setUserLocation] = useRecoilState(userLocationState);
   const [isUsingLocation, setIsUsingLocation] = useRecoilState(isUsingLocationState);
   
-  console.log('User location from state:', userLocation);
   const { isAuthenticated, profile } = useAuth();
   const [showLocation, setShowLocation] = useState(false);
-  const [selectedDoctorId, setSelectedDoctorId] = useState<string | null>(null);
   
   // Use our custom hook for doctor finding logic
   const { 
@@ -38,11 +34,6 @@ const FindDoctor = () => {
     useLocationFilter,
     setUseLocationFilter
   } = useDoctorFinder(userLocation);
-
-  console.log('Doctors loaded:', doctors?.length || 0);
-  console.log('Filtered doctors:', filteredDoctors?.length || 0);
-  console.log('Loading state:', isLoading);
-  console.log('Error state:', error);
 
   // Show error if API fails
   useEffect(() => {
@@ -81,7 +72,6 @@ const FindDoctor = () => {
 
   const toggleLocationDisplay = (checked: boolean) => {
     setShowLocation(checked);
-    console.log("Location display toggled:", checked);
   };
 
   // Fetch user's default doctor (could be implemented later)
