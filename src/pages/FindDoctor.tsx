@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRecoilState, useRecoilValue } from 'recoil';
@@ -15,8 +14,6 @@ import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { LocationToggle } from "@/components/shared/LocationToggle";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { RefreshCcw } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -45,7 +42,6 @@ const FindDoctor = () => {
   
   const [searchRadius, setSearchRadius] = useState(2000);
   const [initialLocationSet, setInitialLocationSet] = useState(false);
-  const [showLocation, setShowLocation] = useState(true); // Default to true to use location
 
   const { coordinates, handleCitySearch, isSearching } = useLocationSearch();
 
@@ -90,7 +86,7 @@ const FindDoctor = () => {
         };
 
   const { doctors, isLoading: isDoctorsLoading } = useDoctorSearch(
-    showLocation ? searchCoordinates : null, 
+    isUsingLocation ? searchCoordinates : null, 
     searchRadius
   );
   
@@ -109,10 +105,10 @@ const FindDoctor = () => {
         // Use the default address to search for doctors
         if (defaultAddress.city) {
           handleCitySearch(defaultAddress.city);
+          setIsUsingLocation(true);
         }
         
         setInitialLocationSet(true);
-        setShowLocation(true); // Enable location search by default
         return;
       }
       
@@ -132,7 +128,6 @@ const FindDoctor = () => {
       }
       
       setInitialLocationSet(true);
-      setShowLocation(true); // Enable location search by default
     } catch (error) {
       console.error("Error initializing location:", error);
       // Fallback to default location
@@ -161,17 +156,17 @@ const FindDoctor = () => {
       searchRadius < 10000 &&
       !isSearching && 
       !isDoctorsLoading &&
-      showLocation // Only auto-expand when in location mode
+      isUsingLocation // Only auto-expand when in location mode
     ) {
       const newRadius = Math.min(searchRadius + 2000, 10000);
       console.log(`Increasing radius from ${searchRadius} to ${newRadius}`);
       setSearchRadius(newRadius);
     }
-  }, [doctors, searchRadius, isDoctorsLoading, isSearching, showLocation]);
+  }, [doctors, searchRadius, isDoctorsLoading, isSearching, isUsingLocation]);
 
   // Handle location toggle
-  const toggleLocationDisplay = useCallback((checked: boolean) => {
-    setShowLocation(checked);
+  const handleLocationToggle = useCallback((checked: boolean) => {
+    setIsUsingLocation(checked);
     if (checked) {
       if ("geolocation" in navigator) {
         navigator.geolocation.getCurrentPosition(
@@ -207,16 +202,6 @@ const FindDoctor = () => {
     }
   }, [setIsUsingLocation, setUserLocation]);
 
-  // Function to manually retry search with a wider radius
-  const handleExpandSearch = () => {
-    const newRadius = Math.min(searchRadius + 2000, 20000);
-    setSearchRadius(newRadius);
-    toast({
-      title: "Expanding Search",
-      description: `Searching with a larger radius of ${newRadius/1000}km`,
-    });
-  };
-
   console.log(`Rendering doctors in ${selectedCountry || 'unknown country'}, found ${doctors?.length || 0} doctors`);
 
   return (
@@ -228,36 +213,15 @@ const FindDoctor = () => {
             <SearchHeader onSearch={handleCitySearch} title="Find a Doctor Near You" />
             
             <div className="flex flex-col md:flex-row gap-4 items-start justify-between mb-4">
-              <div className="flex items-center space-x-2 mb-6">
-                <Switch
-                  id="location-toggle"
-                  checked={showLocation}
-                  onCheckedChange={toggleLocationDisplay}
-                  disabled={!isAuthenticated}
-                />
-                <Label htmlFor="location-toggle">
-                  {isAuthenticated 
-                    ? "Search within 2km of my location" 
-                    : "Login to search near your location"}
-                </Label>
-              </div>
+              <LocationToggle
+                showDefaultLocation={isUsingLocation}
+                onLocationToggle={handleLocationToggle}
+              />
               
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">
                   {selectedCountry ? `Showing doctors in ${selectedCountry}` : 'Select a country on the home page'}
                 </span>
-                
-                {showLocation && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleExpandSearch}
-                    disabled={isSearching || isDoctorsLoading || searchRadius >= 20000}
-                  >
-                    <RefreshCcw className="h-4 w-4 mr-2" />
-                    Expand Search
-                  </Button>
-                )}
               </div>
             </div>
             
@@ -298,7 +262,7 @@ const FindDoctor = () => {
                       </Card>
                     )) : (
                       <p className="text-center py-8">
-                        {showLocation
+                        {isUsingLocation
                           ? "No doctors found nearby. Try expanding your search radius."
                           : `No doctors found in ${selectedCountry || 'selected country'}.`}
                       </p>
@@ -308,8 +272,8 @@ const FindDoctor = () => {
                   <div className="h-[calc(100vh-220px)]">
                     <DoctorMap 
                       doctors={doctors || []} 
-                      userCoordinates={showLocation ? searchCoordinates : null}
-                      showUserLocation={showLocation}
+                      userCoordinates={isUsingLocation ? searchCoordinates : null}
+                      showUserLocation={isUsingLocation}
                       onDoctorSelect={(doctorId) => {
                         const doctor = doctors?.find(d => d.id === doctorId);
                         if (doctor) {
