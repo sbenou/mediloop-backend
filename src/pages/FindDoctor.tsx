@@ -267,6 +267,7 @@ const FindDoctor = () => {
 
   // For debugging
   console.log(`Rendering doctors in ${selectedCountry || 'unknown country'}, found ${doctors?.length || 0} doctors, using location: ${isUsingLocation}`);
+  console.log('Current coordinates for search:', currentCoordinates);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
