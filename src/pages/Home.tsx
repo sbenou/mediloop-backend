@@ -23,6 +23,9 @@ const Home = () => {
   useEffect(() => {
     console.log("Home page mounted");
     console.log("Current URL:", window.location.href);
+    
+    // Make sure we can see components rendering
+    console.log("Rendering Home component with all sections");
   }, []);
 
   return (

@@ -42,6 +42,8 @@ const EditProfile = () => <PlaceholderPage title="Edit Profile" />;
 const Appointments = () => <PlaceholderPage title="Appointments" />;
 
 export default function AppRoutes() {
+  console.log("AppRoutes component rendered");
+  
   return (
     <TestDataLoader>
       <Routes>
