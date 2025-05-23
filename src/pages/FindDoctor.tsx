@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRecoilState, useRecoilValue } from 'recoil';
@@ -44,7 +45,6 @@ const FindDoctor = () => {
   
   const [searchRadius, setSearchRadius] = useState(2000);
   const [initialLocationSet, setInitialLocationSet] = useState(false);
-  const [viewMode, setViewMode] = useState<string>("list");
   const [showLocation, setShowLocation] = useState(true); // Default to true to use location
 
   const { coordinates, handleCitySearch, isSearching } = useLocationSearch();
