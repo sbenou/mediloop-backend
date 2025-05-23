@@ -18,14 +18,28 @@ export const FirebaseNotificationProvider: React.FC<{ children: React.ReactNode 
   
   // Initialize Firebase notifications when user is authenticated
   useEffect(() => {
-    if (isAuthenticated && !fcmToken) {
-      try {
-        initializeNotifications();
-      } catch (error) {
-        console.error('Error initializing notifications:', error);
-        // Continue rendering even if notification initialization fails
+    // Make initialization non-blocking to prevent blank page
+    let isMounted = true;
+    
+    const initialize = async () => {
+      if (isAuthenticated && !fcmToken && isMounted) {
+        try {
+          console.log('Starting notification initialization');
+          await initializeNotifications();
+          console.log('Notification initialization completed');
+        } catch (error) {
+          console.error('Error initializing notifications (non-critical):', error);
+          // Continue rendering even if notification initialization fails
+        }
       }
-    }
+    };
+    
+    // Use setTimeout to ensure this doesn't block initial render
+    setTimeout(initialize, 100);
+    
+    return () => {
+      isMounted = false;
+    };
   }, [isAuthenticated, fcmToken, initializeNotifications]);
   
   return (

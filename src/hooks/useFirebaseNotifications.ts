@@ -16,14 +16,19 @@ export function useFirebaseNotifications() {
       
       // Check if we're in a browser environment with notifications support
       if (typeof window !== 'undefined' && 'Notification' in window) {
-        const token = await requestNotificationPermission();
-        if (token) {
-          setFcmToken(token);
-          setNotificationPermissionGranted(true);
-          
-          // Store token in localStorage for persistence
-          localStorage.setItem('fcm_token', token);
-          console.log('Firebase notification token saved to localStorage');
+        try {
+          const token = await requestNotificationPermission();
+          if (token) {
+            setFcmToken(token);
+            setNotificationPermissionGranted(true);
+            
+            // Store token in localStorage for persistence
+            localStorage.setItem('fcm_token', token);
+            console.log('Firebase notification token saved to localStorage');
+          }
+        } catch (error) {
+          console.error('Error requesting notification permission:', error);
+          // Continue even if there's an error with notifications
         }
       } else {
         console.log('Notifications not supported in this environment');

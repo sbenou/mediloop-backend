@@ -6,13 +6,13 @@ importScripts('https://www.gstatic.com/firebasejs/10.9.0/firebase-messaging-comp
 
 // Firebase configuration - must match the one in src/lib/firebase.ts
 const firebaseConfig = {
-  apiKey: "AIzaSyC74XOrzBelLF1NZDLdNpzlvtDd88FmJHs",
-  authDomain: "mediloop-app.firebaseapp.com",
-  projectId: "mediloop-app",
-  storageBucket: "mediloop-app.appspot.com",
-  messagingSenderId: "670327127852",
-  appId: "1:670327127852:web:b73463765fdcfc086c9c2d",
-  measurementId: "G-8RQNMT898B"
+  apiKey: "AIzaSyC-0lCh14I22Fc2AFfWhyy6qPGU7vmDk5c",
+  authDomain: "mediloop-6b3d3.firebaseapp.com",
+  projectId: "mediloop-6b3d3",
+  storageBucket: "mediloop-6b3d3.firebasestorage.app",
+  messagingSenderId: "1092279546397",
+  appId: "1:1092279546397:web:0a2f285ef6c941d77a8cf4",
+  measurementId: "G-43SY8P58FS"
 };
 
 // Initialize Firebase

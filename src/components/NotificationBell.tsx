@@ -56,13 +56,17 @@ const NotificationBell = () => {
     }
   }, [isAuthenticated, fetchNotifications, setupRealtimeSubscription]);
 
-  // Register FCM token with backend when available
+  // Register FCM token with backend when available - moved to non-blocking
   useEffect(() => {
     if (isAuthenticated && user?.id && fcmToken) {
+      // Don't await this - make it non-blocking
       registerFCMToken(user.id, fcmToken).then(success => {
         if (success) {
           console.log("FCM token registered with backend");
         }
+      }).catch(error => {
+        console.error("Error registering FCM token:", error);
+        // Continue even if token registration fails
       });
     }
   }, [isAuthenticated, user?.id, fcmToken]);
@@ -70,7 +74,13 @@ const NotificationBell = () => {
   // Request notification permission if authenticated and not already initialized
   useEffect(() => {
     if (isAuthenticated && !fcmToken) {
-      initializeNotifications();
+      // Use timeout to make this non-blocking
+      setTimeout(() => {
+        initializeNotifications().catch(err => {
+          console.error("Error initializing notifications (non-critical):", err);
+          // Continue even if initialization fails
+        });
+      }, 1000);
     }
   }, [isAuthenticated, fcmToken, initializeNotifications]);
 

@@ -41,13 +41,13 @@ export const registerFCMToken = async (userId: string, token: string) => {
 export const getOrCreateFCMToken = async () => {
   try {
     if (!messaging) {
-      console.warn('Firebase messaging not initialized');
+      console.warn('Firebase messaging not initialized or not supported in this environment');
       return null;
     }
     
     console.log('Requesting FCM token...');
     const currentToken = await getToken(messaging, {
-      vapidKey: 'BK2yjKiT7Faf6GDkPBWTIWXqZFCZcI1ODQxsJI4_SpU26Md1c-9GVPYBqRWY6up56CrSCPbU18bi4RXdQtGZwxE'
+      vapidKey: 'BLCaFclmh-2Cegf7Qc4XM9ZbL1cf9_73VKJUDsKRpGbAD3gObsp7uLLxNlN6PdEUgz9KpFaI31L3Go6JWdRgXkU'
     });
     
     if (currentToken) {

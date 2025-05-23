@@ -4,24 +4,29 @@ import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyC74XOrzBelLF1NZDLdNpzlvtDd88FmJHs",
-  authDomain: "mediloop-app.firebaseapp.com",
-  projectId: "mediloop-app",
-  storageBucket: "mediloop-app.appspot.com",
-  messagingSenderId: "670327127852",
-  appId: "1:670327127852:web:b73463765fdcfc086c9c2d",
-  measurementId: "G-8RQNMT898B"
+  apiKey: "AIzaSyC-0lCh14I22Fc2AFfWhyy6qPGU7vmDk5c",
+  authDomain: "mediloop-6b3d3.firebaseapp.com",
+  projectId: "mediloop-6b3d3",
+  storageBucket: "mediloop-6b3d3.firebasestorage.app",
+  messagingSenderId: "1092279546397",
+  appId: "1:1092279546397:web:0a2f285ef6c941d77a8cf4",
+  measurementId: "G-43SY8P58FS"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const messaging = getMessaging(app);
+const messaging = typeof window !== 'undefined' && 'Notification' in window ? getMessaging(app) : null;
 
 // Function to request permission and get FCM token
 export const requestNotificationPermission = async () => {
   console.log('Requesting notification permission...');
   
   try {
+    if (!messaging) {
+      console.error('Firebase messaging not initialized or not supported in this environment');
+      return null;
+    }
+    
     // Check if notification permission is already granted
     const permission = await Notification.requestPermission();
     
@@ -30,7 +35,7 @@ export const requestNotificationPermission = async () => {
       
       // Get the FCM token
       const currentToken = await getToken(messaging, {
-        vapidKey: 'BK2yjKiT7Faf6GDkPBWTIWXqZFCZcI1ODQxsJI4_SpU26Md1c-9GVPYBqRWY6up56CrSCPbU18bi4RXdQtGZwxE'
+        vapidKey: 'BLCaFclmh-2Cegf7Qc4XM9ZbL1cf9_73VKJUDsKRpGbAD3gObsp7uLLxNlN6PdEUgz9KpFaI31L3Go6JWdRgXkU'
       });
       
       if (currentToken) {
@@ -51,11 +56,21 @@ export const requestNotificationPermission = async () => {
 };
 
 // Function to handle foreground messages
-export const setupMessageListener = (callback: (payload: any) => void) => {
-  return onMessage(messaging, (payload) => {
-    console.log('Message received in the foreground:', payload);
-    callback(payload);
-  });
+export const setupMessageListener = (callback) => {
+  if (!messaging) {
+    console.warn('Firebase messaging not initialized or not supported in this environment');
+    return () => {};
+  }
+  
+  try {
+    return onMessage(messaging, (payload) => {
+      console.log('Message received in the foreground:', payload);
+      callback(payload);
+    });
+  } catch (error) {
+    console.error('Error setting up message listener:', error);
+    return () => {};
+  }
 };
 
 export { messaging };
