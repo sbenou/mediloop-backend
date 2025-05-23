@@ -1,4 +1,3 @@
-
 import { LocalCache } from './cache';
 import { calculateDistance } from './utils/distance';
 import type { OverpassResult, Pharmacy, Doctor } from './types/overpass.types';
@@ -122,7 +121,7 @@ export const searchPharmacies = async (lat: number, lon: number, radius: number 
   }
 };
 
-// Updated doctor search function to use a broader query with more tag combinations
+// Updated doctor search function to match the pharmacy search style
 export const searchDoctors = async (
   lat: number | null, 
   lon: number | null, 
@@ -147,7 +146,7 @@ export const searchDoctors = async (
   let query;
   
   if (lat && lon) {
-    // Coordinate-based query with radius
+    // Coordinate-based query with radius, similar to pharmacy query but for doctors
     query = `
       [out:json][timeout:60];
       (
@@ -158,19 +157,13 @@ export const searchDoctors = async (
         node["amenity"="hospital"](around:${radius},${lat},${lon});
         node["healthcare"="centre"](around:${radius},${lat},${lon});
         node["healthcare"~"physician|general_practitioner|specialist"](around:${radius},${lat},${lon});
-        way["healthcare"="doctor"](around:${radius},${lat},${lon});
-        way["amenity"="doctors"](around:${radius},${lat},${lon});
-        way["healthcare"="clinic"](around:${radius},${lat},${lon});
-        way["amenity"="clinic"](around:${radius},${lat},${lon});
-        way["amenity"="hospital"](around:${radius},${lat},${lon});
-        way["healthcare"="centre"](around:${radius},${lat},${lon});
       );
       out body;
       >;
       out skel qt;
     `;
   } else {
-    // Country-only query
+    // Country-only query, similar to pharmacy but for doctors
     query = `
       [out:json][timeout:60];
       area["ISO3166-1"="${countryCode}"][admin_level=2]->.country;
@@ -182,12 +175,6 @@ export const searchDoctors = async (
         node["amenity"="hospital"](area.country);
         node["healthcare"="centre"](area.country);
         node["healthcare"~"physician|general_practitioner|specialist"](area.country);
-        way["healthcare"="doctor"](area.country);
-        way["amenity"="doctors"](area.country);
-        way["healthcare"="clinic"](area.country);
-        way["amenity"="clinic"](area.country);
-        way["amenity"="hospital"](area.country);
-        way["healthcare"="centre"](area.country);
       );
       out body;
       >;
@@ -208,7 +195,7 @@ export const searchDoctors = async (
     
     console.log(`Found ${data.elements.length} raw elements from Overpass API`);
     
-    // Process and deduplicate results
+    // Process results to doctor format
     const doctorMap = new Map();
     
     data.elements
@@ -241,10 +228,19 @@ export const searchDoctors = async (
             tags['addr:postcode']
           ].filter(Boolean).join(', ') || 'Address not available';
           
+          // Calculate distance if coordinates are provided
+          let distance = undefined;
+          if (lat !== null && lon !== null) {
+            distance = calculateDistance(lat, lon, elementLat, elementLon);
+            if (typeof distance === 'number') {
+              distance = parseFloat(distance.toFixed(1));
+            }
+          }
+          
           const doctor = {
             id: String(element.id || ''),
-            full_name: tags?.name || tags?.operator || 'Unnamed Medical Facility',
-            name: tags?.name || tags?.operator || 'Unnamed Medical Facility',
+            full_name: tags?.name || tags?.operator || 'Medical Facility',
+            name: tags?.name || tags?.operator || 'Medical Facility',
             address,
             city: tags?.['addr:city'] || '',
             license_number: tags?.['healthcare:speciality'] || 'General Practice',
@@ -255,6 +251,7 @@ export const searchDoctors = async (
               lat: elementLat,
               lon: elementLon
             },
+            distance,
             source: 'overpass' as const
           };
           
@@ -263,7 +260,7 @@ export const searchDoctors = async (
       });
 
     const results = Array.from(doctorMap.values());
-    console.log(`Processed ${results.length} unique doctors/medical facilities with coordinates`);
+    console.log(`Processed ${results.length} unique doctors/medical facilities`);
     
     // Cache results for future use
     LocalCache.set(cacheKey, results, 300); // Cache for 5 minutes

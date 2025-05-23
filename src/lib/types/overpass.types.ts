@@ -48,4 +48,6 @@ export interface Doctor extends Location {
   email?: string;
   phone?: string;
   hours?: string;
+  distance?: number | string;
+  source?: 'database' | 'overpass';
 }
