@@ -1,3 +1,4 @@
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -216,7 +217,10 @@ const UserMenu = memo(() => {
     }
   }, [profile?.id, setAvatarUrl]);
 
+  // Determine whether to show loading skeleton, login button, or user avatar
+  // This is the critical part for the logout issue
   const shouldShowSkeleton = isLoading && localLoading && !hasVisibleSession;
+  const isEffectivelyAuthenticated = isAuthenticated || (!isLoading && !localLoading && hasVisibleSession);
 
   // Memoize the user profile prop to prevent unnecessary re-renders
   const avatarProfile = profile && avatarUrl ? {
@@ -232,17 +236,20 @@ const UserMenu = memo(() => {
     );
   }
 
-  if (!isAuthenticated && !isLoading && !localLoading && !hasVisibleSession) {
+  // If not authenticated and not loading, show login button
+  if (!isEffectivelyAuthenticated) {
     return (
       <button
         onClick={handleNavigateToLogin}
         className="text-primary hover:text-primary/80 transition-colors"
+        data-testid="login-button"
       >
         Connection
       </button>
     );
   }
 
+  // If authenticated, show user menu
   return (
     <DropdownMenu open={menuOpen} onOpenChange={handleMenuToggle}>
       <div className="flex items-center space-x-2">
@@ -250,7 +257,7 @@ const UserMenu = memo(() => {
           userProfile={avatarProfile} 
           canUpload={true} 
           onAvatarClick={handleAvatarClick}
-          isAvailable={isAuthenticated}
+          isAvailable={isEffectivelyAuthenticated}
           showStatus={true}
         />
         <input
