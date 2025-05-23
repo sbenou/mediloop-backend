@@ -12,19 +12,25 @@ export function useFirebaseNotifications() {
   const initializeNotifications = useCallback(async () => {
     setLoading(true);
     try {
-      const token = await requestNotificationPermission();
-      if (token) {
-        setFcmToken(token);
-        setNotificationPermissionGranted(true);
-        
-        // Store token in localStorage for persistence
-        localStorage.setItem('fcm_token', token);
-        
-        // Here you would typically send this token to your backend
-        // to associate it with the current user
+      console.log('Initializing Firebase notifications...');
+      
+      // Check if we're in a browser environment with notifications support
+      if (typeof window !== 'undefined' && 'Notification' in window) {
+        const token = await requestNotificationPermission();
+        if (token) {
+          setFcmToken(token);
+          setNotificationPermissionGranted(true);
+          
+          // Store token in localStorage for persistence
+          localStorage.setItem('fcm_token', token);
+          console.log('Firebase notification token saved to localStorage');
+        }
+      } else {
+        console.log('Notifications not supported in this environment');
       }
     } catch (error) {
       console.error('Error initializing notifications:', error);
+      // Don't rethrow the error - allow the app to continue functioning
     } finally {
       setLoading(false);
     }
@@ -34,31 +40,39 @@ export function useFirebaseNotifications() {
   useEffect(() => {
     if (!notificationPermissionGranted) return;
     
-    const unsubscribe = setupMessageListener((payload) => {
-      // Display a toast notification for foreground messages
-      toast({
-        title: payload.notification?.title || 'New Notification',
-        description: payload.notification?.body,
-        variant: "default",
+    try {
+      const unsubscribe = setupMessageListener((payload) => {
+        // Display a toast notification for foreground messages
+        toast({
+          title: payload.notification?.title || 'New Notification',
+          description: payload.notification?.body,
+          variant: "default",
+        });
       });
       
-      // You might want to update your notifications state here
-      // or trigger a refetch of notifications
-    });
-    
-    return () => {
-      unsubscribe && unsubscribe();
-    };
+      return () => {
+        unsubscribe && unsubscribe();
+      };
+    } catch (error) {
+      console.error('Error setting up message listener:', error);
+      // Don't throw error, just log it
+    }
   }, [notificationPermissionGranted]);
   
   // Check for stored token on mount
   useEffect(() => {
-    const storedToken = localStorage.getItem('fcm_token');
-    if (storedToken) {
-      setFcmToken(storedToken);
-      setNotificationPermissionGranted(true);
+    try {
+      const storedToken = localStorage.getItem('fcm_token');
+      if (storedToken) {
+        setFcmToken(storedToken);
+        setNotificationPermissionGranted(true);
+        console.log('Firebase token retrieved from localStorage');
+      }
+    } catch (error) {
+      console.error('Error retrieving token from localStorage:', error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
   
   return {

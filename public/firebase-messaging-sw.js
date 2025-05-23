@@ -4,7 +4,7 @@
 importScripts('https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.9.0/firebase-messaging-compat.js');
 
-// Firebase configuration
+// Firebase configuration - must match the one in src/lib/firebase.ts
 const firebaseConfig = {
   apiKey: "AIzaSyC74XOrzBelLF1NZDLdNpzlvtDd88FmJHs",
   authDomain: "mediloop-app.firebaseapp.com",

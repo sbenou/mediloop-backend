@@ -5,7 +5,14 @@ import { getToken } from 'firebase/messaging';
 
 // Function to register a user's FCM token with the backend
 export const registerFCMToken = async (userId: string, token: string) => {
+  if (!userId || !token) {
+    console.warn('Missing userId or token for FCM registration');
+    return false;
+  }
+
   try {
+    console.log('Registering FCM token for user:', userId);
+    
     const { error } = await supabase
       .from('user_notification_tokens')
       .upsert({
@@ -22,6 +29,7 @@ export const registerFCMToken = async (userId: string, token: string) => {
       return false;
     }
     
+    console.log('FCM token registered successfully');
     return true;
   } catch (error) {
     console.error('Exception registering FCM token:', error);
@@ -32,11 +40,18 @@ export const registerFCMToken = async (userId: string, token: string) => {
 // Function to get or create a new FCM token
 export const getOrCreateFCMToken = async () => {
   try {
+    if (!messaging) {
+      console.warn('Firebase messaging not initialized');
+      return null;
+    }
+    
+    console.log('Requesting FCM token...');
     const currentToken = await getToken(messaging, {
       vapidKey: 'BK2yjKiT7Faf6GDkPBWTIWXqZFCZcI1ODQxsJI4_SpU26Md1c-9GVPYBqRWY6up56CrSCPbU18bi4RXdQtGZwxE'
     });
     
     if (currentToken) {
+      console.log('FCM token obtained');
       return currentToken;
     } else {
       console.log('No registration token available. Request permission to generate one.');
@@ -50,6 +65,11 @@ export const getOrCreateFCMToken = async () => {
 
 // Function to update a user's notification preferences
 export const updateNotificationPreferences = async (userId: string, preferences: Record<string, boolean>) => {
+  if (!userId) {
+    console.warn('Missing userId for notification preference update');
+    return false;
+  }
+
   try {
     const { error } = await supabase
       .from('user_notification_preferences')
