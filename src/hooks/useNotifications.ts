@@ -5,6 +5,7 @@ import { Notification } from '@/types/supabase';
 import { toast } from '@/components/ui/use-toast';
 import { useTenant } from '@/contexts/TenantContext';
 import { useTenantSupabase } from './useTenantSupabase';
+import { setupMessageListener } from '@/lib/firebase';
 
 export const useNotifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -59,6 +60,20 @@ export const useNotifications = () => {
   useEffect(() => {
     setFetchError(null);
   }, [currentTenant, tenantTable]);
+
+  // Setup listener for Firebase notifications to trigger a refetch
+  useEffect(() => {
+    const unsubscribe = setupMessageListener((payload) => {
+      console.log('Firebase notification received, refreshing notifications');
+      fetchNotifications();
+    });
+    
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [fetchNotifications]);
 
   const markAsRead = useCallback(async (id: string) => {
     try {

@@ -6,11 +6,13 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { useNotifications } from "@/hooks/useNotifications";
 import NotificationTabs from "./notifications/NotificationTabs";
 import { useNavigate } from "react-router-dom";
+import { useFirebaseNotificationContext } from "@/providers/FirebaseNotificationProvider";
+import { registerFCMToken } from "@/utils/firebaseNotificationUtils";
 
 const NotificationBell = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { 
     notifications, 
     unreadCount, 
@@ -20,6 +22,8 @@ const NotificationBell = () => {
     markAllAsRead,
     setupRealtimeSubscription 
   } = useNotifications();
+  
+  const { fcmToken, initializeNotifications } = useFirebaseNotificationContext();
   
   // Use ref to track initialization
   const hasInitialized = useRef(false);
@@ -51,6 +55,24 @@ const NotificationBell = () => {
       return cleanup;
     }
   }, [isAuthenticated, fetchNotifications, setupRealtimeSubscription]);
+
+  // Register FCM token with backend when available
+  useEffect(() => {
+    if (isAuthenticated && user?.id && fcmToken) {
+      registerFCMToken(user.id, fcmToken).then(success => {
+        if (success) {
+          console.log("FCM token registered with backend");
+        }
+      });
+    }
+  }, [isAuthenticated, user?.id, fcmToken]);
+
+  // Request notification permission if authenticated and not already initialized
+  useEffect(() => {
+    if (isAuthenticated && !fcmToken) {
+      initializeNotifications();
+    }
+  }, [isAuthenticated, fcmToken, initializeNotifications]);
 
   // Navigate to notifications view
   const handleViewAllClick = () => {

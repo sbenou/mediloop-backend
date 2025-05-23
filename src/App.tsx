@@ -9,6 +9,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/providers/AuthProvider';
 import { ThemeProvider } from './components/theme-provider';
 import { TenantProvider } from './contexts/TenantContext';
+import { FirebaseNotificationProvider } from './providers/FirebaseNotificationProvider';
 
 function App() {
   const [queryClient] = useState(() => new QueryClient({
@@ -20,16 +21,22 @@ function App() {
     },
   }));
 
+  useEffect(() => {
+    console.log('App rendering TenantProvider and AppRoutes');
+  }, []);
+
   return (
     <RecoilRoot>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
           <AuthProvider>
             <TenantProvider>
-              <BrowserRouter>
-                <AppRoutes />
-                <Toaster />
-              </BrowserRouter>
+              <FirebaseNotificationProvider>
+                <BrowserRouter>
+                  <AppRoutes />
+                  <Toaster />
+                </BrowserRouter>
+              </FirebaseNotificationProvider>
             </TenantProvider>
           </AuthProvider>
         </ThemeProvider>
