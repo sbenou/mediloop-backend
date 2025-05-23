@@ -7,7 +7,7 @@ import { RecoilRoot } from "recoil";
 import { I18nextProvider } from "react-i18next";
 import i18n from "./i18n/config";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@/components/ui/toaster"; // Make sure this points to correct file
 import { Toaster as Sonner } from "sonner";
 import AuthProvider from "./providers/AuthProvider";
 import { ThemeProvider } from "@/components/theme-provider";
