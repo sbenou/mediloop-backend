@@ -20,6 +20,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import DoctorMap from "@/components/doctor/DoctorMap";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const FindDoctor = () => {
   const { isAuthenticated, profile } = useAuth();
@@ -44,6 +45,7 @@ const FindDoctor = () => {
   
   const [searchRadius, setSearchRadius] = useState(2000);
   const [initialLocationSet, setInitialLocationSet] = useState(false);
+  const [showLocation, setShowLocation] = useState(false);
 
   const { coordinates, handleCitySearch, isSearching } = useLocationSearch();
 
@@ -72,7 +74,7 @@ const FindDoctor = () => {
   });
   
   // Create computed search coordinates - ensure consistent number types
-  const searchCoordinates = coordinates 
+  const currentCoordinates = coordinates 
     ? { 
         lat: Number(coordinates.lat), 
         lon: Number(coordinates.lon) 
@@ -88,7 +90,7 @@ const FindDoctor = () => {
         };
 
   const { doctors, isLoading: isDoctorsLoading } = useDoctorSearch(
-    isUsingLocation ? searchCoordinates : null, 
+    isUsingLocation ? currentCoordinates : null, 
     searchRadius
   );
   
@@ -108,6 +110,7 @@ const FindDoctor = () => {
         if (defaultAddress.city) {
           handleCitySearch(defaultAddress.city);
           setIsUsingLocation(true);
+          setShowLocation(true);
         }
         
         setInitialLocationSet(true);
@@ -118,6 +121,7 @@ const FindDoctor = () => {
       if (!session) {
         setUserLocation(LUXEMBOURG_COORDINATES);
         setIsUsingLocation(false);
+        setShowLocation(false);
         
         if (!coordinates) {
           handleCitySearch("Luxembourg City");
@@ -135,6 +139,7 @@ const FindDoctor = () => {
       // Fallback to default location
       setUserLocation(LUXEMBOURG_COORDINATES);
       setIsUsingLocation(false);
+      setShowLocation(false);
       handleCitySearch("Luxembourg City");
     }
   }, [
@@ -168,7 +173,9 @@ const FindDoctor = () => {
 
   // Handle location toggle
   const handleLocationToggle = useCallback((checked: boolean) => {
+    setShowLocation(checked);
     setIsUsingLocation(checked);
+    
     if (checked) {
       if ("geolocation" in navigator) {
         navigator.geolocation.getCurrentPosition(
@@ -204,7 +211,35 @@ const FindDoctor = () => {
     }
   }, [setIsUsingLocation, setUserLocation]);
 
-  console.log(`Rendering doctors in ${selectedCountry || 'unknown country'}, found ${doctors?.length || 0} doctors`);
+  const handleSelectDoctor = (doctorId: string) => {
+    const doctor = doctors?.find(d => d.id === doctorId);
+    if (doctor) {
+      if (!isAuthenticated) {
+        toast({
+          title: "Login Required",
+          description: "Please login to connect with doctors.",
+        });
+        return;
+      }
+
+      if (doctor.source === 'overpass') {
+        toast({
+          title: "Information",
+          description: "Connection requests are only available for registered doctors.",
+        });
+        return;
+      }
+      
+      toast({
+        title: "Connect with Doctor",
+        description: `Request sent to ${doctor.full_name}`,
+      });
+    }
+  };
+
+  // For debugging
+  console.log(`Rendering doctors in ${selectedCountry || 'unknown country'}, found ${doctors?.length || 0} doctors, using location: ${isUsingLocation}`);
+  console.log(`Current coordinates:`, currentCoordinates);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -215,10 +250,14 @@ const FindDoctor = () => {
             <SearchHeader onSearch={handleCitySearch} title="Find a Doctor Near You" />
             
             <div className="flex flex-col md:flex-row gap-4 items-start justify-between mb-4">
-              <LocationToggle
-                showDefaultLocation={isUsingLocation}
-                onLocationToggle={handleLocationToggle}
-              />
+              <div className="flex items-center space-x-2 mb-6">
+                <Switch
+                  id="location-toggle"
+                  checked={showLocation}
+                  onCheckedChange={handleLocationToggle}
+                />
+                <Label htmlFor="location-toggle">Show my location</Label>
+              </div>
               
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">
@@ -245,20 +284,13 @@ const FindDoctor = () => {
                               <p className="text-sm">{doctor.license_number}</p>
                             )}
                             
-                            {isAuthenticated && doctor.source === 'database' && (
-                              <Button
-                                onClick={() => {
-                                  toast({
-                                    title: "Connect with Doctor",
-                                    description: `Request sent to ${doctor.full_name}`,
-                                  });
-                                }}
-                                className="w-full mt-4"
-                                size="sm"
-                              >
-                                Connect
-                              </Button>
-                            )}
+                            <Button
+                              onClick={() => handleSelectDoctor(doctor.id)}
+                              className="w-full mt-4"
+                              size="sm"
+                            >
+                              Connect
+                            </Button>
                           </div>
                         </CardContent>
                       </Card>
@@ -274,33 +306,9 @@ const FindDoctor = () => {
                   <div className="h-[calc(100vh-220px)]">
                     <DoctorMap 
                       doctors={doctors || []} 
-                      userCoordinates={isUsingLocation ? searchCoordinates : null}
-                      showUserLocation={isUsingLocation}
-                      onDoctorSelect={(doctorId) => {
-                        const doctor = doctors?.find(d => d.id === doctorId);
-                        if (doctor) {
-                          if (!isAuthenticated) {
-                            toast({
-                              title: "Login Required",
-                              description: "Please login to connect with doctors.",
-                            });
-                            return;
-                          }
-
-                          if (doctor.source === 'overpass') {
-                            toast({
-                              title: "Information",
-                              description: "Connection requests are only available for registered doctors.",
-                            });
-                            return;
-                          }
-                          
-                          toast({
-                            title: "Connect with Doctor",
-                            description: `Request sent to ${doctor.full_name}`,
-                          });
-                        }
-                      }}
+                      userCoordinates={showLocation ? currentCoordinates : null}
+                      showUserLocation={showLocation}
+                      onDoctorSelect={handleSelectDoctor}
                     />
                   </div>
                 </div>

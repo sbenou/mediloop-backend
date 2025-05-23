@@ -31,7 +31,7 @@ export const useDoctorSearch = (
           // Get doctors from database first
           const { data: dbDoctors, error } = await supabase
             .from("profiles")
-            .select("id, full_name, city, license_number")
+            .select("id, full_name, city, license_number, coordinates")
             .eq("role", "doctor");
 
           if (error) {
@@ -39,14 +39,15 @@ export const useDoctorSearch = (
             throw error;
           }
 
-          console.log('Database doctors:', dbDoctors);
+          console.log('Database doctors:', dbDoctors?.length || 0);
 
           // Add source field to database results, handle null cities
           const formattedDbDoctors = Array.isArray(dbDoctors) 
             ? dbDoctors.map(doc => ({
                 ...doc,
                 source: 'database' as const,
-                city: doc.city || 'Unknown location'  // Ensure city is never null
+                city: doc.city || 'Unknown location',  // Ensure city is never null
+                coordinates: doc.coordinates || null
               }))
             : [];
 
@@ -112,7 +113,7 @@ export const useDoctorSearch = (
           // Get doctors from database first
           const { data: dbDoctors, error } = await supabase
             .from("profiles")
-            .select("id, full_name, city, license_number")
+            .select("id, full_name, city, license_number, coordinates")
             .eq("role", "doctor");
 
           if (error) {
@@ -127,7 +128,8 @@ export const useDoctorSearch = (
             ? dbDoctors.map(doc => ({
                 ...doc,
                 source: 'database' as const,
-                city: doc.city || 'Unknown location'  // Ensure city is never null
+                city: doc.city || 'Unknown location',  // Ensure city is never null
+                coordinates: doc.coordinates || null
               }))
             : [];
 

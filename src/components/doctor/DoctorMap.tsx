@@ -69,7 +69,7 @@ const DoctorMap = ({
       // Clean up map instance
       map.current?.remove();
     };
-  }, [userCoordinates]);
+  }, [userCoordinates, showUserLocation]);
 
   // Add doctor markers to map
   useEffect(() => {
@@ -82,21 +82,36 @@ const DoctorMap = ({
     // Don't try to add markers until the map has loaded
     if (!map.current.loaded()) {
       map.current.on('load', addDoctorMarkers);
-      return;
+      return () => {
+        if (map.current) {
+          map.current.off('load', addDoctorMarkers);
+        }
+      };
+    } else {
+      addDoctorMarkers();
     }
-
-    addDoctorMarkers();
 
     function addDoctorMarkers() {
       if (!map.current) return;
       
+      console.log(`Adding ${doctors.length} doctor markers to map`);
+      
       // Add markers for doctors with coordinates
-      doctors.forEach(doctor => {
+      const doctorsWithCoordinates = doctors.filter(doctor => 
+        doctor.coordinates?.lat && doctor.coordinates?.lon
+      );
+      
+      console.log(`Filtered to ${doctorsWithCoordinates.length} doctors with valid coordinates`);
+      
+      doctorsWithCoordinates.forEach(doctor => {
         if (doctor.coordinates?.lat && doctor.coordinates?.lon) {
           const doctorLat = parseFloat(String(doctor.coordinates.lat));
           const doctorLon = parseFloat(String(doctor.coordinates.lon));
           
-          if (isNaN(doctorLat) || isNaN(doctorLon)) return;
+          if (isNaN(doctorLat) || isNaN(doctorLon)) {
+            console.log(`Skipping doctor ${doctor.id} due to invalid coordinates`, doctor.coordinates);
+            return;
+          }
           
           // Calculate distance if user location is available
           let distanceStr = '';
@@ -153,15 +168,34 @@ const DoctorMap = ({
           markers.current.push(marker);
         }
       });
+      
+      console.log(`Added ${markers.current.length} markers to the map`);
     }
     
-    // Fit map to markers
-    if (markers.current.length > 0 && !userCoordinates) {
+    // Fit map to markers if we have any
+    if (markers.current.length > 0) {
       const bounds = new mapboxgl.LngLatBounds();
       markers.current.forEach(marker => {
         bounds.extend(marker.getLngLat());
       });
-      map.current.fitBounds(bounds, { padding: 70, maxZoom: 13 });
+      
+      // Add user location to bounds if available
+      if (userCoordinates?.lat && userCoordinates?.lon) {
+        bounds.extend([userCoordinates.lon, userCoordinates.lat]);
+      }
+      
+      map.current.fitBounds(bounds, { 
+        padding: 70, 
+        maxZoom: 13,
+        duration: 1000
+      });
+    } else if (!userCoordinates) {
+      // If no markers and no user coordinates, center on Luxembourg
+      map.current.flyTo({
+        center: [6.1296, 49.8153],
+        zoom: 9,
+        duration: 1000
+      });
     }
   }, [doctors, userCoordinates, onDoctorSelect]);
 
