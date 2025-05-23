@@ -402,17 +402,7 @@ const FindDoctor = () => {
                             ? "No doctors found nearby. Try disabling location to see doctors in the country."
                             : `No doctors found in ${selectedCountry || 'selected country'}.`}
                       </p>
-                      {!isDoctorsLoading && (
-                        <Button 
-                          onClick={() => {
-                            setSearchRadius(10000);
-                            setIsUsingLocation(false);
-                            handleCitySearch("Luxembourg City");
-                          }}
-                        >
-                          Search all of Luxembourg
-                        </Button>
-                      )}
+                      
                     </div>
                   )}
                 </div>
