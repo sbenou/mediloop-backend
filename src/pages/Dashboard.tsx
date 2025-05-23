@@ -14,7 +14,6 @@ import { ActivityFeed } from "@/components/activity/ActivityFeed";
 import { Advertisements } from "@/components/activity/Advertisements";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { useFirebaseNotifications } from "@/hooks/useFirebaseNotifications";
 
 const Dashboard = () => {
   const { isAuthenticated, isLoading, userRole, profile } = useAuth();
@@ -23,16 +22,13 @@ const Dashboard = () => {
   const hasInitializedRef = useRef(false);
   const redirectedRef = useRef(false);
   
-  // Initialize Firebase notifications
-  useFirebaseNotifications();
-  
   // Activity drawer state
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
   const [activeDrawerTab, setActiveDrawerTab] = useState<string>("home");
 
   // Add more detailed logging to help debug
   useEffect(() => {
-    // Skip redirect if we're already redirecting to prevent loops
+    // Only perform redirect once and only if needed
     if (!isLoading && !isAuthenticated && !redirectedRef.current) {
       console.warn("🔒 Not authenticated — redirecting to login");
       redirectedRef.current = true;
@@ -41,7 +37,7 @@ const Dashboard = () => {
     }
     
     // Mark as initialized to prevent multiple redirects
-    if (!hasInitializedRef.current && isAuthenticated) {
+    if (!hasInitializedRef.current) {
       hasInitializedRef.current = true;
       
       console.log("✅ Dashboard initialized", { 
@@ -59,6 +55,10 @@ const Dashboard = () => {
   useEffect(() => {
     window.dispatchEvent(new Event('resize'));
   }, [isDrawerOpen]);
+
+  // Prevent unnecessary re-renderings by memoizing the search params
+  const paramsObj = Object.fromEntries(searchParams.entries());
+  console.log("Dashboard rendering with params:", paramsObj);
   
   if (isLoading) {
     return (
@@ -74,10 +74,7 @@ const Dashboard = () => {
   // Check authentication again for safety
   if (!isAuthenticated && !isLoading) {
     console.log("🔒 Dashboard - User not authenticated, redirecting");
-    if (!redirectedRef.current) {
-      redirectedRef.current = true;
-      navigate("/login", { replace: true });
-    }
+    navigate("/login", { replace: true });
     return null;
   }
 

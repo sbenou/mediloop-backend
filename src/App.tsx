@@ -1,36 +1,40 @@
 
-import { useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
+import { BrowserRouter } from 'react-router-dom';
 import AppRoutes from './AppRoutes';
+import { RecoilRoot } from 'recoil';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from "@/components/ui/toaster";
+import { AuthProvider } from '@/providers/AuthProvider';
+import { ThemeProvider } from './components/theme-provider';
 import { TenantProvider } from './contexts/TenantContext';
 
 function App() {
-  useEffect(() => {
-    console.log("App component mounted - checking for rendering issues");
-    // Add a flag to help identify if this is running in the correct environment
-    console.log("Environment check:", {
-      isDev: process.env.NODE_ENV === 'development',
-      isTest: process.env.NODE_ENV === 'test',
-      isProd: process.env.NODE_ENV === 'production',
-    });
-    
-    // Log window load event to verify complete rendering
-    window.addEventListener('load', () => {
-      console.log('Window fully loaded in App component');
-    });
-  }, []);
-  
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 1000 * 60 * 5, // 5 minutes
+        retry: 1,
+      },
+    },
+  }));
+
   return (
-    <div className="app-container relative min-h-screen">
-      {/* Add a visible indicator to confirm the App component is rendering */}
-      <div className="fixed bottom-5 left-0 right-0 bg-green-600 text-white p-4 text-center font-bold text-xl z-[999998]">
-        App Component Loaded Successfully
-      </div>
-      
-      <TenantProvider>
-        <AppRoutes />
-      </TenantProvider>
-    </div>
+    <RecoilRoot>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+          <AuthProvider>
+            <TenantProvider>
+              <BrowserRouter>
+                <AppRoutes />
+                <Toaster />
+              </BrowserRouter>
+            </TenantProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </RecoilRoot>
   );
 }
 

@@ -1,9 +1,8 @@
-
 import { useEffect } from 'react';
 import { useSetRecoilState } from 'recoil';
-import { supabase } from '@/lib/supabase';
+import { supabase, getSessionFromStorage } from '@/lib/supabase';
 import { authState } from '@/store/auth/atoms';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 import { useSessionManagement } from '@/hooks/auth/useSessionManagement';
 import { useVisibilityChange } from '@/hooks/auth/useVisibilityChange';
 import { useStorageEvents } from '@/hooks/auth/useStorageEvents';
@@ -19,7 +18,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     let mounted = true;
-    console.log('[AuthProvider] Initializing auth provider');
 
     const initializeAuth = async () => {
       try {
@@ -29,25 +27,89 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         setAuth(prev => ({ ...prev, isLoading: true }));
         
-        // Get session directly from Supabase
+        const storedSession = getSessionFromStorage();
+        
+        if (storedSession) {
+          console.log('[AuthProvider] Found stored session:', {
+            userId: storedSession.user?.id,
+            timestamp: new Date().toISOString()
+          });
+          
+          if (mounted) {
+            setAuth(prev => ({
+              ...prev,
+              user: storedSession.user,
+              isLoading: true,
+            }));
+          }
+        }
+        
+        console.log('[AuthProvider] Fetching fresh session from API');
         const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('[AuthProvider] Error getting session from API:', error);
+          throw error;
+        }
         
         if (!mounted) return;
         
         if (session) {
-          console.log('[AuthProvider] Found active session for user:', {
+          console.log('[AuthProvider] Using API session for user:', {
             userId: session.user.id,
             timestamp: new Date().toISOString()
           });
           await updateAuthState(session);
+        } else if (storedSession?.user?.id) {
+          console.log('[AuthProvider] API returned no session but found one in storage');
+          // Try to refresh the session
+          try {
+            const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+            
+            if (refreshError) {
+              console.error('Error refreshing stored session:', refreshError);
+              if (mounted) {
+                setAuth({
+                  user: null,
+                  profile: null,
+                  permissions: [],
+                  isLoading: false,
+                });
+              }
+              return;
+            }
+            
+            if (refreshData.session) {
+              console.log('Successfully refreshed stored session');
+              if (mounted) {
+                await updateAuthState(refreshData.session);
+              }
+              return;
+            }
+          } catch (refreshErr) {
+            console.error('Exception during session refresh:', refreshErr);
+          }
+          
+          // If we reach here, we couldn't refresh the session
+          console.log('Could not refresh stored session, clearing auth state');
+          if (mounted) {
+            setAuth({
+              user: null,
+              profile: null,
+              permissions: [],
+              isLoading: false,
+            });
+          }
         } else {
           console.log('[AuthProvider] No active session found, clearing auth state');
-          setAuth({
-            user: null,
-            profile: null,
-            permissions: [],
-            isLoading: false,
-          });
+          if (mounted) {
+            setAuth({
+              user: null,
+              profile: null,
+              permissions: [],
+              isLoading: false,
+            });
+          }
         }
       } catch (error) {
         console.error('[AuthProvider] Auth initialization error:', error);
@@ -59,7 +121,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             isLoading: false,
           });
           
-          toast.error("Authentication Error: Failed to initialize authentication");
+          toast({
+            variant: "destructive",
+            title: "Authentication Error",
+            description: "Failed to initialize authentication. Please try again.",
+          });
         }
       }
     };

@@ -1,82 +1,72 @@
 
-import { useCallback, useEffect } from "react";
-import { useRecoilState } from "recoil";
-import { authState } from "@/store/auth/atoms";
-import { 
-  isAuthenticatedSelector, 
-  userRoleSelector, 
-  userPermissionsSelector,
-  isLoadingSelector,
-  isPharmacistSelector
-} from "@/store/auth/selectors";
-import { useRecoilValue } from "recoil";
-import { supabase } from "@/lib/supabase";
+import { useRecoilState } from 'recoil';
+import { authState } from '@/store/auth/atoms';
+import { supabase } from '@/lib/supabase';
+import { useState, useEffect } from 'react';
 
-/**
- * Hook for accessing and managing authentication state
- * Provides authentication status, user roles, permissions,
- * and utility functions for permission checks
- */
-export const useAuth = () => {
-  const [authData, setAuthData] = useRecoilState(authState);
+export function useAuth() {
+  const [state, setState] = useRecoilState(authState);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   
-  // Use selectors for derived state
-  const isAuthenticated = useRecoilValue(isAuthenticatedSelector);
-  const userRole = useRecoilValue(userRoleSelector);
-  const permissions = useRecoilValue(userPermissionsSelector);
-  const isLoading = useRecoilValue(isLoadingSelector);
-  const isPharmacist = useRecoilValue(isPharmacistSelector);
+  const { user, profile, permissions = [] } = state;
   
-  // Add debug logging
-  useEffect(() => {
-    console.log("[useAuth] Auth state changed:", { 
-      isAuthenticated, 
-      userRole,
-      isPharmacist, 
-      profileRole: authData.profile?.role,
-      hasUser: !!authData.user,
-      hasProfile: !!authData.profile,
-      isLoading
-    });
-  }, [isAuthenticated, userRole, isPharmacist, authData.profile, authData.user, isLoading]);
-
-  // Utility function to check if the user has a specific permission
-  const hasPermission = useCallback((permission: string) => {
-    // During loading, don't make definitive permission decisions
-    if (isLoading) return false;
-    
-    // Check if the permission exists in the user's permissions array
+  // Determine if the user is authenticated
+  const isAuthenticated = !!state.user && !!profile;
+  
+  // Get the user role from the profile if available
+  const userRole = profile?.role || null;
+  
+  // Special helper for checking if the user is a pharmacist
+  const isPharmacist = userRole === 'pharmacist';
+  
+  // Check if user has a specific permission
+  const hasPermission = (permission: string): boolean => {
+    if (!permissions) return false;
     return permissions.includes(permission);
-  }, [permissions, isLoading]);
+  };
   
-  // Function to refresh the session (can be called after login/signup)
-  const refreshSession = useCallback(async () => {
-    try {
-      console.log("[useAuth] Manually refreshing session");
-      const { data } = await supabase.auth.getSession();
-      if (data?.session) {
-        console.log("[useAuth] Session refreshed successfully");
-      } else {
-        console.log("[useAuth] No session found during refresh");
+  // Fetch the profile when the user changes
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        if (!user) {
+          setIsLoading(false);
+          return;
+        }
+        
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle();
+          
+        if (error) {
+          console.error('Error fetching profile:', error);
+        } else if (data) {
+          setState(prev => ({
+            ...prev,
+            profile: data
+          }));
+        }
+        
+        setIsLoading(false);
+      } catch (err) {
+        console.error('Error in fetchProfile:', err);
+        setIsLoading(false);
       }
-      return data?.session;
-    } catch (error) {
-      console.error("[useAuth] Error refreshing session:", error);
-    }
-  }, []);
-
-  // Return the auth state and utility functions
+    };
+    
+    fetchProfile();
+  }, [user, setState]);
+  
   return {
+    user,
+    profile,
+    permissions,
     isAuthenticated,
     userRole,
-    permissions,
-    isLoading,
+    isPharmacist,
     hasPermission,
-    user: authData.user,
-    profile: authData.profile,
-    refreshSession,
-    isPharmacist
+    isLoading
   };
-};
-
-export default useAuth;
+}

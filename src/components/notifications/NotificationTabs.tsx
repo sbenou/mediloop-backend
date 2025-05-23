@@ -1,63 +1,32 @@
 
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Notification } from "@/types/supabase"; 
+import { Notification } from "@/types/supabase"; // Adjust the import path as needed
 import NotificationList from "./NotificationList";
 import { Button } from "@/components/ui/button";
-import { Loader2, RefreshCw, AlertTriangle } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 interface NotificationTabsProps {
   notifications: Notification[];
   unreadCount: number;
   isLoading: boolean;
-  hasError?: boolean;
   onMarkRead: (id: string) => void;
   onMarkAllRead: () => void;
   onViewAll?: () => void;
-  onRetry?: () => void;
 }
 
 const NotificationTabs = ({
   notifications,
   unreadCount,
   isLoading,
-  hasError = false,
   onMarkRead,
   onMarkAllRead,
-  onViewAll,
-  onRetry
+  onViewAll
 }: NotificationTabsProps) => {
   const unreadNotifications = notifications.filter(notification => !notification.read);
   const alertNotifications = notifications.filter(notification => 
     ['payment_failed', 'delivery_failed', 'delivery_late'].includes(notification.type)
   );
-
-  const renderContent = (notificationsToRender: Notification[]) => {
-    if (hasError) {
-      return (
-        <div className="flex flex-col items-center justify-center p-8 text-center">
-          <AlertTriangle className="h-10 w-10 text-amber-500 mb-2" />
-          <p className="text-muted-foreground mb-3">Failed to load notifications</p>
-          {onRetry && (
-            <Button variant="outline" size="sm" onClick={onRetry}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Retry
-            </Button>
-          )}
-        </div>
-      );
-    }
-    
-    if (isLoading) {
-      return (
-        <div className="flex justify-center items-center p-8">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      );
-    }
-    
-    return <NotificationList notifications={notificationsToRender} onMarkRead={onMarkRead} />;
-  };
 
   return (
     <Tabs defaultValue="all" className="w-full">
@@ -75,28 +44,49 @@ const NotificationTabs = ({
           <TabsTrigger value="alerts">Alerts</TabsTrigger>
         </TabsList>
         
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={onMarkAllRead} 
-          className="text-xs"
-          disabled={isLoading || hasError || unreadCount === 0}
-        >
+        <Button variant="ghost" size="sm" onClick={onMarkAllRead} className="text-xs">
           Mark all read
         </Button>
       </div>
 
       <div className="max-h-[400px] overflow-auto">
         <TabsContent value="all" className="m-0 p-0">
-          {renderContent(notifications)}
+          {isLoading ? (
+            <div className="flex justify-center items-center p-4">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <NotificationList 
+              notifications={notifications} 
+              onMarkRead={onMarkRead} 
+            />
+          )}
         </TabsContent>
         
         <TabsContent value="unread" className="m-0 p-0">
-          {renderContent(unreadNotifications)}
+          {isLoading ? (
+            <div className="flex justify-center items-center p-4">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <NotificationList 
+              notifications={unreadNotifications} 
+              onMarkRead={onMarkRead} 
+            />
+          )}
         </TabsContent>
         
         <TabsContent value="alerts" className="m-0 p-0">
-          {renderContent(alertNotifications)}
+          {isLoading ? (
+            <div className="flex justify-center items-center p-4">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <NotificationList 
+              notifications={alertNotifications} 
+              onMarkRead={onMarkRead} 
+            />
+          )}
         </TabsContent>
       </div>
       
