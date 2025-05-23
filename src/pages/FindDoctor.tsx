@@ -22,7 +22,7 @@ import { Label } from "@/components/ui/label";
 import DoctorMap from "@/components/doctor/DoctorMap";
 
 const FindDoctor = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, profile } = useAuth();
   const { data: session } = useQuery({
     queryKey: ['session'],
     queryFn: async () => {
@@ -45,10 +45,34 @@ const FindDoctor = () => {
   const [searchRadius, setSearchRadius] = useState(2000);
   const [initialLocationSet, setInitialLocationSet] = useState(false);
   const [viewMode, setViewMode] = useState<string>("list");
-  const [showLocation, setShowLocation] = useState(false);
+  const [showLocation, setShowLocation] = useState(true); // Default to true to use location
 
   const { coordinates, handleCitySearch, isSearching } = useLocationSearch();
 
+  // Get user's default address if available
+  const { data: userAddresses, isLoading: isAddressLoading } = useQuery({
+    queryKey: ['user-addresses', profile?.id],
+    queryFn: async () => {
+      if (!profile?.id) return [];
+      
+      try {
+        const { data, error } = await supabase
+          .from('addresses')
+          .select('*')
+          .eq('user_id', profile.id)
+          .eq('is_default', true)
+          .limit(1);
+          
+        if (error) throw error;
+        return data || [];
+      } catch (error) {
+        console.error('Error fetching user addresses:', error);
+        return [];
+      }
+    },
+    enabled: !!profile?.id && isAuthenticated,
+  });
+  
   // Create computed search coordinates - ensure consistent number types
   const searchCoordinates = coordinates 
     ? { 
@@ -66,7 +90,7 @@ const FindDoctor = () => {
         };
 
   const { doctors, isLoading: isDoctorsLoading } = useDoctorSearch(
-    isAuthenticated && showLocation ? searchCoordinates : null, 
+    showLocation ? searchCoordinates : null, 
     searchRadius
   );
   
@@ -77,6 +101,22 @@ const FindDoctor = () => {
     }
 
     try {
+      // First try to use user's default address if available
+      if (isAuthenticated && userAddresses && userAddresses.length > 0) {
+        const defaultAddress = userAddresses[0];
+        console.log('Using user default address:', defaultAddress);
+        
+        // Use the default address to search for doctors
+        if (defaultAddress.city) {
+          handleCitySearch(defaultAddress.city);
+        }
+        
+        setInitialLocationSet(true);
+        setShowLocation(true); // Enable location search by default
+        return;
+      }
+      
+      // Otherwise fall back to profile city or session-based initialization
       if (!session) {
         setUserLocation(LUXEMBOURG_COORDINATES);
         setIsUsingLocation(false);
@@ -92,6 +132,7 @@ const FindDoctor = () => {
       }
       
       setInitialLocationSet(true);
+      setShowLocation(true); // Enable location search by default
     } catch (error) {
       console.error("Error initializing location:", error);
       // Fallback to default location
@@ -99,7 +140,17 @@ const FindDoctor = () => {
       setIsUsingLocation(false);
       handleCitySearch("Luxembourg City");
     }
-  }, [session, coordinates, userProfile?.city, setUserLocation, setIsUsingLocation, handleCitySearch, initialLocationSet]);
+  }, [
+    session, 
+    coordinates, 
+    userProfile?.city, 
+    setUserLocation, 
+    setIsUsingLocation, 
+    handleCitySearch, 
+    initialLocationSet, 
+    isAuthenticated, 
+    userAddresses
+  ]);
 
   // Increase search radius when no doctors found
   useEffect(() => {
@@ -211,7 +262,7 @@ const FindDoctor = () => {
             </div>
             
             <div className="w-full mt-6">
-              {isSearching ? (
+              {isSearching || isAddressLoading ? (
                 <div className="flex justify-center items-center h-64">
                   <Skeleton className="h-64 w-full" />
                 </div>

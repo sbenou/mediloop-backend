@@ -120,7 +120,7 @@ export const useDoctorSearch = (
             throw error;
           }
 
-          console.log('Database doctors:', dbDoctors);
+          console.log('Database doctors:', dbDoctors?.length || 0);
 
           // Add source field to database results, handle null cities
           const formattedDbDoctors = Array.isArray(dbDoctors) 
@@ -142,7 +142,7 @@ export const useDoctorSearch = (
           let formattedOverpassDoctors = [];
           try {
             const countryCode = selectedCountry || 'LU';
-            console.log(`Searching for doctors in country: ${countryCode}`);
+            console.log(`Searching for doctors in country: ${countryCode} with radius: ${searchRadius}`);
             
             const overpassDoctors = await searchDoctors(
               coordinates.lat,
@@ -173,7 +173,7 @@ export const useDoctorSearch = (
             return formattedDbDoctors;
           }
 
-          // Combine and deduplicate results (safely)
+          // Combine all doctors
           const allDoctors = [];
           
           // Add database doctors first

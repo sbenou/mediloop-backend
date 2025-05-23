@@ -1,7 +1,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { requestNotificationPermission, setupMessageListener } from '@/lib/firebase';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/use-toast';
 
 export function useFirebaseNotifications() {
   const [fcmToken, setFcmToken] = useState<string | null>(null);
