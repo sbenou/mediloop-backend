@@ -32,9 +32,9 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
     setError(null);
     console.log(`[usePasswordLogin] Attempting login for email: ${email}`);
 
-    // Global timeout to prevent hanging
+    // Global timeout to prevent hanging - increasing to 30 seconds instead of 15
     const loginTimeout = setTimeout(() => {
-      console.error('[usePasswordLogin] Login process timed out after 15 seconds');
+      console.error('[usePasswordLogin] Login process timed out after 30 seconds');
       setIsLoading(false);
       toast({
         variant: "destructive",
@@ -42,7 +42,7 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         description: "The login process took too long. Please try again.",
         duration: 5000,
       });
-    }, 15000);
+    }, 30000); // Increased from 15000 to 30000
 
     try {
       // 1. Authentication step
@@ -130,14 +130,14 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         isLoading: false,
       });
       
-      // 7. Invoke success callback
+      // 7. Invoke success callback if provided
       if (onSuccess) {
         onSuccess();
       }
 
-      // 8. Cleanup
-      setIsLoading(false);
+      // 8. Cleanup timeout
       clearTimeout(loginTimeout);
+      setIsLoading(false);
       
       // 9. Role-based redirection using getDashboardRouteByRole to ensure consistent routing
       const dashboardRoute = getDashboardRouteByRole(userRole);
