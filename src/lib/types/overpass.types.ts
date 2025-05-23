@@ -16,6 +16,8 @@ export interface OverpassResult {
       opening_hours?: string;
       'healthcare'?: string;
       'healthcare:speciality'?: string;
+      operator?: string;
+      phone?: string;
     };
   }>;
 }
