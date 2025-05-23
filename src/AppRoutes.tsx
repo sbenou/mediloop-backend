@@ -1,3 +1,4 @@
+
 import { Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -27,6 +28,7 @@ import FindPharmacy from "@/pages/FindPharmacy";
 import Products from "@/pages/Products";
 import ProtectedActivities from "@/router/roles/ProtectedActivities";
 import ProtectedDoctorProfilePage from "@/router/roles/ProtectedDoctorProfilePage";
+import Index from "@/pages/Index";
 
 // Create a simple placeholder component for missing pages
 const PlaceholderPage = ({ title }: { title: string }) => (
@@ -42,19 +44,19 @@ const EditProfile = () => <PlaceholderPage title="Edit Profile" />;
 const Appointments = () => <PlaceholderPage title="Appointments" />;
 
 export default function AppRoutes() {
-  // Log before render but outside JSX
   console.log("AppRoutes component rendered - checking routes");
   
   return (
     <div className="app-root">
+      {/* Visual indicator for debugging */}
       <div className="fixed top-5 right-5 bg-blue-500 text-white p-2 z-[9999] rounded">
         AppRoutes Loaded
       </div>
       <Routes>
         {/* Public routes that don't require authentication */}
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<Index />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} /> {/* Added Signup route */}
+        <Route path="/signup" element={<Signup />} />
         <Route path="/register" element={<Register />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="/about" element={<About />} />
