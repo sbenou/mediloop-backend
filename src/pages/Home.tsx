@@ -26,9 +26,9 @@ const Home = () => {
   }, []);
 
   return (
-    <CurrencyProvider>
-      <CartProvider>
-        <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col">
+      <CurrencyProvider>
+        <CartProvider>
           <UnifiedHeader />
           <CountrySelector />
           <main className="flex-1">
@@ -47,9 +47,9 @@ const Home = () => {
           <Footer />
           <ScrollToTopButton />
           <CookieConsent />
-        </div>
-      </CartProvider>
-    </CurrencyProvider>
+        </CartProvider>
+      </CurrencyProvider>
+    </div>
   );
 };
 
