@@ -16,7 +16,7 @@ function App() {
     
     // Set a global variable to confirm the app is loading
     window.addEventListener('load', () => {
-      console.log('Window fully loaded');
+      console.log('Window fully loaded in App component');
     });
   }, []);
   
@@ -24,10 +24,11 @@ function App() {
   console.log("App rendering TenantProvider and AppRoutes");
   
   return (
-    <div className="app-container">
-      {/* Debug element at app level */}
-      <div className="fixed bottom-0 left-0 right-0 bg-green-500 text-white p-2 z-[9999] text-center">
-        App Component Loaded
+    <div className="app-container relative min-h-screen">
+      {/* Debug element at app level with extremely high z-index */}
+      <div className="fixed bottom-0 left-0 right-0 bg-green-600 text-white p-4 text-center font-bold text-xl" 
+           style={{ zIndex: 999998 }}>
+        App Component Loaded Successfully
       </div>
       
       <TenantProvider>
