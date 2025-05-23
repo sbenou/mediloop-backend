@@ -37,7 +37,9 @@ function MapRef({ setMapRef }: { setMapRef: (map: L.Map) => void }) {
   const map = useMap();
   
   useEffect(() => {
-    setMapRef(map);
+    if (map) {
+      setMapRef(map);
+    }
   }, [map, setMapRef]);
   
   return null;
@@ -57,6 +59,7 @@ export const DoctorFinderMap = ({
   onDoctorSelect
 }: DoctorFinderMapProps) => {
   const mapRef = useRef<L.Map | null>(null);
+  const [isMapReady, setIsMapReady] = useState(false);
   
   // Default to Luxembourg coordinates
   const defaultCenter = { lat: 49.8153, lng: 6.1296 };
@@ -68,23 +71,28 @@ export const DoctorFinderMap = ({
 
   const setMap = (map: L.Map) => {
     mapRef.current = map;
+    setIsMapReady(true);
   };
 
   // Update map view when user toggles location
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || !isMapReady) return;
     
     if (useLocationFilter && userLocation) {
-      mapRef.current.setView(
-        [userLocation.lat, userLocation.lon],
-        12
-      );
+      try {
+        mapRef.current.setView(
+          [userLocation.lat, userLocation.lon],
+          12
+        );
+      } catch (error) {
+        console.error('Error setting map view:', error);
+      }
     }
-  }, [useLocationFilter, userLocation]);
+  }, [useLocationFilter, userLocation, isMapReady]);
 
   // Fit map to show all markers
   useEffect(() => {
-    if (!mapRef.current || !doctors?.length) return;
+    if (!mapRef.current || !isMapReady || !doctors?.length) return;
     
     try {
       const bounds = L.latLngBounds([]);
@@ -93,15 +101,25 @@ export const DoctorFinderMap = ({
       // Add doctor markers to bounds
       doctors.forEach(doctor => {
         if (doctor.coordinates?.lat && doctor.coordinates?.lon) {
-          bounds.extend([doctor.coordinates.lat, doctor.coordinates.lon]);
-          hasValidMarkers = true;
+          const lat = Number(doctor.coordinates.lat);
+          const lon = Number(doctor.coordinates.lon);
+          
+          if (!isNaN(lat) && !isNaN(lon)) {
+            bounds.extend([lat, lon]);
+            hasValidMarkers = true;
+          }
         }
       });
       
       // Add user location to bounds if available
       if (userLocation?.lat && userLocation?.lon) {
-        bounds.extend([userLocation.lat, userLocation.lon]);
-        hasValidMarkers = true;
+        const userLat = Number(userLocation.lat);
+        const userLon = Number(userLocation.lon);
+        
+        if (!isNaN(userLat) && !isNaN(userLon)) {
+          bounds.extend([userLat, userLon]);
+          hasValidMarkers = true;
+        }
       }
       
       // Fit bounds if we have valid markers
@@ -114,97 +132,109 @@ export const DoctorFinderMap = ({
     } catch (error) {
       console.error('Error fitting bounds:', error);
     }
-  }, [doctors, userLocation]);
+  }, [doctors, userLocation, isMapReady]);
 
   // Map events component
   function MapEvents() {
     useMapEvents({
       load: () => {
-        console.log('Map loaded');
+        console.log('Map loaded successfully');
       },
     });
     
     return null;
   }
   
-  // Filter out doctors without coordinates
+  // Filter out doctors without coordinates and validate them
   const doctorsWithCoordinates = doctors?.filter(
-    doctor => doctor.coordinates?.lat && doctor.coordinates?.lon
+    doctor => {
+      if (!doctor.coordinates?.lat || !doctor.coordinates?.lon) return false;
+      
+      const lat = Number(doctor.coordinates.lat);
+      const lon = Number(doctor.coordinates.lon);
+      
+      return !isNaN(lat) && !isNaN(lon);
+    }
   ) || [];
 
   return (
-    <MapContainer
-      center={[mapCenter.lat, mapCenter.lng]}
-      zoom={10}
-      style={{ height: '100%', width: '100%', borderRadius: '0.375rem' }}
-    >
-      <MapRef setMapRef={setMap} />
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      
-      <MapEvents />
-      
-      {/* User location marker */}
-      {userLocation && (
-        <Marker 
-          position={[userLocation.lat, userLocation.lon]}
-          icon={userIcon}
+    <div className="w-full h-full">
+      {doctors && doctors.length > 0 ? (
+        <MapContainer
+          center={[mapCenter.lat, mapCenter.lng]}
+          zoom={10}
+          style={{ height: '100%', width: '100%', borderRadius: '0.375rem' }}
         >
-          <Popup>
-            <div className="text-center">
-              <p className="font-semibold">Your Location</p>
-            </div>
-          </Popup>
-        </Marker>
-      )}
-      
-      {/* Doctor markers */}
-      {doctorsWithCoordinates.map((doctor) => (
-        doctor.coordinates && (
-          <Marker
-            key={doctor.id}
-            position={[doctor.coordinates.lat, doctor.coordinates.lon]}
-            icon={doctorIcon}
-          >
-            <Popup>
-              <div className="p-1 max-w-xs">
-                <h3 className="font-semibold text-lg">{doctor.full_name}</h3>
-                
-                {(doctor.address || doctor.city) && (
-                  <p className="text-sm text-gray-600 mt-1">
-                    {doctor.address || doctor.city}
-                  </p>
-                )}
-                
-                {doctor.distance !== undefined && (
-                  <p className="text-sm font-medium mt-1">
-                    Distance: {typeof doctor.distance === 'number' ? `${doctor.distance.toFixed(1)} km` : doctor.distance}
-                  </p>
-                )}
-                
-                <Button
-                  size="sm"
-                  className="w-full mt-2 flex items-center justify-center gap-2"
-                  onClick={() => onDoctorSelect(doctor.id, doctor.source)}
-                >
-                  <UserPlus className="h-4 w-4" />
-                  Connect
-                </Button>
-              </div>
-            </Popup>
-          </Marker>
-        )
-      ))}
-      
-      {doctorsWithCoordinates.length === 0 && !userLocation && (
-        <div className="leaflet-top leaflet-right">
-          <div className="leaflet-control leaflet-bar bg-background p-3 m-2 rounded-md shadow">
-            <p className="text-sm font-medium">No doctors found with location data</p>
+          <MapRef setMapRef={setMap} />
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          
+          <MapEvents />
+          
+          {/* User location marker */}
+          {userLocation && (
+            <Marker 
+              position={[Number(userLocation.lat), Number(userLocation.lon)]}
+              icon={userIcon}
+            >
+              <Popup>
+                <div className="text-center">
+                  <p className="font-semibold">Your Location</p>
+                </div>
+              </Popup>
+            </Marker>
+          )}
+          
+          {/* Doctor markers */}
+          {doctorsWithCoordinates.map((doctor) => {
+            const lat = Number(doctor.coordinates!.lat);
+            const lon = Number(doctor.coordinates!.lon);
+            
+            return (
+              <Marker
+                key={doctor.id}
+                position={[lat, lon]}
+                icon={doctorIcon}
+              >
+                <Popup>
+                  <div className="p-1 max-w-xs">
+                    <h3 className="font-semibold text-lg">{doctor.full_name}</h3>
+                    
+                    {(doctor.address || doctor.city) && (
+                      <p className="text-sm text-gray-600 mt-1">
+                        {doctor.address || doctor.city}
+                      </p>
+                    )}
+                    
+                    {doctor.distance !== undefined && (
+                      <p className="text-sm font-medium mt-1">
+                        Distance: {typeof doctor.distance === 'number' ? `${doctor.distance.toFixed(1)} km` : doctor.distance}
+                      </p>
+                    )}
+                    
+                    <Button
+                      size="sm"
+                      className="w-full mt-2 flex items-center justify-center gap-2"
+                      onClick={() => onDoctorSelect(doctor.id, doctor.source)}
+                    >
+                      <UserPlus className="h-4 w-4" />
+                      Connect
+                    </Button>
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          })}
+        </MapContainer>
+      ) : (
+        <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
+          <div className="text-center">
+            <p className="text-gray-500">Loading map...</p>
           </div>
         </div>
       )}
-    </MapContainer>
+    </div>
   );
 };
