@@ -1,3 +1,4 @@
+
 import { LocalCache } from './cache';
 import { calculateDistance } from './utils/distance';
 import type { OverpassResult, Pharmacy, Doctor } from './types/overpass.types';
@@ -127,12 +128,17 @@ export const searchDoctors = async (
   radius: number = 5000,
   countryCode: string = 'LU'
 ): Promise<Doctor[]> => {
+  console.log(`searchDoctors called with lat: ${lat}, lon: ${lon}, radius: ${radius}, country: ${countryCode}`);
+  
   const cacheKey = lat && lon 
     ? `doctors-${countryCode}-${lat}-${lon}-${radius}` 
     : `doctors-${countryCode}`;
     
   const cached = LocalCache.get<Doctor[]>(cacheKey);
-  if (cached) return cached;
+  if (cached) {
+    console.log(`Returning cached doctors results, count: ${cached.length}`);
+    return cached;
+  }
 
   // Choose query based on whether coordinates are provided
   let query;
@@ -145,21 +151,13 @@ export const searchDoctors = async (
       (
         node["healthcare"="doctor"](around:${radius},${lat},${lon});
         node["amenity"="doctors"](around:${radius},${lat},${lon});
+        node["healthcare"="clinic"](around:${radius},${lat},${lon});
+        node["amenity"="clinic"](around:${radius},${lat},${lon});
+        node["amenity"="hospital"](around:${radius},${lat},${lon});
         way["healthcare"="doctor"](around:${radius},${lat},${lon});
         way["amenity"="doctors"](around:${radius},${lat},${lon});
-      )->.nearby;
-      
-      // Then search within the country (if country code is provided)
-      area["ISO3166-1"="${countryCode}"][admin_level=2]->.country;
-      (
-        node["healthcare"="doctor"](area.country);
-        node["amenity"="doctors"](area.country);
-        way["healthcare"="doctor"](area.country);
-        way["amenity"="doctors"](area.country);
-      )->.incountry;
-      
-      // Combine results and output
-      (.nearby; .incountry;);
+        way["healthcare"="clinic"](around:${radius},${lat},${lon});
+      );
       out body;
       >;
       out skel qt;
@@ -173,14 +171,20 @@ export const searchDoctors = async (
       (
         node["healthcare"="doctor"](area.country);
         node["amenity"="doctors"](area.country);
+        node["healthcare"="clinic"](area.country);
+        node["amenity"="clinic"](area.country);
+        node["amenity"="hospital"](area.country);
         way["healthcare"="doctor"](area.country);
         way["amenity"="doctors"](area.country);
+        way["healthcare"="clinic"](area.country);
       );
       out body;
       >;
       out skel qt;
     `;
   }
+
+  console.log('Executing Overpass query for doctors');
 
   try {
     const data = await fetchFromOverpass(query);
@@ -191,7 +195,7 @@ export const searchDoctors = async (
       return [];
     }
     
-    console.log(`Found ${data.elements.length} doctors from Overpass API`);
+    console.log(`Found ${data.elements.length} raw elements from Overpass API`);
     
     // Process and deduplicate results
     const doctorMap = new Map();
@@ -207,21 +211,33 @@ export const searchDoctors = async (
         const elementLon = typeof element.lon === 'number' ? element.lon : null;
         const tags = element.tags || {};
         
-        // Only process elements with coordinates
-        if (elementLat !== null && elementLon !== null) {
+        // Only process elements with valid tags that suggest it's a doctor
+        const isDoctorOrClinic = 
+          tags["healthcare"] === "doctor" || 
+          tags["amenity"] === "doctors" ||
+          tags["healthcare"] === "clinic" ||
+          tags["amenity"] === "clinic" ||
+          tags["amenity"] === "hospital";
+          
+        if (isDoctorOrClinic && (elementLat !== null && elementLon !== null)) {
+          // Format address from available address components
+          const address = [
+            tags['addr:housenumber'],
+            tags['addr:street'],
+            tags['addr:city'],
+            tags['addr:postcode']
+          ].filter(Boolean).join(', ') || 'Address not available';
+          
           const doctor = {
             id: String(element.id || ''),
-            full_name: tags?.name || 'Unnamed Doctor',
-            name: tags?.name || 'Unnamed Doctor',
-            address: [
-              tags?.['addr:housenumber'],
-              tags?.['addr:street'],
-              tags?.['addr:city'],
-              tags?.['addr:postcode']
-            ].filter(Boolean).join(', ') || 'Address not available',
+            full_name: tags?.name || (tags?.operator || 'Unnamed Doctor'),
+            name: tags?.name || (tags?.operator || 'Unnamed Doctor'),
+            address,
             city: tags?.['addr:city'] || '',
             license_number: tags?.['healthcare:speciality'] || 'General Practice',
+            phone: tags?.['contact:phone'] || tags?.phone || '',
             email: tags?.['contact:email'] || tags?.email || '',
+            hours: tags?.opening_hours || '',
             coordinates: {
               lat: elementLat,
               lon: elementLon

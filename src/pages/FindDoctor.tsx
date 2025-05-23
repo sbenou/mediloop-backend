@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRecoilState, useRecoilValue } from 'recoil';
@@ -166,7 +167,7 @@ const FindDoctor = () => {
     }
   }, [doctors, searchRadius, isDoctorsLoading, isSearching, isUsingLocation]);
 
-  // Handle location toggle - similar to SearchPharmacy
+  // Handle location toggle
   const toggleLocationDisplay = useCallback((checked: boolean) => {
     setShowLocation(checked);
     setIsUsingLocation(checked);
@@ -182,7 +183,7 @@ const FindDoctor = () => {
             setIsUsingLocation(true);
             toast({
               title: "Using your location",
-              description: "Showing locations near you",
+              description: "Showing doctors near you",
             });
           },
           (error) => {
@@ -316,7 +317,14 @@ const FindDoctor = () => {
                           
                           <h3 className="font-semibold text-lg">{doctor.full_name}</h3>
                           
-                          {doctor.city && (
+                          {doctor.address && (
+                            <p className="text-sm text-gray-500 flex items-center gap-2">
+                              <MapPin className="h-4 w-4" />
+                              {doctor.address}
+                            </p>
+                          )}
+                          
+                          {doctor.city && !doctor.address && (
                             <p className="text-sm text-gray-500 flex items-center gap-2">
                               <MapPin className="h-4 w-4" />
                               {doctor.city || "Unknown location"}

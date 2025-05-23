@@ -16,6 +16,7 @@ interface Doctor {
   distance?: number;
   source?: 'database' | 'overpass';
   coordinates?: { lat: number; lon: number } | null;
+  address?: string;
 }
 
 export const useDoctorSearch = (
@@ -24,7 +25,7 @@ export const useDoctorSearch = (
 ) => {
   const selectedCountry = useRecoilValue(selectedCountryState);
   
-  const { data: doctors, isLoading } = useQuery({
+  const { data: doctors, isLoading, error } = useQuery({
     queryKey: ["doctors", coordinates?.lat, coordinates?.lon, searchRadius, selectedCountry],
     queryFn: async () => {
       // For country-based search when coordinates aren't available
@@ -32,10 +33,10 @@ export const useDoctorSearch = (
         console.log(`Searching for doctors in country: ${selectedCountry} without coordinates`);
         
         try {
-          // Get doctors from database first
+          // Get doctors from database first (without using coordinates field that doesn't exist)
           const { data: dbDoctors, error } = await supabase
             .from("profiles")
-            .select("id, full_name, city, license_number, coordinates, email, phone, hours")
+            .select("id, full_name, city, license_number, email, phone, hours")
             .eq("role", "doctor");
 
           if (error) {
@@ -51,7 +52,7 @@ export const useDoctorSearch = (
                 ...doc,
                 source: 'database' as const,
                 city: doc.city || 'Unknown location',  // Ensure city is never null
-                coordinates: doc.coordinates || null
+                coordinates: null // Since the database doesn't have coordinates field
               }))
             : [];
 
@@ -72,6 +73,8 @@ export const useDoctorSearch = (
               console.error('Invalid response from searchDoctors:', overpassDoctors);
               return formattedDbDoctors; // Return just database doctors
             }
+
+            console.log('Raw Overpass results:', overpassDoctors.length);
 
             // Add source field to Overpass results
             formattedOverpassDoctors = overpassDoctors
@@ -117,7 +120,7 @@ export const useDoctorSearch = (
           // Get doctors from database first
           const { data: dbDoctors, error } = await supabase
             .from("profiles")
-            .select("id, full_name, city, license_number, coordinates, email, phone, hours")
+            .select("id, full_name, city, license_number, email, phone, hours")
             .eq("role", "doctor");
 
           if (error) {
@@ -130,41 +133,15 @@ export const useDoctorSearch = (
           // Add source field to database results, handle null cities
           const formattedDbDoctors = Array.isArray(dbDoctors) 
             ? dbDoctors.map(doc => {
-                let distance = undefined;
-                if (doc.coordinates?.lat && doc.coordinates?.lon && coordinates) {
-                  const docLat = parseFloat(String(doc.coordinates.lat));
-                  const docLon = parseFloat(String(doc.coordinates.lon));
-                  
-                  if (!isNaN(docLat) && !isNaN(docLon)) {
-                    const calculatedDist = calculateDistance(
-                      coordinates.lat,
-                      coordinates.lon,
-                      docLat,
-                      docLon
-                    );
-                    
-                    if (typeof calculatedDist === 'number') {
-                      distance = parseFloat(calculatedDist.toFixed(1));
-                    }
-                  }
-                }
-                
                 return {
                   ...doc,
                   source: 'database' as const,
                   city: doc.city || 'Unknown location',  // Ensure city is never null
-                  coordinates: doc.coordinates || null,
-                  distance
+                  coordinates: null, // Since the database doesn't have coordinates field
+                  distance: undefined
                 };
               })
             : [];
-
-          // If there are no valid coordinates, just return the database doctors
-          if (!coordinates.lat || !coordinates.lon || 
-              isNaN(coordinates.lat) || isNaN(coordinates.lon)) {
-            console.log('Invalid coordinates, skipping overpass search');
-            return formattedDbDoctors;
-          }
 
           // Get doctors from Overpass API with current radius and country code
           let formattedOverpassDoctors = [];
@@ -184,6 +161,8 @@ export const useDoctorSearch = (
               console.error('Invalid response from searchDoctors:', overpassDoctors);
               return formattedDbDoctors; // Return just database doctors
             }
+
+            console.log('Raw Overpass results:', overpassDoctors.length);
 
             // Add source field to Overpass results and calculate distances
             formattedOverpassDoctors = overpassDoctors
@@ -259,7 +238,8 @@ export const useDoctorSearch = (
 
   return { 
     doctors: Array.isArray(doctors) ? doctors : [], 
-    isLoading 
+    isLoading,
+    error
   };
 };
 

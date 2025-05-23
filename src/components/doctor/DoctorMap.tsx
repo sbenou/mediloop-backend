@@ -1,13 +1,21 @@
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { Button } from "@/components/ui/button";
+import { Search, Map } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 interface Doctor {
   id: string;
   full_name: string;
   coordinates?: { lat: number; lon: number } | null;
   distance?: number;
+  city?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  hours?: string;
 }
 
 interface DoctorMapProps {
@@ -26,17 +34,19 @@ const DoctorMap = ({
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markers = useRef<mapboxgl.Marker[]>([]);
+  const [mapboxToken, setMapboxToken] = useState<string>(import.meta.env.VITE_MAPBOX_TOKEN || '');
+  const [tokenInput, setTokenInput] = useState<string>('');
 
   // Initialize and render map
   useEffect(() => {
     // Check for mapbox token - without it, we can't show the map
-    mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || '';
-    
-    if (!mapboxgl.accessToken) {
+    if (!mapboxToken) {
       console.error('Mapbox token is missing. Map cannot be displayed.');
       return;
     }
 
+    mapboxgl.accessToken = mapboxToken;
+    
     if (!mapContainer.current) return;
 
     console.log('Initializing map with user coordinates:', userCoordinates);
@@ -72,11 +82,11 @@ const DoctorMap = ({
       // Clean up map instance
       map.current?.remove();
     };
-  }, [userCoordinates, showUserLocation]);
+  }, [userCoordinates, showUserLocation, mapboxToken]);
 
   // Add doctor markers to map
   useEffect(() => {
-    if (!map.current) return;
+    if (!map.current || !mapboxToken) return;
 
     // Clear existing markers
     markers.current.forEach(marker => marker.remove());
@@ -141,6 +151,7 @@ const DoctorMap = ({
           }).setHTML(`
             <div class="p-2">
               <h3 class="text-sm font-medium">${doctor.full_name}</h3>
+              <p class="text-xs text-gray-500">${doctor.city || ''}</p>
               <p class="text-xs text-gray-500">${distanceStr}</p>
             </div>
           `);
@@ -195,11 +206,55 @@ const DoctorMap = ({
         duration: 1000
       });
     }
-  }, [doctors, userCoordinates, onDoctorSelect]);
+  }, [doctors, userCoordinates, onDoctorSelect, mapboxToken]);
+
+  const handleSetToken = () => {
+    setMapboxToken(tokenInput);
+    localStorage.setItem('mapbox_token', tokenInput);
+  };
+
+  // Try to load token from local storage if not provided via env
+  useEffect(() => {
+    if (!mapboxToken) {
+      const savedToken = localStorage.getItem('mapbox_token');
+      if (savedToken) {
+        setMapboxToken(savedToken);
+      }
+    }
+  }, [mapboxToken]);
 
   return (
     <div className="w-full h-full rounded-lg overflow-hidden border">
-      <div ref={mapContainer} className="w-full h-full" />
+      {!mapboxToken ? (
+        <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-gray-100">
+          <div className="text-center max-w-md space-y-4">
+            <Map className="w-12 h-12 mx-auto text-gray-400" />
+            <h3 className="text-xl font-semibold">Mapbox Token Required</h3>
+            <p className="text-gray-600">
+              Please enter your Mapbox public token to display the map.
+              You can get one for free at <a href="https://mapbox.com/" className="text-blue-500 underline" target="_blank" rel="noopener noreferrer">mapbox.com</a>
+            </p>
+            
+            <div className="flex gap-2">
+              <Input
+                value={tokenInput}
+                onChange={(e) => setTokenInput(e.target.value)}
+                placeholder="Enter Mapbox token"
+                className="flex-1"
+              />
+              <Button onClick={handleSetToken} type="button">
+                <Search className="mr-2 h-4 w-4" />
+                Set Token
+              </Button>
+            </div>
+            <p className="text-xs text-gray-500">
+              Your token will be saved in your browser for future use.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div ref={mapContainer} className="w-full h-full" />
+      )}
       
       {/* User location pulse animation */}
       <style>
