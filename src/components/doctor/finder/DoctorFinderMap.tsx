@@ -2,19 +2,24 @@
 import { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import 'leaflet-draw/dist/leaflet.draw.css';
 import { Button } from '@/components/ui/button';
 import { UserPlus } from 'lucide-react';
 import L from 'leaflet';
 import type { Doctor } from '@/lib/types/overpass.types';
 
-// Fix Leaflet marker icon issue
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+// Fix Leaflet marker icon issue with a safer approach
+const DefaultIcon = L.icon({
   iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
 });
+
+// Set the default icon
+L.Marker.prototype.options.icon = DefaultIcon;
 
 // Custom doctor icon
 const doctorIcon = new L.Icon({
@@ -60,6 +65,7 @@ export const DoctorFinderMap = ({
 }: DoctorFinderMapProps) => {
   const mapRef = useRef<L.Map | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
+  const [isMapLoading, setIsMapLoading] = useState(true);
   
   // Default to Luxembourg coordinates
   const defaultCenter = { lat: 49.8153, lng: 6.1296 };
@@ -72,6 +78,7 @@ export const DoctorFinderMap = ({
   const setMap = (map: L.Map) => {
     mapRef.current = map;
     setIsMapReady(true);
+    setIsMapLoading(false);
   };
 
   // Update map view when user toggles location
@@ -139,6 +146,7 @@ export const DoctorFinderMap = ({
     useMapEvents({
       load: () => {
         console.log('Map loaded successfully');
+        setIsMapLoading(false);
       },
     });
     
@@ -156,6 +164,16 @@ export const DoctorFinderMap = ({
       return !isNaN(lat) && !isNaN(lon);
     }
   ) || [];
+
+  if (isMapLoading) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
+        <div className="text-center">
+          <p className="text-gray-500">Loading map...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full h-full">
@@ -231,7 +249,7 @@ export const DoctorFinderMap = ({
       ) : (
         <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
           <div className="text-center">
-            <p className="text-gray-500">Loading map...</p>
+            <p className="text-gray-500">No doctors found</p>
           </div>
         </div>
       )}
