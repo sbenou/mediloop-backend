@@ -3,7 +3,6 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { MapPin, Map as MapIcon, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { UserPlus } from 'lucide-react';
 import { getMapboxToken } from '@/services/mapbox';
 import { LocalCache } from '@/lib/cache';
 import mapboxgl from 'mapbox-gl';
