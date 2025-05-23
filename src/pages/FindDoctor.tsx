@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRecoilState, useRecoilValue } from 'recoil';
@@ -42,7 +41,7 @@ const FindDoctor = () => {
   const selectedCountry = useRecoilValue(selectedCountryState);
   const { userProfile } = usePharmacyState(session);
   
-  const [searchRadius, setSearchRadius] = useState(2000);
+  const [searchRadius, setSearchRadius] = useState(5000); // Start with a larger radius
   const [initialLocationSet, setInitialLocationSet] = useState(false);
   const [showLocation, setShowLocation] = useState(false);
   const [selectedDoctorId, setSelectedDoctorId] = useState<string | null>(null);
@@ -84,7 +83,10 @@ const FindDoctor = () => {
           lat: Number(userLocation.lat),
           lon: Number(userLocation.lon)
         }
-      : null;
+      : {
+          lat: Number(LUXEMBOURG_COORDINATES.lat),
+          lon: Number(LUXEMBOURG_COORDINATES.lon)
+        };
 
   const { doctors, isLoading: isDoctorsLoading } = useDoctorSearch(
     isUsingLocation ? currentCoordinates : null, 
@@ -115,19 +117,19 @@ const FindDoctor = () => {
       }
       
       // Otherwise fall back to profile city or session-based initialization
-      if (!session) {
+      if (!coordinates) {
         // Fall back to default location
-        setIsUsingLocation(false);
-        setShowLocation(false);
-        
-        if (!coordinates) {
+        if (userProfile?.city) {
+          console.log('Using profile city:', userProfile.city);
+          handleCitySearch(userProfile.city);
+        } else {
+          console.log('Using default city: Luxembourg City');
           handleCitySearch("Luxembourg City");
         }
-      } else if (!coordinates && userProfile?.city) {
-        handleCitySearch(userProfile.city);
-      } else if (!coordinates) {
-        // Fallback to ensure we always have coordinates
-        handleCitySearch("Luxembourg City");
+        
+        // Start with location-based search off by default
+        setIsUsingLocation(false);
+        setShowLocation(false);
       }
       
       setInitialLocationSet(true);
@@ -137,6 +139,7 @@ const FindDoctor = () => {
       setIsUsingLocation(false);
       setShowLocation(false);
       handleCitySearch("Luxembourg City");
+      setInitialLocationSet(true);
     }
   }, [
     session, 
@@ -156,16 +159,15 @@ const FindDoctor = () => {
     if (
       Array.isArray(doctors) && 
       doctors.length === 0 && 
-      searchRadius < 10000 &&
+      searchRadius < 20000 &&  // Increased max radius
       !isSearching && 
-      !isDoctorsLoading &&
-      isUsingLocation // Only auto-expand when in location mode
+      !isDoctorsLoading
     ) {
-      const newRadius = Math.min(searchRadius + 2000, 10000);
-      console.log(`Increasing radius from ${searchRadius} to ${newRadius}`);
+      const newRadius = Math.min(searchRadius + 5000, 20000);
+      console.log(`Increasing radius from ${searchRadius} to ${newRadius} because no doctors found`);
       setSearchRadius(newRadius);
     }
-  }, [doctors, searchRadius, isDoctorsLoading, isSearching, isUsingLocation]);
+  }, [doctors, searchRadius, isDoctorsLoading, isSearching]);
 
   // Handle location toggle
   const toggleLocationDisplay = useCallback((checked: boolean) => {
@@ -199,7 +201,7 @@ const FindDoctor = () => {
       }
       
       // Reset search radius when enabling location
-      setSearchRadius(2000);
+      setSearchRadius(5000);
     } else {
       // When disabling location-based search
       setIsUsingLocation(false);
@@ -269,6 +271,15 @@ const FindDoctor = () => {
   console.log(`Rendering doctors in ${selectedCountry || 'unknown country'}, found ${doctors?.length || 0} doctors, using location: ${isUsingLocation}`);
   console.log('Current coordinates for search:', currentCoordinates);
 
+  // Force a search if no results after initialization
+  useEffect(() => {
+    if (initialLocationSet && Array.isArray(doctors) && doctors.length === 0 && !isDoctorsLoading && !isSearching) {
+      console.log('No doctors found after initialization, triggering a country-wide search');
+      setIsUsingLocation(false); // Disable location-based search to fall back to country search
+      handleCitySearch("Luxembourg City"); // Force search for Luxembourg City
+    }
+  }, [initialLocationSet, doctors, isDoctorsLoading, isSearching]);
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
@@ -297,7 +308,15 @@ const FindDoctor = () => {
               <div className="grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-6">
                 {/* Doctor List */}
                 <div className="space-y-4 overflow-y-auto pr-2 h-[calc(100vh-220px)]">
-                  {Array.isArray(doctors) && doctors.length > 0 ? doctors.map((doctor) => (
+                  {isDoctorsLoading && (
+                    <>
+                      <Skeleton className="h-40 w-full" />
+                      <Skeleton className="h-40 w-full" />
+                      <Skeleton className="h-40 w-full" />
+                    </>
+                  )}
+                  
+                  {!isDoctorsLoading && Array.isArray(doctors) && doctors.length > 0 ? doctors.map((doctor) => (
                     <Card 
                       key={doctor.id} 
                       className={`overflow-hidden ${selectedDoctorId === doctor.id ? 'ring-2 ring-primary shadow-md' : ''}`}
@@ -375,11 +394,26 @@ const FindDoctor = () => {
                       </CardContent>
                     </Card>
                   )) : (
-                    <p className="text-center py-8">
-                      {isUsingLocation
-                        ? "No doctors found nearby. Try disabling location to see doctors in the country."
-                        : `No doctors found in ${selectedCountry || 'selected country'}.`}
-                    </p>
+                    <div className="text-center py-8">
+                      <p className="text-lg mb-4">
+                        {isDoctorsLoading 
+                          ? "Loading doctors..." 
+                          : isUsingLocation
+                            ? "No doctors found nearby. Try disabling location to see doctors in the country."
+                            : `No doctors found in ${selectedCountry || 'selected country'}.`}
+                      </p>
+                      {!isDoctorsLoading && (
+                        <Button 
+                          onClick={() => {
+                            setSearchRadius(10000);
+                            setIsUsingLocation(false);
+                            handleCitySearch("Luxembourg City");
+                          }}
+                        >
+                          Search all of Luxembourg
+                        </Button>
+                      )}
+                    </div>
                   )}
                 </div>
                 

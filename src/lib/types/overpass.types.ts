@@ -46,4 +46,6 @@ export interface Doctor extends Location {
   city: string;
   license_number: string;
   email?: string;
+  phone?: string;
+  hours?: string;
 }

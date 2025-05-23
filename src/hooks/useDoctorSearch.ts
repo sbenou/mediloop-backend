@@ -19,6 +19,23 @@ interface Doctor {
   address?: string;
 }
 
+// Helper function to calculate distance between two points
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
+  if (isNaN(lat1) || isNaN(lon1) || isNaN(lat2) || isNaN(lon2)) {
+    return 'Invalid coordinates';
+  }
+  
+  const R = 6371; // Radius of the Earth in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+          Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const distance = R * c;
+  return distance;
+}
+
 export const useDoctorSearch = (
   coordinates: { lat: number; lon: number } | null,
   searchRadius: number
@@ -28,12 +45,14 @@ export const useDoctorSearch = (
   const { data: doctors, isLoading, error } = useQuery({
     queryKey: ["doctors", coordinates?.lat, coordinates?.lon, searchRadius, selectedCountry],
     queryFn: async () => {
+      console.log(`Starting doctor search with coordinates: ${JSON.stringify(coordinates)}, radius: ${searchRadius}, country: ${selectedCountry}`);
+      
       // For country-based search when coordinates aren't available
       if (!coordinates && selectedCountry) {
         console.log(`Searching for doctors in country: ${selectedCountry} without coordinates`);
         
         try {
-          // Get doctors from database first (without using coordinates field that doesn't exist)
+          // Get doctors from database first
           const { data: dbDoctors, error } = await supabase
             .from("profiles")
             .select("id, full_name, city, license_number, email, phone, hours")
@@ -51,7 +70,7 @@ export const useDoctorSearch = (
             ? dbDoctors.map(doc => ({
                 ...doc,
                 source: 'database' as const,
-                city: doc.city || 'Unknown location',  // Ensure city is never null
+                city: doc.city || 'Unknown location',
                 coordinates: null // Since the database doesn't have coordinates field
               }))
             : [];
@@ -65,7 +84,7 @@ export const useDoctorSearch = (
             const overpassDoctors = await searchDoctors(
               null, // No lat
               null, // No lon
-              0,    // No radius needed
+              0,    // No radius needed for country search
               countryCode
             );
             
@@ -81,7 +100,7 @@ export const useDoctorSearch = (
               .filter(doc => doc && typeof doc === 'object')
               .map(doc => ({
                 ...doc,
-                city: doc.city || 'Unknown location',  // Ensure city is never null
+                city: doc.city || 'Unknown location',
                 source: 'overpass' as const
               }));
 
@@ -136,7 +155,7 @@ export const useDoctorSearch = (
                 return {
                   ...doc,
                   source: 'database' as const,
-                  city: doc.city || 'Unknown location',  // Ensure city is never null
+                  city: doc.city || 'Unknown location',
                   coordinates: null, // Since the database doesn't have coordinates field
                   distance: undefined
                 };
@@ -147,7 +166,7 @@ export const useDoctorSearch = (
           let formattedOverpassDoctors = [];
           try {
             const countryCode = selectedCountry || 'LU';
-            console.log(`Searching for doctors in country: ${countryCode} with radius: ${searchRadius}`);
+            console.log(`Searching for doctors with coordinates in country: ${countryCode} with radius: ${searchRadius}`);
             
             const overpassDoctors = await searchDoctors(
               coordinates.lat,
@@ -189,7 +208,7 @@ export const useDoctorSearch = (
                 
                 return {
                   ...doc,
-                  city: doc.city || 'Unknown location',  // Ensure city is never null
+                  city: doc.city || 'Unknown location',
                   source: 'overpass' as const,
                   distance
                 };
@@ -222,9 +241,16 @@ export const useDoctorSearch = (
         }
       }
       
-      // Fallback if neither coordinates nor country are available
-      console.log('No coordinates or country provided for doctor search');
-      return [];
+      // Fallback to just a country search if nothing else works
+      try {
+        console.log('Falling back to country-only search with country code:', selectedCountry || 'LU');
+        const countryDoctors = await searchDoctors(null, null, 0, selectedCountry || 'LU');
+        console.log('Fallback search found:', countryDoctors?.length || 0, 'doctors');
+        return countryDoctors;
+      } catch (fallbackErr) {
+        console.error("Error in fallback doctor search:", fallbackErr);
+        return [];
+      }
     },
     // Query configuration
     staleTime: 1000 * 60 * 5, // 5 minutes stale time
@@ -233,7 +259,6 @@ export const useDoctorSearch = (
     refetchOnWindowFocus: false,
     refetchOnMount: true,
     refetchInterval: false, // Disable automatic refetching
-    enabled: Boolean(coordinates) || Boolean(selectedCountry), // Run when we have coordinates OR a selected country
   });
 
   return { 
@@ -242,20 +267,3 @@ export const useDoctorSearch = (
     error
   };
 };
-
-// Helper function to calculate distance between two points
-function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
-  if (isNaN(lat1) || isNaN(lon1) || isNaN(lat2) || isNaN(lon2)) {
-    return 'Invalid coordinates';
-  }
-  
-  const R = 6371; // Radius of the Earth in km
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-          Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  const distance = R * c;
-  return distance;
-}
