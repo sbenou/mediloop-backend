@@ -14,7 +14,6 @@ import { CartProvider } from '@/contexts/CartContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { ScrollToTopButton } from '@/components/ui/scroll-to-top';
 import { CookieConsent } from '@/components/cookies/CookieConsent';
-import CountrySelector from '@/components/CountrySelector';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -22,24 +21,25 @@ const Home = () => {
   // Add detailed logging to help debug
   useEffect(() => {
     console.log("Home page mounted - debugging blank page issue");
-    console.log("Current URL:", window.location.href);
-    console.log("Starting to render Home sections");
+    document.title = "Home - MediLoop";
     
-    // Force a re-render after a short delay to see if that helps
-    const timer = setTimeout(() => {
-      console.log("Forcing re-render of Home component");
-      // This will trigger a re-render
-      navigate('/', { replace: true });
-    }, 500);
-    
-    return () => clearTimeout(timer);
-  }, [navigate]);
+    // Log window dimensions
+    console.log("Window dimensions:", {
+      width: window.innerWidth,
+      height: window.innerHeight
+    });
+  }, []);
 
   // Log outside the JSX
   console.log("Rendering Home JSX");
   
   return (
     <div className="min-h-screen flex flex-col bg-white">
+      {/* Debug element - highly visible */}
+      <div className="fixed top-0 left-0 right-0 bg-red-500 text-white p-2 z-[9999] text-center">
+        Debug: If you see this, the Home component is rendering
+      </div>
+      
       <CurrencyProvider>
         <CartProvider>
           <UnifiedHeader />

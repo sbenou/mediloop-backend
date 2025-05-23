@@ -1,4 +1,3 @@
-
 import { Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -48,6 +47,9 @@ export default function AppRoutes() {
   
   return (
     <div className="app-root">
+      <div className="fixed top-5 right-5 bg-blue-500 text-white p-2 z-[9999] rounded">
+        AppRoutes Loaded
+      </div>
       <Routes>
         {/* Public routes that don't require authentication */}
         <Route path="/" element={<Home />} />
