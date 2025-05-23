@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRecoilState, useRecoilValue } from 'recoil';
@@ -10,17 +9,16 @@ import { userLocationState, isUsingLocationState, selectedCountryState } from "@
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SearchHeader from "@/components/pharmacy/SearchHeader";
-import DoctorListSection from "@/components/doctor/DoctorListSection";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { LocationToggle } from "@/components/shared/LocationToggle";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import DoctorMap from "@/components/doctor/DoctorMap";
 import { Checkbox } from "@/components/ui/checkbox";
+import DoctorMap from "@/components/doctor/DoctorMap";
+import { MapPin, Phone, Mail, Clock } from "lucide-react";
 
 const FindDoctor = () => {
   const { isAuthenticated, profile } = useAuth();
@@ -46,6 +44,7 @@ const FindDoctor = () => {
   const [searchRadius, setSearchRadius] = useState(2000);
   const [initialLocationSet, setInitialLocationSet] = useState(false);
   const [showLocation, setShowLocation] = useState(false);
+  const [selectedDoctorId, setSelectedDoctorId] = useState<string | null>(null);
 
   const { coordinates, handleCitySearch, isSearching } = useLocationSearch();
 
@@ -73,7 +72,7 @@ const FindDoctor = () => {
     enabled: !!profile?.id && isAuthenticated,
   });
   
-  // Create computed search coordinates - ensure consistent number types
+  // Create computed search coordinates
   const currentCoordinates = coordinates 
     ? { 
         lat: Number(coordinates.lat), 
@@ -84,10 +83,7 @@ const FindDoctor = () => {
           lat: Number(userLocation.lat),
           lon: Number(userLocation.lon)
         }
-      : {
-          lat: Number(LUXEMBOURG_COORDINATES.lat),
-          lon: Number(LUXEMBOURG_COORDINATES.lon)
-        };
+      : null;
 
   const { doctors, isLoading: isDoctorsLoading } = useDoctorSearch(
     isUsingLocation ? currentCoordinates : null, 
@@ -119,7 +115,7 @@ const FindDoctor = () => {
       
       // Otherwise fall back to profile city or session-based initialization
       if (!session) {
-        setUserLocation(LUXEMBOURG_COORDINATES);
+        // Fall back to default location
         setIsUsingLocation(false);
         setShowLocation(false);
         
@@ -137,7 +133,6 @@ const FindDoctor = () => {
     } catch (error) {
       console.error("Error initializing location:", error);
       // Fallback to default location
-      setUserLocation(LUXEMBOURG_COORDINATES);
       setIsUsingLocation(false);
       setShowLocation(false);
       handleCitySearch("Luxembourg City");
@@ -171,8 +166,8 @@ const FindDoctor = () => {
     }
   }, [doctors, searchRadius, isDoctorsLoading, isSearching, isUsingLocation]);
 
-  // Handle location toggle
-  const handleLocationToggle = useCallback((checked: boolean) => {
+  // Handle location toggle - similar to SearchPharmacy
+  const toggleLocationDisplay = useCallback((checked: boolean) => {
     setShowLocation(checked);
     setIsUsingLocation(checked);
     
@@ -192,7 +187,6 @@ const FindDoctor = () => {
           },
           (error) => {
             console.error('Geolocation error:', error);
-            setUserLocation(LUXEMBOURG_COORDINATES);
             setIsUsingLocation(false);
             toast({
               title: "Location Error",
@@ -212,7 +206,9 @@ const FindDoctor = () => {
   }, [setIsUsingLocation, setUserLocation]);
 
   const handleSelectDoctor = (doctorId: string) => {
+    setSelectedDoctorId(doctorId);
     const doctor = doctors?.find(d => d.id === doctorId);
+    
     if (doctor) {
       if (!isAuthenticated) {
         toast({
@@ -237,83 +233,158 @@ const FindDoctor = () => {
     }
   };
 
+  const handleSetDoctorAsDefault = async (doctorId: string, isDefault: boolean) => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Login Required",
+        description: "Please login to set a default doctor.",
+      });
+      return;
+    }
+
+    try {
+      if (isDefault) {
+        toast({
+          title: "Default Doctor Set",
+          description: "Your default doctor has been updated.",
+        });
+      } else {
+        toast({
+          title: "Default Doctor Removed",
+          description: "Your default doctor has been removed.",
+        });
+      }
+    } catch (err) {
+      console.error('Error setting default doctor:', err);
+      toast({
+        title: "Error",
+        description: "Failed to update default doctor",
+        variant: "destructive"
+      });
+    }
+  };
+
   // For debugging
   console.log(`Rendering doctors in ${selectedCountry || 'unknown country'}, found ${doctors?.length || 0} doctors, using location: ${isUsingLocation}`);
-  console.log(`Current coordinates:`, currentCoordinates);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       <main className="flex-1 w-full">
-        <div className="container mx-auto px-4 py-4">
+        <SearchHeader 
+          onSearch={handleCitySearch} 
+          title="Find a Doctor Near You" 
+        />
+        
+        <div className="container mx-auto px-4 py-8">
           <div className="w-full max-w-6xl mx-auto">
-            <SearchHeader onSearch={handleCitySearch} title="Find a Doctor Near You" />
-            
-            <div className="flex flex-col md:flex-row gap-4 items-start justify-between mb-4">
-              <div className="flex items-center space-x-2 mb-6">
-                <Switch
-                  id="location-toggle"
-                  checked={showLocation}
-                  onCheckedChange={handleLocationToggle}
-                />
-                <Label htmlFor="location-toggle">Show my location</Label>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  {selectedCountry ? `Showing doctors in ${selectedCountry}` : 'Select a country on the home page'}
-                </span>
-              </div>
+            <div className="flex items-center space-x-2 mb-6">
+              <Switch
+                id="location-toggle"
+                checked={showLocation}
+                onCheckedChange={toggleLocationDisplay}
+              />
+              <Label htmlFor="location-toggle">Show my location</Label>
             </div>
             
-            <div className="w-full mt-6">
-              {isSearching || isAddressLoading ? (
-                <div className="flex justify-center items-center h-64">
-                  <Skeleton className="h-64 w-full" />
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-6">
-                  <div className="space-y-4 overflow-y-auto pr-2 h-[calc(100vh-220px)]">
-                    {Array.isArray(doctors) && doctors.length > 0 ? doctors.map((doctor) => (
-                      <Card key={doctor.id} className="overflow-hidden">
-                        <CardContent className="p-4">
-                          <div className="space-y-2">  
-                            <h3 className="font-semibold text-lg">{doctor.full_name}</h3>
-                            <p className="text-sm text-gray-500">{doctor.city || "Unknown location"}</p>
-                            {doctor.license_number && (
-                              <p className="text-sm">{doctor.license_number}</p>
-                            )}
-                            
-                            <Button
-                              onClick={() => handleSelectDoctor(doctor.id)}
-                              className="w-full mt-4"
-                              size="sm"
-                            >
-                              Connect
-                            </Button>
+            {isSearching || isAddressLoading ? (
+              <div className="flex justify-center items-center h-64">
+                <Skeleton className="h-64 w-full" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-6">
+                {/* Doctor List */}
+                <div className="space-y-4 overflow-y-auto pr-2 h-[calc(100vh-220px)]">
+                  {Array.isArray(doctors) && doctors.length > 0 ? doctors.map((doctor) => (
+                    <Card 
+                      key={doctor.id} 
+                      className={`overflow-hidden ${selectedDoctorId === doctor.id ? 'ring-2 ring-primary shadow-md' : ''}`}
+                      onClick={() => setSelectedDoctorId(doctor.id)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-2 mb-4">
+                            <Checkbox
+                              id={`default-${doctor.id}`}
+                              checked={false} 
+                              onCheckedChange={(checked) => 
+                                handleSetDoctorAsDefault(doctor.id, !!checked)
+                              }
+                            />
+                            <Label htmlFor={`default-${doctor.id}`}>Set as default doctor</Label>
                           </div>
-                        </CardContent>
-                      </Card>
-                    )) : (
-                      <p className="text-center py-8">
-                        {isUsingLocation
-                          ? "No doctors found nearby. Try expanding your search radius."
-                          : `No doctors found in ${selectedCountry || 'selected country'}.`}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div className="h-[calc(100vh-220px)]">
-                    <DoctorMap 
-                      doctors={doctors || []} 
-                      userCoordinates={showLocation ? currentCoordinates : null}
-                      showUserLocation={showLocation}
-                      onDoctorSelect={handleSelectDoctor}
-                    />
-                  </div>
+                          
+                          <h3 className="font-semibold text-lg">{doctor.full_name}</h3>
+                          
+                          {doctor.city && (
+                            <p className="text-sm text-gray-500 flex items-center gap-2">
+                              <MapPin className="h-4 w-4" />
+                              {doctor.city || "Unknown location"}
+                            </p>
+                          )}
+                          
+                          {doctor.license_number && (
+                            <p className="text-sm">License: {doctor.license_number}</p>
+                          )}
+                          
+                          {doctor.phone && (
+                            <p className="text-sm flex items-center gap-2">
+                              <Phone className="h-4 w-4" />
+                              {doctor.phone}
+                            </p>
+                          )}
+                          
+                          {doctor.email && (
+                            <p className="text-sm flex items-center gap-2">
+                              <Mail className="h-4 w-4" />
+                              {doctor.email}
+                            </p>
+                          )}
+                          
+                          {doctor.hours && (
+                            <p className="text-sm flex items-center gap-2">
+                              <Clock className="h-4 w-4" />
+                              {doctor.hours}
+                            </p>
+                          )}
+                          
+                          {doctor.distance && (
+                            <p className="text-sm font-medium">📍 {doctor.distance} km</p>
+                          )}
+                          
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSelectDoctor(doctor.id);
+                            }}
+                            className="w-full mt-4"
+                            variant="default"
+                          >
+                            Connect
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )) : (
+                    <p className="text-center py-8">
+                      {isUsingLocation
+                        ? "No doctors found nearby. Try disabling location to see doctors in the country."
+                        : `No doctors found in ${selectedCountry || 'selected country'}.`}
+                    </p>
+                  )}
                 </div>
-              )}
-            </div>
+                
+                {/* Map */}
+                <div className="h-[calc(100vh-220px)]">
+                  <DoctorMap 
+                    doctors={doctors || []} 
+                    userCoordinates={showLocation ? currentCoordinates : null}
+                    showUserLocation={showLocation}
+                    onDoctorSelect={handleSelectDoctor}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </main>

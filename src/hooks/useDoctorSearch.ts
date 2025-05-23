@@ -10,6 +10,10 @@ interface Doctor {
   full_name: string;
   city: string | null;
   license_number: string;
+  phone?: string | null;
+  email?: string | null;
+  hours?: string | null;
+  distance?: number;
   source?: 'database' | 'overpass';
   coordinates?: { lat: number; lon: number } | null;
 }
@@ -31,7 +35,7 @@ export const useDoctorSearch = (
           // Get doctors from database first
           const { data: dbDoctors, error } = await supabase
             .from("profiles")
-            .select("id, full_name, city, license_number, coordinates")
+            .select("id, full_name, city, license_number, coordinates, email, phone, hours")
             .eq("role", "doctor");
 
           if (error) {
@@ -113,7 +117,7 @@ export const useDoctorSearch = (
           // Get doctors from database first
           const { data: dbDoctors, error } = await supabase
             .from("profiles")
-            .select("id, full_name, city, license_number, coordinates")
+            .select("id, full_name, city, license_number, coordinates, email, phone, hours")
             .eq("role", "doctor");
 
           if (error) {
@@ -125,12 +129,34 @@ export const useDoctorSearch = (
 
           // Add source field to database results, handle null cities
           const formattedDbDoctors = Array.isArray(dbDoctors) 
-            ? dbDoctors.map(doc => ({
-                ...doc,
-                source: 'database' as const,
-                city: doc.city || 'Unknown location',  // Ensure city is never null
-                coordinates: doc.coordinates || null
-              }))
+            ? dbDoctors.map(doc => {
+                let distance = undefined;
+                if (doc.coordinates?.lat && doc.coordinates?.lon && coordinates) {
+                  const docLat = parseFloat(String(doc.coordinates.lat));
+                  const docLon = parseFloat(String(doc.coordinates.lon));
+                  
+                  if (!isNaN(docLat) && !isNaN(docLon)) {
+                    const calculatedDist = calculateDistance(
+                      coordinates.lat,
+                      coordinates.lon,
+                      docLat,
+                      docLon
+                    );
+                    
+                    if (typeof calculatedDist === 'number') {
+                      distance = parseFloat(calculatedDist.toFixed(1));
+                    }
+                  }
+                }
+                
+                return {
+                  ...doc,
+                  source: 'database' as const,
+                  city: doc.city || 'Unknown location',  // Ensure city is never null
+                  coordinates: doc.coordinates || null,
+                  distance
+                };
+              })
             : [];
 
           // If there are no valid coordinates, just return the database doctors
@@ -159,14 +185,36 @@ export const useDoctorSearch = (
               return formattedDbDoctors; // Return just database doctors
             }
 
-            // Add source field to Overpass results
+            // Add source field to Overpass results and calculate distances
             formattedOverpassDoctors = overpassDoctors
               .filter(doc => doc && typeof doc === 'object')
-              .map(doc => ({
-                ...doc,
-                city: doc.city || 'Unknown location',  // Ensure city is never null
-                source: 'overpass' as const
-              }));
+              .map(doc => {
+                let distance = undefined;
+                if (doc.coordinates?.lat && doc.coordinates?.lon && coordinates) {
+                  const docLat = parseFloat(String(doc.coordinates.lat));
+                  const docLon = parseFloat(String(doc.coordinates.lon));
+                  
+                  if (!isNaN(docLat) && !isNaN(docLon)) {
+                    const calculatedDist = calculateDistance(
+                      coordinates.lat,
+                      coordinates.lon,
+                      docLat,
+                      docLon
+                    );
+                    
+                    if (typeof calculatedDist === 'number') {
+                      distance = parseFloat(calculatedDist.toFixed(1));
+                    }
+                  }
+                }
+                
+                return {
+                  ...doc,
+                  city: doc.city || 'Unknown location',  // Ensure city is never null
+                  source: 'overpass' as const,
+                  distance
+                };
+              });
 
             console.log('Overpass doctors found:', formattedOverpassDoctors.length);
           } catch (overpassError) {
@@ -176,25 +224,7 @@ export const useDoctorSearch = (
           }
 
           // Combine all doctors
-          const allDoctors = [];
-          
-          // Add database doctors first
-          if (Array.isArray(formattedDbDoctors)) {
-            formattedDbDoctors.forEach(doc => {
-              if (doc && doc.id) {
-                allDoctors.push(doc);
-              }
-            });
-          }
-          
-          // Then add overpass doctors
-          if (Array.isArray(formattedOverpassDoctors)) {
-            formattedOverpassDoctors.forEach(doc => {
-              if (doc && doc.id) {
-                allDoctors.push(doc);
-              }
-            });
-          }
+          const allDoctors = [...formattedDbDoctors, ...formattedOverpassDoctors];
           
           // Remove duplicates based on id
           const doctorMap = new Map();
@@ -232,3 +262,20 @@ export const useDoctorSearch = (
     isLoading 
   };
 };
+
+// Helper function to calculate distance between two points
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
+  if (isNaN(lat1) || isNaN(lon1) || isNaN(lat2) || isNaN(lon2)) {
+    return 'Invalid coordinates';
+  }
+  
+  const R = 6371; // Radius of the Earth in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+          Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const distance = R * c;
+  return distance;
+}

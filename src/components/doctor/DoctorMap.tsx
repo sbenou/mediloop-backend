@@ -2,12 +2,12 @@
 import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { calculateDistance } from '@/lib/utils/distance';
 
 interface Doctor {
   id: string;
   full_name: string;
   coordinates?: { lat: number; lon: number } | null;
+  distance?: number;
 }
 
 interface DoctorMapProps {
@@ -39,6 +39,8 @@ const DoctorMap = ({
 
     if (!mapContainer.current) return;
 
+    console.log('Initializing map with user coordinates:', userCoordinates);
+
     // Initialize map
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
@@ -54,6 +56,7 @@ const DoctorMap = ({
 
     // Add user location marker if available
     if (showUserLocation && userCoordinates?.lat && userCoordinates?.lon) {
+      console.log('Adding user location marker at:', userCoordinates);
       const userLocationMarker = document.createElement('div');
       userLocationMarker.className = 'absolute w-6 h-6 bg-blue-500 border-2 border-white rounded-full pulse';
 
@@ -113,31 +116,19 @@ const DoctorMap = ({
             return;
           }
           
-          // Calculate distance if user location is available
+          // Get distance string if available
           let distanceStr = '';
-          if (userCoordinates?.lat && userCoordinates?.lon) {
-            const distance = calculateDistance(
-              userCoordinates.lat,
-              userCoordinates.lon,
-              doctorLat,
-              doctorLon
-            );
-            
-            if (typeof distance === 'number') {
-              distanceStr = `(${distance.toFixed(1)} km)`;
-            } else {
-              distanceStr = `(${distance})`;
-            }
+          if (doctor.distance) {
+            distanceStr = `(${doctor.distance} km)`;
           }
           
           // Create marker element
           const markerElement = document.createElement('div');
           markerElement.className = 'cursor-pointer';
           markerElement.innerHTML = `
-            <div class="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white relative group">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            <div class="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
               </svg>
             </div>
           `;
@@ -145,7 +136,8 @@ const DoctorMap = ({
           // Create popup
           const popup = new mapboxgl.Popup({ 
             offset: 25,
-            closeButton: false
+            closeButton: false,
+            className: 'doctor-popup'
           }).setHTML(`
             <div class="p-2">
               <h3 class="text-sm font-medium">${doctor.full_name}</h3>
@@ -161,6 +153,7 @@ const DoctorMap = ({
             
           // Add click handler
           markerElement.addEventListener('click', () => {
+            console.log('Doctor marker clicked:', doctor.id);
             onDoctorSelect(doctor.id);
           });
           
@@ -174,7 +167,9 @@ const DoctorMap = ({
     
     // Fit map to markers if we have any
     if (markers.current.length > 0) {
+      console.log('Fitting map to markers');
       const bounds = new mapboxgl.LngLatBounds();
+      
       markers.current.forEach(marker => {
         bounds.extend(marker.getLngLat());
       });
@@ -185,15 +180,18 @@ const DoctorMap = ({
       }
       
       map.current.fitBounds(bounds, { 
-        padding: 70, 
+        padding: 50,
         maxZoom: 13,
         duration: 1000
       });
-    } else if (!userCoordinates) {
+    } else if (doctors.length === 0) {
+      console.log('No markers to add, centering map on default location or user location');
       // If no markers and no user coordinates, center on Luxembourg
       map.current.flyTo({
-        center: [6.1296, 49.8153],
-        zoom: 9,
+        center: userCoordinates 
+          ? [userCoordinates.lon, userCoordinates.lat]
+          : [6.1296, 49.8153],
+        zoom: userCoordinates ? 12 : 9,
         duration: 1000
       });
     }
@@ -226,6 +224,11 @@ const DoctorMap = ({
             transform: scale(3);
             opacity: 0;
           }
+        }
+        
+        .doctor-popup .mapboxgl-popup-content {
+          border-radius: 8px;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         `}
       </style>
