@@ -13,8 +13,12 @@ interface Doctor {
   phone?: string;
   email?: string;
   hours?: string;
-  distance?: number;
+  distance?: number | string;
   source?: 'database' | 'overpass';
+  coordinates?: {
+    lat: number;
+    lon: number;
+  } | null;
 }
 
 interface DoctorFinderListProps {

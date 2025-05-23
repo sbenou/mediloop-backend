@@ -1,9 +1,27 @@
+
 import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { searchDoctors } from "@/lib/overpass";
 import { supabase } from '@/lib/supabase';
 import { useRecoilValue } from 'recoil';
 import { selectedCountryState } from '@/store/location/atoms';
+
+interface Doctor {
+  id: string;
+  full_name: string;
+  city?: string;
+  license_number?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  hours?: string;
+  distance?: number | string;
+  source?: 'database' | 'overpass';
+  coordinates?: {
+    lat: number;
+    lon: number;
+  } | null;
+}
 
 export const useDoctorFinder = (
   userLocation: { lat: number; lon: number } | null
@@ -37,7 +55,7 @@ export const useDoctorFinder = (
         console.log('Database doctors:', dbDoctors?.length || 0);
         
         // Format database doctors
-        const formattedDbDoctors = dbDoctors?.map(doctor => ({
+        const formattedDbDoctors: Doctor[] = dbDoctors?.map(doctor => ({
           id: doctor.id,
           full_name: doctor.full_name || 'Unknown Doctor',
           city: doctor.city || 'Unknown location',
@@ -45,7 +63,8 @@ export const useDoctorFinder = (
           email: doctor.email,
           phone: doctor.phone,
           hours: doctor.hours,
-          source: 'database' as const
+          source: 'database' as const,
+          coordinates: null
         })) || [];
 
         // Get doctors from Overpass API based on location
@@ -61,13 +80,13 @@ export const useDoctorFinder = (
         console.log('Overpass doctors:', overpassDoctors?.length || 0);
         
         // Combine both sources
-        const allDoctors = [...formattedDbDoctors, ...overpassDoctors];
+        const allDoctors = [...formattedDbDoctors, ...overpassDoctors] as Doctor[];
         console.log('Combined doctors count:', allDoctors.length);
         
         return allDoctors;
       } catch (err) {
         console.error("Error in useDoctorFinder:", err);
-        return [];
+        return [] as Doctor[];
       }
     },
     staleTime: 5 * 60 * 1000, // Keep data fresh for 5 minutes
@@ -78,7 +97,7 @@ export const useDoctorFinder = (
 
   // Apply filters for doctors search
   const filteredDoctors = useMemo(() => {
-    if (!doctors) return [];
+    if (!doctors) return [] as Doctor[];
     
     let filtered = [...doctors];
     
@@ -99,7 +118,7 @@ export const useDoctorFinder = (
       // Use doctors that have distance property or are within radius
       filtered = filtered.filter(doctor => {
         // If doctor has a distance property, it's already filtered by location
-        if (typeof doctor.distance === 'number') {
+        if (doctor.distance !== undefined) {
           return true;
         }
         
@@ -119,7 +138,7 @@ export const useDoctorFinder = (
   }, [filteredDoctors.length, isLoading, searchRadius]);
 
   return { 
-    doctors: Array.isArray(doctors) ? doctors : [], 
+    doctors: Array.isArray(doctors) ? doctors : [] as Doctor[], 
     filteredDoctors,
     isLoading,
     error,

@@ -1,6 +1,6 @@
 
 import { useEffect, useRef, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import { Button } from '@/components/ui/button';
@@ -33,6 +33,17 @@ const userIcon = new L.Icon({
   iconAnchor: [15, 15],
   popupAnchor: [0, -15],
 });
+
+// Component to set map reference
+function MapRef({ setMapRef }: { setMapRef: (map: L.Map) => void }) {
+  const map = useMap();
+  
+  useEffect(() => {
+    setMapRef(map);
+  }, [map, setMapRef]);
+  
+  return null;
+}
 
 interface Doctor {
   id: string;
@@ -75,6 +86,10 @@ export const DoctorFinderMap = ({
     : recoilUserLocation
     ? { lat: recoilUserLocation.lat, lng: recoilUserLocation.lon }
     : defaultCenter;
+
+  const setMap = (map: L.Map) => {
+    mapRef.current = map;
+  };
 
   // Log map initialization
   useEffect(() => {
@@ -151,10 +166,8 @@ export const DoctorFinderMap = ({
       center={[mapCenter.lat, mapCenter.lng]}
       zoom={10}
       style={{ height: '100%', width: '100%', borderRadius: '0.375rem' }}
-      whenCreated={(map) => {
-        mapRef.current = map;
-      }}
     >
+      <MapRef setMapRef={setMap} />
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

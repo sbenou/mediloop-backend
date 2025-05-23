@@ -12,14 +12,15 @@ import { TenantProvider } from './contexts/TenantContext';
 import { FirebaseNotificationProvider } from './providers/FirebaseNotificationProvider';
 
 function App() {
-  const [queryClient] = useState(() => new QueryClient({
+  // Create QueryClient instance outside of render function to avoid recreation on each render
+  const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
         staleTime: 1000 * 60 * 5, // 5 minutes
         retry: 1,
       },
     },
-  }));
+  });
 
   useEffect(() => {
     console.log('App rendering TenantProvider and AppRoutes');

@@ -8,13 +8,17 @@ import { initializeI18n } from './i18n/config'
 // Initialize i18n before rendering the app
 initializeI18n();
 
-// Add DOCTYPE declaration to fix quirks mode warning
-// The rest of the document will be read from the index.html file
+console.log('main.tsx is executing - Initializing React application');
 
-console.log('main.tsx is executing - Updated Lovable version');
+// Make sure we have a root element before trying to render
+const rootElement = document.getElementById('root');
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-)
+if (rootElement) {
+  ReactDOM.createRoot(rootElement).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>,
+  );
+} else {
+  console.error('Root element not found!');
+}

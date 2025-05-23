@@ -4,8 +4,6 @@ import { useRecoilValue } from 'recoil';
 import { userLocationState } from '@/store/location/atoms';
 import UnifiedHeader from '@/components/layout/UnifiedHeader';
 import Footer from '@/components/layout/Footer';
-import { PharmacyFinderList } from '@/components/pharmacy/finder/PharmacyFinderList';
-import { PharmacySearch } from '@/components/pharmacy/finder/PharmacySearch';
 import { toast } from '@/components/ui/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MapPin, Search } from "lucide-react";
@@ -16,6 +14,23 @@ import { DoctorFinderMap } from '@/components/doctor/finder/DoctorFinderMap';
 import { DoctorFinderList } from '@/components/doctor/finder/DoctorFinderList';
 import { DoctorSearch } from '@/components/doctor/finder/DoctorSearch';
 
+interface Doctor {
+  id: string;
+  full_name: string;
+  city?: string;
+  license_number?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  hours?: string;
+  distance?: number | string;
+  source?: 'database' | 'overpass';
+  coordinates?: {
+    lat: number;
+    lon: number;
+  } | null;
+}
+
 const FindDoctor = () => {
   console.log('FindDoctor component rendering');
   const userLocation = useRecoilValue(userLocationState);
@@ -23,7 +38,7 @@ const FindDoctor = () => {
   const { isAuthenticated } = useAuth();
   
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
-  const [leafletFilteredDoctors, setLeafletFilteredDoctors] = useState<any[]>([]);
+  const [leafletFilteredDoctors, setLeafletFilteredDoctors] = useState<Doctor[]>([]);
   
   // Use our custom hook for doctor finding logic
   const { 
@@ -63,7 +78,7 @@ const FindDoctor = () => {
   }, [error]);
 
   // Handle doctors filtered by map shape
-  const handleDoctorsInShape = (shapeFilteredDoctors: any[]) => {
+  const handleDoctorsInShape = (shapeFilteredDoctors: Doctor[]) => {
     console.log("Doctors in shape:", shapeFilteredDoctors.length);
     setLeafletFilteredDoctors(shapeFilteredDoctors);
   };
