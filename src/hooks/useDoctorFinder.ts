@@ -1,27 +1,10 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { searchDoctors } from "@/lib/overpass";
 import { supabase } from '@/lib/supabase';
 import { useRecoilValue } from 'recoil';
 import { selectedCountryState } from '@/store/location/atoms';
-
-interface Doctor {
-  id: string;
-  full_name: string;
-  city?: string;
-  license_number?: string;
-  address?: string;
-  phone?: string;
-  email?: string;
-  hours?: string;
-  distance?: number | string;
-  source?: 'database' | 'overpass';
-  coordinates?: {
-    lat: number;
-    lon: number;
-  } | null;
-}
+import type { Doctor } from '@/lib/types/overpass.types';
 
 export const useDoctorFinder = (
   userLocation: { lat: number; lon: number } | null

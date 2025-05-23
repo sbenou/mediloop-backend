@@ -9,6 +9,7 @@ import { toast } from '@/components/ui/use-toast';
 import { useRecoilValue } from 'recoil';
 import { userLocationState } from '@/store/location/atoms';
 import L from 'leaflet';
+import type { Doctor } from '@/lib/types/overpass.types';
 
 // Fix Leaflet marker icon issue
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -43,22 +44,6 @@ function MapRef({ setMapRef }: { setMapRef: (map: L.Map) => void }) {
   }, [map, setMapRef]);
   
   return null;
-}
-
-interface Doctor {
-  id: string;
-  full_name: string;
-  city?: string;
-  address?: string;
-  coordinates?: {
-    lat: number;
-    lon: number;
-  } | null;
-  distance?: number;
-  phone?: string;
-  email?: string;
-  hours?: string;
-  source?: 'database' | 'overpass';
 }
 
 interface DoctorFinderMapProps {

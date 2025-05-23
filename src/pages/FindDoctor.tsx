@@ -13,23 +13,7 @@ import { useDoctorFinder } from '@/hooks/useDoctorFinder';
 import { DoctorFinderMap } from '@/components/doctor/finder/DoctorFinderMap';
 import { DoctorFinderList } from '@/components/doctor/finder/DoctorFinderList';
 import { DoctorSearch } from '@/components/doctor/finder/DoctorSearch';
-
-interface Doctor {
-  id: string;
-  full_name: string;
-  city?: string;
-  license_number?: string;
-  address?: string;
-  phone?: string;
-  email?: string;
-  hours?: string;
-  distance?: number | string;
-  source?: 'database' | 'overpass';
-  coordinates?: {
-    lat: number;
-    lon: number;
-  } | null;
-}
+import type { Doctor } from '@/lib/types/overpass.types';
 
 const FindDoctor = () => {
   console.log('FindDoctor component rendering');

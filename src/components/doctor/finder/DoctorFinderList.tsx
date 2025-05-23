@@ -3,23 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MapPin, Phone, Mail, Clock, UserPlus } from "lucide-react";
-
-interface Doctor {
-  id: string;
-  full_name: string;
-  city?: string;
-  license_number?: string;
-  address?: string;
-  phone?: string;
-  email?: string;
-  hours?: string;
-  distance?: number | string;
-  source?: 'database' | 'overpass';
-  coordinates?: {
-    lat: number;
-    lon: number;
-  } | null;
-}
+import type { Doctor } from "@/lib/types/overpass.types";
 
 interface DoctorFinderListProps {
   doctors: Doctor[];

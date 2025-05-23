@@ -41,13 +41,19 @@ export interface Pharmacy extends Location {
   email?: string;
 }
 
-export interface Doctor extends Location {
+export interface Doctor {
+  id: string;
   full_name: string;
-  city: string;
-  license_number: string;
-  email?: string;
+  city?: string;
+  license_number?: string;
+  address?: string;
   phone?: string;
+  email?: string;
   hours?: string;
   distance?: number | string;
   source?: 'database' | 'overpass';
+  coordinates?: {
+    lat: number;
+    lon: number;
+  } | null;
 }
