@@ -31,7 +31,8 @@ export * from './scroll-to-top';
 export * from './separator';
 export * from './skeleton';
 export * from './slider';
-export * from './sonner';
+// Export the Sonner Toaster with a unique name to avoid conflict
+export { Toaster as SonnerToaster } from './sonner';
 export * from './switch';
 export * from './table';
 export * from './tabs';
@@ -39,3 +40,4 @@ export * from './textarea';
 export * from './toast';
 export * from './toaster';
 export * from './use-toast';
+
