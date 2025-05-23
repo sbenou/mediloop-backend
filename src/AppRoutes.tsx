@@ -1,3 +1,4 @@
+
 import { Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -42,11 +43,11 @@ const EditProfile = () => <PlaceholderPage title="Edit Profile" />;
 const Appointments = () => <PlaceholderPage title="Appointments" />;
 
 export default function AppRoutes() {
+  // Log before render but outside JSX
   console.log("AppRoutes component rendered - checking routes");
   
   return (
     <div className="app-root">
-      {console.log("AppRoutes rendering routes")}
       <Routes>
         {/* Public routes that don't require authentication */}
         <Route path="/" element={<Home />} />

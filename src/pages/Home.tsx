@@ -35,33 +35,33 @@ const Home = () => {
     return () => clearTimeout(timer);
   }, [navigate]);
 
+  // Log outside the JSX
+  console.log("Rendering Home JSX");
+  
   return (
-    <>
-      {console.log("Rendering Home JSX")}
-      <div className="min-h-screen flex flex-col bg-white">
-        <CurrencyProvider>
-          <CartProvider>
-            <UnifiedHeader />
-            <main className="flex-1">
-              <HeroSection />
-              <div className="container mx-auto px-4">
-                <FeaturesGrid />
-                <GetStartedSteps />
-              </div>
-              <StatsSection />
-              <div className="container mx-auto px-4">
-                <TestimonialsSection />
-              </div>
-              <PartnerSection />
-              <DeliveryPersonSection />
-            </main>
-            <Footer />
-            <ScrollToTopButton />
-            <CookieConsent />
-          </CartProvider>
-        </CurrencyProvider>
-      </div>
-    </>
+    <div className="min-h-screen flex flex-col bg-white">
+      <CurrencyProvider>
+        <CartProvider>
+          <UnifiedHeader />
+          <main className="flex-1">
+            <HeroSection />
+            <div className="container mx-auto px-4">
+              <FeaturesGrid />
+              <GetStartedSteps />
+            </div>
+            <StatsSection />
+            <div className="container mx-auto px-4">
+              <TestimonialsSection />
+            </div>
+            <PartnerSection />
+            <DeliveryPersonSection />
+          </main>
+          <Footer />
+          <ScrollToTopButton />
+          <CookieConsent />
+        </CartProvider>
+      </CurrencyProvider>
+    </div>
   );
 };
 

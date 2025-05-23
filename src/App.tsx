@@ -15,9 +15,11 @@ function App() {
     });
   }, []);
   
+  // Log before render but outside JSX
+  console.log("App rendering TenantProvider and AppRoutes");
+  
   return (
     <div className="app-container">
-      {console.log("App rendering TenantProvider and AppRoutes")}
       <TenantProvider>
         <AppRoutes />
       </TenantProvider>
