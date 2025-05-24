@@ -4,7 +4,6 @@ import { supabase } from "@/lib/supabase";
 import { searchDoctors } from "@/lib/overpass";
 import { useRecoilValue } from 'recoil';
 import { selectedCountryState } from '@/store/location/atoms';
-import { LocalCache } from '@/lib/cache';
 
 interface Doctor {
   id: string;
@@ -39,42 +38,18 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 
 export const useDoctorSearch = (
   coordinates: { lat: number; lon: number } | null,
-  searchRadius: number = 5000
+  searchRadius: number
 ) => {
   const selectedCountry = useRecoilValue(selectedCountryState);
   
   const { data: doctors, isLoading, error } = useQuery({
     queryKey: ["doctors", coordinates?.lat, coordinates?.lon, searchRadius, selectedCountry],
     queryFn: async () => {
-      console.log(`🔍 Starting doctor search with coordinates: ${JSON.stringify(coordinates)}, radius: ${searchRadius}, country: ${selectedCountry}`);
+      console.log(`Starting doctor search with coordinates: ${JSON.stringify(coordinates)}, radius: ${searchRadius}, country: ${selectedCountry}`);
       
-      if (!coordinates) {
-        console.log('❌ No coordinates provided for doctor search');
-        return [];
-      }
-
       try {
-        // Validate coordinates
-        if (typeof coordinates.lat !== 'number' || typeof coordinates.lon !== 'number') {
-          console.error('❌ Invalid coordinates:', coordinates);
-          return [];
-        }
-        
-        // Round coordinates to 4 decimal places for better cache hits
-        const roundedLat = Math.round(coordinates.lat * 10000) / 10000;
-        const roundedLon = Math.round(coordinates.lon * 10000) / 10000;
-        
-        // Try to get from cache first - but only if we have actual data
-        const cacheKey = `doctors-${roundedLat}-${roundedLon}-${searchRadius}-${selectedCountry}`;
-        const cachedData = LocalCache.get(cacheKey);
-        
-        if (cachedData && Array.isArray(cachedData) && cachedData.length > 0) {
-          console.log('Using cached doctor data from LocalCache');
-          return cachedData;
-        }
-
-        // Get doctors from database
-        const { data: dbDoctors, error: dbError } = await supabase
+        // Get doctors from database with a simpler query first
+        const { data: dbDoctors, error } = await supabase
           .from("profiles")
           .select(`
             id, 
@@ -85,13 +60,14 @@ export const useDoctorSearch = (
           `)
           .eq("role", "doctor");
 
-        if (dbError) {
-          console.error('❌ Error fetching doctors from database:', dbError);
+        if (error) {
+          console.error('Error fetching doctors from database:', error);
+          // Don't throw here, continue with overpass data
         }
 
-        console.log(`📊 Database doctors found: ${dbDoctors?.length || 0}`);
-        
-        // Format database doctors
+        console.log('Database doctors:', dbDoctors?.length || 0);
+
+        // Get metadata separately for each doctor
         const formattedDbDoctors = [];
         if (Array.isArray(dbDoctors)) {
           for (const doc of dbDoctors) {
@@ -103,13 +79,11 @@ export const useDoctorSearch = (
                 .eq("doctor_id", doc.id)
                 .maybeSingle();
               metadata = metaData;
-              
-              console.log(`🏥 Metadata for doctor ${doc.full_name}:`, metadata);
             } catch (metaError) {
-              console.error(`❌ Error fetching metadata for doctor: ${doc.id}`, metaError);
+              console.error('Error fetching metadata for doctor:', doc.id, metaError);
             }
 
-            const formattedDoctor = {
+            formattedDbDoctors.push({
               id: doc.id,
               full_name: doc.full_name || 'Doctor',
               city: doc.city || metadata?.city || 'Unknown location',
@@ -119,44 +93,31 @@ export const useDoctorSearch = (
               hours: metadata?.hours || null,
               address: metadata?.address || '',
               source: 'database' as const,
-              coordinates: null, // Database doctors don't have coordinates yet
+              coordinates: null,
               distance: undefined
-            };
-            
-            console.log(`✅ Formatted DB doctor:`, formattedDoctor);
-            formattedDbDoctors.push(formattedDoctor);
+            });
           }
         }
 
-        // Get doctors from Overpass API using the same pattern as pharmacy search
+        // Get doctors from Overpass API
         let formattedOverpassDoctors = [];
         try {
           const countryCode = selectedCountry || 'LU';
-          console.log(`🌍 Searching Overpass API with country: ${countryCode}`);
+          console.log(`Searching for doctors from Overpass with country: ${countryCode}`);
           
-          // Use the same searchDoctors function as used in overpass.ts
-          const overpassDoctors = await searchDoctors(
-            coordinates.lat,
-            coordinates.lon,
-            searchRadius,
-            countryCode
-          );
+          const overpassDoctors = coordinates 
+            ? await searchDoctors(
+                coordinates.lat,
+                coordinates.lon,
+                searchRadius * 2, // Increase search radius for more results
+                countryCode
+              )
+            : await searchDoctors(null, null, 0, countryCode);
           
           if (!Array.isArray(overpassDoctors)) {
-            console.error('❌ Invalid response from searchDoctors:', overpassDoctors);
+            console.error('Invalid response from searchDoctors:', overpassDoctors);
           } else {
-            console.log(`🗺️ Overpass doctors found: ${overpassDoctors.length}`);
-            
-            // Debug each overpass doctor
-            overpassDoctors.forEach((doc, index) => {
-              console.log(`👨‍⚕️ Overpass Doctor ${index + 1}:`, {
-                id: doc.id,
-                name: doc.full_name,
-                coordinates: doc.coordinates,
-                address: doc.address,
-                city: doc.city
-              });
-            });
+            console.log('Raw Overpass results:', overpassDoctors.length);
 
             // Format Overpass results and calculate distances
             formattedOverpassDoctors = overpassDoctors
@@ -181,27 +142,23 @@ export const useDoctorSearch = (
                   }
                 }
                 
-                const formattedDoc = {
+                return {
                   ...doc,
                   city: doc.city || doc.address || 'Unknown location',
                   source: 'overpass' as const,
                   distance
                 };
-                
-                console.log(`✅ Formatted Overpass doctor:`, formattedDoc);
-                return formattedDoc;
               });
 
-            console.log(`📍 Overpass doctors with coordinates: ${formattedOverpassDoctors.filter(d => d.coordinates?.lat && d.coordinates?.lon).length}`);
+            console.log('Overpass doctors found:', formattedOverpassDoctors.length);
           }
         } catch (overpassError) {
-          console.error("❌ Error fetching overpass doctors:", overpassError);
+          console.error("Error fetching overpass doctors:", overpassError);
           // Continue with database doctors only
         }
 
         // Combine all doctors
         const allDoctors = [...formattedDbDoctors, ...formattedOverpassDoctors];
-        console.log(`🔗 Total doctors before deduplication: ${allDoctors.length}`);
         
         // Remove duplicates based on id and sort by distance if available
         const doctorMap = new Map();
@@ -212,11 +169,6 @@ export const useDoctorSearch = (
         });
         
         let result = Array.from(doctorMap.values());
-        console.log(`📋 Final doctors after deduplication: ${result.length}`);
-        
-        // Count doctors with coordinates
-        const doctorsWithCoords = result.filter(d => d.coordinates?.lat && d.coordinates?.lon);
-        console.log(`📍 Doctors with valid coordinates: ${doctorsWithCoords.length}`);
         
         // Sort by distance if coordinates are available
         if (coordinates) {
@@ -228,22 +180,17 @@ export const useDoctorSearch = (
           });
         }
         
-        // Only cache if we have actual results
-        if (result.length > 0) {
-          LocalCache.set(cacheKey, result);
-        }
-        
-        console.log(`✅ Final doctor search result: ${result.length} doctors`);
+        console.log('Final doctor count:', result.length);
         return result;
       } catch (err) {
-        console.error("❌ Error in useDoctorSearch:", err);
+        console.error("Error in useDoctorSearch:", err);
         return [];
       }
     },
-    enabled: !!coordinates,
-    staleTime: 5 * 60 * 1000, // Keep data fresh for 5 minutes
-    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
-    retry: 2,
+    // Query configuration
+    staleTime: 1000 * 60 * 5, // 5 minutes stale time
+    gcTime: 30 * 60 * 1000, // 30 minutes cache time
+    retry: 2, // Increase retries
     refetchOnWindowFocus: false,
     refetchOnMount: true,
     refetchInterval: false,

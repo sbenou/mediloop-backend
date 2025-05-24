@@ -18,7 +18,6 @@ export interface OverpassResult {
       'healthcare:speciality'?: string;
       operator?: string;
       phone?: string;
-      address?: string;
     };
   }>;
 }
