@@ -23,7 +23,7 @@ const GetStartedSteps = () => {
       icon: UserRound,
       title: t('home.getStarted.steps.connectDoctor.title'),
       description: t('home.getStarted.steps.connectDoctor.description'),
-      link: "/find-doctor",
+      link: "/doctors",
       dataTestId: "find-doctor-link"
     },
     {

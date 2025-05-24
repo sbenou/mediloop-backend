@@ -16,7 +16,7 @@ import ProtectedRoute from "@/components/routing/ProtectedRoute";
 import ProtectedReferral from "@/router/roles/ProtectedReferral";
 import Referral from "@/pages/Referral";
 import TestDataLoader from "@/components/testing/TestDataLoader";
-import FindDoctor from "@/pages/FindDoctor";
+import SearchDoctors from "@/pages/SearchDoctors";
 import Dashboard from "@/pages/Dashboard";
 import PharmacyDashboard from "@/pages/pharmacy/PharmacyDashboard";
 import ProtectedBillingDetails from "@/router/roles/ProtectedBillingDetails";
@@ -60,8 +60,8 @@ export default function AppRoutes() {
         <Route path="/products/:pharmacyId" element={<Products />} />
         
         {/* Doctor and pharmacy routes - accessible to all users */}
-        <Route path="/doctors" element={<FindDoctor />} />
-        <Route path="/find-doctor" element={<FindDoctor />} />
+        <Route path="/doctors" element={<SearchDoctors />} />
+        <Route path="/find-doctor" element={<SearchDoctors />} />
         <Route path="/doctors/:id" element={<DoctorDetails />} />
         <Route path="/search-pharmacy" element={<SearchPharmacy />} />
         <Route path="/pharmacies" element={<SearchPharmacy />} />
