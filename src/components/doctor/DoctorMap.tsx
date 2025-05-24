@@ -39,6 +39,7 @@ const DoctorMap = ({
   const [mapboxToken, setMapboxToken] = useState<string>('');
   const [tokenInput, setTokenInput] = useState<string>('');
   const [isLoadingToken, setIsLoadingToken] = useState<boolean>(true);
+  const [mapInitialized, setMapInitialized] = useState<boolean>(false);
 
   // Get Mapbox token using the same service as pharmacy search
   useEffect(() => {
@@ -51,6 +52,7 @@ const DoctorMap = ({
         if (token) {
           console.log('Successfully loaded Mapbox token');
           setMapboxToken(token);
+          mapboxgl.accessToken = token;
         } else {
           console.error('No token received from getMapboxToken service');
         }
@@ -64,175 +66,171 @@ const DoctorMap = ({
     loadMapboxToken();
   }, []);
 
-  // Initialize and render map
+  // Initialize and render map - only after token is loaded
   useEffect(() => {
-    // Check for mapbox token - without it, we can't show the map
-    if (!mapboxToken) {
-      console.error('Mapbox token is missing. Map cannot be displayed.');
+    // Don't initialize if we're still loading the token or don't have one
+    if (isLoadingToken || !mapboxToken || mapInitialized) {
       return;
     }
 
-    mapboxgl.accessToken = mapboxToken;
-    
     if (!mapContainer.current) return;
 
     console.log('Initializing map with user coordinates:', userCoordinates);
 
-    // Initialize map
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/light-v10',
-      center: userCoordinates 
-        ? [userCoordinates.lon, userCoordinates.lat]
-        : [6.1296, 49.8153], // Default to Luxembourg
-      zoom: userCoordinates ? 12 : 9
-    });
+    try {
+      // Initialize map
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/light-v10',
+        center: userCoordinates 
+          ? [userCoordinates.lon, userCoordinates.lat]
+          : [6.1296, 49.8153], // Default to Luxembourg
+        zoom: userCoordinates ? 12 : 9
+      });
 
-    // Add navigation controls
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      // Add navigation controls
+      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-    // Add user location marker if available
-    if (showUserLocation && userCoordinates?.lat && userCoordinates?.lon) {
-      console.log('Adding user location marker at:', userCoordinates);
-      const userLocationElement = document.createElement('div');
-      userLocationElement.className = 'w-4 h-4 bg-blue-500 border-2 border-white rounded-full shadow-lg';
-      userLocationElement.style.width = '16px';
-      userLocationElement.style.height = '16px';
+      // Add user location marker if available
+      if (showUserLocation && userCoordinates?.lat && userCoordinates?.lon) {
+        console.log('Adding user location marker at:', userCoordinates);
+        const userLocationElement = document.createElement('div');
+        userLocationElement.className = 'w-4 h-4 bg-blue-500 border-2 border-white rounded-full shadow-lg';
+        userLocationElement.style.width = '16px';
+        userLocationElement.style.height = '16px';
 
-      new mapboxgl.Marker({ 
-        element: userLocationElement,
-        anchor: 'center' 
-      })
-        .setLngLat([userCoordinates.lon, userCoordinates.lat])
-        .addTo(map.current);
+        new mapboxgl.Marker({ 
+          element: userLocationElement,
+          anchor: 'center' 
+        })
+          .setLngLat([userCoordinates.lon, userCoordinates.lat])
+          .addTo(map.current);
+      }
+
+      setMapInitialized(true);
+
+      map.current.on('load', () => {
+        console.log('Map loaded successfully');
+      });
+
+    } catch (error) {
+      console.error('Error initializing map:', error);
     }
 
     return () => {
       // Clean up map instance
-      map.current?.remove();
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+      setMapInitialized(false);
     };
-  }, [userCoordinates, showUserLocation, mapboxToken]);
+  }, [userCoordinates, showUserLocation, mapboxToken, isLoadingToken]);
 
   // Add doctor markers to map
   useEffect(() => {
-    if (!map.current || !mapboxToken) return;
+    if (!map.current || !mapInitialized || isLoadingToken) return;
 
     // Clear existing markers
     markers.current.forEach(marker => marker.remove());
     markers.current = [];
 
-    // Don't try to add markers until the map has loaded
-    if (!map.current.loaded()) {
-      map.current.on('load', addDoctorMarkers);
-      return () => {
-        if (map.current) {
-          map.current.off('load', addDoctorMarkers);
+    console.log(`Adding ${doctors.length} doctor markers to map`);
+    
+    // Add markers for doctors with coordinates
+    const doctorsWithCoordinates = doctors.filter(doctor => 
+      doctor.coordinates?.lat && doctor.coordinates?.lon
+    );
+    
+    console.log(`Filtered to ${doctorsWithCoordinates.length} doctors with valid coordinates`);
+    
+    doctorsWithCoordinates.forEach(doctor => {
+      if (doctor.coordinates?.lat && doctor.coordinates?.lon) {
+        const doctorLat = parseFloat(String(doctor.coordinates.lat));
+        const doctorLon = parseFloat(String(doctor.coordinates.lon));
+        
+        if (isNaN(doctorLat) || isNaN(doctorLon)) {
+          console.log(`Skipping doctor ${doctor.id} due to invalid coordinates`, doctor.coordinates);
+          return;
         }
-      };
-    } else {
-      addDoctorMarkers();
-    }
-
-    function addDoctorMarkers() {
-      if (!map.current) return;
-      
-      console.log(`Adding ${doctors.length} doctor markers to map`);
-      
-      // Add markers for doctors with coordinates
-      const doctorsWithCoordinates = doctors.filter(doctor => 
-        doctor.coordinates?.lat && doctor.coordinates?.lon
-      );
-      
-      console.log(`Filtered to ${doctorsWithCoordinates.length} doctors with valid coordinates`);
-      
-      doctorsWithCoordinates.forEach(doctor => {
-        if (doctor.coordinates?.lat && doctor.coordinates?.lon) {
-          const doctorLat = parseFloat(String(doctor.coordinates.lat));
-          const doctorLon = parseFloat(String(doctor.coordinates.lon));
-          
-          if (isNaN(doctorLat) || isNaN(doctorLon)) {
-            console.log(`Skipping doctor ${doctor.id} due to invalid coordinates`, doctor.coordinates);
-            return;
-          }
-          
-          // Get distance string if available
-          let distanceStr = '';
-          if (doctor.distance) {
-            distanceStr = `${doctor.distance} km away`;
-          }
-          
-          // Create marker element with doctor icon
-          const markerElement = document.createElement('div');
-          markerElement.className = 'cursor-pointer transform hover:scale-110 transition-transform duration-200';
-          markerElement.innerHTML = `
-            <div class="relative">
-              <div class="w-8 h-8 bg-white border-2 border-primary rounded-full shadow-lg flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
-                  <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
-                </svg>
-              </div>
-              <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-primary rotate-45"></div>
+        
+        // Get distance string if available
+        let distanceStr = '';
+        if (doctor.distance) {
+          distanceStr = `${doctor.distance} km away`;
+        }
+        
+        // Create marker element with doctor icon
+        const markerElement = document.createElement('div');
+        markerElement.className = 'cursor-pointer transform hover:scale-110 transition-transform duration-200';
+        markerElement.innerHTML = `
+          <div class="relative">
+            <div class="w-8 h-8 bg-white border-2 border-primary rounded-full shadow-lg flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+              </svg>
             </div>
-          `;
+            <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-primary rotate-45"></div>
+          </div>
+        `;
 
-          // Create popup with doctor information
-          const popup = new mapboxgl.Popup({ 
-            offset: 25,
-            closeButton: true,
-            className: 'doctor-popup'
-          }).setHTML(`
-            <div class="p-3 min-w-[200px]">
-              <h3 class="font-semibold text-base mb-2">${doctor.full_name}</h3>
-              <div class="space-y-1 text-sm text-gray-600">
+        // Create popup with doctor information
+        const popup = new mapboxgl.Popup({ 
+          offset: 25,
+          closeButton: true,
+          className: 'doctor-popup'
+        }).setHTML(`
+          <div class="p-3 min-w-[200px]">
+            <h3 class="font-semibold text-base mb-2">${doctor.full_name}</h3>
+            <div class="space-y-1 text-sm text-gray-600">
+              <div class="flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                ${doctor.city || doctor.address || 'Location not specified'}
+              </div>
+              ${distanceStr ? `<div class="text-primary font-medium">${distanceStr}</div>` : ''}
+              ${doctor.phone ? `
                 <div class="flex items-center">
                   <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                   </svg>
-                  ${doctor.city || doctor.address || 'Location not specified'}
+                  ${doctor.phone}
                 </div>
-                ${distanceStr ? `<div class="text-primary font-medium">${distanceStr}</div>` : ''}
-                ${doctor.phone ? `
-                  <div class="flex items-center">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                    </svg>
-                    ${doctor.phone}
-                  </div>
-                ` : ''}
-              </div>
-              <div class="mt-3">
-                <button onclick="window.selectDoctor('${doctor.id}')" class="w-full bg-primary text-white px-3 py-2 rounded text-sm hover:bg-primary/90 transition-colors">
-                  Connect with Doctor
-                </button>
-              </div>
+              ` : ''}
             </div>
-          `);
+            <div class="mt-3">
+              <button onclick="window.selectDoctor('${doctor.id}')" class="w-full bg-primary text-white px-3 py-2 rounded text-sm hover:bg-primary/90 transition-colors">
+                Connect with Doctor
+              </button>
+            </div>
+          </div>
+        `);
 
-          // Create and add marker
-          const marker = new mapboxgl.Marker({ element: markerElement })
-            .setLngLat([doctorLon, doctorLat])
-            .setPopup(popup)
-            .addTo(map.current);
-            
-          // Add click handler
-          markerElement.addEventListener('click', () => {
-            console.log('Doctor marker clicked:', doctor.id);
-            onDoctorSelect(doctor.id);
-          });
+        // Create and add marker
+        const marker = new mapboxgl.Marker({ element: markerElement })
+          .setLngLat([doctorLon, doctorLat])
+          .setPopup(popup)
+          .addTo(map.current);
           
-          // Store marker for later cleanup
-          markers.current.push(marker);
-        }
-      });
-      
-      console.log(`Added ${markers.current.length} markers to the map`);
-      
-      // Set up global function for popup button clicks
-      (window as any).selectDoctor = (doctorId: string) => {
-        onDoctorSelect(doctorId);
-      };
-    }
+        // Add click handler
+        markerElement.addEventListener('click', () => {
+          console.log('Doctor marker clicked:', doctor.id);
+          onDoctorSelect(doctor.id);
+        });
+        
+        // Store marker for later cleanup
+        markers.current.push(marker);
+      }
+    });
+    
+    console.log(`Added ${markers.current.length} markers to the map`);
+    
+    // Set up global function for popup button clicks
+    (window as any).selectDoctor = (doctorId: string) => {
+      onDoctorSelect(doctorId);
+    };
     
     // Fit map to markers if we have any
     if (markers.current.length > 0) {
@@ -264,12 +262,34 @@ const DoctorMap = ({
         duration: 1000
       });
     }
-  }, [doctors, userCoordinates, onDoctorSelect, mapboxToken]);
+  }, [doctors, userCoordinates, onDoctorSelect, mapInitialized, isLoadingToken]);
 
   const handleSetToken = () => {
-    setMapboxToken(tokenInput);
-    localStorage.setItem('mapbox_token', tokenInput);
+    if (tokenInput) {
+      setMapboxToken(tokenInput);
+      localStorage.setItem('mapbox_token', tokenInput);
+      mapboxgl.accessToken = tokenInput;
+    }
   };
+
+  // Show loading state while token is being fetched
+  if (isLoadingToken) {
+    return (
+      <div className="w-full h-full rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+        <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-gray-50">
+          <div className="text-center max-w-md space-y-4">
+            <div className="mx-auto w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
+              <Map className="w-8 h-8 text-gray-400 animate-pulse" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900">Loading Map</h3>
+            <p className="text-gray-600 text-sm">
+              Please wait while we load the map...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full h-full rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
