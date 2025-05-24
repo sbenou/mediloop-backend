@@ -5,7 +5,6 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Button } from "@/components/ui/button";
 import { Search, Map, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { getMapboxToken } from '@/services/mapbox';
 
 interface Doctor {
   id: string;
@@ -40,16 +39,31 @@ const DoctorMap = ({
   const [tokenInput, setTokenInput] = useState<string>('');
   const [isLoadingToken, setIsLoadingToken] = useState<boolean>(true);
 
-  // Get Mapbox token from the service function
+  // Try to get token from localStorage first, then from service
   useEffect(() => {
     async function loadMapboxToken() {
       setIsLoadingToken(true);
       try {
+        // First check localStorage
+        const cachedToken = localStorage.getItem('mapbox_token');
+        if (cachedToken) {
+          console.log('Using cached Mapbox token from localStorage');
+          setMapboxToken(cachedToken);
+          mapboxgl.accessToken = cachedToken;
+          setIsLoadingToken(false);
+          return;
+        }
+
+        // If no cached token, try to get from service
+        const { getMapboxToken } = await import('@/services/mapbox');
         const token = await getMapboxToken();
         
         if (token) {
+          console.log('Retrieved Mapbox token from service');
           setMapboxToken(token);
           mapboxgl.accessToken = token;
+          // Cache it for future use
+          localStorage.setItem('mapbox_token', token);
         }
       } catch (error) {
         console.error("Error loading Mapbox token:", error);
@@ -58,86 +72,95 @@ const DoctorMap = ({
       }
     }
     
-    if (!mapboxToken) {
-      loadMapboxToken();
-    }
+    loadMapboxToken();
   }, []);
 
-  // Initialize and render map
+  // Initialize map when token is available
   useEffect(() => {
-    // Check for mapbox token - without it, we can't show the map
-    if (!mapboxToken) {
-      console.error('Mapbox token is missing. Map cannot be displayed.');
+    if (!mapboxToken || !mapContainer.current) {
+      console.log('Missing mapbox token or container, skipping map initialization');
       return;
     }
 
-    mapboxgl.accessToken = mapboxToken;
-    
-    if (!mapContainer.current) return;
+    // Don't reinitialize if map already exists
+    if (map.current) {
+      console.log('Map already initialized, skipping');
+      return;
+    }
 
-    console.log('Initializing map with user coordinates:', userCoordinates);
+    console.log('Initializing map with token and coordinates:', userCoordinates);
 
-    // Initialize map
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/light-v10',
-      center: userCoordinates 
-        ? [userCoordinates.lon, userCoordinates.lat]
-        : [6.1296, 49.8153], // Default to Luxembourg
-      zoom: userCoordinates ? 12 : 9
-    });
+    try {
+      mapboxgl.accessToken = mapboxToken;
+      
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/light-v10',
+        center: userCoordinates 
+          ? [userCoordinates.lon, userCoordinates.lat]
+          : [6.1296, 49.8153], // Default to Luxembourg
+        zoom: userCoordinates ? 12 : 9
+      });
 
-    // Add navigation controls
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      // Add navigation controls
+      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-    // Add user location marker if available
-    if (showUserLocation && userCoordinates?.lat && userCoordinates?.lon) {
-      console.log('Adding user location marker at:', userCoordinates);
-      const userLocationElement = document.createElement('div');
-      userLocationElement.className = 'w-4 h-4 bg-blue-500 border-2 border-white rounded-full shadow-lg';
-      userLocationElement.style.width = '16px';
-      userLocationElement.style.height = '16px';
-
-      new mapboxgl.Marker({ 
-        element: userLocationElement,
-        anchor: 'center' 
-      })
-        .setLngLat([userCoordinates.lon, userCoordinates.lat])
-        .addTo(map.current);
+      console.log('Map initialized successfully');
+    } catch (error) {
+      console.error('Error initializing map:', error);
     }
 
     return () => {
-      // Clean up map instance
-      map.current?.remove();
+      if (map.current) {
+        console.log('Cleaning up map');
+        map.current.remove();
+        map.current = null;
+      }
     };
-  }, [userCoordinates, showUserLocation, mapboxToken]);
+  }, [mapboxToken, userCoordinates]);
 
-  // Add doctor markers to map
+  // Add user location marker
   useEffect(() => {
-    if (!map.current || !mapboxToken) return;
+    if (!map.current || !showUserLocation || !userCoordinates?.lat || !userCoordinates?.lon) {
+      return;
+    }
+
+    console.log('Adding user location marker at:', userCoordinates);
+    
+    const userLocationElement = document.createElement('div');
+    userLocationElement.className = 'w-4 h-4 bg-blue-500 border-2 border-white rounded-full shadow-lg';
+    userLocationElement.style.width = '16px';
+    userLocationElement.style.height = '16px';
+
+    new mapboxgl.Marker({ 
+      element: userLocationElement,
+      anchor: 'center' 
+    })
+      .setLngLat([userCoordinates.lon, userCoordinates.lat])
+      .addTo(map.current);
+  }, [showUserLocation, userCoordinates, mapboxToken]);
+
+  // Add doctor markers
+  useEffect(() => {
+    if (!map.current || !mapboxToken) {
+      console.log('Map or token not ready for markers');
+      return;
+    }
 
     // Clear existing markers
     markers.current.forEach(marker => marker.remove());
     markers.current = [];
 
-    // Don't try to add markers until the map has loaded
-    if (!map.current.loaded()) {
-      map.current.on('load', addDoctorMarkers);
-      return () => {
-        if (map.current) {
-          map.current.off('load', addDoctorMarkers);
-        }
-      };
-    } else {
-      addDoctorMarkers();
-    }
+    // Wait for map to be fully loaded before adding markers
+    const addMarkersWhenReady = () => {
+      if (!map.current?.loaded()) {
+        console.log('Map not loaded yet, waiting...');
+        setTimeout(addMarkersWhenReady, 100);
+        return;
+      }
 
-    function addDoctorMarkers() {
-      if (!map.current) return;
-      
       console.log(`Adding ${doctors.length} doctor markers to map`);
       
-      // Add markers for doctors with coordinates
       const doctorsWithCoordinates = doctors.filter(doctor => 
         doctor.coordinates?.lat && doctor.coordinates?.lon
       );
@@ -145,129 +168,127 @@ const DoctorMap = ({
       console.log(`Filtered to ${doctorsWithCoordinates.length} doctors with valid coordinates`);
       
       doctorsWithCoordinates.forEach(doctor => {
-        if (doctor.coordinates?.lat && doctor.coordinates?.lon) {
-          const doctorLat = parseFloat(String(doctor.coordinates.lat));
-          const doctorLon = parseFloat(String(doctor.coordinates.lon));
-          
-          if (isNaN(doctorLat) || isNaN(doctorLon)) {
-            console.log(`Skipping doctor ${doctor.id} due to invalid coordinates`, doctor.coordinates);
-            return;
-          }
-          
-          // Get distance string if available
-          let distanceStr = '';
-          if (doctor.distance) {
-            distanceStr = `${doctor.distance} km away`;
-          }
-          
-          // Create marker element with doctor icon
-          const markerElement = document.createElement('div');
-          markerElement.className = 'cursor-pointer transform hover:scale-110 transition-transform duration-200';
-          markerElement.innerHTML = `
-            <div class="relative">
-              <div class="w-8 h-8 bg-white border-2 border-primary rounded-full shadow-lg flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
-                  <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
-                </svg>
-              </div>
-              <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-primary rotate-45"></div>
+        if (!doctor.coordinates?.lat || !doctor.coordinates?.lon) return;
+        
+        const doctorLat = parseFloat(String(doctor.coordinates.lat));
+        const doctorLon = parseFloat(String(doctor.coordinates.lon));
+        
+        if (isNaN(doctorLat) || isNaN(doctorLon)) {
+          console.log(`Skipping doctor ${doctor.id} due to invalid coordinates`, doctor.coordinates);
+          return;
+        }
+        
+        console.log(`Adding marker for doctor ${doctor.full_name} at [${doctorLon}, ${doctorLat}]`);
+        
+        // Create marker element
+        const markerElement = document.createElement('div');
+        markerElement.className = 'cursor-pointer transform hover:scale-110 transition-transform duration-200';
+        markerElement.innerHTML = `
+          <div class="relative">
+            <div class="w-8 h-8 bg-white border-2 border-red-500 rounded-full shadow-lg flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="red" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+              </svg>
             </div>
-          `;
+            <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-red-500 rotate-45"></div>
+          </div>
+        `;
 
-          // Create popup with doctor information
-          const popup = new mapboxgl.Popup({ 
-            offset: 25,
-            closeButton: true,
-            className: 'doctor-popup'
-          }).setHTML(`
-            <div class="p-3 min-w-[200px]">
-              <h3 class="font-semibold text-base mb-2">${doctor.full_name}</h3>
-              <div class="space-y-1 text-sm text-gray-600">
+        // Get distance string if available
+        let distanceStr = '';
+        if (doctor.distance) {
+          distanceStr = `${doctor.distance} km away`;
+        }
+
+        // Create popup
+        const popup = new mapboxgl.Popup({ 
+          offset: 25,
+          closeButton: true,
+          className: 'doctor-popup'
+        }).setHTML(`
+          <div class="p-3 min-w-[200px]">
+            <h3 class="font-semibold text-base mb-2">${doctor.full_name}</h3>
+            <div class="space-y-1 text-sm text-gray-600">
+              <div class="flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                ${doctor.city || doctor.address || 'Location not specified'}
+              </div>
+              ${distanceStr ? `<div class="text-red-600 font-medium">${distanceStr}</div>` : ''}
+              ${doctor.phone ? `
                 <div class="flex items-center">
                   <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                   </svg>
-                  ${doctor.city || doctor.address || 'Location not specified'}
+                  ${doctor.phone}
                 </div>
-                ${distanceStr ? `<div class="text-primary font-medium">${distanceStr}</div>` : ''}
-                ${doctor.phone ? `
-                  <div class="flex items-center">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                    </svg>
-                    ${doctor.phone}
-                  </div>
-                ` : ''}
-              </div>
-              <div class="mt-3">
-                <button onclick="window.selectDoctor('${doctor.id}')" class="w-full bg-primary text-white px-3 py-2 rounded text-sm hover:bg-primary/90 transition-colors">
-                  Connect with Doctor
-                </button>
-              </div>
+              ` : ''}
             </div>
-          `);
+            <div class="mt-3">
+              <button onclick="window.selectDoctor('${doctor.id}')" class="w-full bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700 transition-colors">
+                Connect with Doctor
+              </button>
+            </div>
+          </div>
+        `);
 
-          // Create and add marker
-          const marker = new mapboxgl.Marker({ element: markerElement })
-            .setLngLat([doctorLon, doctorLat])
-            .setPopup(popup)
-            .addTo(map.current);
-            
-          // Add click handler
-          markerElement.addEventListener('click', () => {
-            console.log('Doctor marker clicked:', doctor.id);
-            onDoctorSelect(doctor.id);
-          });
+        // Create and add marker
+        const marker = new mapboxgl.Marker({ element: markerElement })
+          .setLngLat([doctorLon, doctorLat])
+          .setPopup(popup)
+          .addTo(map.current!);
           
-          // Store marker for later cleanup
-          markers.current.push(marker);
-        }
+        // Add click handler
+        markerElement.addEventListener('click', () => {
+          console.log('Doctor marker clicked:', doctor.id);
+          onDoctorSelect(doctor.id);
+        });
+        
+        markers.current.push(marker);
       });
       
-      console.log(`Added ${markers.current.length} markers to the map`);
+      console.log(`Successfully added ${markers.current.length} markers to the map`);
       
       // Set up global function for popup button clicks
       (window as any).selectDoctor = (doctorId: string) => {
+        console.log('Doctor selected from popup:', doctorId);
         onDoctorSelect(doctorId);
       };
-    }
-    
-    // Fit map to markers if we have any
-    if (markers.current.length > 0) {
-      console.log('Fitting map to markers');
-      const bounds = new mapboxgl.LngLatBounds();
-      
-      markers.current.forEach(marker => {
-        bounds.extend(marker.getLngLat());
-      });
-      
-      // Add user location to bounds if available
-      if (userCoordinates?.lat && userCoordinates?.lon) {
-        bounds.extend([userCoordinates.lon, userCoordinates.lat]);
+
+      // Fit map to show all markers
+      if (markers.current.length > 0) {
+        console.log('Fitting map to show all markers');
+        const bounds = new mapboxgl.LngLatBounds();
+        
+        markers.current.forEach(marker => {
+          bounds.extend(marker.getLngLat());
+        });
+        
+        // Add user location to bounds if available
+        if (userCoordinates?.lat && userCoordinates?.lon) {
+          bounds.extend([userCoordinates.lon, userCoordinates.lat]);
+        }
+        
+        map.current!.fitBounds(bounds, { 
+          padding: 50,
+          maxZoom: 13,
+          duration: 1000
+        });
       }
-      
-      map.current.fitBounds(bounds, { 
-        padding: 50,
-        maxZoom: 13,
-        duration: 1000
-      });
-    } else if (doctors.length === 0) {
-      console.log('No markers to add, centering map on default location or user location');
-      // If no markers and no user coordinates, center on Luxembourg
-      map.current.flyTo({
-        center: userCoordinates 
-          ? [userCoordinates.lon, userCoordinates.lat]
-          : [6.1296, 49.8153],
-        zoom: userCoordinates ? 12 : 9,
-        duration: 1000
-      });
-    }
-  }, [doctors, userCoordinates, onDoctorSelect, mapboxToken]);
+    };
+
+    addMarkersWhenReady();
+  }, [doctors, onDoctorSelect, mapboxToken]);
 
   const handleSetToken = () => {
-    setMapboxToken(tokenInput);
-    localStorage.setItem('mapbox_token', tokenInput);
+    if (tokenInput.trim()) {
+      setMapboxToken(tokenInput.trim());
+      localStorage.setItem('mapbox_token', tokenInput.trim());
+      mapboxgl.accessToken = tokenInput.trim();
+      console.log('Token set manually:', tokenInput.trim());
+    }
   };
 
   return (
@@ -284,7 +305,7 @@ const DoctorMap = ({
             </p>
             <p className="text-xs text-gray-500">
               You can get a free token at{' '}
-              <a href="https://mapbox.com/" className="text-primary underline" target="_blank" rel="noopener noreferrer">
+              <a href="https://mapbox.com/" className="text-red-600 underline" target="_blank" rel="noopener noreferrer">
                 mapbox.com
               </a>
             </p>
@@ -309,7 +330,7 @@ const DoctorMap = ({
       ) : isLoadingToken ? (
         <div className="w-full h-full flex items-center justify-center">
           <div className="text-center">
-            <Map className="h-10 w-10 text-primary/60 mx-auto mb-2 animate-pulse" />
+            <Map className="h-10 w-10 text-red-600/60 mx-auto mb-2 animate-pulse" />
             <p className="text-sm text-gray-600">Loading map...</p>
           </div>
         </div>
