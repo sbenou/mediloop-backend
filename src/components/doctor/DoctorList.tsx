@@ -61,58 +61,64 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
   return (
     <div className="space-y-4">
       {doctors.map((doctor) => (
-        <Card key={doctor.id} className="hover:shadow-md transition-shadow">
-          <CardHeader>
-            <CardTitle className="text-lg">{doctor.full_name}</CardTitle>
-            <div className="flex items-center text-sm text-gray-600">
-              <MapPin className="w-4 h-4 mr-1" />
-              {doctor.city || doctor.address || 'Location not specified'}
-              {doctor.distance && (
-                <span className="ml-2 text-primary font-medium">
-                  {typeof doctor.distance === 'number' ? `${doctor.distance} km` : doctor.distance}
-                </span>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {doctor.license_number && (
-                <p className="text-sm text-gray-600">
-                  License: {doctor.license_number}
-                </p>
-              )}
-              
-              {doctor.phone && (
-                <div className="flex items-center text-sm text-gray-600">
-                  <Phone className="w-4 h-4 mr-2" />
-                  {doctor.phone}
-                </div>
-              )}
-              
-              {doctor.email && (
-                <div className="flex items-center text-sm text-gray-600">
-                  <Mail className="w-4 h-4 mr-2" />
-                  {doctor.email}
-                </div>
-              )}
-              
-              {doctor.hours && (
-                <div className="flex items-center text-sm text-gray-600">
-                  <Clock className="w-4 h-4 mr-2" />
-                  <span className="truncate">{doctor.hours}</span>
-                </div>
-              )}
-              
-              <div className="pt-2">
-                <Button 
-                  onClick={() => onConnect(doctor.id, doctor.source || 'database')}
-                  className="w-full"
-                >
-                  Connect
-                </Button>
+        <Card key={doctor.id} className="p-4 hover:shadow-md transition-shadow">
+          <div className="flex justify-between items-start mb-3">
+            <div>
+              <h3 className="font-semibold text-lg text-gray-900">{doctor.full_name}</h3>
+              <div className="flex items-center text-sm text-gray-600 mt-1">
+                <MapPin className="w-4 h-4 mr-1" />
+                {doctor.city || doctor.address || 'Location not specified'}
+                {doctor.distance && (
+                  <span className="ml-2 text-primary font-medium">
+                    {typeof doctor.distance === 'number' ? `${doctor.distance} km` : doctor.distance}
+                  </span>
+                )}
               </div>
             </div>
-          </CardContent>
+          </div>
+
+          <div className="space-y-2 mb-4">
+            {doctor.license_number && (
+              <p className="text-sm text-gray-600">
+                License: {doctor.license_number}
+              </p>
+            )}
+            
+            {doctor.phone && (
+              <div className="flex items-center text-sm text-gray-600">
+                <Phone className="w-4 h-4 mr-2" />
+                {doctor.phone}
+              </div>
+            )}
+            
+            {doctor.email && (
+              <div className="flex items-center text-sm text-gray-600">
+                <Mail className="w-4 h-4 mr-2" />
+                {doctor.email}
+              </div>
+            )}
+            
+            {doctor.hours && (
+              <div className="flex items-start text-sm text-gray-600">
+                <Clock className="w-4 h-4 mr-2 mt-0.5" />
+                <div>
+                  <p className="font-medium">Opening Hours:</p>
+                  <div className="text-xs text-gray-500">
+                    {doctor.hours.split('\n').map((line, index) => (
+                      <div key={index}>{line}</div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <Button 
+            onClick={() => onConnect(doctor.id, doctor.source || 'database')}
+            className="w-full bg-primary hover:bg-primary/90"
+          >
+            Connect
+          </Button>
         </Card>
       ))}
     </div>

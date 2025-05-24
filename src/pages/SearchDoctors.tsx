@@ -149,8 +149,8 @@ const SearchDoctors = () => {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-6 h-[calc(100vh-200px)]">
-            <div className="overflow-y-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[600px]">
+            <div className="overflow-y-auto max-h-[600px] pr-4">
               <DoctorList
                 doctors={doctors}
                 isLoading={isLoading}
@@ -159,7 +159,7 @@ const SearchDoctors = () => {
               />
             </div>
             
-            <div className="rounded-lg overflow-hidden">
+            <div className="h-[600px] rounded-lg overflow-hidden border">
               <DoctorMap 
                 doctors={doctors} 
                 userCoordinates={currentCoordinates} 
