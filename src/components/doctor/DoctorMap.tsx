@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -308,7 +309,7 @@ const DoctorMap = ({
       ) : isLoadingToken ? (
         <div className="w-full h-full flex items-center justify-center">
           <div className="text-center">
-            <MapIcon className="h-10 w-10 text-primary/60 mx-auto mb-2 animate-pulse" />
+            <Map className="h-10 w-10 text-primary/60 mx-auto mb-2 animate-pulse" />
             <p className="text-sm text-gray-600">Loading map...</p>
           </div>
         </div>
