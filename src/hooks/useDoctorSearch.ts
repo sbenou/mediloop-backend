@@ -60,8 +60,7 @@ export const useDoctorSearch = (
               full_name, 
               city, 
               license_number, 
-              email, 
-              phone_number,
+              email,
               doctor_metadata!doctor_metadata_doctor_id_fkey (
                 hours,
                 address,
@@ -86,7 +85,7 @@ export const useDoctorSearch = (
                 city: doc.city || doc.doctor_metadata?.[0]?.city || 'Unknown location',
                 license_number: doc.license_number || '',
                 email: doc.email,
-                phone: doc.phone_number,
+                phone: null, // No phone in profiles
                 hours: doc.doctor_metadata?.[0]?.hours || null,
                 address: doc.doctor_metadata?.[0]?.address || '',
                 source: 'database' as const,
@@ -163,8 +162,7 @@ export const useDoctorSearch = (
               full_name, 
               city, 
               license_number, 
-              email, 
-              phone_number,
+              email,
               doctor_metadata!doctor_metadata_doctor_id_fkey (
                 hours,
                 address,
@@ -190,7 +188,7 @@ export const useDoctorSearch = (
                   city: doc.city || doc.doctor_metadata?.[0]?.city || 'Unknown location',
                   license_number: doc.license_number || '',
                   email: doc.email,
-                  phone: doc.phone_number,
+                  phone: null, // No phone in profiles
                   hours: doc.doctor_metadata?.[0]?.hours || null,
                   address: doc.doctor_metadata?.[0]?.address || '',
                   source: 'database' as const,

@@ -5,7 +5,6 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Button } from "@/components/ui/button";
 import { Search, Map } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { getMapboxToken } from '@/services/mapbox';
 
 interface Doctor {
   id: string;
@@ -38,6 +37,37 @@ const DoctorMap = ({
   const [mapboxToken, setMapboxToken] = useState<string>('');
   const [tokenInput, setTokenInput] = useState<string>('');
   const [isLoadingToken, setIsLoadingToken] = useState<boolean>(true);
+
+  // Get Mapbox token from localStorage or environment
+  useEffect(() => {
+    async function loadMapboxToken() {
+      setIsLoadingToken(true);
+      try {
+        // Try to get token from environment variable first
+        let token = import.meta.env.VITE_MAPBOX_TOKEN;
+        
+        // If not in env, try localStorage
+        if (!token) {
+          token = localStorage.getItem('mapbox_token') || '';
+        }
+        
+        if (token) {
+          setMapboxToken(token);
+          
+          // Store in localStorage for future use
+          if (!localStorage.getItem('mapbox_token')) {
+            localStorage.setItem('mapbox_token', token);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading Mapbox token:", error);
+      } finally {
+        setIsLoadingToken(false);
+      }
+    }
+    
+    loadMapboxToken();
+  }, []);
 
   // Initialize and render map
   useEffect(() => {
@@ -209,46 +239,6 @@ const DoctorMap = ({
       });
     }
   }, [doctors, userCoordinates, onDoctorSelect, mapboxToken]);
-
-  // Get Mapbox token from services or localStorage
-  useEffect(() => {
-    async function loadMapboxToken() {
-      setIsLoadingToken(true);
-      try {
-        // Try to get token from environment variable first
-        let token = import.meta.env.VITE_MAPBOX_TOKEN;
-        
-        // If not in env, try localStorage
-        if (!token) {
-          token = localStorage.getItem('mapbox_token') || '';
-        }
-        
-        // If still no token, try to get from service
-        if (!token) {
-          try {
-            token = await getMapboxToken();
-          } catch (error) {
-            console.error("Error getting Mapbox token from service:", error);
-          }
-        }
-        
-        if (token) {
-          setMapboxToken(token);
-          
-          // Store in localStorage for future use
-          if (!localStorage.getItem('mapbox_token')) {
-            localStorage.setItem('mapbox_token', token);
-          }
-        }
-      } catch (error) {
-        console.error("Error loading Mapbox token:", error);
-      } finally {
-        setIsLoadingToken(false);
-      }
-    }
-    
-    loadMapboxToken();
-  }, []);
 
   const handleSetToken = () => {
     setMapboxToken(tokenInput);
