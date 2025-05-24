@@ -12,6 +12,7 @@ interface Doctor {
   license_number: string;
   phone?: string | null;
   email?: string | null;
+  hours?: string | null;
   distance?: number;
   source?: 'database' | 'overpass';
   coordinates?: { lat: number; lon: number } | null;
@@ -51,10 +52,23 @@ export const useDoctorSearch = (
         console.log(`Searching for doctors in country: ${selectedCountry} without coordinates`);
         
         try {
-          // Get doctors from database first - removed 'hours' column
+          // Get doctors from database with their metadata including hours
           const { data: dbDoctors, error } = await supabase
             .from("profiles")
-            .select("id, full_name, city, license_number, email, phone")
+            .select(`
+              id, 
+              full_name, 
+              city, 
+              license_number, 
+              email, 
+              phone_number,
+              doctor_metadata!doctor_metadata_doctor_id_fkey (
+                hours,
+                address,
+                city,
+                postal_code
+              )
+            `)
             .eq("role", "doctor");
 
           if (error) {
@@ -64,13 +78,19 @@ export const useDoctorSearch = (
 
           console.log('Database doctors:', dbDoctors?.length || 0);
 
-          // Add source field to database results, handle null cities
+          // Format database results with metadata
           const formattedDbDoctors = Array.isArray(dbDoctors) 
             ? dbDoctors.map(doc => ({
-                ...doc,
+                id: doc.id,
+                full_name: doc.full_name || 'Doctor',
+                city: doc.city || doc.doctor_metadata?.[0]?.city || 'Unknown location',
+                license_number: doc.license_number || '',
+                email: doc.email,
+                phone: doc.phone_number,
+                hours: doc.doctor_metadata?.[0]?.hours || null,
+                address: doc.doctor_metadata?.[0]?.address || '',
                 source: 'database' as const,
-                city: doc.city || 'Unknown location',
-                coordinates: null // Since the database doesn't have coordinates field
+                coordinates: null
               }))
             : [];
 
@@ -135,10 +155,23 @@ export const useDoctorSearch = (
         console.log('Fetching doctors with coordinates:', coordinates, 'radius:', searchRadius, 'country:', selectedCountry);
       
         try {
-          // Get doctors from database first - removed 'hours' column
+          // Get doctors from database with their metadata including hours
           const { data: dbDoctors, error } = await supabase
             .from("profiles")
-            .select("id, full_name, city, license_number, email, phone")
+            .select(`
+              id, 
+              full_name, 
+              city, 
+              license_number, 
+              email, 
+              phone_number,
+              doctor_metadata!doctor_metadata_doctor_id_fkey (
+                hours,
+                address,
+                city,
+                postal_code
+              )
+            `)
             .eq("role", "doctor");
 
           if (error) {
@@ -148,14 +181,20 @@ export const useDoctorSearch = (
 
           console.log('Database doctors:', dbDoctors?.length || 0);
 
-          // Add source field to database results, handle null cities
+          // Format database results with metadata
           const formattedDbDoctors = Array.isArray(dbDoctors) 
             ? dbDoctors.map(doc => {
                 return {
-                  ...doc,
+                  id: doc.id,
+                  full_name: doc.full_name || 'Doctor',
+                  city: doc.city || doc.doctor_metadata?.[0]?.city || 'Unknown location',
+                  license_number: doc.license_number || '',
+                  email: doc.email,
+                  phone: doc.phone_number,
+                  hours: doc.doctor_metadata?.[0]?.hours || null,
+                  address: doc.doctor_metadata?.[0]?.address || '',
                   source: 'database' as const,
-                  city: doc.city || 'Unknown location',
-                  coordinates: null, // Since the database doesn't have coordinates field
+                  coordinates: null,
                   distance: undefined
                 };
               })
