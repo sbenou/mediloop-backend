@@ -64,11 +64,11 @@ export const useDoctorSearch = (
         const roundedLat = Math.round(coordinates.lat * 10000) / 10000;
         const roundedLon = Math.round(coordinates.lon * 10000) / 10000;
         
-        // Try to get from cache first
+        // Try to get from cache first - but only if we have actual data
         const cacheKey = `doctors-${roundedLat}-${roundedLon}-${searchRadius}-${selectedCountry}`;
         const cachedData = LocalCache.get(cacheKey);
         
-        if (cachedData) {
+        if (cachedData && Array.isArray(cachedData) && cachedData.length > 0) {
           console.log('Using cached doctor data from LocalCache');
           return cachedData;
         }
@@ -228,8 +228,10 @@ export const useDoctorSearch = (
           });
         }
         
-        // Cache the results
-        LocalCache.set(cacheKey, result);
+        // Only cache if we have actual results
+        if (result.length > 0) {
+          LocalCache.set(cacheKey, result);
+        }
         
         console.log(`✅ Final doctor search result: ${result.length} doctors`);
         return result;
