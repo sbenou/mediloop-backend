@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,12 +30,12 @@ interface DoctorListProps {
 }
 
 const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListProps) => {
-  const { session } = useAuth();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const connectMutation = useMutation({
     mutationFn: async (doctorId: string) => {
-      if (!session?.user?.id) {
+      if (!user?.id) {
         throw new Error('Not authenticated');
       }
 
@@ -45,7 +44,7 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
         .from('doctor_patient_connections')
         .insert({
           doctor_id: doctorId,
-          patient_id: session.user.id,
+          patient_id: user.id,
           status: 'pending'
         })
         .select()
@@ -78,7 +77,7 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
   });
 
   const handleConnect = (doctorId: string, source: 'database' | 'overpass') => {
-    if (!session?.user) {
+    if (!user) {
       toast({
         title: "Login Required",
         description: "Please login to connect with doctors.",
