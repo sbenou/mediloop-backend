@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useRef } from 'react';
 import { useFirebaseNotifications } from '@/hooks/useFirebaseNotifications';
 import { useAuth } from '@/hooks/auth/useAuth';
 
@@ -15,31 +15,23 @@ const FirebaseNotificationContext = createContext<FirebaseNotificationContextTyp
 export const FirebaseNotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { fcmToken, notificationPermissionGranted, loading, initializeNotifications } = useFirebaseNotifications();
   const { isAuthenticated } = useAuth();
+  const hasInitialized = useRef(false);
   
-  // Initialize Firebase notifications when user is authenticated
+  // Initialize Firebase notifications when user is authenticated - only once
   useEffect(() => {
-    // Make initialization non-blocking to prevent blank page
-    let isMounted = true;
-    
-    const initialize = async () => {
-      if (isAuthenticated && !fcmToken && isMounted) {
-        try {
-          console.log('Starting notification initialization');
-          await initializeNotifications();
-          console.log('Notification initialization completed');
-        } catch (error) {
+    if (isAuthenticated && !hasInitialized.current && !fcmToken) {
+      hasInitialized.current = true;
+      
+      // Use a longer timeout to ensure auth is fully settled
+      const timeoutId = setTimeout(() => {
+        initializeNotifications().catch(error => {
           console.error('Error initializing notifications (non-critical):', error);
-          // Continue rendering even if notification initialization fails
-        }
-      }
-    };
-    
-    // Use setTimeout to ensure this doesn't block initial render
-    setTimeout(initialize, 100);
-    
-    return () => {
-      isMounted = false;
-    };
+          // Continue even if notification initialization fails
+        });
+      }, 2000); // 2 second delay to let auth settle
+      
+      return () => clearTimeout(timeoutId);
+    }
   }, [isAuthenticated, fcmToken, initializeNotifications]);
   
   return (

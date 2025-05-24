@@ -1,5 +1,5 @@
 
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Notification } from '@/types/supabase';
 import { toast } from '@/components/ui/use-toast';
@@ -14,10 +14,31 @@ export const useNotifications = () => {
   const [fetchError, setFetchError] = useState<Error | null>(null);
   const { currentTenant } = useTenant();
   const { tenantTable } = useTenantSupabase();
+  
+  // Use refs to prevent infinite loops
+  const isFetching = useRef(false);
+  const lastFetchTime = useRef(0);
+  const FETCH_COOLDOWN = 2000; // 2 seconds between fetches
 
   // Function to fetch notifications from database
   const fetchNotifications = useCallback(async () => {
+    // Prevent multiple simultaneous fetches
+    if (isFetching.current) {
+      console.log('Fetch already in progress, skipping...');
+      return;
+    }
+    
+    // Rate limiting - don't fetch too frequently
+    const now = Date.now();
+    if (now - lastFetchTime.current < FETCH_COOLDOWN) {
+      console.log('Fetch rate limited, skipping...');
+      return;
+    }
+    
+    isFetching.current = true;
+    lastFetchTime.current = now;
     setIsLoading(true);
+    
     try {
       let response;
       
@@ -53,6 +74,7 @@ export const useNotifications = () => {
       // Don't show toast for initial fetch to prevent error loops
     } finally {
       setIsLoading(false);
+      isFetching.current = false;
     }
   }, [currentTenant, tenantTable]);
 
@@ -61,14 +83,22 @@ export const useNotifications = () => {
     setFetchError(null);
   }, [currentTenant, tenantTable]);
 
-  // Setup listener for Firebase notifications to trigger a refetch
+  // Setup listener for Firebase notifications to trigger a refetch - with debouncing
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
     const unsubscribe = setupMessageListener((payload) => {
-      console.log('Firebase notification received, refreshing notifications');
-      fetchNotifications();
+      console.log('Firebase notification received, scheduling refresh...');
+      
+      // Debounce the refresh to prevent multiple rapid calls
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        fetchNotifications();
+      }, 1000); // 1 second delay
     });
     
     return () => {
+      clearTimeout(timeoutId);
       if (unsubscribe) {
         unsubscribe();
       }
@@ -162,10 +192,10 @@ export const useNotifications = () => {
           table: 'notifications'
         }, (payload) => {
           console.log('Tenant notification change:', payload);
-          // Use setTimeout to prevent potential deadlocks with Supabase client
+          // Use setTimeout with longer delay to prevent potential deadlocks
           setTimeout(() => {
             fetchNotifications();
-          }, 0);
+          }, 1500);
         })
         .subscribe((status) => {
           console.log(`Tenant notification channel status: ${status}`);
@@ -181,10 +211,11 @@ export const useNotifications = () => {
           schema: 'public',
           table: 'notifications'
         }, (payload) => {
-          // Use setTimeout to prevent potential deadlocks with Supabase client
+          console.log('Public notification change:', payload);
+          // Use setTimeout with longer delay to prevent potential deadlocks
           setTimeout(() => {
             fetchNotifications();
-          }, 0);
+          }, 1500);
         })
         .subscribe((status) => {
           console.log(`Public notification channel status: ${status}`);

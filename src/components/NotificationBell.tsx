@@ -25,30 +25,31 @@ const NotificationBell = () => {
   
   const { fcmToken, initializeNotifications } = useFirebaseNotificationContext();
   
-  // Use ref to track initialization
+  // Use refs to track initialization and prevent loops
   const hasInitialized = useRef(false);
   const errorCountRef = useRef(0);
+  const fcmTokenRegistered = useRef(false);
 
   // Fetch notifications when authenticated - only once
   useEffect(() => {
     if (isAuthenticated && !hasInitialized.current) {
       console.log("NotificationBell: Initial data fetch");
+      hasInitialized.current = true;
       
       const fetchData = async () => {
         try {
           await fetchNotifications();
         } catch (err) {
           console.error("NotificationBell: Error fetching initial data", err);
-          if (errorCountRef.current < 3) {
+          if (errorCountRef.current < 2) { // Reduced retry attempts
             errorCountRef.current++;
             // Retry with exponential backoff
-            setTimeout(fetchData, 1000 * Math.pow(2, errorCountRef.current));
+            setTimeout(fetchData, 2000 * Math.pow(2, errorCountRef.current));
           }
         }
       };
       
       fetchData();
-      hasInitialized.current = true;
       
       // Only set up subscription once
       const cleanup = setupRealtimeSubscription();
@@ -56,9 +57,11 @@ const NotificationBell = () => {
     }
   }, [isAuthenticated, fetchNotifications, setupRealtimeSubscription]);
 
-  // Register FCM token with backend when available - moved to non-blocking
+  // Register FCM token with backend when available - only once per token
   useEffect(() => {
-    if (isAuthenticated && user?.id && fcmToken) {
+    if (isAuthenticated && user?.id && fcmToken && !fcmTokenRegistered.current) {
+      fcmTokenRegistered.current = true;
+      
       // Don't await this - make it non-blocking
       registerFCMToken(user.id, fcmToken).then(success => {
         if (success) {
@@ -66,21 +69,24 @@ const NotificationBell = () => {
         }
       }).catch(error => {
         console.error("Error registering FCM token:", error);
+        fcmTokenRegistered.current = false; // Allow retry on next render
         // Continue even if token registration fails
       });
     }
   }, [isAuthenticated, user?.id, fcmToken]);
 
-  // Request notification permission if authenticated and not already initialized
+  // Request notification permission if authenticated and not already initialized - only once
   useEffect(() => {
     if (isAuthenticated && !fcmToken) {
-      // Use timeout to make this non-blocking
-      setTimeout(() => {
+      // Use timeout to make this non-blocking and prevent auth interference
+      const timeoutId = setTimeout(() => {
         initializeNotifications().catch(err => {
           console.error("Error initializing notifications (non-critical):", err);
           // Continue even if initialization fails
         });
-      }, 1000);
+      }, 3000); // 3 second delay to ensure auth is stable
+
+      return () => clearTimeout(timeoutId);
     }
   }, [isAuthenticated, fcmToken, initializeNotifications]);
 
