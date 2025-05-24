@@ -5,6 +5,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Button } from "@/components/ui/button";
 import { Search, Map, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { getMapboxToken } from '@/services/mapbox';
 
 interface Doctor {
   id: string;
@@ -39,26 +40,19 @@ const DoctorMap = ({
   const [tokenInput, setTokenInput] = useState<string>('');
   const [isLoadingToken, setIsLoadingToken] = useState<boolean>(true);
 
-  // Get Mapbox token from localStorage or environment
+  // Get Mapbox token using the same service as pharmacy search
   useEffect(() => {
     async function loadMapboxToken() {
       setIsLoadingToken(true);
       try {
-        // Try to get token from environment variable first
-        let token = import.meta.env.VITE_MAPBOX_TOKEN;
-        
-        // If not in env, try localStorage
-        if (!token) {
-          token = localStorage.getItem('mapbox_token') || '';
-        }
+        console.log('Loading Mapbox token using getMapboxToken service...');
+        const token = await getMapboxToken();
         
         if (token) {
+          console.log('Successfully loaded Mapbox token');
           setMapboxToken(token);
-          
-          // Store in localStorage for future use
-          if (!localStorage.getItem('mapbox_token')) {
-            localStorage.setItem('mapbox_token', token);
-          }
+        } else {
+          console.error('No token received from getMapboxToken service');
         }
       } catch (error) {
         console.error("Error loading Mapbox token:", error);
