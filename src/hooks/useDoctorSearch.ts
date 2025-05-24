@@ -52,7 +52,7 @@ export const useDoctorSearch = (
         console.log(`Searching for doctors in country: ${selectedCountry} without coordinates`);
         
         try {
-          // Get doctors from database with their metadata including hours
+          // Get doctors from database with simpler query first
           const { data: dbDoctors, error } = await supabase
             .from("profiles")
             .select(`
@@ -60,13 +60,7 @@ export const useDoctorSearch = (
               full_name, 
               city, 
               license_number, 
-              email,
-              doctor_metadata!doctor_metadata_doctor_id_fkey (
-                hours,
-                address,
-                city,
-                postal_code
-              )
+              email
             `)
             .eq("role", "doctor");
 
@@ -77,21 +71,36 @@ export const useDoctorSearch = (
 
           console.log('Database doctors:', dbDoctors?.length || 0);
 
-          // Format database results with metadata
-          const formattedDbDoctors = Array.isArray(dbDoctors) 
-            ? dbDoctors.map(doc => ({
+          // Get metadata separately for each doctor
+          const formattedDbDoctors = [];
+          if (Array.isArray(dbDoctors)) {
+            for (const doc of dbDoctors) {
+              let metadata = null;
+              try {
+                const { data: metaData } = await supabase
+                  .from("doctor_metadata")
+                  .select("hours, address, city, postal_code")
+                  .eq("doctor_id", doc.id)
+                  .maybeSingle();
+                metadata = metaData;
+              } catch (metaError) {
+                console.error('Error fetching metadata for doctor:', doc.id, metaError);
+              }
+
+              formattedDbDoctors.push({
                 id: doc.id,
                 full_name: doc.full_name || 'Doctor',
-                city: doc.city || doc.doctor_metadata?.[0]?.city || 'Unknown location',
+                city: doc.city || metadata?.city || 'Unknown location',
                 license_number: doc.license_number || '',
                 email: doc.email,
-                phone: null, // No phone in profiles
-                hours: doc.doctor_metadata?.[0]?.hours || null,
-                address: doc.doctor_metadata?.[0]?.address || '',
+                phone: null,
+                hours: metadata?.hours || null,
+                address: metadata?.address || '',
                 source: 'database' as const,
                 coordinates: null
-              }))
-            : [];
+              });
+            }
+          }
 
           // Get doctors from Overpass API with country code only
           let formattedOverpassDoctors = [];
@@ -154,7 +163,7 @@ export const useDoctorSearch = (
         console.log('Fetching doctors with coordinates:', coordinates, 'radius:', searchRadius, 'country:', selectedCountry);
       
         try {
-          // Get doctors from database with their metadata including hours
+          // Get doctors from database with simpler query first
           const { data: dbDoctors, error } = await supabase
             .from("profiles")
             .select(`
@@ -162,13 +171,7 @@ export const useDoctorSearch = (
               full_name, 
               city, 
               license_number, 
-              email,
-              doctor_metadata!doctor_metadata_doctor_id_fkey (
-                hours,
-                address,
-                city,
-                postal_code
-              )
+              email
             `)
             .eq("role", "doctor");
 
@@ -179,24 +182,37 @@ export const useDoctorSearch = (
 
           console.log('Database doctors:', dbDoctors?.length || 0);
 
-          // Format database results with metadata
-          const formattedDbDoctors = Array.isArray(dbDoctors) 
-            ? dbDoctors.map(doc => {
-                return {
-                  id: doc.id,
-                  full_name: doc.full_name || 'Doctor',
-                  city: doc.city || doc.doctor_metadata?.[0]?.city || 'Unknown location',
-                  license_number: doc.license_number || '',
-                  email: doc.email,
-                  phone: null, // No phone in profiles
-                  hours: doc.doctor_metadata?.[0]?.hours || null,
-                  address: doc.doctor_metadata?.[0]?.address || '',
-                  source: 'database' as const,
-                  coordinates: null,
-                  distance: undefined
-                };
-              })
-            : [];
+          // Get metadata separately for each doctor
+          const formattedDbDoctors = [];
+          if (Array.isArray(dbDoctors)) {
+            for (const doc of dbDoctors) {
+              let metadata = null;
+              try {
+                const { data: metaData } = await supabase
+                  .from("doctor_metadata")
+                  .select("hours, address, city, postal_code")
+                  .eq("doctor_id", doc.id)
+                  .maybeSingle();
+                metadata = metaData;
+              } catch (metaError) {
+                console.error('Error fetching metadata for doctor:', doc.id, metaError);
+              }
+
+              formattedDbDoctors.push({
+                id: doc.id,
+                full_name: doc.full_name || 'Doctor',
+                city: doc.city || metadata?.city || 'Unknown location',
+                license_number: doc.license_number || '',
+                email: doc.email,
+                phone: null,
+                hours: metadata?.hours || null,
+                address: metadata?.address || '',
+                source: 'database' as const,
+                coordinates: null,
+                distance: undefined
+              });
+            }
+          }
 
           // Get doctors from Overpass API with current radius and country code
           let formattedOverpassDoctors = [];
