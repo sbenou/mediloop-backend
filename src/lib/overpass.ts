@@ -1,5 +1,7 @@
+
 import { LocalCache } from './cache';
 import { calculateDistance } from './utils/distance';
+import { supabase } from './supabase';
 import type { OverpassResult, Pharmacy, Doctor } from './types/overpass.types';
 
 const MAX_RETRIES = 3;
@@ -78,7 +80,6 @@ export const searchPharmacies = async (lat: number, lon: number, radius: number 
   try {
     const data = await fetchFromOverpass(query);
     
-    // Verify that the data has the expected structure
     if (!data || !Array.isArray(data.elements)) {
       console.error('Invalid Overpass API response structure for pharmacies:', data);
       return [];
@@ -87,12 +88,11 @@ export const searchPharmacies = async (lat: number, lon: number, radius: number 
     const results = data.elements
       .filter(element => element && typeof element === 'object' && 'id' in element)
       .map(element => {
-        // Make sure all required properties exist with fallbacks
         const lat = typeof element.lat === 'number' ? element.lat : null;
         const lon = typeof element.lon === 'number' ? element.lon : null;
         const tags = element.tags || {};
         
-        return {
+        const pharmacy = {
           id: String(element.id || ''),
           name: tags?.name || 'Unnamed Pharmacy',
           address: [
@@ -110,6 +110,15 @@ export const searchPharmacies = async (lat: number, lon: number, radius: number 
             lon: lon
           }
         };
+
+        // Store pharmacy hours in metadata table if we have hours data
+        if (tags?.opening_hours && pharmacy.name !== 'Unnamed Pharmacy') {
+          storePharmacyMetadata(pharmacy.name, pharmacy.address, tags.opening_hours).catch(err => {
+            console.error('Error storing pharmacy metadata:', err);
+          });
+        }
+
+        return pharmacy;
       })
       .filter(pharmacy => pharmacy.coordinates.lat !== null && pharmacy.coordinates.lon !== null);
 
@@ -121,7 +130,54 @@ export const searchPharmacies = async (lat: number, lon: number, radius: number 
   }
 };
 
-// Updated doctor search function to match the pharmacy search style
+// Helper function to store pharmacy metadata
+async function storePharmacyMetadata(name: string, address: string, hours: string) {
+  try {
+    // First, try to find an existing pharmacy with this name and address
+    const { data: existingPharmacy } = await supabase
+      .from('pharmacies')
+      .select('id')
+      .eq('name', name)
+      .eq('address', address)
+      .maybeSingle();
+
+    if (existingPharmacy) {
+      // Update or create pharmacy_metadata entry
+      await supabase
+        .from('pharmacy_metadata')
+        .upsert({
+          pharmacy_id: existingPharmacy.id,
+          logo_url: null
+        });
+
+      // Update pharmacy hours in the main table
+      await supabase
+        .from('pharmacies')
+        .update({ hours })
+        .eq('id', existingPharmacy.id);
+    }
+  } catch (error) {
+    console.error('Error in storePharmacyMetadata:', error);
+  }
+}
+
+// Helper function to store doctor metadata
+async function storeDoctorMetadata(doctorId: string, hours: string, address: string, city: string) {
+  try {
+    await supabase
+      .from('doctor_metadata')
+      .upsert({
+        doctor_id: doctorId,
+        hours,
+        address,
+        city,
+        postal_code: ''
+      });
+  } catch (error) {
+    console.error('Error in storeDoctorMetadata:', error);
+  }
+}
+
 export const searchDoctors = async (
   lat: number | null, 
   lon: number | null, 
@@ -130,23 +186,19 @@ export const searchDoctors = async (
 ): Promise<Doctor[]> => {
   console.log(`searchDoctors called with lat: ${lat}, lon: ${lon}, radius: ${radius}, country: ${countryCode}`);
   
-  // Generate a unique cache key based on parameters
   const cacheKey = lat && lon 
     ? `doctors-${countryCode}-${lat}-${lon}-${radius}` 
     : `doctors-country-${countryCode}`;
     
-  // Try to get cached results first
   const cached = LocalCache.get<Doctor[]>(cacheKey);
   if (cached) {
     console.log(`Returning cached doctors results, count: ${cached.length}`);
     return cached;
   }
 
-  // Choose query based on whether coordinates are provided
   let query;
   
   if (lat && lon) {
-    // Coordinate-based query with radius, similar to pharmacy query but for doctors
     query = `
       [out:json][timeout:60];
       (
@@ -163,7 +215,6 @@ export const searchDoctors = async (
       out skel qt;
     `;
   } else {
-    // Country-only query, similar to pharmacy but for doctors
     query = `
       [out:json][timeout:60];
       area["ISO3166-1"="${countryCode}"][admin_level=2]->.country;
@@ -187,7 +238,6 @@ export const searchDoctors = async (
   try {
     const data = await fetchFromOverpass(query);
     
-    // Verify that the data has the expected structure
     if (!data || !Array.isArray(data.elements)) {
       console.error('Invalid Overpass API response structure for doctors:', data);
       return [];
@@ -195,21 +245,17 @@ export const searchDoctors = async (
     
     console.log(`Found ${data.elements.length} raw elements from Overpass API`);
     
-    // Process results to doctor format
     const doctorMap = new Map();
     
     data.elements
       .filter(element => element && typeof element === 'object' && 'id' in element)
       .forEach(element => {
-        // Skip if we already processed this element
         if (doctorMap.has(String(element.id))) return;
         
-        // Make sure all required properties exist with fallbacks
         const elementLat = typeof element.lat === 'number' ? element.lat : null;
         const elementLon = typeof element.lon === 'number' ? element.lon : null;
         const tags = element.tags || {};
         
-        // Only process elements with valid tags that suggest it's a doctor or medical facility
         const isMedicalFacility = 
           tags["healthcare"] === "doctor" || 
           tags["amenity"] === "doctors" ||
@@ -220,7 +266,6 @@ export const searchDoctors = async (
           /physician|general_practitioner|specialist/.test(tags["healthcare"] || "");
           
         if (isMedicalFacility && (elementLat !== null && elementLon !== null)) {
-          // Format address from available address components
           const address = [
             tags['addr:housenumber'],
             tags['addr:street'],
@@ -228,7 +273,6 @@ export const searchDoctors = async (
             tags['addr:postcode']
           ].filter(Boolean).join(', ') || 'Address not available';
           
-          // Calculate distance if coordinates are provided
           let distance = undefined;
           if (lat !== null && lon !== null) {
             distance = calculateDistance(lat, lon, elementLat, elementLon);
@@ -237,16 +281,20 @@ export const searchDoctors = async (
             }
           }
           
+          const doctorId = String(element.id || '');
+          const hours = tags?.opening_hours || '';
+          const city = tags?.['addr:city'] || '';
+          
           const doctor = {
-            id: String(element.id || ''),
+            id: doctorId,
             full_name: tags?.name || tags?.operator || 'Medical Facility',
             name: tags?.name || tags?.operator || 'Medical Facility',
             address,
-            city: tags?.['addr:city'] || '',
+            city,
             license_number: tags?.['healthcare:speciality'] || 'General Practice',
             phone: tags?.['contact:phone'] || tags?.phone || '',
             email: tags?.['contact:email'] || tags?.email || '',
-            hours: tags?.opening_hours || '',
+            hours,
             coordinates: {
               lat: elementLat,
               lon: elementLon
@@ -255,6 +303,13 @@ export const searchDoctors = async (
             source: 'overpass' as const
           };
           
+          // Store doctor metadata if we have hours data
+          if (hours && doctor.full_name !== 'Medical Facility') {
+            storeDoctorMetadata(doctorId, hours, address, city).catch(err => {
+              console.error('Error storing doctor metadata:', err);
+            });
+          }
+          
           doctorMap.set(String(element.id), doctor);
         }
       });
@@ -262,8 +317,7 @@ export const searchDoctors = async (
     const results = Array.from(doctorMap.values());
     console.log(`Processed ${results.length} unique doctors/medical facilities`);
     
-    // Cache results for future use
-    LocalCache.set(cacheKey, results, 300); // Cache for 5 minutes
+    LocalCache.set(cacheKey, results, 300);
     return results;
   } catch (error) {
     console.error('Failed to fetch doctors:', error);

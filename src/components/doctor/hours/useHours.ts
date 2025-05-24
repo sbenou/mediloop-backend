@@ -1,124 +1,114 @@
 
-import { useState, useEffect } from 'react';
-import { WeekHours, defaultHours } from '@/types/pharmacy/hours';
-import { parseStringHours, formatHoursDisplay } from '@/utils/pharmacy/hoursFormatters';
-import { toast } from '@/components/ui/use-toast';
+import { useState, useEffect, Dispatch, SetStateAction } from 'react';
 import { supabase } from '@/lib/supabase';
+import { parseHoursText, stringifyWeekHours } from '@/utils/pharmacy/hoursFormatters';
+import { formatHoursDisplay } from '@/utils/pharmacy/hoursFormatters';
+import { WeekHours } from '@/types/pharmacy/hours';
+import { toast } from '@/components/ui/use-toast';
 
-export const useHours = (hours: string | null, doctorId: string, setIsEditing?: (value: boolean) => void) => {
-  const [hoursText, setHoursText] = useState(hours || '');
+export const useHours = (
+  initialHours: string | null,
+  doctorId: string,
+  setIsEditing?: Dispatch<SetStateAction<boolean>>
+) => {
+  const [hoursText, setHoursText] = useState(initialHours || '');
   const [weekHours, setWeekHours] = useState<WeekHours | null>(null);
-  const [formattedHours, setFormattedHours] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
-  const [isStructuredFormat, setIsStructuredFormat] = useState(false);
   
-  // Parse hours on initial load
+  // Parse initial hours and determine format
   useEffect(() => {
-    if (hours) {
+    if (initialHours) {
+      setHoursText(initialHours);
       try {
-        // Try to parse as JSON first
-        if (hours.trim().startsWith('{')) {
-          const parsedHours = JSON.parse(hours);
-          setWeekHours(parsedHours);
-          setIsStructuredFormat(true);
-          setFormattedHours(formatHoursDisplay(parsedHours));
-        } else {
-          // If it's string format, parse it to structured format
-          setHoursText(hours);
-          const parsedHours = parseStringHours(hours);
-          setWeekHours(parsedHours);
-          setFormattedHours(formatHoursDisplay(parsedHours));
-          setIsStructuredFormat(false);
+        const parsed = parseHoursText(initialHours);
+        if (parsed) {
+          setWeekHours(parsed);
         }
       } catch (error) {
-        console.error('Error parsing hours:', error);
-        setHoursText(hours);
-        const parsedHours = parseStringHours(hours || '');
-        setWeekHours(parsedHours);
-        setFormattedHours(formatHoursDisplay(parsedHours));
-        setIsStructuredFormat(false);
+        // If parsing fails, it's probably free text format
+        console.log('Hours are in free text format');
       }
-    } else {
-      // Initialize with default hours if none exist
-      setWeekHours(defaultHours);
-      setFormattedHours(formatHoursDisplay(defaultHours));
-      setIsStructuredFormat(true);
     }
-  }, [hours]);
+  }, [initialHours]);
+
+  // Format hours for display
+  const formattedHours = formatHoursDisplay(hoursText);
+  
+  // Check if hours are in structured format
+  const isStructuredFormat = weekHours !== null;
 
   const handleSaveText = async () => {
-    if (!doctorId) return;
-    
+    setIsSaving(true);
     try {
-      setIsSaving(true);
-      
-      // Save as text format
+      // Update doctor_metadata table
       const { error } = await supabase
         .from('doctor_metadata')
-        .upsert({ 
+        .upsert({
           doctor_id: doctorId,
           hours: hoursText,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'doctor_id' });
-      
+          address: '', // Keep existing or set empty if new
+          city: '',
+          postal_code: ''
+        });
+
       if (error) throw error;
-      
+
       toast({
-        title: "Success",
-        description: "Opening hours updated successfully",
+        title: "Hours updated",
+        description: "Doctor hours have been saved successfully.",
       });
       
-      if (setIsEditing) setIsEditing(false);
-      
-      // Update parsed display
-      const parsedHours = parseStringHours(hoursText);
-      setWeekHours(parsedHours);
-      setFormattedHours(formatHoursDisplay(parsedHours));
+      if (setIsEditing) {
+        setIsEditing(false);
+      }
     } catch (error) {
-      console.error('Error updating hours:', error);
+      console.error('Error saving hours:', error);
       toast({
-        variant: "destructive",
         title: "Error",
-        description: "Failed to update opening hours",
+        description: "Failed to save hours. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setIsSaving(false);
     }
   };
-  
+
   const handleSaveStructured = async () => {
-    if (!doctorId || !weekHours) return;
+    if (!weekHours) return;
     
+    setIsSaving(true);
     try {
-      setIsSaving(true);
+      const hoursString = stringifyWeekHours(weekHours);
       
-      // Save as JSON format
-      const hoursData = JSON.stringify(weekHours);
-      
+      // Update doctor_metadata table
       const { error } = await supabase
         .from('doctor_metadata')
-        .upsert({ 
+        .upsert({
           doctor_id: doctorId,
-          hours: hoursData,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'doctor_id' });
-      
+          hours: hoursString,
+          address: '', // Keep existing or set empty if new
+          city: '',
+          postal_code: ''
+        });
+
       if (error) throw error;
+
+      setHoursText(hoursString);
       
       toast({
-        title: "Success",
-        description: "Opening hours updated successfully",
+        title: "Hours updated",
+        description: "Doctor hours have been saved successfully.",
       });
       
-      if (setIsEditing) setIsEditing(false);
-      setIsStructuredFormat(true);
-      setFormattedHours(formatHoursDisplay(weekHours));
+      if (setIsEditing) {
+        setIsEditing(false);
+      }
     } catch (error) {
-      console.error('Error updating hours:', error);
+      console.error('Error saving hours:', error);
       toast({
-        variant: "destructive",
         title: "Error",
-        description: "Failed to update opening hours",
+        description: "Failed to save hours. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setIsSaving(false);
