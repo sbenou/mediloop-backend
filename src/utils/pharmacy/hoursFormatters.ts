@@ -3,7 +3,20 @@ import { WeekHours, defaultHours } from '@/types/pharmacy/hours';
 /**
  * Formats the structured week hours into an array of display strings
  */
-export const formatHoursDisplay = (hours: WeekHours): string[] => {
+export const formatHoursDisplay = (hours: WeekHours | string): string[] => {
+  // If it's a string, try to parse it first
+  if (typeof hours === 'string') {
+    const parsed = parseStringHours(hours);
+    return formatHoursDisplayFromWeekHours(parsed);
+  }
+  
+  return formatHoursDisplayFromWeekHours(hours);
+};
+
+/**
+ * Helper function to format WeekHours into display strings
+ */
+const formatHoursDisplayFromWeekHours = (hours: WeekHours): string[] => {
   const result: string[] = [];
   
   const days: Array<[keyof WeekHours, string]> = [
@@ -27,6 +40,35 @@ export const formatHoursDisplay = (hours: WeekHours): string[] => {
   });
   
   return result;
+};
+
+/**
+ * Convert WeekHours object to a string representation
+ */
+export const stringifyWeekHours = (weekHours: WeekHours): string => {
+  return JSON.stringify(weekHours);
+};
+
+/**
+ * Attempt to parse a string-formatted hours text into structured WeekHours
+ */
+export const parseHoursText = (hoursText: string): WeekHours | null => {
+  if (!hoursText || hoursText.trim() === '') {
+    return null;
+  }
+  
+  try {
+    // Try to parse JSON directly if it's in that format
+    if (hoursText.trim().startsWith('{')) {
+      return validateHoursData(JSON.parse(hoursText));
+    }
+    
+    // Otherwise, try to parse text format
+    return parseStringHours(hoursText);
+  } catch (error) {
+    console.error('Error parsing hours text:', error);
+    return null;
+  }
 };
 
 /**

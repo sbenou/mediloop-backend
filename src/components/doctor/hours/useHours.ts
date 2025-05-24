@@ -1,8 +1,7 @@
 
 import { useState, useEffect, Dispatch, SetStateAction } from 'react';
 import { supabase } from '@/lib/supabase';
-import { parseHoursText, stringifyWeekHours } from '@/utils/pharmacy/hoursFormatters';
-import { formatHoursDisplay } from '@/utils/pharmacy/hoursFormatters';
+import { parseHoursText, stringifyWeekHours, formatHoursDisplay } from '@/utils/pharmacy/hoursFormatters';
 import { WeekHours } from '@/types/pharmacy/hours';
 import { toast } from '@/components/ui/use-toast';
 
