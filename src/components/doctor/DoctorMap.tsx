@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Button } from "@/components/ui/button";
-import { Search, Map } from "lucide-react";
+import { Search, Map, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 interface Doctor {
@@ -16,6 +16,7 @@ interface Doctor {
   phone?: string;
   email?: string;
   hours?: string;
+  source?: 'database' | 'overpass';
 }
 
 interface DoctorMapProps {
@@ -86,7 +87,7 @@ const DoctorMap = ({
     // Initialize map
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v11',
+      style: 'mapbox://styles/mapbox/light-v10',
       center: userCoordinates 
         ? [userCoordinates.lon, userCoordinates.lat]
         : [6.1296, 49.8153], // Default to Luxembourg
@@ -99,11 +100,13 @@ const DoctorMap = ({
     // Add user location marker if available
     if (showUserLocation && userCoordinates?.lat && userCoordinates?.lon) {
       console.log('Adding user location marker at:', userCoordinates);
-      const userLocationMarker = document.createElement('div');
-      userLocationMarker.className = 'absolute w-6 h-6 bg-blue-500 border-2 border-white rounded-full pulse';
+      const userLocationElement = document.createElement('div');
+      userLocationElement.className = 'w-4 h-4 bg-blue-500 border-2 border-white rounded-full shadow-lg';
+      userLocationElement.style.width = '16px';
+      userLocationElement.style.height = '16px';
 
       new mapboxgl.Marker({ 
-        element: userLocationMarker,
+        element: userLocationElement,
         anchor: 'center' 
       })
         .setLngLat([userCoordinates.lon, userCoordinates.lat])
@@ -161,30 +164,54 @@ const DoctorMap = ({
           // Get distance string if available
           let distanceStr = '';
           if (doctor.distance) {
-            distanceStr = `(${doctor.distance} km)`;
+            distanceStr = `${doctor.distance} km away`;
           }
           
-          // Create marker element
+          // Create marker element with doctor icon
           const markerElement = document.createElement('div');
-          markerElement.className = 'cursor-pointer';
+          markerElement.className = 'cursor-pointer transform hover:scale-110 transition-transform duration-200';
           markerElement.innerHTML = `
-            <div class="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
-              </svg>
+            <div class="relative">
+              <div class="w-8 h-8 bg-white border-2 border-primary rounded-full shadow-lg flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
+                  <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                </svg>
+              </div>
+              <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-primary rotate-45"></div>
             </div>
           `;
 
-          // Create popup
+          // Create popup with doctor information
           const popup = new mapboxgl.Popup({ 
             offset: 25,
-            closeButton: false,
+            closeButton: true,
             className: 'doctor-popup'
           }).setHTML(`
-            <div class="p-2">
-              <h3 class="text-sm font-medium">${doctor.full_name}</h3>
-              <p class="text-xs text-gray-500">${doctor.city || ''}</p>
-              <p class="text-xs text-gray-500">${distanceStr}</p>
+            <div class="p-3 min-w-[200px]">
+              <h3 class="font-semibold text-base mb-2">${doctor.full_name}</h3>
+              <div class="space-y-1 text-sm text-gray-600">
+                <div class="flex items-center">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                  ${doctor.city || doctor.address || 'Location not specified'}
+                </div>
+                ${distanceStr ? `<div class="text-primary font-medium">${distanceStr}</div>` : ''}
+                ${doctor.phone ? `
+                  <div class="flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                    </svg>
+                    ${doctor.phone}
+                  </div>
+                ` : ''}
+              </div>
+              <div class="mt-3">
+                <button onclick="window.selectDoctor('${doctor.id}')" class="w-full bg-primary text-white px-3 py-2 rounded text-sm hover:bg-primary/90 transition-colors">
+                  Connect with Doctor
+                </button>
+              </div>
             </div>
           `);
 
@@ -206,6 +233,11 @@ const DoctorMap = ({
       });
       
       console.log(`Added ${markers.current.length} markers to the map`);
+      
+      // Set up global function for popup button clicks
+      (window as any).selectDoctor = (doctorId: string) => {
+        onDoctorSelect(doctorId);
+      };
     }
     
     // Fit map to markers if we have any
@@ -246,31 +278,38 @@ const DoctorMap = ({
   };
 
   return (
-    <div className="w-full h-full rounded-lg overflow-hidden border">
+    <div className="w-full h-full rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
       {!mapboxToken ? (
-        <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-gray-100">
+        <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-gray-50">
           <div className="text-center max-w-md space-y-4">
-            <Map className="w-12 h-12 mx-auto text-gray-400" />
-            <h3 className="text-xl font-semibold">Mapbox Token Required</h3>
-            <p className="text-gray-600">
-              Please enter your Mapbox public token to display the map.
-              You can get one for free at <a href="https://mapbox.com/" className="text-blue-500 underline" target="_blank" rel="noopener noreferrer">mapbox.com</a>
+            <div className="mx-auto w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
+              <Map className="w-8 h-8 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900">Map requires Mapbox token</h3>
+            <p className="text-gray-600 text-sm">
+              Please enter your Mapbox public token to display the interactive map with doctor locations.
+            </p>
+            <p className="text-xs text-gray-500">
+              You can get a free token at{' '}
+              <a href="https://mapbox.com/" className="text-primary underline" target="_blank" rel="noopener noreferrer">
+                mapbox.com
+              </a>
             </p>
             
-            <div className="flex gap-2">
+            <div className="flex gap-2 mt-4">
               <Input
                 value={tokenInput}
                 onChange={(e) => setTokenInput(e.target.value)}
                 placeholder="Enter Mapbox token"
                 className="flex-1"
               />
-              <Button onClick={handleSetToken} type="button">
+              <Button onClick={handleSetToken} type="button" size="sm">
                 <Search className="mr-2 h-4 w-4" />
                 Set Token
               </Button>
             </div>
             <p className="text-xs text-gray-500">
-              Your token will be saved in your browser for future use.
+              Your token will be saved locally for future use.
             </p>
           </div>
         </div>
@@ -278,34 +317,17 @@ const DoctorMap = ({
         <div ref={mapContainer} className="w-full h-full" />
       )}
       
-      {/* User location pulse animation */}
+      {/* Custom popup styles */}
       <style>
         {`
-        .pulse::before {
-          content: "";
-          position: absolute;
-          width: 100%;
-          height: 100%;
-          border-radius: 50%;
-          background-color: rgba(59, 130, 246, 0.5);
-          animation: pulse 2s infinite;
-          z-index: -1;
-        }
-        
-        @keyframes pulse {
-          0% {
-            transform: scale(1);
-            opacity: 1;
-          }
-          100% {
-            transform: scale(3);
-            opacity: 0;
-          }
-        }
-        
         .doctor-popup .mapboxgl-popup-content {
           border-radius: 8px;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          border: 1px solid #e5e7eb;
+        }
+        
+        .doctor-popup .mapboxgl-popup-tip {
+          border-top-color: #e5e7eb;
         }
         `}
       </style>

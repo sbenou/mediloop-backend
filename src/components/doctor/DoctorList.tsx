@@ -1,7 +1,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MapPin, Phone, Mail, Clock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { MapPin, Phone, Mail, Clock, Star } from "lucide-react";
 
 interface Doctor {
   id: string;
@@ -59,66 +60,93 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
+      <div className="text-sm text-gray-600 mb-4">
+        {doctors.length} doctor{doctors.length !== 1 ? 's' : ''} found in {searchCity}
+      </div>
+      
       {doctors.map((doctor) => (
-        <Card key={doctor.id} className="p-4 hover:shadow-md transition-shadow">
-          <div className="flex justify-between items-start mb-3">
-            <div>
-              <h3 className="font-semibold text-lg text-gray-900">{doctor.full_name}</h3>
-              <div className="flex items-center text-sm text-gray-600 mt-1">
-                <MapPin className="w-4 h-4 mr-1" />
-                {doctor.city || doctor.address || 'Location not specified'}
-                {doctor.distance && (
-                  <span className="ml-2 text-primary font-medium">
-                    {typeof doctor.distance === 'number' ? `${doctor.distance} km` : doctor.distance}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
+        <Card key={doctor.id} className="group hover:shadow-md transition-all duration-200 border border-gray-200">
+          <CardContent className="p-4">
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex-1">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="font-semibold text-base text-gray-900 group-hover:text-primary transition-colors">
+                      {doctor.full_name}
+                    </h3>
+                    
+                    <div className="flex items-center text-sm text-gray-600 mt-1">
+                      <MapPin className="w-4 h-4 mr-1 text-gray-400" />
+                      <span>{doctor.city || doctor.address || 'Location not specified'}</span>
+                      {doctor.distance && (
+                        <Badge variant="secondary" className="ml-2 text-xs">
+                          {typeof doctor.distance === 'number' ? `${doctor.distance} km` : doctor.distance}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
 
-          <div className="space-y-2 mb-4">
-            {doctor.license_number && (
-              <p className="text-sm text-gray-600">
-                License: {doctor.license_number}
-              </p>
-            )}
-            
-            {doctor.phone && (
-              <div className="flex items-center text-sm text-gray-600">
-                <Phone className="w-4 h-4 mr-2" />
-                {doctor.phone}
-              </div>
-            )}
-            
-            {doctor.email && (
-              <div className="flex items-center text-sm text-gray-600">
-                <Mail className="w-4 h-4 mr-2" />
-                {doctor.email}
-              </div>
-            )}
-            
-            {doctor.hours && (
-              <div className="flex items-start text-sm text-gray-600">
-                <Clock className="w-4 h-4 mr-2 mt-0.5" />
-                <div>
-                  <p className="font-medium">Opening Hours:</p>
-                  <div className="text-xs text-gray-500">
-                    {doctor.hours.split('\n').map((line, index) => (
-                      <div key={index}>{line}</div>
-                    ))}
+                  <div className="flex items-center space-x-1">
+                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                    <span className="text-sm text-gray-600">4.8</span>
                   </div>
                 </div>
+
+                <div className="mt-3 space-y-2">
+                  {doctor.license_number && (
+                    <div className="text-sm text-gray-600">
+                      <span className="font-medium">License:</span> {doctor.license_number}
+                    </div>
+                  )}
+                  
+                  {doctor.phone && (
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Phone className="w-4 h-4 mr-2 text-gray-400" />
+                      {doctor.phone}
+                    </div>
+                  )}
+                  
+                  {doctor.email && (
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Mail className="w-4 h-4 mr-2 text-gray-400" />
+                      <span className="truncate">{doctor.email}</span>
+                    </div>
+                  )}
+                  
+                  {doctor.hours && (
+                    <div className="flex items-start text-sm text-gray-600">
+                      <Clock className="w-4 h-4 mr-2 mt-0.5 text-gray-400" />
+                      <div>
+                        <span className="font-medium text-gray-700">Hours:</span>
+                        <div className="text-xs mt-1 text-gray-500">
+                          {doctor.hours.split('\n').map((line, index) => (
+                            <div key={index}>{line}</div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-4 flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Badge variant={doctor.source === 'database' ? 'default' : 'outline'} className="text-xs">
+                      {doctor.source === 'database' ? 'Verified' : 'Listed'}
+                    </Badge>
+                  </div>
+                  
+                  <Button 
+                    onClick={() => onConnect(doctor.id, doctor.source || 'database')}
+                    size="sm"
+                    className="bg-primary hover:bg-primary/90 text-white"
+                  >
+                    Connect
+                  </Button>
+                </div>
               </div>
-            )}
-          </div>
-          
-          <Button 
-            onClick={() => onConnect(doctor.id, doctor.source || 'database')}
-            className="w-full bg-primary hover:bg-primary/90"
-          >
-            Connect
-          </Button>
+            </div>
+          </CardContent>
         </Card>
       ))}
     </div>

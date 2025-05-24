@@ -47,195 +47,79 @@ export const useDoctorSearch = (
     queryFn: async () => {
       console.log(`Starting doctor search with coordinates: ${JSON.stringify(coordinates)}, radius: ${searchRadius}, country: ${selectedCountry}`);
       
-      // For country-based search when coordinates aren't available
-      if (!coordinates && selectedCountry) {
-        console.log(`Searching for doctors in country: ${selectedCountry} without coordinates`);
-        
-        try {
-          // Get doctors from database with simpler query first
-          const { data: dbDoctors, error } = await supabase
-            .from("profiles")
-            .select(`
-              id, 
-              full_name, 
-              city, 
-              license_number, 
-              email
-            `)
-            .eq("role", "doctor");
+      try {
+        // Get doctors from database with a simpler query first
+        const { data: dbDoctors, error } = await supabase
+          .from("profiles")
+          .select(`
+            id, 
+            full_name, 
+            city, 
+            license_number, 
+            email
+          `)
+          .eq("role", "doctor");
 
-          if (error) {
-            console.error('Error fetching doctors from database:', error);
-            throw error;
-          }
-
-          console.log('Database doctors:', dbDoctors?.length || 0);
-
-          // Get metadata separately for each doctor
-          const formattedDbDoctors = [];
-          if (Array.isArray(dbDoctors)) {
-            for (const doc of dbDoctors) {
-              let metadata = null;
-              try {
-                const { data: metaData } = await supabase
-                  .from("doctor_metadata")
-                  .select("hours, address, city, postal_code")
-                  .eq("doctor_id", doc.id)
-                  .maybeSingle();
-                metadata = metaData;
-              } catch (metaError) {
-                console.error('Error fetching metadata for doctor:', doc.id, metaError);
-              }
-
-              formattedDbDoctors.push({
-                id: doc.id,
-                full_name: doc.full_name || 'Doctor',
-                city: doc.city || metadata?.city || 'Unknown location',
-                license_number: doc.license_number || '',
-                email: doc.email,
-                phone: null,
-                hours: metadata?.hours || null,
-                address: metadata?.address || '',
-                source: 'database' as const,
-                coordinates: null
-              });
-            }
-          }
-
-          // Get doctors from Overpass API with country code only
-          let formattedOverpassDoctors = [];
-          try {
-            const countryCode = selectedCountry || 'LU';
-            console.log(`Searching for doctors in country: ${countryCode} (country-only search)`);
-            
-            const overpassDoctors = await searchDoctors(
-              null, // No lat
-              null, // No lon
-              0,    // No radius needed for country search
-              countryCode
-            );
-            
-            if (!Array.isArray(overpassDoctors)) {
-              console.error('Invalid response from searchDoctors:', overpassDoctors);
-              return formattedDbDoctors; // Return just database doctors
-            }
-
-            console.log('Raw Overpass results:', overpassDoctors.length);
-
-            // Add source field to Overpass results
-            formattedOverpassDoctors = overpassDoctors
-              .filter(doc => doc && typeof doc === 'object')
-              .map(doc => ({
-                ...doc,
-                city: doc.city || 'Unknown location',
-                source: 'overpass' as const
-              }));
-
-            console.log('Overpass doctors found:', formattedOverpassDoctors.length);
-          } catch (overpassError) {
-            console.error("Error fetching overpass doctors:", overpassError);
-            // Just continue with database doctors
-            return formattedDbDoctors;
-          }
-
-          // Combine and deduplicate results
-          const allDoctors = [...formattedDbDoctors, ...formattedOverpassDoctors];
-          
-          // Remove duplicates based on id
-          const doctorMap = new Map();
-          allDoctors.forEach(item => {
-            if (item && item.id) {
-              doctorMap.set(item.id, item);
-            }
-          });
-          
-          const result = Array.from(doctorMap.values());
-          console.log('Final doctor count (country-only search):', result.length);
-          return result;
-        } catch (err) {
-          console.error("Error in useDoctorSearch (country-only search):", err);
-          return [];
+        if (error) {
+          console.error('Error fetching doctors from database:', error);
+          // Don't throw here, continue with overpass data
         }
-      }
-      
-      // Coordinate-based search (for logged-in users with location)
-      if (coordinates) {
-        console.log('Fetching doctors with coordinates:', coordinates, 'radius:', searchRadius, 'country:', selectedCountry);
-      
+
+        console.log('Database doctors:', dbDoctors?.length || 0);
+
+        // Get metadata separately for each doctor
+        const formattedDbDoctors = [];
+        if (Array.isArray(dbDoctors)) {
+          for (const doc of dbDoctors) {
+            let metadata = null;
+            try {
+              const { data: metaData } = await supabase
+                .from("doctor_metadata")
+                .select("hours, address, city, postal_code")
+                .eq("doctor_id", doc.id)
+                .maybeSingle();
+              metadata = metaData;
+            } catch (metaError) {
+              console.error('Error fetching metadata for doctor:', doc.id, metaError);
+            }
+
+            formattedDbDoctors.push({
+              id: doc.id,
+              full_name: doc.full_name || 'Doctor',
+              city: doc.city || metadata?.city || 'Unknown location',
+              license_number: doc.license_number || '',
+              email: doc.email,
+              phone: null,
+              hours: metadata?.hours || null,
+              address: metadata?.address || '',
+              source: 'database' as const,
+              coordinates: null,
+              distance: undefined
+            });
+          }
+        }
+
+        // Get doctors from Overpass API
+        let formattedOverpassDoctors = [];
         try {
-          // Get doctors from database with simpler query first
-          const { data: dbDoctors, error } = await supabase
-            .from("profiles")
-            .select(`
-              id, 
-              full_name, 
-              city, 
-              license_number, 
-              email
-            `)
-            .eq("role", "doctor");
-
-          if (error) {
-            console.error('Error fetching doctors from database:', error);
-            throw error;
-          }
-
-          console.log('Database doctors:', dbDoctors?.length || 0);
-
-          // Get metadata separately for each doctor
-          const formattedDbDoctors = [];
-          if (Array.isArray(dbDoctors)) {
-            for (const doc of dbDoctors) {
-              let metadata = null;
-              try {
-                const { data: metaData } = await supabase
-                  .from("doctor_metadata")
-                  .select("hours, address, city, postal_code")
-                  .eq("doctor_id", doc.id)
-                  .maybeSingle();
-                metadata = metaData;
-              } catch (metaError) {
-                console.error('Error fetching metadata for doctor:', doc.id, metaError);
-              }
-
-              formattedDbDoctors.push({
-                id: doc.id,
-                full_name: doc.full_name || 'Doctor',
-                city: doc.city || metadata?.city || 'Unknown location',
-                license_number: doc.license_number || '',
-                email: doc.email,
-                phone: null,
-                hours: metadata?.hours || null,
-                address: metadata?.address || '',
-                source: 'database' as const,
-                coordinates: null,
-                distance: undefined
-              });
-            }
-          }
-
-          // Get doctors from Overpass API with current radius and country code
-          let formattedOverpassDoctors = [];
-          try {
-            const countryCode = selectedCountry || 'LU';
-            console.log(`Searching for doctors with coordinates in country: ${countryCode} with radius: ${searchRadius}`);
-            
-            const overpassDoctors = await searchDoctors(
-              coordinates.lat,
-              coordinates.lon,
-              searchRadius,
-              countryCode
-            );
-            
-            // Handle unexpected response format safely
-            if (!Array.isArray(overpassDoctors)) {
-              console.error('Invalid response from searchDoctors:', overpassDoctors);
-              return formattedDbDoctors; // Return just database doctors
-            }
-
+          const countryCode = selectedCountry || 'LU';
+          console.log(`Searching for doctors from Overpass with country: ${countryCode}`);
+          
+          const overpassDoctors = coordinates 
+            ? await searchDoctors(
+                coordinates.lat,
+                coordinates.lon,
+                searchRadius * 2, // Increase search radius for more results
+                countryCode
+              )
+            : await searchDoctors(null, null, 0, countryCode);
+          
+          if (!Array.isArray(overpassDoctors)) {
+            console.error('Invalid response from searchDoctors:', overpassDoctors);
+          } else {
             console.log('Raw Overpass results:', overpassDoctors.length);
 
-            // Add source field to Overpass results and calculate distances
+            // Format Overpass results and calculate distances
             formattedOverpassDoctors = overpassDoctors
               .filter(doc => doc && typeof doc === 'object')
               .map(doc => {
@@ -260,57 +144,56 @@ export const useDoctorSearch = (
                 
                 return {
                   ...doc,
-                  city: doc.city || 'Unknown location',
+                  city: doc.city || doc.address || 'Unknown location',
                   source: 'overpass' as const,
                   distance
                 };
               });
 
             console.log('Overpass doctors found:', formattedOverpassDoctors.length);
-          } catch (overpassError) {
-            console.error("Error fetching overpass doctors:", overpassError);
-            // Just continue with database doctors
-            return formattedDbDoctors;
           }
-
-          // Combine all doctors
-          const allDoctors = [...formattedDbDoctors, ...formattedOverpassDoctors];
-          
-          // Remove duplicates based on id
-          const doctorMap = new Map();
-          allDoctors.forEach(item => {
-            if (item && item.id) {
-              doctorMap.set(item.id, item);
-            }
-          });
-          
-          const result = Array.from(doctorMap.values());
-          console.log('Final doctor count:', result.length);
-          return result;
-        } catch (err) {
-          console.error("Error in useDoctorSearch:", err);
-          return [];
+        } catch (overpassError) {
+          console.error("Error fetching overpass doctors:", overpassError);
+          // Continue with database doctors only
         }
-      }
-      
-      // Fallback to just a country search if nothing else works
-      try {
-        console.log('Falling back to country-only search with country code:', selectedCountry || 'LU');
-        const countryDoctors = await searchDoctors(null, null, 0, selectedCountry || 'LU');
-        console.log('Fallback search found:', countryDoctors?.length || 0, 'doctors');
-        return countryDoctors;
-      } catch (fallbackErr) {
-        console.error("Error in fallback doctor search:", fallbackErr);
+
+        // Combine all doctors
+        const allDoctors = [...formattedDbDoctors, ...formattedOverpassDoctors];
+        
+        // Remove duplicates based on id and sort by distance if available
+        const doctorMap = new Map();
+        allDoctors.forEach(item => {
+          if (item && item.id) {
+            doctorMap.set(item.id, item);
+          }
+        });
+        
+        let result = Array.from(doctorMap.values());
+        
+        // Sort by distance if coordinates are available
+        if (coordinates) {
+          result = result.sort((a, b) => {
+            if (a.distance === undefined && b.distance === undefined) return 0;
+            if (a.distance === undefined) return 1;
+            if (b.distance === undefined) return -1;
+            return a.distance - b.distance;
+          });
+        }
+        
+        console.log('Final doctor count:', result.length);
+        return result;
+      } catch (err) {
+        console.error("Error in useDoctorSearch:", err);
         return [];
       }
     },
     // Query configuration
     staleTime: 1000 * 60 * 5, // 5 minutes stale time
     gcTime: 30 * 60 * 1000, // 30 minutes cache time
-    retry: 1, // Limit retries
+    retry: 2, // Increase retries
     refetchOnWindowFocus: false,
     refetchOnMount: true,
-    refetchInterval: false, // Disable automatic refetching
+    refetchInterval: false,
   });
 
   return { 
