@@ -199,16 +199,20 @@ export const searchDoctors = async (
   let query;
   
   if (lat && lon) {
+    // More focused query similar to pharmacy search - prioritize named medical facilities
     query = `
       [out:json][timeout:60];
       (
-        node["healthcare"="doctor"](around:${radius},${lat},${lon});
-        node["amenity"="doctors"](around:${radius},${lat},${lon});
-        node["healthcare"="clinic"](around:${radius},${lat},${lon});
-        node["amenity"="clinic"](around:${radius},${lat},${lon});
-        node["amenity"="hospital"](around:${radius},${lat},${lon});
-        node["healthcare"="centre"](around:${radius},${lat},${lon});
-        node["healthcare"~"physician|general_practitioner|specialist"](around:${radius},${lat},${lon});
+        node["amenity"="doctors"][name](around:${radius},${lat},${lon});
+        node["healthcare"="doctor"][name](around:${radius},${lat},${lon});
+        node["amenity"="clinic"][name](around:${radius},${lat},${lon});
+        node["healthcare"="clinic"][name](around:${radius},${lat},${lon});
+        node["amenity"="hospital"][name](around:${radius},${lat},${lon});
+        way["amenity"="doctors"][name](around:${radius},${lat},${lon});
+        way["healthcare"="doctor"][name](around:${radius},${lat},${lon});
+        way["amenity"="clinic"][name](around:${radius},${lat},${lon});
+        way["healthcare"="clinic"][name](around:${radius},${lat},${lon});
+        way["amenity"="hospital"][name](around:${radius},${lat},${lon});
       );
       out body;
       >;
@@ -219,13 +223,16 @@ export const searchDoctors = async (
       [out:json][timeout:60];
       area["ISO3166-1"="${countryCode}"][admin_level=2]->.country;
       (
-        node["healthcare"="doctor"](area.country);
-        node["amenity"="doctors"](area.country);
-        node["healthcare"="clinic"](area.country);
-        node["amenity"="clinic"](area.country);
-        node["amenity"="hospital"](area.country);
-        node["healthcare"="centre"](area.country);
-        node["healthcare"~"physician|general_practitioner|specialist"](area.country);
+        node["amenity"="doctors"][name](area.country);
+        node["healthcare"="doctor"][name](area.country);
+        node["amenity"="clinic"][name](area.country);
+        node["healthcare"="clinic"][name](area.country);
+        node["amenity"="hospital"][name](area.country);
+        way["amenity"="doctors"][name](area.country);
+        way["healthcare"="doctor"][name](area.country);
+        way["amenity"="clinic"][name](area.country);
+        way["healthcare"="clinic"][name](area.country);
+        way["amenity"="hospital"][name](area.country);
       );
       out body;
       >;
@@ -256,22 +263,32 @@ export const searchDoctors = async (
         const elementLon = typeof element.lon === 'number' ? element.lon : null;
         const tags = element.tags || {};
         
+        // Only include entries that have a name - this filters out generic "Medical Facility" entries
+        const hasValidName = tags.name && tags.name.trim() !== '';
+        
         const isMedicalFacility = 
           tags["healthcare"] === "doctor" || 
           tags["amenity"] === "doctors" ||
           tags["healthcare"] === "clinic" ||
           tags["amenity"] === "clinic" ||
-          tags["amenity"] === "hospital" ||
-          tags["healthcare"] === "centre" ||
-          /physician|general_practitioner|specialist/.test(tags["healthcare"] || "");
+          tags["amenity"] === "hospital";
           
-        if (isMedicalFacility && (elementLat !== null && elementLon !== null)) {
-          const address = [
-            tags['addr:housenumber'],
-            tags['addr:street'],
-            tags['addr:city'],
-            tags['addr:postcode']
-          ].filter(Boolean).join(', ') || 'Address not available';
+        if (hasValidName && isMedicalFacility && (elementLat !== null && elementLon !== null)) {
+          // Build address more comprehensively
+          const addressParts = [];
+          if (tags['addr:housenumber']) addressParts.push(tags['addr:housenumber']);
+          if (tags['addr:street']) addressParts.push(tags['addr:street']);
+          if (tags['addr:city']) addressParts.push(tags['addr:city']);
+          if (tags['addr:postcode']) addressParts.push(tags['addr:postcode']);
+          
+          // If no structured address, try other address fields
+          let address = addressParts.length > 0 ? addressParts.join(', ') : '';
+          if (!address && tags.address) {
+            address = tags.address;
+          }
+          if (!address) {
+            address = `${tags['addr:city'] || 'Luxembourg'}`;
+          }
           
           let distance = undefined;
           if (lat !== null && lon !== null) {
@@ -285,13 +302,22 @@ export const searchDoctors = async (
           const hours = tags?.opening_hours || '';
           const city = tags?.['addr:city'] || '';
           
+          // Get speciality information for license_number field
+          let speciality = 'General Practice';
+          if (tags['healthcare:speciality']) {
+            speciality = tags['healthcare:speciality']
+              .split(';')
+              .map((s: string) => s.trim())
+              .join(', ');
+          }
+          
           const doctor = {
             id: doctorId,
-            full_name: tags?.name || tags?.operator || 'Medical Facility',
-            name: tags?.name || tags?.operator || 'Medical Facility',
+            full_name: tags.name,
+            name: tags.name,
             address,
-            city,
-            license_number: tags?.['healthcare:speciality'] || 'General Practice',
+            city: city || 'Luxembourg',
+            license_number: speciality,
             phone: tags?.['contact:phone'] || tags?.phone || '',
             email: tags?.['contact:email'] || tags?.email || '',
             hours,
@@ -303,19 +329,23 @@ export const searchDoctors = async (
             source: 'overpass' as const
           };
           
+          console.log(`Adding doctor: ${doctor.full_name} at ${address}`);
+          
           // Store doctor metadata if we have hours data
-          if (hours && doctor.full_name !== 'Medical Facility') {
+          if (hours && doctor.full_name) {
             storeDoctorMetadata(doctorId, hours, address, city).catch(err => {
               console.error('Error storing doctor metadata:', err);
             });
           }
           
           doctorMap.set(String(element.id), doctor);
+        } else {
+          console.log(`Skipping entry - hasValidName: ${hasValidName}, isMedicalFacility: ${isMedicalFacility}, hasCoords: ${elementLat !== null && elementLon !== null}`);
         }
       });
 
     const results = Array.from(doctorMap.values());
-    console.log(`Processed ${results.length} unique doctors/medical facilities`);
+    console.log(`Processed ${results.length} valid doctors with names and addresses`);
     
     LocalCache.set(cacheKey, results, 300);
     return results;
