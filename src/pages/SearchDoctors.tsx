@@ -12,7 +12,8 @@ import { supabase } from '@/lib/supabase';
 import { useLocationSearch } from "@/hooks/useLocationSearch";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import DoctorListSection from '@/components/doctor/DoctorListSection';
+import DoctorList from '@/components/doctor/DoctorList';
+import DoctorMap from '@/components/doctor/DoctorMap';
 
 const SearchDoctors = () => {
   const [search, setSearch] = useState('');
@@ -137,8 +138,8 @@ const SearchDoctors = () => {
         />
 
         <div className="container mx-auto py-8 px-4">
-          <div className="w-full max-w-6xl mx-auto">
-            <div className="flex items-center space-x-2 mb-6">
+          <div className="mb-6">
+            <div className="flex items-center space-x-2">
               <Switch
                 id="location-toggle"
                 checked={showLocation}
@@ -146,20 +147,31 @@ const SearchDoctors = () => {
               />
               <Label htmlFor="location-toggle">Show my location</Label>
             </div>
-            
-            {isLoading ? (
-              <div className="flex justify-center items-center h-64">
-                <p className="text-gray-500">Loading doctors...</p>
-              </div>
-            ) : (
-              <DoctorListSection
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-6 h-[calc(100vh-200px)]">
+            <div className="overflow-y-auto">
+              <DoctorList
                 doctors={doctors}
                 isLoading={isLoading}
-                coordinates={currentCoordinates}
-                showUserLocation={showLocation}
                 onConnect={handleConnectDoctor}
+                searchCity="nearby location"
               />
-            )}
+            </div>
+            
+            <div className="rounded-lg overflow-hidden">
+              <DoctorMap 
+                doctors={doctors} 
+                userCoordinates={currentCoordinates} 
+                showUserLocation={showLocation}
+                onDoctorSelect={(doctorId) => {
+                  const doctor = doctors.find(d => d.id === doctorId);
+                  if (doctor) {
+                    handleConnectDoctor(doctorId, doctor.source || 'database');
+                  }
+                }}
+              />
+            </div>
           </div>
         </div>
       </main>
