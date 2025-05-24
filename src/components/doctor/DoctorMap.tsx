@@ -1,10 +1,10 @@
-
 import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Button } from "@/components/ui/button";
 import { Search, Map, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { getMapboxToken } from '@/services/mapbox';
 
 interface Doctor {
   id: string;
@@ -39,26 +39,16 @@ const DoctorMap = ({
   const [tokenInput, setTokenInput] = useState<string>('');
   const [isLoadingToken, setIsLoadingToken] = useState<boolean>(true);
 
-  // Get Mapbox token from localStorage or environment
+  // Get Mapbox token from the service function
   useEffect(() => {
     async function loadMapboxToken() {
       setIsLoadingToken(true);
       try {
-        // Try to get token from environment variable first
-        let token = import.meta.env.VITE_MAPBOX_TOKEN;
-        
-        // If not in env, try localStorage
-        if (!token) {
-          token = localStorage.getItem('mapbox_token') || '';
-        }
+        const token = await getMapboxToken();
         
         if (token) {
           setMapboxToken(token);
-          
-          // Store in localStorage for future use
-          if (!localStorage.getItem('mapbox_token')) {
-            localStorage.setItem('mapbox_token', token);
-          }
+          mapboxgl.accessToken = token;
         }
       } catch (error) {
         console.error("Error loading Mapbox token:", error);
@@ -67,7 +57,9 @@ const DoctorMap = ({
       }
     }
     
-    loadMapboxToken();
+    if (!mapboxToken) {
+      loadMapboxToken();
+    }
   }, []);
 
   // Initialize and render map
@@ -279,7 +271,7 @@ const DoctorMap = ({
 
   return (
     <div className="w-full h-full rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
-      {!mapboxToken ? (
+      {!mapboxToken && !isLoadingToken ? (
         <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-gray-50">
           <div className="text-center max-w-md space-y-4">
             <div className="mx-auto w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
@@ -311,6 +303,13 @@ const DoctorMap = ({
             <p className="text-xs text-gray-500">
               Your token will be saved locally for future use.
             </p>
+          </div>
+        </div>
+      ) : isLoadingToken ? (
+        <div className="w-full h-full flex items-center justify-center">
+          <div className="text-center">
+            <MapIcon className="h-10 w-10 text-primary/60 mx-auto mb-2 animate-pulse" />
+            <p className="text-sm text-gray-600">Loading map...</p>
           </div>
         </div>
       ) : (

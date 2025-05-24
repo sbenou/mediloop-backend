@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { sendConnectionRequestNotification } from '@/utils/doctorConnectionNotifications';
 
 interface Doctor {
   id: string;
@@ -56,6 +57,18 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
         }
         throw error;
       }
+
+      // Send notification to doctor after successful connection request
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single();
+
+      await sendConnectionRequestNotification(
+        doctorId, 
+        profileData?.full_name || 'A patient'
+      );
 
       return data;
     },

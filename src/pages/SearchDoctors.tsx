@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -14,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import DoctorList from '@/components/doctor/DoctorList';
 import DoctorMap from '@/components/doctor/DoctorMap';
+import { sendConnectionRequestNotification } from '@/utils/doctorConnectionNotifications';
 
 const SearchDoctors = () => {
   const [search, setSearch] = useState('');
@@ -102,22 +102,42 @@ const SearchDoctors = () => {
         return;
       }
 
-      // Connect to the doctor
+      // Connect to the doctor using the correct table
       const { error } = await supabase
-        .from('user_doctors')
-        .insert({ user_id: profile.id, doctor_id: doctorId });
+        .from('doctor_patient_connections')
+        .insert({ 
+          doctor_id: doctorId, 
+          patient_id: profile.id,
+          status: 'pending'
+        });
       
-      if (error) throw error;
+      if (error) {
+        if (error.code === '23505') {
+          toast({
+            title: "Connection Request Already Exists",
+            description: "You have already sent a connection request to this doctor.",
+            variant: "destructive"
+          });
+          return;
+        }
+        throw error;
+      }
+
+      // Send notification to doctor
+      await sendConnectionRequestNotification(
+        doctorId, 
+        profile.full_name || 'A patient'
+      );
       
       toast({
-        title: "Connected to Doctor",
-        description: "You have successfully connected to this doctor.",
+        title: "Connection Request Sent",
+        description: "Your connection request has been sent to the doctor.",
       });
     } catch (err) {
       console.error('Error connecting to doctor:', err);
       toast({
         title: "Error",
-        description: "Failed to connect to doctor",
+        description: "Failed to send connection request",
         variant: "destructive"
       });
     }
