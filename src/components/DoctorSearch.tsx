@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRecoilState } from 'recoil';
@@ -73,6 +72,11 @@ const DoctorSearch = () => {
     lon: searchCoordinates.lon
   };
 
+  const handleDoctorConnect = (doctorId: string, source: 'database' | 'overpass') => {
+    // This function is now handled directly in DoctorList component
+    // No need to do anything here as the logic is moved to the component
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -126,23 +130,7 @@ const DoctorSearch = () => {
           isLoading={isDoctorsLoading || isSearching}
           coordinates={displayCoordinates}
           showUserLocation={isUsingLocation}
-          onConnect={(doctorId, source) => {
-            if (!isAuthenticated) {
-              toast({
-                title: "Login Required",
-                description: "Please login to connect with doctors.",
-              });
-              return;
-            }
-
-            if (source === 'overpass') {
-              toast({
-                title: "Information",
-                description: "Connection requests are only available for registered doctors.",
-              });
-              return;
-            }
-          }}
+          onConnect={handleDoctorConnect}
         />
       </main>
     </div>

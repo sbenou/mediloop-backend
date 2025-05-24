@@ -2,7 +2,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Phone, Mail, Clock, Star } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { MapPin, Phone, Mail, Clock, UserPlus } from "lucide-react";
+import { useAuth } from "@/hooks/auth/useAuth";
+import { supabase } from "@/lib/supabase";
+import { toast } from "@/components/ui/use-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface Doctor {
   id: string;
@@ -22,23 +27,90 @@ interface DoctorListProps {
   doctors: Doctor[];
   isLoading: boolean;
   onConnect: (doctorId: string, source: 'database' | 'overpass') => void;
-  searchCity: string;
+  searchCity?: string;
 }
 
 const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListProps) => {
+  const { session } = useAuth();
+  const queryClient = useQueryClient();
+
+  const connectMutation = useMutation({
+    mutationFn: async (doctorId: string) => {
+      if (!session?.user?.id) {
+        throw new Error('Not authenticated');
+      }
+
+      // Use the correct table name: doctor_patient_connections
+      const { data, error } = await supabase
+        .from('doctor_patient_connections')
+        .insert({
+          doctor_id: doctorId,
+          patient_id: session.user.id,
+          status: 'pending'
+        })
+        .select()
+        .single();
+
+      if (error) {
+        if (error.code === '23505') {
+          throw new Error('Connection request already exists');
+        }
+        throw error;
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Connection Request Sent",
+        description: "Your connection request has been sent to the doctor.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['doctorConnections'] });
+    },
+    onError: (error: Error) => {
+      console.error('Error connecting to doctor:', error);
+      toast({
+        variant: "destructive",
+        title: "Connection Failed",
+        description: error.message || "Failed to connect to doctor. Please try again.",
+      });
+    },
+  });
+
+  const handleConnect = (doctorId: string, source: 'database' | 'overpass') => {
+    if (!session?.user) {
+      toast({
+        title: "Login Required",
+        description: "Please login to connect with doctors.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (source === 'overpass') {
+      toast({
+        title: "Information",
+        description: "Connection requests are only available for registered doctors.",
+      });
+      return;
+    }
+
+    connectMutation.mutate(doctorId);
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4">
         {[1, 2, 3].map((i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader>
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-              <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="h-3 bg-gray-200 rounded"></div>
-                <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+          <Card key={i}>
+            <CardContent className="p-6">
+              <div className="flex justify-between items-start">
+                <div className="space-y-2 flex-1">
+                  <Skeleton className="h-6 w-40" />
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-4 w-48" />
+                </div>
+                <Skeleton className="h-10 w-24" />
               </div>
             </CardContent>
           </Card>
@@ -49,101 +121,106 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
 
   if (doctors.length === 0) {
     return (
-      <div className="text-center py-12">
-        <MapPin className="mx-auto h-12 w-12 text-gray-400" />
-        <h3 className="mt-2 text-sm font-medium text-gray-900">No doctors found</h3>
-        <p className="mt-1 text-sm text-gray-500">
-          Try expanding your search area or check back later.
-        </p>
-      </div>
+      <Card>
+        <CardContent className="p-8 text-center">
+          <div className="text-gray-500">
+            <MapPin className="mx-auto h-12 w-12 mb-4 text-gray-300" />
+            <h3 className="text-lg font-medium mb-2">No doctors found</h3>
+            <p className="text-sm">
+              {searchCity 
+                ? `No doctors found in ${searchCity}. Try searching in a different location.`
+                : "No doctors found in your area. Try adjusting your search location."
+              }
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="space-y-3">
-      <div className="text-sm text-gray-600 mb-4">
-        {doctors.length} doctor{doctors.length !== 1 ? 's' : ''} found in {searchCity}
-      </div>
-      
+    <div className="space-y-4">
       {doctors.map((doctor) => (
-        <Card key={doctor.id} className="group hover:shadow-md transition-all duration-200 border border-gray-200">
-          <CardContent className="p-4">
-            <div className="flex justify-between items-start mb-3">
-              <div className="flex-1">
+        <Card key={doctor.id} className="hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex justify-between items-start">
+              <div className="flex-1 space-y-3">
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="font-semibold text-base text-gray-900 group-hover:text-primary transition-colors">
+                    <h3 className="text-lg font-semibold text-gray-900">
                       {doctor.full_name}
                     </h3>
-                    
-                    <div className="flex items-center text-sm text-gray-600 mt-1">
-                      <MapPin className="w-4 h-4 mr-1 text-gray-400" />
-                      <span>{doctor.city || doctor.address || 'Location not specified'}</span>
-                      {doctor.distance && (
-                        <Badge variant="secondary" className="ml-2 text-xs">
-                          {typeof doctor.distance === 'number' ? `${doctor.distance} km` : doctor.distance}
-                        </Badge>
-                      )}
-                    </div>
+                    {doctor.license_number && (
+                      <p className="text-sm text-gray-600">
+                        License: {doctor.license_number}
+                      </p>
+                    )}
                   </div>
-
-                  <div className="flex items-center space-x-1">
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                    <span className="text-sm text-gray-600">4.8</span>
+                  <div className="flex gap-2">
+                    <Badge variant={doctor.source === 'database' ? 'default' : 'secondary'}>
+                      {doctor.source === 'database' ? 'Registered' : 'Listed'}
+                    </Badge>
+                    {doctor.distance && (
+                      <Badge variant="outline">
+                        {doctor.distance} km away
+                      </Badge>
+                    )}
                   </div>
                 </div>
 
-                <div className="mt-3 space-y-2">
-                  {doctor.license_number && (
-                    <div className="text-sm text-gray-600">
-                      <span className="font-medium">License:</span> {doctor.license_number}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+                  {doctor.city && (
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-gray-400" />
+                      <span>{doctor.city}</span>
                     </div>
                   )}
                   
+                  {doctor.address && doctor.address !== 'Address not available' && (
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-gray-400" />
+                      <span className="truncate">{doctor.address}</span>
+                    </div>
+                  )}
+
                   {doctor.phone && (
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Phone className="w-4 h-4 mr-2 text-gray-400" />
-                      {doctor.phone}
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-gray-400" />
+                      <span>{doctor.phone}</span>
                     </div>
                   )}
-                  
+
                   {doctor.email && (
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Mail className="w-4 h-4 mr-2 text-gray-400" />
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-gray-400" />
                       <span className="truncate">{doctor.email}</span>
                     </div>
                   )}
-                  
-                  {doctor.hours && (
-                    <div className="flex items-start text-sm text-gray-600">
-                      <Clock className="w-4 h-4 mr-2 mt-0.5 text-gray-400" />
-                      <div>
-                        <span className="font-medium text-gray-700">Hours:</span>
-                        <div className="text-xs mt-1 text-gray-500">
-                          {doctor.hours.split('\n').map((line, index) => (
-                            <div key={index}>{line}</div>
-                          ))}
-                        </div>
-                      </div>
+
+                  {doctor.hours && doctor.hours !== 'Hours not available' && (
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-gray-400" />
+                      <span className="truncate">{doctor.hours}</span>
                     </div>
                   )}
                 </div>
+              </div>
 
-                <div className="mt-4 flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Badge variant={doctor.source === 'database' ? 'default' : 'outline'} className="text-xs">
-                      {doctor.source === 'database' ? 'Verified' : 'Listed'}
-                    </Badge>
-                  </div>
-                  
-                  <Button 
-                    onClick={() => onConnect(doctor.id, doctor.source || 'database')}
-                    size="sm"
-                    className="bg-primary hover:bg-primary/90 text-white"
-                  >
-                    Connect
-                  </Button>
-                </div>
+              <div className="ml-6 flex flex-col gap-2">
+                <Button
+                  onClick={() => handleConnect(doctor.id, doctor.source || 'database')}
+                  disabled={connectMutation.isPending || doctor.source === 'overpass'}
+                  className="min-w-[120px]"
+                >
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  {connectMutation.isPending ? "Connecting..." : "Connect"}
+                </Button>
+                
+                {doctor.source === 'overpass' && (
+                  <p className="text-xs text-gray-500 text-center">
+                    Directory listing only
+                  </p>
+                )}
               </div>
             </div>
           </CardContent>
