@@ -45,7 +45,7 @@ export const useDoctorSearch = (
   const { data: doctors, isLoading, error } = useQuery({
     queryKey: ["doctors", coordinates?.lat, coordinates?.lon, searchRadius, selectedCountry],
     queryFn: async () => {
-      console.log(`Starting doctor search with coordinates: ${JSON.stringify(coordinates)}, radius: ${searchRadius}, country: ${selectedCountry}`);
+      console.log(`🔍 Starting doctor search with coordinates: ${JSON.stringify(coordinates)}, radius: ${searchRadius}, country: ${selectedCountry}`);
       
       try {
         // Get doctors from database with a simpler query first
@@ -61,11 +61,23 @@ export const useDoctorSearch = (
           .eq("role", "doctor");
 
         if (error) {
-          console.error('Error fetching doctors from database:', error);
+          console.error('❌ Error fetching doctors from database:', error);
           // Don't throw here, continue with overpass data
         }
 
-        console.log('Database doctors:', dbDoctors?.length || 0);
+        console.log(`📊 Database doctors found: ${dbDoctors?.length || 0}`);
+        
+        // Debug each database doctor
+        if (dbDoctors) {
+          dbDoctors.forEach((doc, index) => {
+            console.log(`👨‍⚕️ DB Doctor ${index + 1}:`, {
+              id: doc.id,
+              name: doc.full_name,
+              city: doc.city,
+              license: doc.license_number
+            });
+          });
+        }
 
         // Get metadata separately for each doctor
         const formattedDbDoctors = [];
@@ -79,11 +91,13 @@ export const useDoctorSearch = (
                 .eq("doctor_id", doc.id)
                 .maybeSingle();
               metadata = metaData;
+              
+              console.log(`🏥 Metadata for doctor ${doc.full_name}:`, metadata);
             } catch (metaError) {
-              console.error('Error fetching metadata for doctor:', doc.id, metaError);
+              console.error(`❌ Error fetching metadata for doctor: ${doc.id}`, metaError);
             }
 
-            formattedDbDoctors.push({
+            const formattedDoctor = {
               id: doc.id,
               full_name: doc.full_name || 'Doctor',
               city: doc.city || metadata?.city || 'Unknown location',
@@ -93,9 +107,12 @@ export const useDoctorSearch = (
               hours: metadata?.hours || null,
               address: metadata?.address || '',
               source: 'database' as const,
-              coordinates: null,
+              coordinates: null, // Database doctors don't have coordinates yet
               distance: undefined
-            });
+            };
+            
+            console.log(`✅ Formatted DB doctor:`, formattedDoctor);
+            formattedDbDoctors.push(formattedDoctor);
           }
         }
 
@@ -103,7 +120,7 @@ export const useDoctorSearch = (
         let formattedOverpassDoctors = [];
         try {
           const countryCode = selectedCountry || 'LU';
-          console.log(`Searching for doctors from Overpass with country: ${countryCode}`);
+          console.log(`🌍 Searching Overpass API with country: ${countryCode}`);
           
           const overpassDoctors = coordinates 
             ? await searchDoctors(
@@ -115,9 +132,20 @@ export const useDoctorSearch = (
             : await searchDoctors(null, null, 0, countryCode);
           
           if (!Array.isArray(overpassDoctors)) {
-            console.error('Invalid response from searchDoctors:', overpassDoctors);
+            console.error('❌ Invalid response from searchDoctors:', overpassDoctors);
           } else {
-            console.log('Raw Overpass results:', overpassDoctors.length);
+            console.log(`🗺️ Overpass doctors found: ${overpassDoctors.length}`);
+            
+            // Debug each overpass doctor
+            overpassDoctors.forEach((doc, index) => {
+              console.log(`👨‍⚕️ Overpass Doctor ${index + 1}:`, {
+                id: doc.id,
+                name: doc.full_name,
+                coordinates: doc.coordinates,
+                address: doc.address,
+                city: doc.city
+              });
+            });
 
             // Format Overpass results and calculate distances
             formattedOverpassDoctors = overpassDoctors
@@ -142,23 +170,27 @@ export const useDoctorSearch = (
                   }
                 }
                 
-                return {
+                const formattedDoc = {
                   ...doc,
                   city: doc.city || doc.address || 'Unknown location',
                   source: 'overpass' as const,
                   distance
                 };
+                
+                console.log(`✅ Formatted Overpass doctor:`, formattedDoc);
+                return formattedDoc;
               });
 
-            console.log('Overpass doctors found:', formattedOverpassDoctors.length);
+            console.log(`📍 Overpass doctors with coordinates: ${formattedOverpassDoctors.filter(d => d.coordinates?.lat && d.coordinates?.lon).length}`);
           }
         } catch (overpassError) {
-          console.error("Error fetching overpass doctors:", overpassError);
+          console.error("❌ Error fetching overpass doctors:", overpassError);
           // Continue with database doctors only
         }
 
         // Combine all doctors
         const allDoctors = [...formattedDbDoctors, ...formattedOverpassDoctors];
+        console.log(`🔗 Total doctors before deduplication: ${allDoctors.length}`);
         
         // Remove duplicates based on id and sort by distance if available
         const doctorMap = new Map();
@@ -169,6 +201,11 @@ export const useDoctorSearch = (
         });
         
         let result = Array.from(doctorMap.values());
+        console.log(`📋 Final doctors after deduplication: ${result.length}`);
+        
+        // Count doctors with coordinates
+        const doctorsWithCoords = result.filter(d => d.coordinates?.lat && d.coordinates?.lon);
+        console.log(`📍 Doctors with valid coordinates: ${doctorsWithCoords.length}`);
         
         // Sort by distance if coordinates are available
         if (coordinates) {
@@ -180,10 +217,10 @@ export const useDoctorSearch = (
           });
         }
         
-        console.log('Final doctor count:', result.length);
+        console.log(`✅ Final doctor search result: ${result.length} doctors`);
         return result;
       } catch (err) {
-        console.error("Error in useDoctorSearch:", err);
+        console.error("❌ Error in useDoctorSearch:", err);
         return [];
       }
     },
