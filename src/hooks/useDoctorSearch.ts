@@ -12,7 +12,6 @@ interface Doctor {
   license_number: string;
   phone?: string | null;
   email?: string | null;
-  hours?: string | null;
   distance?: number;
   source?: 'database' | 'overpass';
   coordinates?: { lat: number; lon: number } | null;
@@ -52,10 +51,10 @@ export const useDoctorSearch = (
         console.log(`Searching for doctors in country: ${selectedCountry} without coordinates`);
         
         try {
-          // Get doctors from database first
+          // Get doctors from database first - removed 'hours' column
           const { data: dbDoctors, error } = await supabase
             .from("profiles")
-            .select("id, full_name, city, license_number, email, phone, hours")
+            .select("id, full_name, city, license_number, email, phone")
             .eq("role", "doctor");
 
           if (error) {
@@ -136,10 +135,10 @@ export const useDoctorSearch = (
         console.log('Fetching doctors with coordinates:', coordinates, 'radius:', searchRadius, 'country:', selectedCountry);
       
         try {
-          // Get doctors from database first
+          // Get doctors from database first - removed 'hours' column
           const { data: dbDoctors, error } = await supabase
             .from("profiles")
-            .select("id, full_name, city, license_number, email, phone, hours")
+            .select("id, full_name, city, license_number, email, phone")
             .eq("role", "doctor");
 
           if (error) {
