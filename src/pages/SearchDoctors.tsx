@@ -9,12 +9,10 @@ import { useDoctorSearch } from '@/hooks/useDoctorSearch';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/supabase';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocationSearch } from "@/hooks/useLocationSearch";
-import SimplePharmacyMap from '@/components/pharmacy/SimplePharmacyMap';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+import DoctorListSection from '@/components/doctor/DoctorListSection';
 
 const SearchDoctors = () => {
   const [search, setSearch] = useState('');
@@ -36,8 +34,6 @@ const SearchDoctors = () => {
   const currentCoordinates = coordinates || { lat: 49.8153, lon: 6.1296 };
   
   const { doctors, isLoading } = useDoctorSearch(currentCoordinates, 5000);
-  const [selectedDoctorId, setSelectedDoctorId] = useState<string | null>(null);
-  const [filteredDoctors, setFilteredDoctors] = useState<any[]>([]);
   const [showLocation, setShowLocation] = useState(false);
   
   const location = useLocation();
@@ -75,14 +71,6 @@ const SearchDoctors = () => {
     }
   }, []);
 
-  useEffect(() => {
-    // Set filtered doctors when data loads
-    if (doctors && doctors.length > 0) {
-      console.log("Setting filtered doctors:", doctors.length);
-      setFilteredDoctors(doctors);
-    }
-  }, [doctors]);
-
   const searchDoctor = (searchTerm: string) => {
     try {
       setSearch(searchTerm);
@@ -93,7 +81,7 @@ const SearchDoctors = () => {
     }
   };
 
-  const handleConnectDoctor = async (doctorId: string) => {
+  const handleConnectDoctor = async (doctorId: string, source?: 'database' | 'overpass') => {
     if (!profile?.id) {
       toast({
         title: "Login Required",
@@ -134,50 +122,6 @@ const SearchDoctors = () => {
     }
   };
 
-  const handleSetConnectedDoctor = async (doctorId: string, isConnected: boolean) => {
-    if (!profile) {
-      toast({
-        title: "Login Required",
-        description: "Please login to connect with a doctor.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      if (isConnected) {
-        // Connect to doctor
-        await supabase
-          .from('user_doctors')
-          .upsert({ user_id: profile.id, doctor_id: doctorId });
-        
-        toast({
-          title: "Connected to Doctor",
-          description: "You are now connected to this doctor.",
-        });
-      } else {
-        // Disconnect from doctor
-        await supabase
-          .from('user_doctors')
-          .delete()
-          .eq('user_id', profile.id)
-          .eq('doctor_id', doctorId);
-          
-        toast({
-          title: "Doctor Disconnected",
-          description: "You are no longer connected to this doctor.",
-        });
-      }
-    } catch (err) {
-      console.error('Error updating doctor connection:', err);
-      toast({
-        title: "Error",
-        description: "Failed to update doctor connection",
-        variant: "destructive"
-      });
-    }
-  };
-
   const toggleLocationDisplay = (checked: boolean) => {
     setShowLocation(checked);
     console.log("Location display toggled:", checked);
@@ -208,64 +152,13 @@ const SearchDoctors = () => {
                 <p className="text-gray-500">Loading doctors...</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-6 h-[calc(100vh-200px)]">
-                {/* Doctor List */}
-                <div className="space-y-4 overflow-y-auto pr-2">
-                  {filteredDoctors.length === 0 ? (
-                    <p className="text-center py-8">No doctors found</p>
-                  ) : (
-                    filteredDoctors.map((doctor) => (
-                      <Card key={doctor.id} className="overflow-hidden">
-                        <CardContent className="p-4">
-                          <div className="space-y-2">
-                            <div className="flex items-center space-x-2 mb-4">
-                              <Checkbox
-                                id={`connect-${doctor.id}`}
-                                checked={connectedDoctor === doctor.id}
-                                onCheckedChange={(checked) => 
-                                  handleSetConnectedDoctor(doctor.id, !!checked)
-                                }
-                              />
-                              <Label htmlFor={`connect-${doctor.id}`}>Connect with this doctor</Label>
-                            </div>
-                            
-                            <h3 className="font-semibold text-lg">{doctor.full_name}</h3>
-                            <p className="text-sm text-gray-500">{doctor.city}</p>
-                            {doctor.license_number && (
-                              <p className="text-sm">License: {doctor.license_number}</p>
-                            )}
-                            {doctor.email && (
-                              <p className="text-sm">✉️ {doctor.email}</p>
-                            )}
-                            {doctor.hours && (
-                              <p className="text-sm">⏰ {doctor.hours}</p>
-                            )}
-                            {doctor.distance && (
-                              <p className="text-sm font-medium">📍 {doctor.distance} km</p>
-                            )}
-                            
-                            <button
-                              onClick={() => handleConnectDoctor(doctor.id)}
-                              className="w-full mt-4 bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
-                            >
-                              Connect
-                            </button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))
-                  )}
-                </div>
-                
-                {/* Map */}
-                <div className="h-full">
-                  <SimplePharmacyMap
-                    pharmacies={filteredDoctors}
-                    userLocation={showLocation ? currentCoordinates : null}
-                    height="calc(100vh - 220px)"
-                  />
-                </div>
-              </div>
+              <DoctorListSection
+                doctors={doctors}
+                isLoading={isLoading}
+                coordinates={currentCoordinates}
+                showUserLocation={showLocation}
+                onConnect={handleConnectDoctor}
+              />
             )}
           </div>
         </div>
