@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,7 +37,8 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
 
   const connectMutation = useMutation({
     mutationFn: async (doctorId: string) => {
-      console.log('Starting connection request for doctor:', doctorId);
+      console.log('=== Starting connection request process ===');
+      console.log('Doctor ID:', doctorId);
       console.log('Current user:', user?.id);
       
       if (!user?.id) {
@@ -85,9 +87,10 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
           throw error;
         }
 
-        console.log('Connection request created successfully:', data);
+        console.log('✅ Connection request created successfully:', data);
 
         // Get patient name for notification
+        console.log('Fetching patient profile for notification...');
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('full_name')
@@ -99,21 +102,27 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
         }
 
         const patientName = profileData?.full_name || 'A patient';
-        console.log('Sending notification to doctor with patient name:', patientName);
+        console.log('Patient name for notification:', patientName);
 
-        // Send notification to doctor - this should not fail silently
+        // Send notification to doctor - this is critical for the user experience
+        console.log('=== Starting notification creation ===');
         try {
           const notificationResult = await sendConnectionRequestNotification(doctorId, patientName);
-          console.log('Notification sent successfully:', notificationResult);
+          console.log('✅ Notification process completed successfully:', notificationResult);
         } catch (notificationError) {
-          console.error('Notification failed:', notificationError);
-          // Don't throw here as the connection was successful, but log the error
-          console.warn('Connection created but notification failed - manual notification may be needed');
+          console.error('❌ CRITICAL: Notification creation failed:', notificationError);
+          // This is a critical failure - the doctor won't know about the connection request
+          console.error('Connection was created but doctor will not be notified');
+          
+          // Still don't throw here as the connection was successful
+          // But we should log this as a critical issue
+          console.warn('⚠️ MANUAL INTERVENTION MAY BE NEEDED - Doctor not notified of connection request');
         }
 
+        console.log('=== Connection request process completed ===');
         return data;
       } catch (error) {
-        console.error('Error in connection mutation:', error);
+        console.error('❌ Error in connection mutation:', error);
         throw error;
       }
     },

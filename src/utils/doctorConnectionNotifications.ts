@@ -3,32 +3,66 @@ import { supabase } from '@/lib/supabase';
 
 export const sendConnectionRequestNotification = async (doctorId: string, patientName: string) => {
   try {
-    console.log('Creating connection request notification for doctor:', doctorId);
+    console.log('=== Starting notification creation process ===');
+    console.log('Doctor ID:', doctorId);
     console.log('Patient name:', patientName);
     
+    // First, let's verify the doctor exists
+    const { data: doctorProfile, error: doctorError } = await supabase
+      .from('profiles')
+      .select('id, full_name, email')
+      .eq('id', doctorId)
+      .single();
+    
+    if (doctorError) {
+      console.error('Error fetching doctor profile:', doctorError);
+      throw new Error(`Doctor not found: ${doctorError.message}`);
+    }
+    
+    if (!doctorProfile) {
+      console.error('Doctor profile not found for ID:', doctorId);
+      throw new Error('Doctor profile not found');
+    }
+    
+    console.log('Doctor profile found:', doctorProfile);
+    
     // Create notification in database - this will trigger realtime updates
+    console.log('Creating notification in database...');
+    const notificationData = {
+      user_id: doctorId,
+      type: 'connection_request',
+      title: 'New Connection Request',
+      message: `${patientName} has requested to connect with you`,
+      read: false,
+      created_at: new Date().toISOString()
+    };
+    
+    console.log('Notification data to insert:', notificationData);
+    
     const { data: notification, error } = await supabase
       .from('notifications')
-      .insert({
-        user_id: doctorId,
-        type: 'connection_request',
-        title: 'New Connection Request',
-        message: `${patientName} has requested to connect with you`,
-        read: false,
-        created_at: new Date().toISOString()
-      })
+      .insert(notificationData)
       .select()
       .single();
 
     if (error) {
-      console.error('Error creating connection notification:', error);
-      throw error;
+      console.error('Database error creating notification:', error);
+      console.error('Error details:', error.details);
+      console.error('Error hint:', error.hint);
+      console.error('Error message:', error.message);
+      throw new Error(`Failed to create notification: ${error.message}`);
     }
     
-    console.log('Connection request notification created successfully:', notification);
+    if (!notification) {
+      console.error('Notification was not created - no data returned');
+      throw new Error('Notification creation failed - no data returned');
+    }
+    
+    console.log('✅ Notification created successfully in database:', notification);
     
     // Send targeted Firebase push notification to doctor (optional, non-blocking)
     try {
+      console.log('Attempting to send Firebase push notification...');
       await sendFirebasePushNotification(doctorId, {
         title: 'New Connection Request',
         body: `${patientName} has requested to connect with you`,
@@ -38,16 +72,19 @@ export const sendConnectionRequestNotification = async (doctorId: string, patien
           notificationId: notification.id
         }
       });
-      console.log('Firebase push notification sent successfully');
+      console.log('✅ Firebase push notification sent successfully');
     } catch (firebaseError) {
-      console.warn('Firebase push notification failed (non-critical):', firebaseError);
+      console.warn('⚠️ Firebase push notification failed (non-critical):', firebaseError);
       // Don't throw here as the database notification was successful
     }
     
+    console.log('=== Notification creation process completed successfully ===');
     return notification;
     
   } catch (error) {
+    console.error('=== NOTIFICATION CREATION FAILED ===');
     console.error('Error in sendConnectionRequestNotification:', error);
+    console.error('Error stack:', error.stack);
     throw error; // Re-throw to let the caller handle the error
   }
 };
@@ -59,6 +96,8 @@ const sendFirebasePushNotification = async (userId: string, notificationData: {
   data?: Record<string, any>;
 }) => {
   try {
+    console.log('Looking up FCM token for user:', userId);
+    
     // Get the user's FCM token from the database
     const { data: tokenData, error } = await supabase
       .from('user_notification_tokens')
@@ -67,7 +106,12 @@ const sendFirebasePushNotification = async (userId: string, notificationData: {
       .eq('platform', 'web')
       .single();
 
-    if (error || !tokenData?.token) {
+    if (error) {
+      console.log('Error fetching FCM token:', error);
+      return;
+    }
+
+    if (!tokenData?.token) {
       console.log('No FCM token found for user:', userId);
       return;
     }
@@ -82,5 +126,6 @@ const sendFirebasePushNotification = async (userId: string, notificationData: {
     
   } catch (error) {
     console.error('Error sending Firebase push notification:', error);
+    throw error;
   }
 };
