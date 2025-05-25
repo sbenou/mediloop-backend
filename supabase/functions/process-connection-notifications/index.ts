@@ -8,11 +8,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Create a Supabase client
+// Create a Supabase client with service role for elevated permissions
 function createSupabaseClient() {
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  return createClient(supabaseUrl, supabaseKey);
+  return createClient(supabaseUrl, supabaseKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  });
 }
 
 // Firebase Admin SDK setup
@@ -144,26 +149,31 @@ async function sendPushNotification(fcmToken: string, title: string, body: strin
   }
 }
 
-// Process connection request notification
-async function processConnectionRequest(doctorId: string, patientName: string) {
+// Process connection request notification or test notification
+async function processConnectionRequest(doctorId: string, patientName: string, isTest = false, customTitle?: string, customMessage?: string) {
   const supabase = createSupabaseClient();
   
   try {
-    console.log(`Processing connection request: Doctor ${doctorId}, Patient ${patientName}`);
+    console.log(`Processing ${isTest ? 'test' : 'connection'} notification: Doctor ${doctorId}, Patient ${patientName}`);
     
-    // 1. Create in-app notification
+    // Determine notification content
+    const notificationTitle = isTest && customTitle ? customTitle : 'New Patient Connection Request';
+    const notificationMessage = isTest && customMessage ? customMessage : `${patientName} has requested to connect with you as a patient.`;
+    
+    // 1. Create in-app notification using service role (bypasses RLS)
     const { data: notification, error: notificationError } = await supabase
       .from('notifications')
       .insert({
         user_id: doctorId,
-        type: 'connection_request',
-        title: 'New Patient Connection Request',
-        message: `${patientName} has requested to connect with you as a patient.`,
-        link: '/dashboard?section=patients&profileTab=active',
+        type: isTest ? 'test_notification' : 'connection_request',
+        title: notificationTitle,
+        message: notificationMessage,
+        link: isTest ? '/test-notifications' : '/dashboard?section=patients&profileTab=active',
         meta: {
           patientName,
           timestamp: new Date().toISOString(),
-          source: 'background_job'
+          source: 'background_job',
+          isTest
         },
         read: false,
         created_at: new Date().toISOString()
@@ -195,13 +205,14 @@ async function processConnectionRequest(doctorId: string, patientName: string) {
       for (const tokenRecord of fcmTokens) {
         const pushResult = await sendPushNotification(
           tokenRecord.token,
-          'New Patient Connection Request',
-          `${patientName} wants to connect with you`,
+          notificationTitle,
+          isTest && customMessage ? customMessage : `${patientName} wants to connect with you`,
           {
-            type: 'connection_request',
+            type: isTest ? 'test_notification' : 'connection_request',
             doctorId,
             patientName,
-            notificationId: notification.id
+            notificationId: notification.id,
+            isTest: isTest.toString()
           }
         );
         pushResults.push(pushResult);
@@ -215,11 +226,11 @@ async function processConnectionRequest(doctorId: string, patientName: string) {
       success: true,
       notification,
       pushResults,
-      message: `Connection request notification processed successfully for doctor ${doctorId}`
+      message: `${isTest ? 'Test' : 'Connection request'} notification processed successfully for doctor ${doctorId}`
     };
     
   } catch (error) {
-    console.error('Error processing connection request:', error);
+    console.error('Error processing notification:', error);
     throw error;
   }
 }
@@ -234,7 +245,7 @@ serve(async (req) => {
   }
   
   try {
-    const { doctorId, patientName } = await req.json();
+    const { doctorId, patientName, isTest, customTitle, customMessage } = await req.json();
     
     if (!doctorId || !patientName) {
       return new Response(
@@ -243,7 +254,7 @@ serve(async (req) => {
       );
     }
     
-    const result = await processConnectionRequest(doctorId, patientName);
+    const result = await processConnectionRequest(doctorId, patientName, isTest, customTitle, customMessage);
     
     return new Response(
       JSON.stringify(result),
