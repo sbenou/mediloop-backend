@@ -29,25 +29,32 @@ const NotificationBell = () => {
   const hasInitializedData = useRef(false);
   const fcmTokenRegistered = useRef(false);
   const subscriptionCleanup = useRef<(() => void) | null>(null);
+  const dataInitTimeout = useRef<NodeJS.Timeout | null>(null);
+  const tokenRegTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch notifications and set up realtime subscription when authenticated - only once
   useEffect(() => {
+    // Clear any pending initialization
+    if (dataInitTimeout.current) {
+      clearTimeout(dataInitTimeout.current);
+      dataInitTimeout.current = null;
+    }
+    
     if (isAuthenticated && !hasInitializedData.current) {
       console.log("NotificationBell: Initial data fetch and subscription setup");
       hasInitializedData.current = true;
       
-      const fetchData = async () => {
+      // Add delay to ensure auth is fully settled
+      dataInitTimeout.current = setTimeout(async () => {
         try {
           await fetchNotifications();
+          // Set up subscription once
+          subscriptionCleanup.current = setupRealtimeSubscription();
         } catch (err) {
           console.error("NotificationBell: Error fetching initial data", err);
+          hasInitializedData.current = false; // Allow retry
         }
-      };
-      
-      fetchData();
-      
-      // Set up subscription once
-      subscriptionCleanup.current = setupRealtimeSubscription();
+      }, 500);
     }
     
     // Reset when user logs out
@@ -57,6 +64,10 @@ const NotificationBell = () => {
       if (subscriptionCleanup.current) {
         subscriptionCleanup.current();
         subscriptionCleanup.current = null;
+      }
+      if (dataInitTimeout.current) {
+        clearTimeout(dataInitTimeout.current);
+        dataInitTimeout.current = null;
       }
     }
     
@@ -70,24 +81,46 @@ const NotificationBell = () => {
 
   // Register FCM token with backend when available - only once per token
   useEffect(() => {
+    // Clear any pending token registration
+    if (tokenRegTimeout.current) {
+      clearTimeout(tokenRegTimeout.current);
+      tokenRegTimeout.current = null;
+    }
+    
     if (isAuthenticated && user?.id && fcmToken && !fcmTokenRegistered.current) {
       fcmTokenRegistered.current = true;
       
-      // Register token with backend for targeted notifications
-      registerFCMToken(user.id, fcmToken).then(success => {
-        if (success) {
-          console.log("FCM token registered with backend for targeted notifications");
-        }
-      }).catch(error => {
-        console.error("Error registering FCM token:", error);
-        fcmTokenRegistered.current = false; // Allow retry on next render
-      });
+      // Add delay to prevent race conditions
+      tokenRegTimeout.current = setTimeout(() => {
+        // Register token with backend for targeted notifications
+        registerFCMToken(user.id, fcmToken).then(success => {
+          if (success) {
+            console.log("FCM token registered with backend for targeted notifications");
+          } else {
+            fcmTokenRegistered.current = false; // Allow retry
+          }
+        }).catch(error => {
+          console.error("Error registering FCM token:", error);
+          fcmTokenRegistered.current = false; // Allow retry on next render
+        });
+      }, 1000);
     }
     
     // Reset registration flag when token changes or user logs out
     if (!fcmToken || !isAuthenticated) {
       fcmTokenRegistered.current = false;
+      if (tokenRegTimeout.current) {
+        clearTimeout(tokenRegTimeout.current);
+        tokenRegTimeout.current = null;
+      }
     }
+    
+    return () => {
+      if (tokenRegTimeout.current) {
+        clearTimeout(tokenRegTimeout.current);
+        tokenRegTimeout.current = null;
+      }
+    };
   }, [isAuthenticated, user?.id, fcmToken]);
 
   // Navigate to notifications view

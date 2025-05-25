@@ -40,6 +40,18 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
         throw new Error('Not authenticated');
       }
 
+      // First check if connection already exists
+      const { data: existingConnection } = await supabase
+        .from('doctor_patient_connections')
+        .select('id, status')
+        .eq('doctor_id', doctorId)
+        .eq('patient_id', user.id)
+        .maybeSingle();
+
+      if (existingConnection) {
+        throw new Error(`Connection ${existingConnection.status === 'pending' ? 'request already exists' : 'already established'}`);
+      }
+
       // Use the correct table name: doctor_patient_connections
       const { data, error } = await supabase
         .from('doctor_patient_connections')
@@ -52,9 +64,7 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
         .single();
 
       if (error) {
-        if (error.code === '23505') {
-          throw new Error('Connection request already exists');
-        }
+        console.error('Connection insert error:', error);
         throw error;
       }
 
@@ -81,10 +91,18 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
     },
     onError: (error: Error) => {
       console.error('Error connecting to doctor:', error);
+      
+      let errorMessage = "Failed to connect to doctor. Please try again.";
+      if (error.message.includes('already exists')) {
+        errorMessage = "You have already sent a connection request to this doctor.";
+      } else if (error.message.includes('already established')) {
+        errorMessage = "You are already connected to this doctor.";
+      }
+      
       toast({
         variant: "destructive",
         title: "Connection Failed",
-        description: error.message || "Failed to connect to doctor. Please try again.",
+        description: errorMessage,
       });
     },
   });

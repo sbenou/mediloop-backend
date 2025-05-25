@@ -16,22 +16,43 @@ export const FirebaseNotificationProvider: React.FC<{ children: React.ReactNode 
   const { fcmToken, notificationPermissionGranted, loading, initializeNotifications } = useFirebaseNotifications();
   const { isAuthenticated } = useAuth();
   const hasInitialized = useRef(false);
+  const initializationTimeout = useRef<NodeJS.Timeout | null>(null);
   
   // Initialize Firebase notifications when user is authenticated - only once per session
   useEffect(() => {
+    // Clear any pending initialization
+    if (initializationTimeout.current) {
+      clearTimeout(initializationTimeout.current);
+      initializationTimeout.current = null;
+    }
+    
     if (isAuthenticated && !hasInitialized.current && !fcmToken) {
       hasInitialized.current = true;
       
-      // Initialize immediately after authentication
-      initializeNotifications().catch(error => {
-        console.error('Error initializing notifications (non-critical):', error);
-      });
+      // Add a small delay to ensure authentication is fully settled
+      initializationTimeout.current = setTimeout(() => {
+        initializeNotifications().catch(error => {
+          console.error('Error initializing notifications (non-critical):', error);
+          hasInitialized.current = false; // Allow retry
+        });
+      }, 1000);
     }
     
     // Reset initialization flag when user logs out
     if (!isAuthenticated) {
       hasInitialized.current = false;
+      if (initializationTimeout.current) {
+        clearTimeout(initializationTimeout.current);
+        initializationTimeout.current = null;
+      }
     }
+    
+    return () => {
+      if (initializationTimeout.current) {
+        clearTimeout(initializationTimeout.current);
+        initializationTimeout.current = null;
+      }
+    };
   }, [isAuthenticated, fcmToken, initializeNotifications]);
   
   return (
