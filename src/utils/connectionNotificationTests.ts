@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import { sendConnectionRequestNotification } from './doctorConnectionNotifications';
 import { createNotification, createTenantNotification } from './notifications';
@@ -41,7 +40,7 @@ interface TestSummary {
 
 export class ConnectionNotificationTester {
   private results: TestResult[] = [];
-  private testTimeout = 2000; // Reduced timeout to 2 seconds
+  private testTimeout = 5000; // Restored to 5 seconds
   private isTestingStopped = false;
 
   private async runTest(testName: string, testFn: () => Promise<any>): Promise<TestResult> {
@@ -85,7 +84,6 @@ export class ConnectionNotificationTester {
     return this.runTest('Database Connectivity', async () => {
       console.log('🔍 Testing database connection...');
       
-      // Simple test query with immediate return
       const startTime = Date.now();
       const { data, error } = await supabase
         .from('profiles')
@@ -109,7 +107,6 @@ export class ConnectionNotificationTester {
     return this.runTest('Current Authentication State', async () => {
       console.log('🔐 Testing current authentication state...');
       
-      // Use a simpler approach - just get session synchronously
       const startTime = Date.now();
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       const sessionTime = Date.now() - startTime;
@@ -206,6 +203,20 @@ export class ConnectionNotificationTester {
     return this.runTest('Direct Notification Creation', async () => {
       console.log('🔔 Testing direct notification creation...');
       
+      // First ensure we're authenticated as the doctor
+      console.log('🔐 Signing in as test doctor...');
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: TEST_ACCOUNTS.doctor.email,
+        password: 'testpassword123'
+      });
+
+      if (signInError) {
+        console.log('⚠️ Sign in failed, trying to proceed anyway:', signInError.message);
+      }
+
+      // Wait a moment for auth to propagate
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       const notificationData = {
         user_id: TEST_ACCOUNTS.doctor.id,
         type: 'connection_request',
@@ -249,6 +260,20 @@ export class ConnectionNotificationTester {
     return this.runTest('Notification Helper Function', async () => {
       console.log('🔧 Testing notification helper function...');
       
+      // Ensure we're authenticated
+      console.log('🔐 Ensuring authentication for helper function test...');
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: TEST_ACCOUNTS.doctor.email,
+        password: 'testpassword123'
+      });
+
+      if (signInError) {
+        console.log('⚠️ Sign in failed, trying to proceed anyway:', signInError.message);
+      }
+
+      // Wait a moment for auth to propagate
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const startTime = Date.now();
       const result = await createNotification({
         userId: TEST_ACCOUNTS.doctor.id,
@@ -276,6 +301,20 @@ export class ConnectionNotificationTester {
   async testConnectionNotificationFlow() {
     return this.runTest('Connection Notification Flow', async () => {
       console.log('🔗 Testing connection notification flow...');
+      
+      // Ensure we're authenticated
+      console.log('🔐 Ensuring authentication for connection flow test...');
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: TEST_ACCOUNTS.doctor.email,
+        password: 'testpassword123'
+      });
+
+      if (signInError) {
+        console.log('⚠️ Sign in failed, trying to proceed anyway:', signInError.message);
+      }
+
+      // Wait a moment for auth to propagate
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       const startTime = Date.now();
       const result = await sendConnectionRequestNotification(
