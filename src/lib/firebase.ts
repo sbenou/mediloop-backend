@@ -15,7 +15,16 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const messaging = typeof window !== 'undefined' && 'Notification' in window ? getMessaging(app) : null;
+
+// Initialize messaging only in valid context
+let messaging = null;
+try {
+  if (typeof window !== 'undefined' && 'Notification' in window && window === window.top) {
+    messaging = getMessaging(app);
+  }
+} catch (error) {
+  console.warn('Firebase messaging initialization skipped:', error);
+}
 
 // Function to request permission and get FCM token
 export const requestNotificationPermission = async () => {
@@ -23,7 +32,19 @@ export const requestNotificationPermission = async () => {
   
   try {
     if (!messaging) {
-      console.error('Firebase messaging not initialized or not supported in this environment');
+      console.warn('Firebase messaging not initialized or not supported in this environment');
+      return null;
+    }
+    
+    // Additional context validation
+    if (typeof window === 'undefined' || window !== window.top) {
+      console.warn('Not in valid context for notification permission request');
+      return null;
+    }
+    
+    // Check current permission state
+    if (Notification.permission === 'denied') {
+      console.warn('Notification permission is denied');
       return null;
     }
     
@@ -50,7 +71,7 @@ export const requestNotificationPermission = async () => {
       return null;
     }
   } catch (error) {
-    console.error('Error requesting notification permission:', error);
+    console.warn('Error requesting notification permission (non-critical):', error);
     return null;
   }
 };
@@ -62,13 +83,19 @@ export const setupMessageListener = (callback) => {
     return () => {};
   }
   
+  // Additional context validation
+  if (typeof window === 'undefined' || window !== window.top) {
+    console.warn('Not in valid context for message listener');
+    return () => {};
+  }
+  
   try {
     return onMessage(messaging, (payload) => {
       console.log('Message received in the foreground:', payload);
       callback(payload);
     });
   } catch (error) {
-    console.error('Error setting up message listener:', error);
+    console.warn('Error setting up message listener (non-critical):', error);
     return () => {};
   }
 };
