@@ -41,7 +41,7 @@ interface TestSummary {
 
 export class ConnectionNotificationTester {
   private results: TestResult[] = [];
-  private testTimeout = 3000; // Reduced timeout to 3 seconds
+  private testTimeout = 2000; // Reduced timeout to 2 seconds
   private isTestingStopped = false;
 
   private async runTest(testName: string, testFn: () => Promise<any>): Promise<TestResult> {
@@ -85,10 +85,15 @@ export class ConnectionNotificationTester {
     return this.runTest('Database Connectivity', async () => {
       console.log('🔍 Testing database connection...');
       
+      // Simple test query with immediate return
+      const startTime = Date.now();
       const { data, error } = await supabase
         .from('profiles')
-        .select('count')
+        .select('id')
         .limit(1);
+      
+      const queryTime = Date.now() - startTime;
+      console.log(`Database query took ${queryTime}ms`);
       
       if (error) {
         console.error('❌ Database connectivity error:', error);
@@ -96,7 +101,7 @@ export class ConnectionNotificationTester {
       }
       
       console.log('✅ Database connection successful');
-      return { message: 'Database connection successful', count: data?.length || 0 };
+      return { message: 'Database connection successful', count: data?.length || 0, queryTime };
     });
   }
 
@@ -104,7 +109,11 @@ export class ConnectionNotificationTester {
     return this.runTest('Current Authentication State', async () => {
       console.log('🔐 Testing current authentication state...');
       
+      // Use a simpler approach - just get session synchronously
+      const startTime = Date.now();
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      const sessionTime = Date.now() - startTime;
+      console.log(`Session query took ${sessionTime}ms`);
       
       if (sessionError) {
         throw new Error(`Session error: ${sessionError.message}`);
@@ -123,7 +132,8 @@ export class ConnectionNotificationTester {
         isAuthenticated,
         userId,
         sessionExists: !!sessionData?.session,
-        userEmail: sessionData?.session?.user?.email
+        userEmail: sessionData?.session?.user?.email,
+        sessionTime
       };
     });
   }
@@ -132,11 +142,15 @@ export class ConnectionNotificationTester {
     return this.runTest('Doctor Profile Exists', async () => {
       console.log('👨‍⚕️ Testing if doctor profile exists...');
       
+      const startTime = Date.now();
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, full_name, role')
         .eq('id', TEST_ACCOUNTS.doctor.id)
-        .single();
+        .maybeSingle();
+
+      const queryTime = Date.now() - startTime;
+      console.log(`Doctor profile query took ${queryTime}ms`);
 
       if (error) {
         console.error('❌ Doctor profile fetch error:', error);
@@ -150,7 +164,8 @@ export class ConnectionNotificationTester {
       console.log('✅ Doctor profile found:', profile);
       return {
         profile,
-        doctorId: TEST_ACCOUNTS.doctor.id
+        doctorId: TEST_ACCOUNTS.doctor.id,
+        queryTime
       };
     });
   }
@@ -159,11 +174,15 @@ export class ConnectionNotificationTester {
     return this.runTest('Patient Profile Exists', async () => {
       console.log('🤒 Testing if patient profile exists...');
       
+      const startTime = Date.now();
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, full_name, role')
         .eq('id', TEST_ACCOUNTS.patient.id)
-        .single();
+        .maybeSingle();
+
+      const queryTime = Date.now() - startTime;
+      console.log(`Patient profile query took ${queryTime}ms`);
 
       if (error) {
         console.error('❌ Patient profile fetch error:', error);
@@ -177,7 +196,8 @@ export class ConnectionNotificationTester {
       console.log('✅ Patient profile found:', profile);
       return {
         profile,
-        patientId: TEST_ACCOUNTS.patient.id
+        patientId: TEST_ACCOUNTS.patient.id,
+        queryTime
       };
     });
   }
@@ -197,21 +217,30 @@ export class ConnectionNotificationTester {
 
       console.log('📝 Creating test notification:', notificationData);
       
+      const startTime = Date.now();
       const { data, error } = await supabase
         .from('notifications')
         .insert(notificationData)
         .select()
-        .single();
+        .maybeSingle();
+
+      const queryTime = Date.now() - startTime;
+      console.log(`Notification creation query took ${queryTime}ms`);
 
       if (error) {
         console.error('❌ Direct notification creation error:', error);
         throw new Error(`Direct notification creation failed: ${error.message}`);
       }
 
+      if (!data) {
+        throw new Error('Notification creation returned no data');
+      }
+
       console.log('✅ Direct notification created successfully:', data);
       return {
         notification: data,
-        targetUserId: TEST_ACCOUNTS.doctor.id
+        targetUserId: TEST_ACCOUNTS.doctor.id,
+        queryTime
       };
     });
   }
@@ -220,12 +249,16 @@ export class ConnectionNotificationTester {
     return this.runTest('Notification Helper Function', async () => {
       console.log('🔧 Testing notification helper function...');
       
+      const startTime = Date.now();
       const result = await createNotification({
         userId: TEST_ACCOUNTS.doctor.id,
         type: 'connection_request',
         title: 'Test Function Notification',
         message: 'Testing notification helper function (TEST)'
       });
+
+      const queryTime = Date.now() - startTime;
+      console.log(`Notification helper function took ${queryTime}ms`);
 
       if (!result) {
         throw new Error('Notification helper function returned null');
@@ -234,7 +267,8 @@ export class ConnectionNotificationTester {
       console.log('✅ Notification helper function test successful:', result);
       return {
         notification: result,
-        userId: TEST_ACCOUNTS.doctor.id
+        userId: TEST_ACCOUNTS.doctor.id,
+        queryTime
       };
     });
   }
@@ -243,10 +277,14 @@ export class ConnectionNotificationTester {
     return this.runTest('Connection Notification Flow', async () => {
       console.log('🔗 Testing connection notification flow...');
       
+      const startTime = Date.now();
       const result = await sendConnectionRequestNotification(
         TEST_ACCOUNTS.doctor.id,
         TEST_ACCOUNTS.patient.name
       );
+
+      const queryTime = Date.now() - startTime;
+      console.log(`Connection notification flow took ${queryTime}ms`);
 
       if (!result) {
         throw new Error('Connection notification flow returned null');
@@ -256,7 +294,8 @@ export class ConnectionNotificationTester {
       return {
         notification: result,
         doctorId: TEST_ACCOUNTS.doctor.id,
-        patientName: TEST_ACCOUNTS.patient.name
+        patientName: TEST_ACCOUNTS.patient.name,
+        queryTime
       };
     });
   }
@@ -265,12 +304,16 @@ export class ConnectionNotificationTester {
     return this.runTest('Notification Query', async () => {
       console.log('📋 Testing notification query...');
       
+      const startTime = Date.now();
       const { data: notifications, error } = await supabase
         .from('notifications')
-        .select('*')
+        .select('id, title, message, created_at')
         .eq('user_id', TEST_ACCOUNTS.doctor.id)
         .order('created_at', { ascending: false })
         .limit(5);
+
+      const queryTime = Date.now() - startTime;
+      console.log(`Notification query took ${queryTime}ms`);
 
       if (error) {
         console.error('❌ Notification query error:', error);
@@ -281,7 +324,8 @@ export class ConnectionNotificationTester {
       return {
         notifications,
         count: notifications?.length || 0,
-        userId: TEST_ACCOUNTS.doctor.id
+        userId: TEST_ACCOUNTS.doctor.id,
+        queryTime
       };
     });
   }
@@ -320,7 +364,7 @@ export class ConnectionNotificationTester {
     try {
       console.log('✅ Using pre-existing test accounts, running individual tests...');
 
-      // Run tests in sequence without authentication
+      // Run tests in sequence
       await this.testDatabaseConnectivity();
       await this.testCurrentAuthenticationState();
       await this.testDoctorProfileExists();
