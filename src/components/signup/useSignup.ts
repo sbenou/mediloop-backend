@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
+import { createUserTenant } from "@/utils/tenancy";
 import { UserRole } from "./SignupForm";
 
 const RATE_LIMIT_KEY = "signup_rate_limit";
@@ -149,6 +150,15 @@ export const useSignup = () => {
         if (profileError) {
           console.error("Error creating profile:", profileError);
           throw profileError;
+        }
+        
+        // Create tenant for the user (for patients, create immediately)
+        if (role === 'patient') {
+          console.log("Creating tenant for patient");
+          const tenantId = await createUserTenant(userId, role, name);
+          if (!tenantId) {
+            console.warn("Failed to create tenant for patient, but continuing with signup");
+          }
         }
         
         // Check if email confirmation is required

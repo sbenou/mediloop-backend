@@ -1364,6 +1364,16 @@ export type Database = {
         Args: { tenant_name: string; tenant_domain: string }
         Returns: string
       }
+      create_user_tenant: {
+        Args: {
+          p_user_id: string
+          p_user_role: string
+          p_user_name: string
+          p_workplace_name?: string
+          p_pharmacy_name?: string
+        }
+        Returns: string
+      }
       extend_boost: {
         Args: { p_boost_id: string; p_duration: string; p_price: number }
         Returns: boolean
@@ -1471,6 +1481,14 @@ export type Database = {
           p_new_permissions: string[]
         }
         Returns: undefined
+      }
+      update_user_tenant_name: {
+        Args: {
+          p_user_id: string
+          p_workplace_name?: string
+          p_pharmacy_name?: string
+        }
+        Returns: boolean
       }
       upsert_pharmacy: {
         Args: {

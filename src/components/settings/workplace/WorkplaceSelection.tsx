@@ -1,235 +1,286 @@
 
-import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, Building2, MapPin, Phone, Clock, CheckCircle } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/lib/supabase";
+import { updateUserTenantName } from "@/utils/tenancy";
+
+interface Workplace {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  postal_code: string;
+  phone?: string;
+  hours?: string;
+  workplace_type: string;
+  description?: string;
+}
 
 interface WorkplaceSelectionProps {
-  userId?: string;
+  userId: string;
   userRole: string;
   redirectAfterSelection?: boolean;
   onComplete?: () => void;
 }
 
-interface Workplace {
-  id: string;
-  name: string;
-  address?: string;
-  city?: string;
-  postal_code?: string;
-  phone?: string;
-  hours?: string;
-  license_number?: string;
-}
+const WorkplaceSelection: React.FC<WorkplaceSelectionProps> = ({
+  userId,
+  userRole,
+  redirectAfterSelection = false,
+  onComplete
+}) => {
+  const [workplaces, setWorkplaces] = useState<Workplace[]>([]);
+  const [pharmacies, setPharmacies] = useState<any[]>([]);
+  const [selectedId, setSelectedId] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
-interface LocationState {
-  isNewSignup?: boolean;
-  userId?: string;
-  userRole?: string;
-}
-
-const WorkplaceSelection = ({ userId, userRole, redirectAfterSelection = false, onComplete }: WorkplaceSelectionProps) => {
-  const [selectedWorkplaceId, setSelectedWorkplaceId] = useState<string | null>(null);
-  const location = useLocation();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const locationState = location.state as LocationState || {};
-  
-  // If userId is not passed directly, try to get it from location state (useful for redirects)
-  const effectiveUserId = userId || locationState.userId;
-  const effectiveUserRole = userRole || locationState.userRole;
-  const isPharmacistSignup = locationState.isNewSignup && effectiveUserRole === 'pharmacist';
-  const isDoctorSignup = locationState.isNewSignup && effectiveUserRole === 'doctor';
-  
-  const { data: session } = useQuery({
-    queryKey: ['session'],
-    queryFn: async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) throw error;
-      return session;
-    },
-  });
-
-  // Fetch workplaces based on user role
-  const { data: workplaces, isLoading } = useQuery({
-    queryKey: ['workplaces', effectiveUserRole],
-    queryFn: async () => {
-      if (effectiveUserRole === 'pharmacist') {
-        // Fetch pharmacies
-        const { data, error } = await supabase
-          .from('pharmacies')
-          .select('*');
+  // Fetch workplaces or pharmacies based on user role
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        setIsLoading(true);
         
-        if (error) throw error;
-        return data || [];
-      } else if (effectiveUserRole === 'doctor') {
-        // Fetch doctors
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id, full_name, city, license_number')
-          .eq('role', 'doctor');
-        
-        if (error) throw error;
-        
-        // Map to match workplace interface
-        return (data || []).map(doctor => ({
-          id: doctor.id,
-          name: doctor.full_name || '',
-          city: doctor.city || '',
-          license_number: doctor.license_number || ''
-        }));
+        if (userRole === 'doctor') {
+          const { data, error } = await supabase
+            .from('workplaces')
+            .select('*')
+            .order('name');
+          
+          if (error) {
+            console.error('Error fetching workplaces:', error);
+            toast({
+              title: "Error",
+              description: "Failed to load workplaces",
+              variant: "destructive",
+            });
+            return;
+          }
+          
+          setWorkplaces(data || []);
+        } else if (userRole === 'pharmacist') {
+          const { data, error } = await supabase
+            .from('pharmacies')
+            .select('*')
+            .order('name');
+          
+          if (error) {
+            console.error('Error fetching pharmacies:', error);
+            toast({
+              title: "Error",
+              description: "Failed to load pharmacies",
+              variant: "destructive",
+            });
+            return;
+          }
+          
+          setPharmacies(data || []);
+        }
+      } catch (error) {
+        console.error('Error in fetchOptions:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load options",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
       }
-      
-      return [];
-    },
-  });
+    };
 
-  // Mutation to set a user's workplace
-  const setWorkplaceMutation = useMutation({
-    mutationFn: async (workplaceId: string) => {
-      const targetUserId = effectiveUserId || session?.user?.id;
-      if (!targetUserId) throw new Error('No user ID available');
+    fetchOptions();
+  }, [userRole, toast]);
 
-      console.log(`Setting ${effectiveUserRole} workplace for user:`, targetUserId, "workplace:", workplaceId);
+  const handleSubmit = async () => {
+    if (!selectedId) {
+      toast({
+        title: "Selection Required",
+        description: `Please select a ${userRole === 'doctor' ? 'workplace' : 'pharmacy'}`,
+        variant: "destructive",
+      });
+      return;
+    }
 
-      if (effectiveUserRole === 'pharmacist') {
+    setIsSubmitting(true);
+
+    try {
+      if (userRole === 'doctor') {
+        // Link doctor to workplace
+        const { error } = await supabase
+          .from('doctor_workplaces')
+          .upsert({
+            user_id: userId,
+            workplace_id: selectedId,
+            is_primary: true
+          });
+
+        if (error) {
+          console.error('Error linking doctor to workplace:', error);
+          throw error;
+        }
+
+        // Update tenant name with workplace name
+        const selectedWorkplace = workplaces.find(w => w.id === selectedId);
+        if (selectedWorkplace) {
+          await updateUserTenantName(userId, selectedWorkplace.name);
+        }
+
+        toast({
+          title: "Success",
+          description: "Workplace selection saved successfully",
+        });
+      } else if (userRole === 'pharmacist') {
+        // Link pharmacist to pharmacy
         const { error } = await supabase
           .from('user_pharmacies')
-          .upsert([
-            { user_id: targetUserId, pharmacy_id: workplaceId }
-          ]);
+          .upsert({
+            user_id: userId,
+            pharmacy_id: selectedId
+          });
 
-        if (error) throw error;
-      } else if (effectiveUserRole === 'doctor') {
-        // For doctors, use a more generic approach to call the RPC function
-        // This avoids the TypeScript error
-        const { error } = await supabase.functions.invoke('upsert-doctor-workplace', {
-          body: { 
-            userId: targetUserId, 
-            workplaceId: workplaceId
-          }
+        if (error) {
+          console.error('Error linking pharmacist to pharmacy:', error);
+          throw error;
+        }
+
+        // Update tenant name with pharmacy name
+        const selectedPharmacy = pharmacies.find(p => p.id === selectedId);
+        if (selectedPharmacy) {
+          await updateUserTenantName(userId, undefined, selectedPharmacy.name);
+        }
+
+        toast({
+          title: "Success",
+          description: "Pharmacy selection saved successfully",
         });
+      }
 
-        if (error) throw error;
-      }
-      
-      return { success: true };
-    },
-    onSuccess: () => {
-      if (effectiveUserRole === 'pharmacist') {
-        queryClient.invalidateQueries({ queryKey: ['userPharmacy'] });
-      } else if (effectiveUserRole === 'doctor') {
-        queryClient.invalidateQueries({ queryKey: ['userDoctor'] });
-      }
-      
-      toast({
-        title: `${effectiveUserRole === 'pharmacist' ? 'Pharmacy' : 'Doctor Workplace'} Selected`,
-        description: "Your workplace has been set successfully.",
-      });
-      
+      // Call completion callback
       if (onComplete) {
         onComplete();
-      } else if (redirectAfterSelection || isPharmacistSignup || isDoctorSignup) {
-        navigate('/', { replace: true });
       }
-    },
-    onError: (error) => {
-      console.error('Error setting workplace:', error);
+    } catch (error) {
+      console.error('Error saving selection:', error);
       toast({
         title: "Error",
-        description: `Failed to set your ${effectiveUserRole === 'pharmacist' ? 'pharmacy' : 'doctor workplace'}. Please try again.`,
+        description: "Failed to save selection. Please try again.",
         variant: "destructive",
       });
-    },
-  });
-
-  const handleSelectWorkplace = (workplaceId: string) => {
-    setSelectedWorkplaceId(workplaceId);
-  };
-
-  const handleConfirmSelection = () => {
-    if (selectedWorkplaceId) {
-      console.log(`Confirming ${effectiveUserRole} workplace selection:`, selectedWorkplaceId);
-      setWorkplaceMutation.mutate(selectedWorkplaceId);
-    } else {
-      toast({
-        title: "No Selection",
-        description: `Please select a ${effectiveUserRole === 'pharmacist' ? 'pharmacy' : 'workplace'} first.`,
-        variant: "destructive",
-      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  // Get the appropriate display fields based on role
-  const getWorkplaceDisplayInfo = (workplace: Workplace) => {
-    if (effectiveUserRole === 'pharmacist') {
-      return {
-        title: workplace.name,
-        subtitle: workplace.address ? `${workplace.address}, ${workplace.city || ''}` : workplace.city || '',
-        extra: workplace.phone || ''
-      };
-    } else if (effectiveUserRole === 'doctor') {
-      return {
-        title: workplace.name,
-        subtitle: workplace.city || '',
-        extra: workplace.license_number ? `License: ${workplace.license_number}` : ''
-      };
-    }
-    
-    return { title: workplace.name, subtitle: '', extra: '' };
-  };
+  if (isLoading) {
+    return (
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-center space-x-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Loading options...</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const options = userRole === 'doctor' ? workplaces : pharmacies;
+  const optionType = userRole === 'doctor' ? 'workplace' : 'pharmacy';
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        {isLoading ? (
-          <div className="text-center py-8">Loading {effectiveUserRole === 'pharmacist' ? 'pharmacies' : 'workplaces'}...</div>
-        ) : (
-          <div className="space-y-4">
-            {workplaces && workplaces.length > 0 ? (
-              <div className="grid gap-4">
-                {workplaces.map(workplace => {
-                  const { title, subtitle, extra } = getWorkplaceDisplayInfo(workplace);
-                  return (
-                    <div 
-                      key={workplace.id}
-                      className={`p-4 border rounded-md cursor-pointer transition-colors ${
-                        selectedWorkplaceId === workplace.id ? 'bg-primary/10 border-primary' : 'hover:bg-accent'
-                      }`}
-                      onClick={() => handleSelectWorkplace(workplace.id)}
-                    >
-                      <h3 className="font-medium">{title}</h3>
-                      {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
-                      {extra && <p className="text-sm">{extra}</p>}
+    <Card className="w-full max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle className="flex items-center space-x-2">
+          <Building2 className="h-5 w-5" />
+          <span>Select Your {userRole === 'doctor' ? 'Workplace' : 'Pharmacy'}</span>
+        </CardTitle>
+        <CardDescription>
+          Choose the {optionType} where you work to complete your registration
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">
+            {userRole === 'doctor' ? 'Workplace' : 'Pharmacy'}
+          </label>
+          <Select value={selectedId} onValueChange={setSelectedId}>
+            <SelectTrigger>
+              <SelectValue placeholder={`Select a ${optionType}...`} />
+            </SelectTrigger>
+            <SelectContent>
+              {options.map((option) => (
+                <SelectItem key={option.id} value={option.id}>
+                  <div className="flex flex-col">
+                    <span className="font-medium">{option.name}</span>
+                    <span className="text-sm text-gray-500">
+                      {option.city || option.address}
+                    </span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {selectedId && (
+          <Card className="bg-gray-50">
+            <CardContent className="p-4">
+              {(() => {
+                const selected = options.find(o => o.id === selectedId);
+                if (!selected) return null;
+                
+                return (
+                  <div className="space-y-2">
+                    <h4 className="font-medium flex items-center space-x-2">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span>{selected.name}</span>
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
+                      <div className="flex items-center space-x-2">
+                        <MapPin className="h-4 w-4" />
+                        <span>{selected.address}, {selected.city}</span>
+                      </div>
+                      {selected.phone && (
+                        <div className="flex items-center space-x-2">
+                          <Phone className="h-4 w-4" />
+                          <span>{selected.phone}</span>
+                        </div>
+                      )}
+                      {selected.hours && (
+                        <div className="flex items-center space-x-2">
+                          <Clock className="h-4 w-4" />
+                          <span>{selected.hours}</span>
+                        </div>
+                      )}
                     </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <p>No {effectiveUserRole === 'pharmacist' ? 'pharmacies' : 'workplaces'} found. Please contact support.</p>
-              </div>
-            )}
-          </div>
+                  </div>
+                );
+              })()}
+            </CardContent>
+          </Card>
         )}
-      </div>
-      <div className="flex justify-between">
-        <Button variant="outline" onClick={() => {
-          if (onComplete) onComplete();
-          else navigate('/');
-        }}>
-          Skip for now
-        </Button>
+
         <Button 
-          onClick={handleConfirmSelection}
-          disabled={!selectedWorkplaceId || setWorkplaceMutation.isPending}
+          onClick={handleSubmit} 
+          disabled={!selectedId || isSubmitting}
+          className="w-full"
         >
-          {setWorkplaceMutation.isPending ? "Saving..." : "Confirm Selection"}
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            'Complete Registration'
+          )}
         </Button>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

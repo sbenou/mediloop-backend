@@ -1,6 +1,6 @@
 
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { Tenant, getTenantFromHostname, fetchTenantInfo } from '@/utils/tenancy';
+import { Tenant, getTenantFromHostname, fetchTenantInfo, fetchUserTenant } from '@/utils/tenancy';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/supabase';
@@ -41,33 +41,44 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
       const isPreview = window.location.hostname.includes('lovable.app');
       setIsPreviewMode(isPreview);
       
-      // Get tenant from hostname
+      // Get tenant from hostname first
       const tenantDomain = getTenantFromHostname(window.location.hostname);
       
-      if (!tenantDomain) {
-        console.log('No tenant domain found in URL - using default tenant');
-        setIsLoading(false);
-        return;
+      if (tenantDomain) {
+        console.log('Detected tenant domain from hostname:', tenantDomain);
+        
+        // Fetch tenant information by domain
+        const tenant = await fetchTenantInfo(tenantDomain);
+        
+        if (tenant) {
+          console.log('Setting current tenant from domain:', tenant);
+          setCurrentTenant(tenant);
+          
+          // If user is authenticated, set tenant in JWT claims
+          if (isAuthenticated && user?.id) {
+            await setTenantInSession(tenant.id, tenant.schema);
+          }
+          
+          setIsLoading(false);
+          return;
+        }
       }
       
-      console.log('Detected tenant domain:', tenantDomain);
-      
-      // Fetch tenant information
-      const tenant = await fetchTenantInfo(tenantDomain);
-      
-      if (!tenant) {
-        console.warn(`Tenant "${tenantDomain}" not found or inactive`);
-        // Don't set an error here, just leave currentTenant as null
-        setIsLoading(false);
-        return;
-      }
-      
-      console.log('Setting current tenant:', tenant);
-      setCurrentTenant(tenant);
-      
-      // If user is authenticated, set tenant in JWT claims
+      // If no domain-based tenant found and user is authenticated, try user-based tenant
       if (isAuthenticated && user?.id) {
-        await setTenantInSession(tenant.id, tenant.schema);
+        console.log('Looking for user-specific tenant for user:', user.id);
+        
+        const userTenant = await fetchUserTenant(user.id);
+        
+        if (userTenant) {
+          console.log('Setting current tenant from user:', userTenant);
+          setCurrentTenant(userTenant);
+          await setTenantInSession(userTenant.id, userTenant.schema);
+        } else {
+          console.log('No tenant found for user, continuing without tenant context');
+        }
+      } else {
+        console.log('No authenticated user, continuing without tenant context');
       }
       
     } catch (err) {
@@ -79,25 +90,10 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
     }
   };
   
-  // Initialize tenant when component mounts
+  // Initialize tenant when component mounts or auth state changes
   useEffect(() => {
     initTenant();
-  }, []);
-  
-  // When auth state changes, update tenant in session
-  useEffect(() => {
-    if (isAuthenticated && user?.id && currentTenant) {
-      setTenantInSession(currentTenant.id, currentTenant.schema).then(success => {
-        if (!success) {
-          toast({
-            title: "Tenant Context",
-            description: "Failed to set tenant context. Some features may be limited.",
-            variant: "destructive",
-          });
-        }
-      });
-    }
-  }, [isAuthenticated, user?.id, currentTenant]);
+  }, [isAuthenticated, user?.id]);
   
   // Helper function to set both tenant id and schema in JWT claims
   const setTenantInSession = async (tenantId: string, tenantSchema: string): Promise<boolean> => {
