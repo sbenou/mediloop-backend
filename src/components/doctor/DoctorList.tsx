@@ -36,53 +36,88 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
 
   const connectMutation = useMutation({
     mutationFn: async (doctorId: string) => {
+      console.log('Starting connection request for doctor:', doctorId);
+      console.log('Current user:', user?.id);
+      
       if (!user?.id) {
+        console.error('No authenticated user found');
         throw new Error('Not authenticated');
       }
 
-      // First check if connection already exists
-      const { data: existingConnection } = await supabase
-        .from('doctor_patient_connections')
-        .select('id, status')
-        .eq('doctor_id', doctorId)
-        .eq('patient_id', user.id)
-        .maybeSingle();
+      try {
+        console.log('Checking for existing connection...');
+        // First check if connection already exists
+        const { data: existingConnection, error: checkError } = await supabase
+          .from('doctor_patient_connections')
+          .select('id, status')
+          .eq('doctor_id', doctorId)
+          .eq('patient_id', user.id)
+          .maybeSingle();
 
-      if (existingConnection) {
-        throw new Error(`Connection ${existingConnection.status === 'pending' ? 'request already exists' : 'already established'}`);
-      }
+        if (checkError) {
+          console.error('Error checking existing connection:', checkError);
+          throw checkError;
+        }
 
-      // Use the correct table name: doctor_patient_connections
-      const { data, error } = await supabase
-        .from('doctor_patient_connections')
-        .insert({
-          doctor_id: doctorId,
-          patient_id: user.id,
-          status: 'pending'
-        })
-        .select()
-        .single();
+        if (existingConnection) {
+          console.log('Existing connection found:', existingConnection);
+          const message = existingConnection.status === 'pending' 
+            ? 'Connection request already exists' 
+            : 'Connection already established';
+          throw new Error(message);
+        }
 
-      if (error) {
-        console.error('Connection insert error:', error);
+        console.log('No existing connection found, creating new request...');
+
+        // Create new connection request
+        const { data, error } = await supabase
+          .from('doctor_patient_connections')
+          .insert({
+            doctor_id: doctorId,
+            patient_id: user.id,
+            status: 'pending'
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Connection insert error:', error);
+          throw error;
+        }
+
+        console.log('Connection request created successfully:', data);
+
+        // Get patient name for notification
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) {
+          console.warn('Could not fetch profile for notification:', profileError);
+        }
+
+        const patientName = profileData?.full_name || 'A patient';
+        console.log('Sending notification to doctor with patient name:', patientName);
+
+        // Send notification to doctor
+        try {
+          await sendConnectionRequestNotification(doctorId, patientName);
+          console.log('Notification sent successfully');
+        } catch (notificationError) {
+          console.warn('Notification failed but connection was created:', notificationError);
+          // Don't throw here as the connection was successful
+        }
+
+        return data;
+      } catch (error) {
+        console.error('Error in connection mutation:', error);
         throw error;
       }
-
-      // Send notification to doctor after successful connection request
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('full_name')
-        .eq('id', user.id)
-        .single();
-
-      await sendConnectionRequestNotification(
-        doctorId, 
-        profileData?.full_name || 'A patient'
-      );
-
-      return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Connection request successful:', data);
       toast({
         title: "Connection Request Sent",
         description: "Your connection request has been sent to the doctor.",
@@ -90,7 +125,7 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
       queryClient.invalidateQueries({ queryKey: ['doctorConnections'] });
     },
     onError: (error: Error) => {
-      console.error('Error connecting to doctor:', error);
+      console.error('Connection request failed:', error);
       
       let errorMessage = "Failed to connect to doctor. Please try again.";
       if (error.message.includes('already exists')) {
@@ -107,8 +142,11 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
     },
   });
 
-  const handleConnect = (doctorId: string, source: 'database' | 'overpass') => {
+  const handleConnect = async (doctorId: string, source: 'database' | 'overpass') => {
+    console.log('Connect button clicked for doctor:', doctorId, 'source:', source);
+    
     if (!user) {
+      console.log('User not authenticated');
       toast({
         title: "Login Required",
         description: "Please login to connect with doctors.",
@@ -118,6 +156,7 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
     }
 
     if (source === 'overpass') {
+      console.log('Cannot connect to overpass doctor');
       toast({
         title: "Information",
         description: "Connection requests are only available for registered doctors.",
@@ -125,7 +164,13 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
       return;
     }
 
-    connectMutation.mutate(doctorId);
+    console.log('Triggering mutation for doctor:', doctorId);
+    
+    try {
+      await connectMutation.mutateAsync(doctorId);
+    } catch (error) {
+      console.error('Error in handleConnect:', error);
+    }
   };
 
   if (isLoading) {
