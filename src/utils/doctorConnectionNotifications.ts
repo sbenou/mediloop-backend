@@ -59,25 +59,6 @@ export const sendConnectionRequestNotification = async (doctorId: string, patien
     }
     
     console.log('✅ Notification created successfully in database:', notification);
-    
-    // Send targeted Firebase push notification to doctor (optional, non-blocking)
-    try {
-      console.log('Attempting to send Firebase push notification...');
-      await sendFirebasePushNotification(doctorId, {
-        title: 'New Connection Request',
-        body: `${patientName} has requested to connect with you`,
-        data: {
-          type: 'connection_request',
-          patientName: patientName,
-          notificationId: notification.id
-        }
-      });
-      console.log('✅ Firebase push notification sent successfully');
-    } catch (firebaseError) {
-      console.warn('⚠️ Firebase push notification failed (non-critical):', firebaseError);
-      // Don't throw here as the database notification was successful
-    }
-    
     console.log('=== Notification creation process completed successfully ===');
     return notification;
     
@@ -86,46 +67,5 @@ export const sendConnectionRequestNotification = async (doctorId: string, patien
     console.error('Error in sendConnectionRequestNotification:', error);
     console.error('Error stack:', error.stack);
     throw error; // Re-throw to let the caller handle the error
-  }
-};
-
-// Function to send targeted Firebase push notifications
-const sendFirebasePushNotification = async (userId: string, notificationData: {
-  title: string;
-  body: string;
-  data?: Record<string, any>;
-}) => {
-  try {
-    console.log('Looking up FCM token for user:', userId);
-    
-    // Get the user's FCM token from the database
-    const { data: tokenData, error } = await supabase
-      .from('user_notification_tokens')
-      .select('token')
-      .eq('user_id', userId)
-      .eq('platform', 'web')
-      .single();
-
-    if (error) {
-      console.log('Error fetching FCM token:', error);
-      return;
-    }
-
-    if (!tokenData?.token) {
-      console.log('No FCM token found for user:', userId);
-      return;
-    }
-
-    // In a real implementation, you would call your backend service here
-    // to send the push notification using Firebase Admin SDK
-    console.log('Would send Firebase push notification to token:', tokenData.token.substring(0, 20) + '...');
-    console.log('Notification data:', notificationData);
-    
-    // TODO: Implement actual Firebase push notification sending via edge function
-    // This would require a Supabase edge function that uses Firebase Admin SDK
-    
-  } catch (error) {
-    console.error('Error sending Firebase push notification:', error);
-    throw error;
   }
 };

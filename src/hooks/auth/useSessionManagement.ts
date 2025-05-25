@@ -1,37 +1,52 @@
-import { useCallback } from 'react';
-import { supabase, getSessionFromStorage, clearAllAuthStorage } from '@/lib/supabase';
-import { useProfileFetch } from './useProfileFetch';
+
+import { useCallback, useRef } from 'react';
 import { useSetRecoilState } from 'recoil';
 import { authState } from '@/store/auth/atoms';
 import { storeSession } from '@/lib/auth/sessionUtils';
-import { toast } from '@/components/ui/use-toast';
+import { useProfileFetch } from './useProfileFetch';
+import type { Session } from '@supabase/supabase-js';
 
 export const useSessionManagement = () => {
   const setAuth = useSetRecoilState(authState);
   const { fetchAndSetProfile } = useProfileFetch();
-  
-  const updateAuthState = useCallback(async (session: any | null) => {
+  const isUpdatingRef = useRef(false);
+  const lastUserIdRef = useRef<string | null>(null);
+
+  const updateAuthState = useCallback(async (session: Session | null) => {
+    const userId = session?.user?.id;
+    
     console.log('[SessionManagement] updateAuthState called with session:', {
       hasSession: !!session,
-      userId: session?.user?.id,
+      userId,
       timestamp: new Date().toISOString()
     });
 
-    if (!session?.user) {
-      console.log('[SessionManagement] No session or user, clearing auth state');
-      setAuth({
-        user: null,
-        profile: null,
-        permissions: [],
-        isLoading: false,
-      });
+    // Prevent concurrent updates for the same user
+    if (isUpdatingRef.current && lastUserIdRef.current === userId) {
+      console.log('[SessionManagement] Already updating auth state for this user, skipping');
       return;
     }
 
+    isUpdatingRef.current = true;
+    lastUserIdRef.current = userId || null;
+
     try {
+      if (!session || !userId) {
+        console.log('[SessionManagement] No session or user ID, clearing auth state');
+        setAuth({
+          user: null,
+          profile: null,
+          permissions: [],
+          isLoading: false,
+        });
+        return;
+      }
+
+      // Store session before proceeding
       console.log('[SessionManagement] Storing session before proceeding');
-      storeSession(session);
-      
+      await storeSession(session);
+
+      // Set initial auth state with user
       console.log('[SessionManagement] Setting initial auth state with user');
       setAuth(prev => ({
         ...prev,
@@ -39,233 +54,54 @@ export const useSessionManagement = () => {
         isLoading: true,
       }));
 
-      // Validate token
+      // Start token validation
+      console.log('[SessionManagement] Starting token validation');
+      
       try {
-        console.log('[SessionManagement] Starting token validation');
-        const { data: userData, error: userError } = await supabase.auth.getUser();
+        // Fetch profile and permissions
+        const { profile, permissions } = await fetchAndSetProfile(userId);
         
-        if (userError) {
-          console.error('[SessionManagement] Token validation error:', userError);
-          throw userError;
-        }
-        
-        if (!userData.user || userData.user.id !== session.user.id) {
-          console.error('[SessionManagement] User ID mismatch or missing user data');
-          throw new Error('User identity validation failed');
-        }
-        
-        console.log('[SessionManagement] Token validation successful');
-      } catch (tokenError) {
-        console.error('[SessionManagement] Token validation failed:', tokenError);
-        clearAllAuthStorage();
-        setAuth({
-          user: null,
-          profile: null,
-          permissions: [],
-          isLoading: false,
-        });
-        
-        toast({
-          variant: "destructive",
-          title: "Session Error",
-          description: "Your session appears to be invalid. Please try logging in again.",
-        });
-        return;
-      }
-
-      console.log('[SessionManagement] Fetching user profile');
-      const { profile, permissions } = await fetchAndSetProfile(session.user.id);
-
-      if (!profile) {
-        console.error('[SessionManagement] No profile found after fetch, trying to create one');
-        // Try to create profile one last time if it doesn't exist
-        try {
-          const userData = session.user;
-          const role = userData.user_metadata?.role || 'patient';
-          const fullName = userData.user_metadata?.full_name || userData.user_metadata?.name || 'User';
-          
-          await supabase.rpc('create_profile_secure', {
-            user_id: userData.id,
-            user_role: role,
-            user_full_name: fullName,
-            user_email: userData.email || '',
-            user_license_number: userData.user_metadata?.license_number || null,
+        if (profile) {
+          console.log('[SessionManagement] Profile fetched successfully, updating auth state');
+          setAuth({
+            user: session.user,
+            profile,
+            permissions,
+            isLoading: false,
           });
-          
-          // Try to fetch again after creation
-          const retryFetch = await fetchAndSetProfile(session.user.id);
-          
-          if (retryFetch.profile) {
-            console.log('Successfully created and fetched profile on retry');
-            setAuth({
-              user: session.user,
-              profile: retryFetch.profile,
-              permissions: retryFetch.permissions,
-              isLoading: false,
-            });
-            return;
-          } else {
-            console.error('Still no profile after retry creation');
-          }
-        } catch (retryError) {
-          console.error('Error in profile creation retry:', retryError);
+        } else {
+          console.log('[SessionManagement] No profile found, setting minimal auth state');
+          setAuth({
+            user: session.user,
+            profile: null,
+            permissions: [],
+            isLoading: false,
+          });
         }
-        
-        // If we still don't have a profile, clear auth state and force re-login
+      } catch (profileError) {
+        console.error('[SessionManagement] Error fetching profile:', profileError);
+        // Don't clear the user, just set profile to null
         setAuth({
-          user: null,
+          user: session.user,
           profile: null,
           permissions: [],
           isLoading: false,
         });
-        
-        // Clear session as well to force a new login
-        try {
-          clearAllAuthStorage();
-          await supabase.auth.signOut({ scope: 'local' });
-        } catch (signOutError) {
-          console.error('Error signing out after profile fetch failure:', signOutError);
-        }
-        
-        toast({
-          variant: "destructive",
-          title: "Profile Error",
-          description: "Unable to load your profile. Please try logging in again.",
-        });
-        return;
       }
-
-      console.log('[SessionManagement] Final auth state update with:', {
-        userId: session.user.id,
-        role: profile?.role,
-        permissionsCount: permissions.length,
-        timestamp: new Date().toISOString()
-      });
-
-      setAuth({
-        user: session.user,
-        profile,
-        permissions,
-        isLoading: false,
-      });
-
     } catch (error) {
       console.error('[SessionManagement] Error in updateAuthState:', error);
-      clearAllAuthStorage();
       setAuth({
         user: null,
         profile: null,
         permissions: [],
         isLoading: false,
       });
-      
-      toast({
-        variant: "destructive",
-        title: "Authentication Error",
-        description: "There was an error loading your profile. Please try logging in again.",
-      });
+    } finally {
+      isUpdatingRef.current = false;
     }
-  }, [fetchAndSetProfile, setAuth]);
+  }, [setAuth, fetchAndSetProfile]);
 
-  const refreshSession = useCallback(async () => {
-    let refreshAttempts = 0;
-    const MAX_ATTEMPTS = 2;
-    
-    const attemptRefresh = async (): Promise<any> => {
-      refreshAttempts++;
-      try {
-        console.log(`Attempting to refresh session... (attempt ${refreshAttempts}/${MAX_ATTEMPTS})`);
-        
-        // First try to get a new session directly from Supabase
-        try {
-          const { data, error } = await supabase.auth.getSession();
-          
-          if (!error && data.session) {
-            console.log('Session retrieved successfully via API');
-            storeSession(data.session); // Ensure it's properly stored
-            return data.session;
-          } else if (error) {
-            console.error('Error getting session from API:', error);
-          }
-        } catch (getSessionErr) {
-          console.error('Error during getSession:', getSessionErr);
-        }
-        
-        // If getSession fails, try explicit refresh
-        try {
-          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-          
-          if (!refreshError && refreshData.session) {
-            console.log('Session refreshed successfully via API');
-            storeSession(refreshData.session); // Ensure it's properly stored
-            return refreshData.session;
-          } else if (refreshError) {
-            console.error('Error refreshing session:', refreshError);
-          }
-        } catch (refreshErr) {
-          console.error('Error during refresh attempt:', refreshErr);
-        }
-        
-        // Check in storage if refresh failed
-        const storedSession = getSessionFromStorage();
-        
-        if (!storedSession) {
-          if (refreshAttempts < MAX_ATTEMPTS) {
-            console.log('No session found, trying one more refresh attempt...');
-            return attemptRefresh();
-          } else {
-            console.log(`Maximum refresh attempts (${MAX_ATTEMPTS}) reached`);
-            return null;
-          }
-        }
-        
-        // Validate that the stored session is actually usable
-        try {
-          const { data: userData, error: userError } = await supabase.auth.getUser();
-          
-          if (userError) {
-            console.error('Stored session invalid, attempting refresh again');
-            if (refreshAttempts < MAX_ATTEMPTS) {
-              return attemptRefresh();
-            } else {
-              console.warn(`Maximum refresh attempts (${MAX_ATTEMPTS}) reached`);
-              clearAllAuthStorage();
-              return null;
-            }
-          }
-          
-          if (userData.user) {
-            console.log('Stored session validated successfully');
-            return storedSession;
-          } else {
-            console.log('Stored session validation returned no user');
-            clearAllAuthStorage();
-            return null;
-          }
-          
-        } catch (validateErr) {
-          console.error('Error validating stored session:', validateErr);
-          if (refreshAttempts < MAX_ATTEMPTS) {
-            return attemptRefresh();
-          } else {
-            return null;
-          }
-        }
-      } catch (err) {
-        console.error(`Session refresh error (attempt ${refreshAttempts}/${MAX_ATTEMPTS}):`, err);
-        if (refreshAttempts < MAX_ATTEMPTS) {
-          return attemptRefresh();
-        } else {
-          return null;
-        }
-      }
-    };
-    
-    return attemptRefresh();
-  }, []);
-
-  return {
-    updateAuthState,
-    refreshSession
-  };
+  return { updateAuthState };
 };
+
+export default useSessionManagement;

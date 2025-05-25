@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -104,19 +103,15 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
         const patientName = profileData?.full_name || 'A patient';
         console.log('Patient name for notification:', patientName);
 
-        // Send notification to doctor - this is critical for the user experience
+        // Send notification to doctor
         console.log('=== Starting notification creation ===');
         try {
           const notificationResult = await sendConnectionRequestNotification(doctorId, patientName);
           console.log('✅ Notification process completed successfully:', notificationResult);
         } catch (notificationError) {
           console.error('❌ CRITICAL: Notification creation failed:', notificationError);
-          // This is a critical failure - the doctor won't know about the connection request
-          console.error('Connection was created but doctor will not be notified');
-          
           // Still don't throw here as the connection was successful
-          // But we should log this as a critical issue
-          console.warn('⚠️ MANUAL INTERVENTION MAY BE NEEDED - Doctor not notified of connection request');
+          console.warn('⚠️ Connection created but doctor notification failed');
         }
 
         console.log('=== Connection request process completed ===');
