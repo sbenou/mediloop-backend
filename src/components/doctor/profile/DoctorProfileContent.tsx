@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,6 +43,8 @@ const DoctorProfileContent: React.FC<DoctorProfileContentProps> = ({
   const doctorForMap = {
     id: doctorData.id,
     full_name: doctorData.name,
+    city: doctorData.city,
+    license_number: 'N/A', // Default value for profile display
     coordinates: { lat: 0, lon: 0 } // You might want to add actual coordinates here
   };
 
