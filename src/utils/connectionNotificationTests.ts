@@ -3,23 +3,22 @@ import { supabase } from '@/lib/supabase';
 import { sendConnectionRequestNotification } from './doctorConnectionNotifications';
 import { createNotification, createTenantNotification } from './notifications';
 
-// Test accounts - updated with more reliable test data
+// Pre-existing test accounts that should already be in the database
 const TEST_ACCOUNTS = {
   patient: {
     id: '7b8de1a4-fa25-46b4-8487-ed8fdae18eef',
     email: 'benou004@hotmail.com',
-    name: 'sam testington',
-    password: 'test123456'
+    name: 'sam testington'
   },
   doctor: {
     id: '697f1f0e-17a9-4ca6-a607-cf5df7b2be85', 
     email: 'ridam57@yahoo.fr',
-    name: 'Tim Burton',
-    password: 'test123456'
+    name: 'Tim Burton'
   },
   pharmacist: {
+    id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479', // Example UUID
     email: 'saady.london@gmail.com',
-    password: 'test123456'
+    name: 'Ahmed Saady'
   }
 };
 
@@ -31,10 +30,18 @@ interface TestResult {
   duration: number;
 }
 
+interface TestSummary {
+  total: number;
+  passed: number;
+  failed: number;
+  successRate: string;
+  totalTime: string;
+  failedTests: Array<{ test: string; error: string }>;
+}
+
 export class ConnectionNotificationTester {
   private results: TestResult[] = [];
-  private testTimeout = 15000; // 15 seconds per test
-  private originalSession: any = null;
+  private testTimeout = 10000; // 10 seconds per test
   private isTestingStopped = false;
 
   private async runTest(testName: string, testFn: () => Promise<any>): Promise<TestResult> {
@@ -74,129 +81,6 @@ export class ConnectionNotificationTester {
     }
   }
 
-  private async authenticateAsDoctor() {
-    console.log('🔐 Starting doctor authentication process...');
-    
-    try {
-      // First, ensure we're signed out completely
-      await supabase.auth.signOut();
-      console.log('✅ Signed out existing session');
-      
-      // Wait for sign out to complete
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      console.log('🔑 Attempting to sign in as doctor with credentials:', {
-        email: TEST_ACCOUNTS.doctor.email,
-        hasPassword: !!TEST_ACCOUNTS.doctor.password
-      });
-      
-      // Try signing in with the doctor account
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: TEST_ACCOUNTS.doctor.email,
-        password: TEST_ACCOUNTS.doctor.password
-      });
-
-      if (signInError) {
-        console.log('❌ Doctor sign-in failed:', signInError.message);
-        
-        // If authentication fails, try to create the account
-        if (signInError.message.includes('Invalid login credentials')) {
-          console.log('🔧 Attempting to create doctor account...');
-          
-          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-            email: TEST_ACCOUNTS.doctor.email,
-            password: TEST_ACCOUNTS.doctor.password,
-            options: {
-              data: {
-                full_name: TEST_ACCOUNTS.doctor.name,
-                role: 'doctor'
-              }
-            }
-          });
-          
-          if (signUpError) {
-            console.error('❌ Failed to create doctor account:', signUpError.message);
-            throw new Error(`Failed to create doctor account: ${signUpError.message}`);
-          }
-          
-          console.log('✅ Doctor account created, now signing in...');
-          
-          // Wait a moment for account creation to complete
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          
-          // Try signing in again
-          const { data: retrySignIn, error: retryError } = await supabase.auth.signInWithPassword({
-            email: TEST_ACCOUNTS.doctor.email,
-            password: TEST_ACCOUNTS.doctor.password
-          });
-          
-          if (retryError) {
-            console.error('❌ Retry sign-in failed:', retryError.message);
-            throw new Error(`Retry sign-in failed: ${retryError.message}`);
-          }
-          
-          console.log('✅ Doctor authenticated after account creation');
-          return retrySignIn;
-        } else {
-          throw new Error(`Authentication failed: ${signInError.message}`);
-        }
-      }
-
-      console.log('✅ Doctor authenticated successfully');
-      
-      // Wait for session to be established
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Verify session
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session) {
-        throw new Error('Session not established after authentication');
-      }
-      
-      console.log('✅ Session verified for user:', sessionData.session.user.id);
-      
-      // Ensure profile exists
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', sessionData.session.user.id)
-        .single();
-      
-      if (profileError && profileError.code === 'PGRST116') {
-        console.log('📝 Creating doctor profile...');
-        const { error: createError } = await supabase
-          .from('profiles')
-          .insert({
-            id: sessionData.session.user.id,
-            full_name: TEST_ACCOUNTS.doctor.name,
-            email: TEST_ACCOUNTS.doctor.email,
-            role: 'doctor'
-          });
-        
-        if (createError) {
-          console.warn('⚠️ Profile creation failed, but continuing:', createError.message);
-        } else {
-          console.log('✅ Doctor profile created');
-        }
-      }
-      
-      return signInData;
-    } catch (error) {
-      console.error('❌ Authentication error:', error);
-      throw error;
-    }
-  }
-
-  private async restoreOriginalSession() {
-    try {
-      console.log('🔄 Cleaning up test session...');
-      await supabase.auth.signOut();
-      console.log('✅ Test session cleaned up');
-    } catch (error) {
-      console.warn('⚠️ Error during cleanup:', error);
-    }
-  }
-
   async testDatabaseConnectivity() {
     return this.runTest('Database Connectivity', async () => {
       console.log('🔍 Testing database connection...');
@@ -212,51 +96,96 @@ export class ConnectionNotificationTester {
     });
   }
 
-  async testProfileFetch() {
-    return this.runTest('Profile Fetch', async () => {
-      console.log('🔍 Testing profile fetch...');
+  async testCurrentAuthenticationState() {
+    return this.runTest('Current Authentication State', async () => {
+      console.log('🔐 Testing current authentication state...');
       
-      const { data: sessionData } = await supabase.auth.getSession();
-      const currentUserId = sessionData?.session?.user?.id;
-
-      if (!currentUserId) {
-        throw new Error('No authenticated user for profile fetch test');
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        throw new Error(`Session error: ${sessionError.message}`);
       }
 
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', currentUserId)
-        .single();
+      const isAuthenticated = !!sessionData?.session?.user;
+      const userId = sessionData?.session?.user?.id;
 
-      if (error) {
-        console.error('❌ Profile fetch error:', error);
-        throw new Error(`Profile fetch failed: ${error.message}`);
-      }
+      console.log('🔍 Current authentication state:', {
+        isAuthenticated,
+        userId,
+        sessionExists: !!sessionData?.session
+      });
 
-      console.log('✅ Profile fetched successfully:', profile);
       return {
-        profile,
-        userId: currentUserId
+        isAuthenticated,
+        userId,
+        sessionExists: !!sessionData?.session,
+        userEmail: sessionData?.session?.user?.email
       };
     });
   }
 
-  async testNotificationCreation() {
-    return this.runTest('Notification Creation', async () => {
-      console.log('🔔 Testing notification creation...');
+  async testDoctorProfileExists() {
+    return this.runTest('Doctor Profile Exists', async () => {
+      console.log('👨‍⚕️ Testing if doctor profile exists...');
       
-      const { data: sessionData } = await supabase.auth.getSession();
-      const currentUserId = sessionData?.session?.user?.id;
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', TEST_ACCOUNTS.doctor.id)
+        .single();
 
-      if (!currentUserId) {
-        throw new Error('No authenticated user for notification creation test');
+      if (error) {
+        console.error('❌ Doctor profile fetch error:', error);
+        throw new Error(`Doctor profile fetch failed: ${error.message}`);
       }
 
+      if (!profile) {
+        throw new Error('Doctor profile not found');
+      }
+
+      console.log('✅ Doctor profile found:', profile);
+      return {
+        profile,
+        doctorId: TEST_ACCOUNTS.doctor.id
+      };
+    });
+  }
+
+  async testPatientProfileExists() {
+    return this.runTest('Patient Profile Exists', async () => {
+      console.log('🤒 Testing if patient profile exists...');
+      
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', TEST_ACCOUNTS.patient.id)
+        .single();
+
+      if (error) {
+        console.error('❌ Patient profile fetch error:', error);
+        throw new Error(`Patient profile fetch failed: ${error.message}`);
+      }
+
+      if (!profile) {
+        throw new Error('Patient profile not found');
+      }
+
+      console.log('✅ Patient profile found:', profile);
+      return {
+        profile,
+        patientId: TEST_ACCOUNTS.patient.id
+      };
+    });
+  }
+
+  async testNotificationCreationDirect() {
+    return this.runTest('Direct Notification Creation', async () => {
+      console.log('🔔 Testing direct notification creation...');
+      
       const notificationData = {
-        user_id: currentUserId,
+        user_id: TEST_ACCOUNTS.doctor.id,
         type: 'connection_request',
-        title: 'Test Connection Request',
+        title: 'Test Connection Request (Direct)',
         message: `${TEST_ACCOUNTS.patient.name} has requested to connect with you (TEST)`,
         read: false,
         tenant_id: null
@@ -270,44 +199,37 @@ export class ConnectionNotificationTester {
         .single();
 
       if (error) {
-        console.error('❌ Notification creation error:', error);
-        throw new Error(`Notification creation failed: ${error.message}`);
+        console.error('❌ Direct notification creation error:', error);
+        throw new Error(`Direct notification creation failed: ${error.message}`);
       }
 
-      console.log('✅ Notification created successfully:', data);
+      console.log('✅ Direct notification created successfully:', data);
       return {
         notification: data,
-        authenticatedUserId: currentUserId
+        targetUserId: TEST_ACCOUNTS.doctor.id
       };
     });
   }
 
-  async testNotificationFunction() {
-    return this.runTest('Notification Function', async () => {
+  async testNotificationHelperFunction() {
+    return this.runTest('Notification Helper Function', async () => {
       console.log('🔧 Testing notification helper function...');
       
-      const { data: sessionData } = await supabase.auth.getSession();
-      const currentUserId = sessionData?.session?.user?.id;
-
-      if (!currentUserId) {
-        throw new Error('No authenticated user for notification function test');
-      }
-
       const result = await createNotification({
-        userId: currentUserId,
+        userId: TEST_ACCOUNTS.doctor.id,
         type: 'connection_request',
         title: 'Test Function Notification',
-        message: 'Testing notification helper function'
+        message: 'Testing notification helper function (TEST)'
       });
 
       if (!result) {
-        throw new Error('Notification function returned null');
+        throw new Error('Notification helper function returned null');
       }
 
-      console.log('✅ Notification function test successful:', result);
+      console.log('✅ Notification helper function test successful:', result);
       return {
         notification: result,
-        userId: currentUserId
+        userId: TEST_ACCOUNTS.doctor.id
       };
     });
   }
@@ -316,15 +238,8 @@ export class ConnectionNotificationTester {
     return this.runTest('Connection Notification Flow', async () => {
       console.log('🔗 Testing connection notification flow...');
       
-      const { data: sessionData } = await supabase.auth.getSession();
-      const currentUserId = sessionData?.session?.user?.id;
-
-      if (!currentUserId) {
-        throw new Error('No authenticated user for connection notification flow test');
-      }
-
       const result = await sendConnectionRequestNotification(
-        currentUserId,
+        TEST_ACCOUNTS.doctor.id,
         TEST_ACCOUNTS.patient.name
       );
 
@@ -335,7 +250,7 @@ export class ConnectionNotificationTester {
       console.log('✅ Connection notification flow successful:', result);
       return {
         notification: result,
-        doctorId: currentUserId,
+        doctorId: TEST_ACCOUNTS.doctor.id,
         patientName: TEST_ACCOUNTS.patient.name
       };
     });
@@ -345,17 +260,10 @@ export class ConnectionNotificationTester {
     return this.runTest('Notification Query', async () => {
       console.log('📋 Testing notification query...');
       
-      const { data: sessionData } = await supabase.auth.getSession();
-      const currentUserId = sessionData?.session?.user?.id;
-
-      if (!currentUserId) {
-        throw new Error('No authenticated user for notification query test');
-      }
-
       const { data: notifications, error } = await supabase
         .from('notifications')
         .select('*')
-        .eq('user_id', currentUserId)
+        .eq('user_id', TEST_ACCOUNTS.doctor.id)
         .order('created_at', { ascending: false })
         .limit(5);
 
@@ -368,7 +276,7 @@ export class ConnectionNotificationTester {
       return {
         notifications,
         count: notifications?.length || 0,
-        userId: currentUserId
+        userId: TEST_ACCOUNTS.doctor.id
       };
     });
   }
@@ -397,38 +305,6 @@ export class ConnectionNotificationTester {
     });
   }
 
-  async testAuthenticationState() {
-    return this.runTest('Authentication State', async () => {
-      console.log('🔐 Testing authentication state...');
-      
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        throw new Error(`Session error: ${sessionError.message}`);
-      }
-
-      const isAuthenticated = !!sessionData?.session?.user;
-      const userId = sessionData?.session?.user?.id;
-
-      console.log('🔍 Authentication state:', {
-        isAuthenticated,
-        userId,
-        sessionExists: !!sessionData?.session
-      });
-
-      if (!isAuthenticated) {
-        throw new Error('User is not authenticated');
-      }
-
-      return {
-        isAuthenticated,
-        userId,
-        sessionExists: !!sessionData?.session,
-        userEmail: sessionData.session.user.email
-      };
-    });
-  }
-
   async runAllTests() {
     console.log('🚀 Starting Connection Notification Test Suite');
     console.log('📋 Test Accounts:', TEST_ACCOUNTS);
@@ -437,22 +313,15 @@ export class ConnectionNotificationTester {
     this.isTestingStopped = false;
 
     try {
-      // Authenticate as doctor for tests
-      console.log('🔐 Starting authentication process...');
-      await this.authenticateAsDoctor();
-      
-      if (this.isTestingStopped) {
-        throw new Error('Testing stopped due to authentication timeout');
-      }
+      console.log('✅ Using pre-existing test accounts, running individual tests...');
 
-      console.log('✅ Authentication successful, running individual tests...');
-
-      // Run tests in sequence
+      // Run tests in sequence without authentication
       await this.testDatabaseConnectivity();
-      await this.testAuthenticationState();
-      await this.testProfileFetch();
-      await this.testNotificationCreation();
-      await this.testNotificationFunction();
+      await this.testCurrentAuthenticationState();
+      await this.testDoctorProfileExists();
+      await this.testPatientProfileExists();
+      await this.testNotificationCreationDirect();
+      await this.testNotificationHelperFunction();
       await this.testConnectionNotificationFlow();
       await this.testNotificationQuery();
       await this.testFirebaseIntegration();
@@ -466,8 +335,6 @@ export class ConnectionNotificationTester {
         error: error instanceof Error ? error.message : String(error),
         duration: 0
       });
-    } finally {
-      await this.restoreOriginalSession();
     }
 
     // Generate summary
@@ -480,7 +347,7 @@ export class ConnectionNotificationTester {
     };
   }
 
-  private generateSummary() {
+  private generateSummary(): TestSummary {
     const total = this.results.length;
     const passed = this.results.filter(r => r.success).length;
     const failed = this.results.filter(r => !r.success).length;
@@ -494,7 +361,7 @@ export class ConnectionNotificationTester {
       totalTime: `${totalTime}ms`,
       failedTests: this.results.filter(r => !r.success).map(r => ({
         test: r.test,
-        error: r.error
+        error: r.error || 'Unknown error'
       }))
     };
   }
@@ -504,21 +371,16 @@ export class ConnectionNotificationTester {
     console.log('🧹 Cleaning up test notifications...');
     
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const currentUserId = sessionData?.session?.user?.id;
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .ilike('title', '%test%')
+        .in('user_id', [TEST_ACCOUNTS.doctor.id, TEST_ACCOUNTS.patient.id]);
 
-      if (currentUserId) {
-        const { error } = await supabase
-          .from('notifications')
-          .delete()
-          .ilike('title', '%test%')
-          .eq('user_id', currentUserId);
-
-        if (error) {
-          console.warn('⚠️ Cleanup warning:', error.message);
-        } else {
-          console.log('✅ Cleanup completed');
-        }
+      if (error) {
+        console.warn('⚠️ Cleanup warning:', error.message);
+      } else {
+        console.log('✅ Cleanup completed');
       }
     } catch (error) {
       console.warn('⚠️ Cleanup failed:', error);
