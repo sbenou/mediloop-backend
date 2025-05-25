@@ -1,5 +1,5 @@
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { requestNotificationPermission, setupMessageListener } from '@/lib/firebase';
 import { toast } from '@/components/ui/use-toast';
 
@@ -8,9 +8,13 @@ export function useFirebaseNotifications() {
   const [notificationPermissionGranted, setNotificationPermissionGranted] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   
-  // Initialize Firebase notifications - make it completely non-blocking
+  // Use refs to prevent re-initialization and infinite loops
+  const isInitialized = useRef(false);
+  const messageListenerCleanup = useRef<(() => void) | null>(null);
+  
+  // Initialize Firebase notifications - make it completely non-blocking and prevent multiple calls
   const initializeNotifications = useCallback(async () => {
-    if (loading) return; // Prevent multiple initializations
+    if (loading || isInitialized.current) return; // Prevent multiple initializations
     
     setLoading(true);
     try {
@@ -23,6 +27,7 @@ export function useFirebaseNotifications() {
         if (storedToken && Notification.permission === 'granted') {
           setFcmToken(storedToken);
           setNotificationPermissionGranted(true);
+          isInitialized.current = true;
           setLoading(false);
           return;
         }
@@ -36,6 +41,7 @@ export function useFirebaseNotifications() {
             // Store token in localStorage for persistence
             localStorage.setItem('fcm_token', token);
             console.log('Firebase notification token saved to localStorage');
+            isInitialized.current = true;
           }
         } catch (error) {
           console.error('Error requesting notification permission:', error);
@@ -52,32 +58,33 @@ export function useFirebaseNotifications() {
     }
   }, [loading]);
   
-  // Handle foreground messages - only set up once
+  // Handle foreground messages - only set up once and prevent loops
   useEffect(() => {
-    if (!notificationPermissionGranted) return;
-    
-    let unsubscribe: (() => void) | null = null;
+    if (!notificationPermissionGranted || messageListenerCleanup.current) return;
     
     try {
-      unsubscribe = setupMessageListener((payload) => {
-        // Display a toast notification for foreground messages
+      const unsubscribe = setupMessageListener((payload) => {
+        // Only show toast, don't trigger any other state changes that could cause loops
         toast({
           title: payload.notification?.title || 'New Notification',
           description: payload.notification?.body,
           variant: "default",
         });
       });
+      
+      messageListenerCleanup.current = unsubscribe;
     } catch (error) {
       console.error('Error setting up message listener:', error);
       // Don't throw error, just log it
     }
     
     return () => {
-      if (unsubscribe) {
+      if (messageListenerCleanup.current) {
         try {
-          unsubscribe();
+          messageListenerCleanup.current();
+          messageListenerCleanup.current = null;
         } catch (error) {
-          console.error('Error unsubscribing from message listener:', error);
+          console.error('Error cleaning up message listener:', error);
         }
       }
     };
@@ -85,11 +92,14 @@ export function useFirebaseNotifications() {
   
   // Check for stored token on mount - only once
   useEffect(() => {
+    if (isInitialized.current) return;
+    
     try {
       const storedToken = localStorage.getItem('fcm_token');
       if (storedToken && Notification.permission === 'granted') {
         setFcmToken(storedToken);
         setNotificationPermissionGranted(true);
+        isInitialized.current = true;
         console.log('Firebase token retrieved from localStorage');
       }
     } catch (error) {

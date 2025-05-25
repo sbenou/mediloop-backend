@@ -5,7 +5,6 @@ import { Notification } from '@/types/supabase';
 import { toast } from '@/components/ui/use-toast';
 import { useTenant } from '@/contexts/TenantContext';
 import { useTenantSupabase } from './useTenantSupabase';
-import { setupMessageListener } from '@/lib/firebase';
 
 export const useNotifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -18,7 +17,8 @@ export const useNotifications = () => {
   // Use refs to prevent infinite loops
   const isFetching = useRef(false);
   const lastFetchTime = useRef(0);
-  const FETCH_COOLDOWN = 2000; // 2 seconds between fetches
+  const subscriptionSetup = useRef(false);
+  const FETCH_COOLDOWN = 5000; // 5 seconds between fetches
 
   // Function to fetch notifications from database
   const fetchNotifications = useCallback(async () => {
@@ -71,7 +71,6 @@ export const useNotifications = () => {
     } catch (error) {
       console.error('Error fetching notifications:', error);
       setFetchError(error as Error);
-      // Don't show toast for initial fetch to prevent error loops
     } finally {
       setIsLoading(false);
       isFetching.current = false;
@@ -82,28 +81,6 @@ export const useNotifications = () => {
   useEffect(() => {
     setFetchError(null);
   }, [currentTenant, tenantTable]);
-
-  // Setup listener for Firebase notifications to trigger a refetch - with debouncing
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-    
-    const unsubscribe = setupMessageListener((payload) => {
-      console.log('Firebase notification received, scheduling refresh...');
-      
-      // Debounce the refresh to prevent multiple rapid calls
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        fetchNotifications();
-      }, 1000); // 1 second delay
-    });
-    
-    return () => {
-      clearTimeout(timeoutId);
-      if (unsubscribe) {
-        unsubscribe();
-      }
-    };
-  }, [fetchNotifications]);
 
   const markAsRead = useCallback(async (id: string) => {
     try {
@@ -180,6 +157,12 @@ export const useNotifications = () => {
   }, [currentTenant, tenantTable]);
 
   const setupRealtimeSubscription = useCallback(() => {
+    if (subscriptionSetup.current) {
+      console.log('Subscription already set up, skipping...');
+      return () => {};
+    }
+    
+    subscriptionSetup.current = true;
     let channelToCleanup = null;
     
     // If we have a tenant, subscribe to tenant-specific table
@@ -192,10 +175,10 @@ export const useNotifications = () => {
           table: 'notifications'
         }, (payload) => {
           console.log('Tenant notification change:', payload);
-          // Use setTimeout with longer delay to prevent potential deadlocks
+          // Use longer delay to prevent potential conflicts
           setTimeout(() => {
             fetchNotifications();
-          }, 1500);
+          }, 3000);
         })
         .subscribe((status) => {
           console.log(`Tenant notification channel status: ${status}`);
@@ -212,10 +195,10 @@ export const useNotifications = () => {
           table: 'notifications'
         }, (payload) => {
           console.log('Public notification change:', payload);
-          // Use setTimeout with longer delay to prevent potential deadlocks
+          // Use longer delay to prevent potential conflicts
           setTimeout(() => {
             fetchNotifications();
-          }, 1500);
+          }, 3000);
         })
         .subscribe((status) => {
           console.log(`Public notification channel status: ${status}`);
@@ -228,6 +211,7 @@ export const useNotifications = () => {
       if (channelToCleanup) {
         supabase.removeChannel(channelToCleanup);
       }
+      subscriptionSetup.current = false;
     };
   }, [currentTenant, fetchNotifications]);
 
