@@ -12,9 +12,9 @@ export function useFirebaseNotifications() {
   const isInitialized = useRef(false);
   const messageListenerCleanup = useRef<(() => void) | null>(null);
   
-  // Initialize Firebase notifications - make it completely non-blocking and prevent multiple calls
+  // Initialize Firebase notifications - only once per session
   const initializeNotifications = useCallback(async () => {
-    if (loading || isInitialized.current) return; // Prevent multiple initializations
+    if (loading || isInitialized.current) return;
     
     setLoading(true);
     try {
@@ -58,13 +58,13 @@ export function useFirebaseNotifications() {
     }
   }, [loading]);
   
-  // Handle foreground messages - only set up once and prevent loops
+  // Handle foreground messages - only set up once per session
   useEffect(() => {
     if (!notificationPermissionGranted || messageListenerCleanup.current) return;
     
     try {
       const unsubscribe = setupMessageListener((payload) => {
-        // Only show toast, don't trigger any other state changes that could cause loops
+        // Only show toast for incoming notifications, don't trigger any other state changes
         toast({
           title: payload.notification?.title || 'New Notification',
           description: payload.notification?.body,
@@ -73,9 +73,9 @@ export function useFirebaseNotifications() {
       });
       
       messageListenerCleanup.current = unsubscribe;
+      console.log('Firebase message listener set up');
     } catch (error) {
       console.error('Error setting up message listener:', error);
-      // Don't throw error, just log it
     }
     
     return () => {
@@ -83,6 +83,7 @@ export function useFirebaseNotifications() {
         try {
           messageListenerCleanup.current();
           messageListenerCleanup.current = null;
+          console.log('Firebase message listener cleaned up');
         } catch (error) {
           console.error('Error cleaning up message listener:', error);
         }

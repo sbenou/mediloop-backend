@@ -23,18 +23,17 @@ const NotificationBell = () => {
     setupRealtimeSubscription 
   } = useNotifications();
   
-  const { fcmToken, initializeNotifications } = useFirebaseNotificationContext();
+  const { fcmToken } = useFirebaseNotificationContext();
   
-  // Use refs to track initialization and prevent loops
+  // Use refs to track initialization and prevent multiple setups
   const hasInitializedData = useRef(false);
-  const hasInitializedFCM = useRef(false);
   const fcmTokenRegistered = useRef(false);
-  const initTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const subscriptionCleanup = useRef<(() => void) | null>(null);
 
-  // Fetch notifications when authenticated - only once
+  // Fetch notifications and set up realtime subscription when authenticated - only once
   useEffect(() => {
     if (isAuthenticated && !hasInitializedData.current) {
-      console.log("NotificationBell: Initial data fetch");
+      console.log("NotificationBell: Initial data fetch and subscription setup");
       hasInitializedData.current = true;
       
       const fetchData = async () => {
@@ -48,9 +47,25 @@ const NotificationBell = () => {
       fetchData();
       
       // Set up subscription once
-      const cleanup = setupRealtimeSubscription();
-      return cleanup;
+      subscriptionCleanup.current = setupRealtimeSubscription();
     }
+    
+    // Reset when user logs out
+    if (!isAuthenticated) {
+      hasInitializedData.current = false;
+      fcmTokenRegistered.current = false;
+      if (subscriptionCleanup.current) {
+        subscriptionCleanup.current();
+        subscriptionCleanup.current = null;
+      }
+    }
+    
+    return () => {
+      if (!isAuthenticated && subscriptionCleanup.current) {
+        subscriptionCleanup.current();
+        subscriptionCleanup.current = null;
+      }
+    };
   }, [isAuthenticated, fetchNotifications, setupRealtimeSubscription]);
 
   // Register FCM token with backend when available - only once per token
@@ -58,44 +73,22 @@ const NotificationBell = () => {
     if (isAuthenticated && user?.id && fcmToken && !fcmTokenRegistered.current) {
       fcmTokenRegistered.current = true;
       
-      // Don't await this - make it non-blocking
+      // Register token with backend for targeted notifications
       registerFCMToken(user.id, fcmToken).then(success => {
         if (success) {
-          console.log("FCM token registered with backend");
+          console.log("FCM token registered with backend for targeted notifications");
         }
       }).catch(error => {
         console.error("Error registering FCM token:", error);
         fcmTokenRegistered.current = false; // Allow retry on next render
       });
     }
+    
+    // Reset registration flag when token changes or user logs out
+    if (!fcmToken || !isAuthenticated) {
+      fcmTokenRegistered.current = false;
+    }
   }, [isAuthenticated, user?.id, fcmToken]);
-
-  // Request notification permission if authenticated and not already initialized - only once
-  useEffect(() => {
-    // Clear any existing timeout
-    if (initTimeoutRef.current) {
-      clearTimeout(initTimeoutRef.current);
-      initTimeoutRef.current = null;
-    }
-    
-    if (isAuthenticated && !fcmToken && !hasInitializedFCM.current) {
-      hasInitializedFCM.current = true;
-      
-      // Use timeout to make this non-blocking and prevent auth interference
-      initTimeoutRef.current = setTimeout(() => {
-        initializeNotifications().catch(err => {
-          console.error("Error initializing notifications (non-critical):", err);
-        });
-      }, 6000); // 6 second delay to ensure auth is stable and prevent conflicts
-    }
-    
-    return () => {
-      if (initTimeoutRef.current) {
-        clearTimeout(initTimeoutRef.current);
-        initTimeoutRef.current = null;
-      }
-    };
-  }, [isAuthenticated, fcmToken, initializeNotifications]);
 
   // Navigate to notifications view
   const handleViewAllClick = () => {

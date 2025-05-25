@@ -5,6 +5,7 @@ export const sendConnectionRequestNotification = async (doctorId: string, patien
   try {
     console.log('Sending connection request notification to doctor:', doctorId);
     
+    // Create notification in database - this will trigger realtime updates
     const { error } = await supabase
       .from('notifications')
       .insert({
@@ -21,8 +22,52 @@ export const sendConnectionRequestNotification = async (doctorId: string, patien
     }
     
     console.log('Connection request notification sent successfully');
+    
+    // Send targeted Firebase push notification to doctor
+    await sendFirebasePushNotification(doctorId, {
+      title: 'New Connection Request',
+      body: `${patientName} has requested to connect with you`,
+      data: {
+        type: 'connection_request',
+        patientName: patientName
+      }
+    });
+    
   } catch (error) {
     console.error('Error in sendConnectionRequestNotification:', error);
     // Don't rethrow to prevent blocking the connection request
+  }
+};
+
+// Function to send targeted Firebase push notifications
+const sendFirebasePushNotification = async (userId: string, notificationData: {
+  title: string;
+  body: string;
+  data?: Record<string, any>;
+}) => {
+  try {
+    // Get the user's FCM token from the database
+    const { data: tokenData, error } = await supabase
+      .from('user_notification_tokens')
+      .select('token')
+      .eq('user_id', userId)
+      .eq('platform', 'web')
+      .single();
+
+    if (error || !tokenData?.token) {
+      console.log('No FCM token found for user:', userId);
+      return;
+    }
+
+    // In a real implementation, you would call your backend service here
+    // to send the push notification using Firebase Admin SDK
+    console.log('Would send Firebase push notification to token:', tokenData.token.substring(0, 20) + '...');
+    console.log('Notification data:', notificationData);
+    
+    // TODO: Implement actual Firebase push notification sending via edge function
+    // This would require a Supabase edge function that uses Firebase Admin SDK
+    
+  } catch (error) {
+    console.error('Error sending Firebase push notification:', error);
   }
 };
