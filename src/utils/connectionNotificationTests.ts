@@ -41,7 +41,7 @@ interface TestSummary {
 
 export class ConnectionNotificationTester {
   private results: TestResult[] = [];
-  private testTimeout = 5000; // Reduced timeout to 5 seconds
+  private testTimeout = 3000; // Reduced timeout to 3 seconds
   private isTestingStopped = false;
 
   private async runTest(testName: string, testFn: () => Promise<any>): Promise<TestResult> {
@@ -85,30 +85,18 @@ export class ConnectionNotificationTester {
     return this.runTest('Database Connectivity', async () => {
       console.log('🔍 Testing database connection...');
       
-      // Use a simpler query with explicit timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('count')
+        .limit(1);
       
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('count')
-          .limit(1)
-          .abortSignal(controller.signal);
-        
-        clearTimeout(timeoutId);
-        
-        if (error) {
-          console.error('❌ Database connectivity error:', error);
-          throw error;
-        }
-        
-        console.log('✅ Database connection successful');
-        return { message: 'Database connection successful', count: data?.length || 0 };
-      } catch (err) {
-        clearTimeout(timeoutId);
-        throw err;
+      if (error) {
+        console.error('❌ Database connectivity error:', error);
+        throw error;
       }
+      
+      console.log('✅ Database connection successful');
+      return { message: 'Database connection successful', count: data?.length || 0 };
     });
   }
 
@@ -116,36 +104,27 @@ export class ConnectionNotificationTester {
     return this.runTest('Current Authentication State', async () => {
       console.log('🔐 Testing current authentication state...');
       
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
-      try {
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-        clearTimeout(timeoutId);
-        
-        if (sessionError) {
-          throw new Error(`Session error: ${sessionError.message}`);
-        }
-
-        const isAuthenticated = !!sessionData?.session?.user;
-        const userId = sessionData?.session?.user?.id;
-
-        console.log('🔍 Current authentication state:', {
-          isAuthenticated,
-          userId,
-          sessionExists: !!sessionData?.session
-        });
-
-        return {
-          isAuthenticated,
-          userId,
-          sessionExists: !!sessionData?.session,
-          userEmail: sessionData?.session?.user?.email
-        };
-      } catch (err) {
-        clearTimeout(timeoutId);
-        throw err;
+      if (sessionError) {
+        throw new Error(`Session error: ${sessionError.message}`);
       }
+
+      const isAuthenticated = !!sessionData?.session?.user;
+      const userId = sessionData?.session?.user?.id;
+
+      console.log('🔍 Current authentication state:', {
+        isAuthenticated,
+        userId,
+        sessionExists: !!sessionData?.session
+      });
+
+      return {
+        isAuthenticated,
+        userId,
+        sessionExists: !!sessionData?.session,
+        userEmail: sessionData?.session?.user?.email
+      };
     });
   }
 
@@ -153,37 +132,26 @@ export class ConnectionNotificationTester {
     return this.runTest('Doctor Profile Exists', async () => {
       console.log('👨‍⚕️ Testing if doctor profile exists...');
       
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
-      
-      try {
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', TEST_ACCOUNTS.doctor.id)
-          .single()
-          .abortSignal(controller.signal);
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', TEST_ACCOUNTS.doctor.id)
+        .single();
 
-        clearTimeout(timeoutId);
-
-        if (error) {
-          console.error('❌ Doctor profile fetch error:', error);
-          throw new Error(`Doctor profile fetch failed: ${error.message}`);
-        }
-
-        if (!profile) {
-          throw new Error('Doctor profile not found');
-        }
-
-        console.log('✅ Doctor profile found:', profile);
-        return {
-          profile,
-          doctorId: TEST_ACCOUNTS.doctor.id
-        };
-      } catch (err) {
-        clearTimeout(timeoutId);
-        throw err;
+      if (error) {
+        console.error('❌ Doctor profile fetch error:', error);
+        throw new Error(`Doctor profile fetch failed: ${error.message}`);
       }
+
+      if (!profile) {
+        throw new Error('Doctor profile not found');
+      }
+
+      console.log('✅ Doctor profile found:', profile);
+      return {
+        profile,
+        doctorId: TEST_ACCOUNTS.doctor.id
+      };
     });
   }
 
@@ -191,37 +159,26 @@ export class ConnectionNotificationTester {
     return this.runTest('Patient Profile Exists', async () => {
       console.log('🤒 Testing if patient profile exists...');
       
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
-      
-      try {
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', TEST_ACCOUNTS.patient.id)
-          .single()
-          .abortSignal(controller.signal);
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', TEST_ACCOUNTS.patient.id)
+        .single();
 
-        clearTimeout(timeoutId);
-
-        if (error) {
-          console.error('❌ Patient profile fetch error:', error);
-          throw new Error(`Patient profile fetch failed: ${error.message}`);
-        }
-
-        if (!profile) {
-          throw new Error('Patient profile not found');
-        }
-
-        console.log('✅ Patient profile found:', profile);
-        return {
-          profile,
-          patientId: TEST_ACCOUNTS.patient.id
-        };
-      } catch (err) {
-        clearTimeout(timeoutId);
-        throw err;
+      if (error) {
+        console.error('❌ Patient profile fetch error:', error);
+        throw new Error(`Patient profile fetch failed: ${error.message}`);
       }
+
+      if (!profile) {
+        throw new Error('Patient profile not found');
+      }
+
+      console.log('✅ Patient profile found:', profile);
+      return {
+        profile,
+        patientId: TEST_ACCOUNTS.patient.id
+      };
     });
   }
 
@@ -240,33 +197,22 @@ export class ConnectionNotificationTester {
 
       console.log('📝 Creating test notification:', notificationData);
       
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
-      
-      try {
-        const { data, error } = await supabase
-          .from('notifications')
-          .insert(notificationData)
-          .select()
-          .single()
-          .abortSignal(controller.signal);
+      const { data, error } = await supabase
+        .from('notifications')
+        .insert(notificationData)
+        .select()
+        .single();
 
-        clearTimeout(timeoutId);
-
-        if (error) {
-          console.error('❌ Direct notification creation error:', error);
-          throw new Error(`Direct notification creation failed: ${error.message}`);
-        }
-
-        console.log('✅ Direct notification created successfully:', data);
-        return {
-          notification: data,
-          targetUserId: TEST_ACCOUNTS.doctor.id
-        };
-      } catch (err) {
-        clearTimeout(timeoutId);
-        throw err;
+      if (error) {
+        console.error('❌ Direct notification creation error:', error);
+        throw new Error(`Direct notification creation failed: ${error.message}`);
       }
+
+      console.log('✅ Direct notification created successfully:', data);
+      return {
+        notification: data,
+        targetUserId: TEST_ACCOUNTS.doctor.id
+      };
     });
   }
 
@@ -274,32 +220,22 @@ export class ConnectionNotificationTester {
     return this.runTest('Notification Helper Function', async () => {
       console.log('🔧 Testing notification helper function...');
       
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
-      
-      try {
-        const result = await createNotification({
-          userId: TEST_ACCOUNTS.doctor.id,
-          type: 'connection_request',
-          title: 'Test Function Notification',
-          message: 'Testing notification helper function (TEST)'
-        });
+      const result = await createNotification({
+        userId: TEST_ACCOUNTS.doctor.id,
+        type: 'connection_request',
+        title: 'Test Function Notification',
+        message: 'Testing notification helper function (TEST)'
+      });
 
-        clearTimeout(timeoutId);
-
-        if (!result) {
-          throw new Error('Notification helper function returned null');
-        }
-
-        console.log('✅ Notification helper function test successful:', result);
-        return {
-          notification: result,
-          userId: TEST_ACCOUNTS.doctor.id
-        };
-      } catch (err) {
-        clearTimeout(timeoutId);
-        throw err;
+      if (!result) {
+        throw new Error('Notification helper function returned null');
       }
+
+      console.log('✅ Notification helper function test successful:', result);
+      return {
+        notification: result,
+        userId: TEST_ACCOUNTS.doctor.id
+      };
     });
   }
 
@@ -307,31 +243,21 @@ export class ConnectionNotificationTester {
     return this.runTest('Connection Notification Flow', async () => {
       console.log('🔗 Testing connection notification flow...');
       
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
-      
-      try {
-        const result = await sendConnectionRequestNotification(
-          TEST_ACCOUNTS.doctor.id,
-          TEST_ACCOUNTS.patient.name
-        );
+      const result = await sendConnectionRequestNotification(
+        TEST_ACCOUNTS.doctor.id,
+        TEST_ACCOUNTS.patient.name
+      );
 
-        clearTimeout(timeoutId);
-
-        if (!result) {
-          throw new Error('Connection notification flow returned null');
-        }
-
-        console.log('✅ Connection notification flow successful:', result);
-        return {
-          notification: result,
-          doctorId: TEST_ACCOUNTS.doctor.id,
-          patientName: TEST_ACCOUNTS.patient.name
-        };
-      } catch (err) {
-        clearTimeout(timeoutId);
-        throw err;
+      if (!result) {
+        throw new Error('Connection notification flow returned null');
       }
+
+      console.log('✅ Connection notification flow successful:', result);
+      return {
+        notification: result,
+        doctorId: TEST_ACCOUNTS.doctor.id,
+        patientName: TEST_ACCOUNTS.patient.name
+      };
     });
   }
 
@@ -339,35 +265,24 @@ export class ConnectionNotificationTester {
     return this.runTest('Notification Query', async () => {
       console.log('📋 Testing notification query...');
       
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
-      
-      try {
-        const { data: notifications, error } = await supabase
-          .from('notifications')
-          .select('*')
-          .eq('user_id', TEST_ACCOUNTS.doctor.id)
-          .order('created_at', { ascending: false })
-          .limit(5)
-          .abortSignal(controller.signal);
+      const { data: notifications, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', TEST_ACCOUNTS.doctor.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
 
-        clearTimeout(timeoutId);
-
-        if (error) {
-          console.error('❌ Notification query error:', error);
-          throw new Error(`Notification query failed: ${error.message}`);
-        }
-
-        console.log('✅ Notification query successful:', notifications);
-        return {
-          notifications,
-          count: notifications?.length || 0,
-          userId: TEST_ACCOUNTS.doctor.id
-        };
-      } catch (err) {
-        clearTimeout(timeoutId);
-        throw err;
+      if (error) {
+        console.error('❌ Notification query error:', error);
+        throw new Error(`Notification query failed: ${error.message}`);
       }
+
+      console.log('✅ Notification query successful:', notifications);
+      return {
+        notifications,
+        count: notifications?.length || 0,
+        userId: TEST_ACCOUNTS.doctor.id
+      };
     });
   }
 
@@ -461,17 +376,11 @@ export class ConnectionNotificationTester {
     console.log('🧹 Cleaning up test notifications...');
     
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
-      
       const { error } = await supabase
         .from('notifications')
         .delete()
         .ilike('title', '%test%')
-        .in('user_id', [TEST_ACCOUNTS.doctor.id, TEST_ACCOUNTS.patient.id])
-        .abortSignal(controller.signal);
-
-      clearTimeout(timeoutId);
+        .in('user_id', [TEST_ACCOUNTS.doctor.id, TEST_ACCOUNTS.patient.id]);
 
       if (error) {
         console.warn('⚠️ Cleanup warning:', error.message);
