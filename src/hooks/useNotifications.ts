@@ -26,6 +26,8 @@ export const useNotifications = () => {
   const fetchNotifications = useCallback(async () => {
     if (!user?.id) {
       console.log('No user ID available for fetching notifications');
+      setNotifications([]);
+      setUnreadCount(0);
       return;
     }
 

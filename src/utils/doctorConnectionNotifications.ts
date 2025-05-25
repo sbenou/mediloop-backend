@@ -27,23 +27,28 @@ export const sendConnectionRequestNotification = async (doctorId: string, patien
     
     console.log('Connection request notification created successfully:', notification);
     
-    // Send targeted Firebase push notification to doctor
-    await sendFirebasePushNotification(doctorId, {
-      title: 'New Connection Request',
-      body: `${patientName} has requested to connect with you`,
-      data: {
-        type: 'connection_request',
-        patientName: patientName,
-        notificationId: notification.id
-      }
-    });
+    // Send targeted Firebase push notification to doctor (optional, non-blocking)
+    try {
+      await sendFirebasePushNotification(doctorId, {
+        title: 'New Connection Request',
+        body: `${patientName} has requested to connect with you`,
+        data: {
+          type: 'connection_request',
+          patientName: patientName,
+          notificationId: notification.id
+        }
+      });
+      console.log('Firebase push notification sent successfully');
+    } catch (firebaseError) {
+      console.warn('Firebase push notification failed (non-critical):', firebaseError);
+      // Don't throw here as the database notification was successful
+    }
     
     return notification;
     
   } catch (error) {
     console.error('Error in sendConnectionRequestNotification:', error);
-    // Don't rethrow to prevent blocking the connection request
-    return null;
+    throw error; // Re-throw to let the caller handle the error
   }
 };
 

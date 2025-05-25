@@ -101,13 +101,14 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
         const patientName = profileData?.full_name || 'A patient';
         console.log('Sending notification to doctor with patient name:', patientName);
 
-        // Send notification to doctor
+        // Send notification to doctor - this should not fail silently
         try {
-          await sendConnectionRequestNotification(doctorId, patientName);
-          console.log('Notification sent successfully');
+          const notificationResult = await sendConnectionRequestNotification(doctorId, patientName);
+          console.log('Notification sent successfully:', notificationResult);
         } catch (notificationError) {
-          console.warn('Notification failed but connection was created:', notificationError);
-          // Don't throw here as the connection was successful
+          console.error('Notification failed:', notificationError);
+          // Don't throw here as the connection was successful, but log the error
+          console.warn('Connection created but notification failed - manual notification may be needed');
         }
 
         return data;
