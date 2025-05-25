@@ -49,7 +49,7 @@ export const useProfileFetch = () => {
         const timeoutPromise = new Promise<{ profile: UserProfile | null; permissions: string[] }>((_, reject) => {
           setTimeout(() => {
             reject(new Error('Profile fetch timeout'));
-          }, 5000); // Reduced timeout to 5 seconds
+          }, 3000); // Reduced timeout to 3 seconds
         });
 
         // First, check if the user exists in auth users with a shorter timeout
@@ -80,7 +80,7 @@ export const useProfileFetch = () => {
         const authUserWithTimeout = Promise.race([
           authUserPromise,
           new Promise<AuthUserInfo>(resolve => 
-            setTimeout(() => resolve({ id: userId }), 2000)
+            setTimeout(() => resolve({ id: userId }), 1500)
           )
         ]);
         
@@ -176,7 +176,7 @@ export const useProfileFetch = () => {
                   
                 const { data: pharmacyData } = await Promise.race([
                   pharmacyPromise,
-                  new Promise(resolve => setTimeout(() => resolve({ data: null }), 2000))
+                  new Promise(resolve => setTimeout(() => resolve({ data: null }), 1500))
                 ]) as any;
                 
                 pharmacyId = pharmacyData?.pharmacy_id || null;
@@ -196,13 +196,13 @@ export const useProfileFetch = () => {
             };
 
             // Fetch permissions with timeout protection
-            let permissions: string[] = [];
+            let userPermissions: string[] = [];
             try {
               if (completeProfile.role_id && !abortController.signal.aborted) {
                 const permissionsPromise = fetchUserPermissions(completeProfile.role_id);
-                permissions = await Promise.race([
+                userPermissions = await Promise.race([
                   permissionsPromise,
-                  new Promise<string[]>(resolve => setTimeout(() => resolve([]), 2000))
+                  new Promise<string[]>(resolve => setTimeout(() => resolve([]), 1500))
                 ]);
               }
             } catch (permError) {
@@ -212,10 +212,10 @@ export const useProfileFetch = () => {
             console.log('Profile and permissions fetched successfully:', {
               profileId: completeProfile.id,
               role: completeProfile.role,
-              permissionsCount: permissions.length
+              permissionsCount: userPermissions.length
             });
 
-            return { profile: completeProfile, permissions };
+            return { profile: completeProfile, permissions: userPermissions };
           } catch (profileError) {
             if (abortController.signal.aborted) {
               throw new Error('Fetch aborted');
@@ -253,7 +253,7 @@ export const useProfileFetch = () => {
               pharmacy_logo_url: null
             };
             
-            return { profile: minimalProfile, permissions };
+            return { profile: minimalProfile, permissions: [] };
           }
         };
 
