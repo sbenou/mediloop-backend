@@ -1,6 +1,5 @@
 
 import { supabase } from "@/lib/supabase";
-import { useTenant } from "@/contexts/TenantContext";
 
 export type NotificationType = 
   | "payment_failed" 
@@ -16,7 +15,8 @@ export type NotificationType =
   | "new_subscription" 
   | "new_teleconsultation" 
   | "new_doctor" 
-  | "new_pharmacy";
+  | "new_pharmacy"
+  | "connection_request";
 
 interface CreateNotificationParams {
   userId: string;
@@ -38,6 +38,18 @@ export async function createNotification({
   tenantId
 }: CreateNotificationParams) {
   try {
+    // If no tenant ID provided, try to get it from the user's profile
+    let finalTenantId = tenantId;
+    if (!finalTenantId) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', userId)
+        .single();
+      
+      finalTenantId = profile?.tenant_id;
+    }
+
     const { data, error } = await supabase
       .from('notifications')
       .insert({
@@ -47,7 +59,7 @@ export async function createNotification({
         message,
         link,
         meta,
-        tenant_id: tenantId
+        tenant_id: finalTenantId
       })
       .select()
       .single();
@@ -81,16 +93,29 @@ export async function createSystemNotification(
   });
 }
 
-// Hook to create tenant-aware notifications
-export function useTenantNotifications() {
-  const { currentTenant } = useTenant();
-  
-  const createTenantNotification = async (params: Omit<CreateNotificationParams, 'tenantId'>) => {
-    return createNotification({
-      ...params,
-      tenantId: currentTenant?.id
-    });
-  };
-  
-  return { createTenantNotification };
+// Helper function to create tenant-aware notifications
+export async function createTenantNotification(
+  userId: string,
+  type: NotificationType,
+  title: string,
+  message: string,
+  link?: string,
+  meta?: Record<string, any>
+) {
+  // Get user's tenant ID from their profile
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('tenant_id')
+    .eq('id', userId)
+    .single();
+
+  return createNotification({
+    userId,
+    type,
+    title,
+    message,
+    link,
+    meta,
+    tenantId: profile?.tenant_id
+  });
 }

@@ -88,11 +88,11 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
 
         console.log('✅ Connection request created successfully:', data);
 
-        // Get patient name for notification
+        // Get patient name and tenant info for notification
         console.log('Fetching patient profile for notification...');
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('full_name')
+          .select('full_name, tenant_id')
           .eq('id', user.id)
           .single();
 
@@ -103,7 +103,7 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
         const patientName = profileData?.full_name || 'A patient';
         console.log('Patient name for notification:', patientName);
 
-        // Send notification to doctor
+        // Send notification to doctor with tenant awareness
         console.log('=== Starting notification creation ===');
         try {
           const notificationResult = await sendConnectionRequestNotification(doctorId, patientName);

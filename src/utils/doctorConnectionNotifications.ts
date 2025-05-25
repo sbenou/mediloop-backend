@@ -7,10 +7,10 @@ export const sendConnectionRequestNotification = async (doctorId: string, patien
     console.log('Doctor ID:', doctorId);
     console.log('Patient name:', patientName);
     
-    // First, let's verify the doctor exists
+    // First, let's verify the doctor exists and get their tenant info
     const { data: doctorProfile, error: doctorError } = await supabase
       .from('profiles')
-      .select('id, full_name, email')
+      .select('id, full_name, email, tenant_id')
       .eq('id', doctorId)
       .single();
     
@@ -26,7 +26,7 @@ export const sendConnectionRequestNotification = async (doctorId: string, patien
     
     console.log('Doctor profile found:', doctorProfile);
     
-    // Create notification in database - this will trigger realtime updates
+    // Create notification in database with tenant awareness
     console.log('Creating notification in database...');
     const notificationData = {
       user_id: doctorId,
@@ -34,6 +34,7 @@ export const sendConnectionRequestNotification = async (doctorId: string, patien
       title: 'New Connection Request',
       message: `${patientName} has requested to connect with you`,
       read: false,
+      tenant_id: doctorProfile.tenant_id, // Include tenant_id for proper scoping
       created_at: new Date().toISOString()
     };
     
