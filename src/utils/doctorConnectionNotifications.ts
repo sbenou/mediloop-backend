@@ -3,25 +3,29 @@ import { supabase } from '@/lib/supabase';
 
 export const sendConnectionRequestNotification = async (doctorId: string, patientName: string) => {
   try {
-    console.log('Sending connection request notification to doctor:', doctorId);
+    console.log('Creating connection request notification for doctor:', doctorId);
+    console.log('Patient name:', patientName);
     
     // Create notification in database - this will trigger realtime updates
-    const { error } = await supabase
+    const { data: notification, error } = await supabase
       .from('notifications')
       .insert({
         user_id: doctorId,
         type: 'connection_request',
         title: 'New Connection Request',
         message: `${patientName} has requested to connect with you`,
-        read: false
-      });
+        read: false,
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single();
 
     if (error) {
-      console.error('Error sending connection notification:', error);
+      console.error('Error creating connection notification:', error);
       throw error;
     }
     
-    console.log('Connection request notification sent successfully');
+    console.log('Connection request notification created successfully:', notification);
     
     // Send targeted Firebase push notification to doctor
     await sendFirebasePushNotification(doctorId, {
@@ -29,13 +33,17 @@ export const sendConnectionRequestNotification = async (doctorId: string, patien
       body: `${patientName} has requested to connect with you`,
       data: {
         type: 'connection_request',
-        patientName: patientName
+        patientName: patientName,
+        notificationId: notification.id
       }
     });
+    
+    return notification;
     
   } catch (error) {
     console.error('Error in sendConnectionRequestNotification:', error);
     // Don't rethrow to prevent blocking the connection request
+    return null;
   }
 };
 

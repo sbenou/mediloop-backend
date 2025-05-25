@@ -34,31 +34,35 @@ const NotificationBell = () => {
 
   // Fetch notifications and set up realtime subscription when authenticated - only once
   useEffect(() => {
+    console.log('NotificationBell effect triggered:', { isAuthenticated, user: user?.id, hasInitialized: hasInitializedData.current });
+    
     // Clear any pending initialization
     if (dataInitTimeout.current) {
       clearTimeout(dataInitTimeout.current);
       dataInitTimeout.current = null;
     }
     
-    if (isAuthenticated && !hasInitializedData.current) {
-      console.log("NotificationBell: Initial data fetch and subscription setup");
+    if (isAuthenticated && user?.id && !hasInitializedData.current) {
+      console.log("NotificationBell: Initial data fetch and subscription setup for user:", user.id);
       hasInitializedData.current = true;
       
       // Add delay to ensure auth is fully settled
       dataInitTimeout.current = setTimeout(async () => {
         try {
+          console.log("NotificationBell: Fetching initial notifications");
           await fetchNotifications();
-          // Set up subscription once
+          console.log("NotificationBell: Setting up realtime subscription");
           subscriptionCleanup.current = setupRealtimeSubscription();
         } catch (err) {
           console.error("NotificationBell: Error fetching initial data", err);
           hasInitializedData.current = false; // Allow retry
         }
-      }, 500);
+      }, 1000);
     }
     
     // Reset when user logs out
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !user?.id) {
+      console.log("NotificationBell: Resetting state due to logout");
       hasInitializedData.current = false;
       fcmTokenRegistered.current = false;
       if (subscriptionCleanup.current) {
@@ -77,7 +81,7 @@ const NotificationBell = () => {
         subscriptionCleanup.current = null;
       }
     };
-  }, [isAuthenticated, fetchNotifications, setupRealtimeSubscription]);
+  }, [isAuthenticated, user?.id, fetchNotifications, setupRealtimeSubscription]);
 
   // Register FCM token with backend when available - only once per token
   useEffect(() => {
@@ -103,7 +107,7 @@ const NotificationBell = () => {
           console.error("Error registering FCM token:", error);
           fcmTokenRegistered.current = false; // Allow retry on next render
         });
-      }, 1000);
+      }, 1500);
     }
     
     // Reset registration flag when token changes or user logs out
@@ -130,6 +134,17 @@ const NotificationBell = () => {
       state: { preserveAuth: true, keepSidebar: true }
     });
   };
+
+  // Debug logging
+  useEffect(() => {
+    console.log('NotificationBell state:', {
+      isAuthenticated,
+      userId: user?.id,
+      unreadCount,
+      notificationsLength: notifications.length,
+      isLoading
+    });
+  }, [isAuthenticated, user?.id, unreadCount, notifications.length, isLoading]);
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
