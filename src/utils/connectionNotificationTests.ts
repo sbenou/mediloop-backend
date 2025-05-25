@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import { sendConnectionRequestNotification } from './doctorConnectionNotifications';
 import { createNotification, createTenantNotification } from './notifications';
@@ -44,10 +43,11 @@ export class ConnectionNotificationTester {
       return result;
     } catch (error) {
       const duration = Date.now() - startTime;
+      const errorMessage = error instanceof Error ? error.message : String(error);
       const result = { 
         test: testName, 
         success: false, 
-        error: error instanceof Error ? error.message : String(error), 
+        error: errorMessage, 
         duration 
       };
       this.results.push(result);
@@ -66,11 +66,14 @@ export class ConnectionNotificationTester {
 
   async testUserProfiles() {
     return this.runTest('User Profiles Check', async () => {
+      // First, clean up any duplicate profiles for our test accounts
+      await this.cleanupDuplicateProfiles();
+
       const { data: patientProfile, error: patientError } = await supabase
         .from('profiles')
         .select('id, full_name, email, role, tenant_id')
         .eq('id', TEST_ACCOUNTS.patient.id)
-        .single();
+        .maybeSingle();
 
       if (patientError) throw new Error(`Patient profile error: ${patientError.message}`);
 
@@ -78,18 +81,94 @@ export class ConnectionNotificationTester {
         .from('profiles')
         .select('id, full_name, email, role, tenant_id')
         .eq('id', TEST_ACCOUNTS.doctor.id)
-        .single();
+        .maybeSingle();
 
       if (doctorError) throw new Error(`Doctor profile error: ${doctorError.message}`);
 
+      // Create profiles if they don't exist
+      if (!patientProfile) {
+        console.log('Creating missing patient profile...');
+        const { error: createError } = await supabase
+          .from('profiles')
+          .insert({
+            id: TEST_ACCOUNTS.patient.id,
+            full_name: TEST_ACCOUNTS.patient.name,
+            email: TEST_ACCOUNTS.patient.email,
+            role: 'patient'
+          });
+        if (createError) throw new Error(`Failed to create patient profile: ${createError.message}`);
+      }
+
+      if (!doctorProfile) {
+        console.log('Creating missing doctor profile...');
+        const { error: createError } = await supabase
+          .from('profiles')
+          .insert({
+            id: TEST_ACCOUNTS.doctor.id,
+            full_name: TEST_ACCOUNTS.doctor.name,
+            email: TEST_ACCOUNTS.doctor.email,
+            role: 'doctor'
+          });
+        if (createError) throw new Error(`Failed to create doctor profile: ${createError.message}`);
+      }
+
+      // Fetch the profiles again after potential creation
+      const { data: finalPatientProfile } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, role, tenant_id')
+        .eq('id', TEST_ACCOUNTS.patient.id)
+        .single();
+
+      const { data: finalDoctorProfile } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, role, tenant_id')
+        .eq('id', TEST_ACCOUNTS.doctor.id)
+        .single();
+
       return {
-        patient: patientProfile,
-        doctor: doctorProfile,
-        patientHasTenant: !!patientProfile?.tenant_id,
-        doctorHasTenant: !!doctorProfile?.tenant_id,
-        sameTenant: patientProfile?.tenant_id === doctorProfile?.tenant_id
+        patient: finalPatientProfile,
+        doctor: finalDoctorProfile,
+        patientHasTenant: !!finalPatientProfile?.tenant_id,
+        doctorHasTenant: !!finalDoctorProfile?.tenant_id,
+        sameTenant: finalPatientProfile?.tenant_id === finalDoctorProfile?.tenant_id
       };
     });
+  }
+
+  private async cleanupDuplicateProfiles() {
+    try {
+      // Clean up any duplicate patient profiles
+      const { data: patientDuplicates } = await supabase
+        .from('profiles')
+        .select('id, created_at')
+        .eq('id', TEST_ACCOUNTS.patient.id)
+        .order('created_at', { ascending: true });
+
+      if (patientDuplicates && patientDuplicates.length > 1) {
+        // Keep the first one, delete the rest
+        const toDelete = patientDuplicates.slice(1);
+        for (const duplicate of toDelete) {
+          await supabase.from('profiles').delete().eq('id', duplicate.id);
+        }
+      }
+
+      // Clean up any duplicate doctor profiles
+      const { data: doctorDuplicates } = await supabase
+        .from('profiles')
+        .select('id, created_at')
+        .eq('id', TEST_ACCOUNTS.doctor.id)
+        .order('created_at', { ascending: true });
+
+      if (doctorDuplicates && doctorDuplicates.length > 1) {
+        // Keep the first one, delete the rest
+        const toDelete = doctorDuplicates.slice(1);
+        for (const duplicate of toDelete) {
+          await supabase.from('profiles').delete().eq('id', duplicate.id);
+        }
+      }
+    } catch (error) {
+      console.warn('Error cleaning up duplicate profiles:', error);
+    }
   }
 
   async testNotificationTableAccess() {
@@ -102,12 +181,12 @@ export class ConnectionNotificationTester {
 
       if (readError) throw new Error(`Read access failed: ${readError.message}`);
 
-      // Test write access with a test notification
+      // Test write access with a test notification - using doctor ID since RLS allows authenticated users to insert
       const testNotification = {
         user_id: TEST_ACCOUNTS.doctor.id,
         type: 'test',
         title: 'Test Notification',
-        message: 'This is a test notification',
+        message: 'This is a test notification for access testing',
         tenant_id: null
       };
 
@@ -164,7 +243,7 @@ export class ConnectionNotificationTester {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) throw new Error(`Direct notification creation failed: ${error.message}`);
 
       // Verify it was created
       const { data: verification, error: verifyError } = await supabase
@@ -193,7 +272,7 @@ export class ConnectionNotificationTester {
         tenantId: null
       });
 
-      if (!result) throw new Error('Utility function returned null');
+      if (!result) throw new Error('Utility function returned null - check console for errors');
 
       return result;
     });
@@ -208,7 +287,7 @@ export class ConnectionNotificationTester {
         `${TEST_ACCOUNTS.patient.name} test tenant-aware notification`
       );
 
-      if (!result) throw new Error('Tenant-aware function returned null');
+      if (!result) throw new Error('Tenant-aware function returned null - check console for errors');
 
       return result;
     });
@@ -259,7 +338,7 @@ export class ConnectionNotificationTester {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) throw new Error(`Connection creation failed: ${error.message}`);
 
       return {
         connection: data,
@@ -336,7 +415,6 @@ export class ConnectionNotificationTester {
   }
 }
 
-// Export a simple function to run the tests
 export async function runConnectionNotificationTests() {
   const tester = new ConnectionNotificationTester();
   
@@ -351,7 +429,6 @@ export async function runConnectionNotificationTests() {
   }
 }
 
-// Firebase-specific debugging
 export async function debugFirebaseIntegration() {
   console.log('🔥 Firebase Integration Debug');
   
