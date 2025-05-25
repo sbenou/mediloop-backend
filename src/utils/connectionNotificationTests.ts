@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 import { sendConnectionRequestNotification } from './doctorConnectionNotifications';
 import { createNotification, createTenantNotification } from './notifications';
@@ -29,13 +30,19 @@ interface TestResult {
 
 export class ConnectionNotificationTester {
   private results: TestResult[] = [];
+  private testTimeout = 30000; // 30 second timeout per test
 
   private async runTest(testName: string, testFn: () => Promise<any>): Promise<TestResult> {
     console.log(`🧪 Running test: ${testName}`);
     const startTime = Date.now();
     
     try {
-      const data = await testFn();
+      // Add timeout wrapper to prevent hanging tests
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error(`Test timeout after ${this.testTimeout}ms`)), this.testTimeout);
+      });
+      
+      const data = await Promise.race([testFn(), timeoutPromise]);
       const duration = Date.now() - startTime;
       const result = { test: testName, success: true, data, duration };
       this.results.push(result);
@@ -58,14 +65,23 @@ export class ConnectionNotificationTester {
 
   async testDatabaseConnectivity() {
     return this.runTest('Database Connectivity', async () => {
+      console.log('Testing database connection...');
       const { data, error } = await supabase.from('profiles').select('count').limit(1);
-      if (error) throw error;
+      
+      if (error) {
+        console.error('Database connectivity error:', error);
+        throw error;
+      }
+      
+      console.log('Database connection successful, data:', data);
       return { message: 'Database connection successful', count: data?.length || 0 };
     });
   }
 
   async testUserProfiles() {
     return this.runTest('User Profiles Check', async () => {
+      console.log('Checking user profiles...');
+      
       // First, clean up any duplicate profiles for our test accounts
       await this.cleanupDuplicateProfiles();
 
@@ -75,7 +91,10 @@ export class ConnectionNotificationTester {
         .eq('id', TEST_ACCOUNTS.patient.id)
         .maybeSingle();
 
-      if (patientError) throw new Error(`Patient profile error: ${patientError.message}`);
+      if (patientError) {
+        console.error('Patient profile error:', patientError);
+        throw new Error(`Patient profile error: ${patientError.message}`);
+      }
 
       const { data: doctorProfile, error: doctorError } = await supabase
         .from('profiles')
@@ -83,7 +102,10 @@ export class ConnectionNotificationTester {
         .eq('id', TEST_ACCOUNTS.doctor.id)
         .maybeSingle();
 
-      if (doctorError) throw new Error(`Doctor profile error: ${doctorError.message}`);
+      if (doctorError) {
+        console.error('Doctor profile error:', doctorError);
+        throw new Error(`Doctor profile error: ${doctorError.message}`);
+      }
 
       // Create profiles if they don't exist
       if (!patientProfile) {
@@ -173,13 +195,18 @@ export class ConnectionNotificationTester {
 
   async testNotificationTableAccess() {
     return this.runTest('Notification Table Access', async () => {
+      console.log('Testing notification table access...');
+      
       // Test read access
       const { data: readTest, error: readError } = await supabase
         .from('notifications')
         .select('id, user_id, type, title')
         .limit(5);
 
-      if (readError) throw new Error(`Read access failed: ${readError.message}`);
+      if (readError) {
+        console.error('Read access error:', readError);
+        throw new Error(`Read access failed: ${readError.message}`);
+      }
 
       // Test write access with a test notification - using doctor ID since RLS allows authenticated users to insert
       const testNotification = {
@@ -190,13 +217,17 @@ export class ConnectionNotificationTester {
         tenant_id: null
       };
 
+      console.log('Attempting to insert test notification:', testNotification);
       const { data: writeTest, error: writeError } = await supabase
         .from('notifications')
         .insert(testNotification)
         .select()
         .single();
 
-      if (writeError) throw new Error(`Write access failed: ${writeError.message}`);
+      if (writeError) {
+        console.error('Write access error:', writeError);
+        throw new Error(`Write access failed: ${writeError.message}`);
+      }
 
       // Clean up test notification
       await supabase.from('notifications').delete().eq('id', writeTest.id);
@@ -212,6 +243,8 @@ export class ConnectionNotificationTester {
 
   async testTenantContext() {
     return this.runTest('Tenant Context Check', async () => {
+      console.log('Testing tenant context...');
+      
       // Get current session and check for tenant claims
       const { data: session } = await supabase.auth.getSession();
       const claims = session?.session?.user?.app_metadata || {};
@@ -228,6 +261,8 @@ export class ConnectionNotificationTester {
 
   async testDirectNotificationCreation() {
     return this.runTest('Direct Notification Creation', async () => {
+      console.log('Testing direct notification creation...');
+      
       const notificationData = {
         user_id: TEST_ACCOUNTS.doctor.id,
         type: 'connection_request',
@@ -237,13 +272,17 @@ export class ConnectionNotificationTester {
         tenant_id: null
       };
 
+      console.log('Inserting notification:', notificationData);
       const { data, error } = await supabase
         .from('notifications')
         .insert(notificationData)
         .select()
         .single();
 
-      if (error) throw new Error(`Direct notification creation failed: ${error.message}`);
+      if (error) {
+        console.error('Direct notification creation error:', error);
+        throw new Error(`Direct notification creation failed: ${error.message}`);
+      }
 
       // Verify it was created
       const { data: verification, error: verifyError } = await supabase
@@ -252,7 +291,10 @@ export class ConnectionNotificationTester {
         .eq('id', data.id)
         .single();
 
-      if (verifyError) throw new Error(`Verification failed: ${verifyError.message}`);
+      if (verifyError) {
+        console.error('Verification error:', verifyError);
+        throw new Error(`Verification failed: ${verifyError.message}`);
+      }
 
       return {
         created: data,
@@ -264,6 +306,8 @@ export class ConnectionNotificationTester {
 
   async testUtilityFunction() {
     return this.runTest('Utility Function Test', async () => {
+      console.log('Testing utility function...');
+      
       const result = await createNotification({
         userId: TEST_ACCOUNTS.doctor.id,
         type: 'connection_request',
@@ -272,14 +316,20 @@ export class ConnectionNotificationTester {
         tenantId: null
       });
 
-      if (!result) throw new Error('Utility function returned null - check console for errors');
+      if (!result) {
+        console.error('Utility function returned null');
+        throw new Error('Utility function returned null - check console for errors');
+      }
 
+      console.log('Utility function result:', result);
       return result;
     });
   }
 
   async testTenantAwareNotification() {
     return this.runTest('Tenant-Aware Notification', async () => {
+      console.log('Testing tenant-aware notification...');
+      
       const result = await createTenantNotification(
         TEST_ACCOUNTS.doctor.id,
         'connection_request',
@@ -287,39 +337,20 @@ export class ConnectionNotificationTester {
         `${TEST_ACCOUNTS.patient.name} test tenant-aware notification`
       );
 
-      if (!result) throw new Error('Tenant-aware function returned null - check console for errors');
+      if (!result) {
+        console.error('Tenant-aware function returned null');
+        throw new Error('Tenant-aware function returned null - check console for errors');
+      }
 
+      console.log('Tenant-aware notification result:', result);
       return result;
-    });
-  }
-
-  async testFullConnectionFlow() {
-    return this.runTest('Full Connection Notification Flow', async () => {
-      const result = await sendConnectionRequestNotification(
-        TEST_ACCOUNTS.doctor.id,
-        TEST_ACCOUNTS.patient.name
-      );
-
-      if (!result) throw new Error('Connection notification function returned null');
-
-      // Verify the notification exists
-      const { data: verification, error: verifyError } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('id', result.id)
-        .single();
-
-      if (verifyError) throw new Error(`Verification failed: ${verifyError.message}`);
-
-      return {
-        notification: result,
-        verification
-      };
     });
   }
 
   async testConnectionRequestCreation() {
     return this.runTest('Connection Request Creation', async () => {
+      console.log('Testing connection request creation...');
+      
       // First, clean up any existing connection
       await supabase
         .from('doctor_patient_connections')
@@ -328,21 +359,60 @@ export class ConnectionNotificationTester {
         .eq('patient_id', TEST_ACCOUNTS.patient.id);
 
       // Create a new connection request
+      const connectionData = {
+        doctor_id: TEST_ACCOUNTS.doctor.id,
+        patient_id: TEST_ACCOUNTS.patient.id,
+        status: 'pending'
+      };
+      
+      console.log('Creating connection:', connectionData);
       const { data, error } = await supabase
         .from('doctor_patient_connections')
-        .insert({
-          doctor_id: TEST_ACCOUNTS.doctor.id,
-          patient_id: TEST_ACCOUNTS.patient.id,
-          status: 'pending'
-        })
+        .insert(connectionData)
         .select()
         .single();
 
-      if (error) throw new Error(`Connection creation failed: ${error.message}`);
+      if (error) {
+        console.error('Connection creation error:', error);
+        throw new Error(`Connection creation failed: ${error.message}`);
+      }
 
       return {
         connection: data,
         canCreateConnections: true
+      };
+    });
+  }
+
+  async testFullConnectionFlow() {
+    return this.runTest('Full Connection Notification Flow', async () => {
+      console.log('Testing full connection flow...');
+      
+      const result = await sendConnectionRequestNotification(
+        TEST_ACCOUNTS.doctor.id,
+        TEST_ACCOUNTS.patient.name
+      );
+
+      if (!result) {
+        console.error('Connection notification function returned null');
+        throw new Error('Connection notification function returned null');
+      }
+
+      // Verify the notification exists
+      const { data: verification, error: verifyError } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('id', result.id)
+        .single();
+
+      if (verifyError) {
+        console.error('Verification error:', verifyError);
+        throw new Error(`Verification failed: ${verifyError.message}`);
+      }
+
+      return {
+        notification: result,
+        verification
       };
     });
   }
@@ -353,16 +423,21 @@ export class ConnectionNotificationTester {
     
     this.results = [];
 
-    // Run tests in sequence
-    await this.testDatabaseConnectivity();
-    await this.testUserProfiles();
-    await this.testNotificationTableAccess();
-    await this.testTenantContext();
-    await this.testDirectNotificationCreation();
-    await this.testUtilityFunction();
-    await this.testTenantAwareNotification();
-    await this.testConnectionRequestCreation();
-    await this.testFullConnectionFlow();
+    try {
+      // Run tests in sequence with individual error handling
+      await this.testDatabaseConnectivity();
+      await this.testUserProfiles();
+      await this.testNotificationTableAccess();
+      await this.testTenantContext();
+      await this.testDirectNotificationCreation();
+      await this.testUtilityFunction();
+      await this.testTenantAwareNotification();
+      await this.testConnectionRequestCreation();
+      await this.testFullConnectionFlow();
+    } catch (error) {
+      console.error('Test suite execution error:', error);
+      // Don't throw here, let individual tests handle their own errors
+    }
 
     // Generate summary
     const summary = this.generateSummary();
