@@ -7,7 +7,7 @@ import { useSessionManagement } from '@/hooks/auth/useSessionManagement';
 
 export const AuthInit = () => {
   const setAuth = useSetRecoilState(authState);
-  const { updateAuthState, refreshSession } = useSessionManagement();
+  const { updateAuthState } = useSessionManagement();
 
   useEffect(() => {
     console.log("[AuthInit][DEBUG] Initializing auth state");
@@ -18,8 +18,19 @@ export const AuthInit = () => {
     // First try to get any existing session
     const initializeAuth = async () => {
       try {
-        // Attempt to refresh the session first
-        const session = await refreshSession();
+        // Get current session directly from Supabase
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("[AuthInit][DEBUG] Error getting session:", error);
+          setAuth({
+            user: null,
+            profile: null,
+            permissions: [],
+            isLoading: false
+          });
+          return;
+        }
         
         if (session) {
           console.log("[AuthInit][DEBUG] Session found, updating auth state");
@@ -68,7 +79,7 @@ export const AuthInit = () => {
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [setAuth, updateAuthState, refreshSession]);
+  }, [setAuth, updateAuthState]);
   
   // This component doesn't render anything
   return null;

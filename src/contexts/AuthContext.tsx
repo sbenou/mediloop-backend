@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect } from 'react';
 import { RecoilRoot } from 'recoil';
 import { useSessionManagement } from '@/hooks/auth/useSessionManagement';
 import { useSessionPolling } from '@/hooks/auth/useSessionPolling';
+import { supabase } from '@/lib/supabase';
 
 // Create context that will provide authentication functionality
 const AuthContext = createContext<null>(null);
@@ -16,7 +17,7 @@ interface AuthProviderProps {
  * and functionality to all child components
  */
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const { updateAuthState, refreshSession } = useSessionManagement();
+  const { updateAuthState } = useSessionManagement();
   
   // Set up session polling for token refresh
   useSessionPolling();
@@ -31,7 +32,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.log("Starting auth initialization");
         
         // Create a timeout promise with increased timeout (8 seconds instead of 5)
-        const sessionPromise = refreshSession();
+        const sessionPromise = supabase.auth.getSession().then(({ data }) => data.session);
         const timeoutPromise = new Promise<null>(resolve => {
           initTimeoutId = setTimeout(() => {
             console.warn('Auth initialization is taking longer than expected (8 seconds)');
@@ -76,7 +77,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.log('Auth token changed in another tab, refreshing session');
         setTimeout(async () => {
           if (!isMounted) return;
-          const session = await refreshSession();
+          const { data: { session } } = await supabase.auth.getSession();
           if (session && isMounted) {
             updateAuthState(session);
           } else if (isMounted) {
@@ -94,7 +95,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       window.removeEventListener('storage', handleStorageEvent);
       if (initTimeoutId) clearTimeout(initTimeoutId);
     };
-  }, [updateAuthState, refreshSession]);
+  }, [updateAuthState]);
   
   return (
     <AuthContext.Provider value={null}>
