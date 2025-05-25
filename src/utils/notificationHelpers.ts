@@ -1,11 +1,34 @@
-
 import { createNotification, NotificationType } from "@/utils/notifications";
 import { supabase } from "@/lib/supabase";
 import { useTenantSupabase } from "@/hooks/useTenantSupabase";
 import { useCallback } from "react";
+import { sendConnectionRequestNotification } from "./doctorConnectionNotifications";
 
-// Helper function to send doctor connection notifications
+// Helper function to send doctor connection notifications (now using background jobs)
 export async function sendDoctorConnectionNotification(doctorId: string, patientName: string) {
+  try {
+    console.log('Sending doctor connection notification via background job');
+    
+    // Use the new background job approach
+    const result = await sendConnectionRequestNotification(doctorId, patientName);
+    
+    if (result && result.success) {
+      console.log('Doctor connection notification sent successfully via background job');
+      return result.notification;
+    } else {
+      // Fallback to direct notification creation if background job fails
+      console.warn('Background job failed, falling back to direct notification creation');
+      return await sendDoctorConnectionNotificationFallback(doctorId, patientName);
+    }
+  } catch (error) {
+    console.error('Error with background job, using fallback:', error);
+    // Fallback to direct notification creation
+    return await sendDoctorConnectionNotificationFallback(doctorId, patientName);
+  }
+}
+
+// Fallback function for direct notification creation
+async function sendDoctorConnectionNotificationFallback(doctorId: string, patientName: string) {
   try {
     // Get doctor profile
     const { data: doctorProfile } = await supabase
@@ -25,11 +48,12 @@ export async function sendDoctorConnectionNotification(doctorId: string, patient
       link: "/dashboard?section=patients&profileTab=active",
       meta: {
         patientName,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        source: 'fallback_direct'
       }
     });
   } catch (error) {
-    console.error('Error sending doctor connection notification:', error);
+    console.error('Error sending doctor connection notification fallback:', error);
     return null;
   }
 }
@@ -105,6 +129,37 @@ export function useTenantNotifications() {
     }
     
     try {
+      // For tenant scenarios, still use background jobs but with tenant context
+      console.log(`Sending tenant doctor connection notification for ${currentTenant.name}`);
+      
+      const result = await supabase.functions.invoke('process-connection-notifications', {
+        body: { 
+          doctorId, 
+          patientName,
+          tenantId: currentTenant.id,
+          tenantSchema: currentTenant.schema
+        }
+      });
+      
+      if (result.error) {
+        throw new Error(result.error.message);
+      }
+      
+      return result.data?.notification;
+    } catch (error) {
+      console.error(`Error sending tenant doctor connection notification for ${currentTenant.name}:`, error);
+      // Fallback to direct tenant notification
+      return await sendTenantDoctorConnectionNotificationFallback(doctorId, patientName);
+    }
+  }, [tenantTable, currentTenant]);
+  
+  // Fallback for tenant notifications
+  const sendTenantDoctorConnectionNotificationFallback = useCallback(async (doctorId: string, patientName: string) => {
+    if (!currentTenant) {
+      return sendDoctorConnectionNotification(doctorId, patientName);
+    }
+    
+    try {
       // Get doctor profile from tenant schema
       const { data: doctorProfile, error } = await supabase
         .from(`${currentTenant.schema}.profiles`)
@@ -130,7 +185,8 @@ export function useTenantNotifications() {
             patientName,
             timestamp: new Date().toISOString(),
             tenantId: currentTenant.id,
-            tenantName: currentTenant.name
+            tenantName: currentTenant.name,
+            source: 'tenant_fallback'
           },
           created_at: new Date().toISOString()
         })
@@ -144,10 +200,10 @@ export function useTenantNotifications() {
       
       return notification;
     } catch (error) {
-      console.error(`Error sending tenant doctor connection notification for ${currentTenant.name}:`, error);
+      console.error(`Error sending tenant doctor connection notification fallback for ${currentTenant.name}:`, error);
       return null;
     }
-  }, [tenantTable, currentTenant]);
+  }, [currentTenant]);
   
   const sendTenantPurchaseNotification = useCallback(async (userId: string, orderTotal: number, orderId: string) => {
     if (!currentTenant) {

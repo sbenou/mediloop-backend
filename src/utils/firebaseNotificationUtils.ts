@@ -92,3 +92,32 @@ export const updateNotificationPreferences = async (userId: string, preferences:
     return false;
   }
 };
+
+// New function to test push notification delivery
+export const testPushNotification = async (userId: string, title: string, message: string) => {
+  try {
+    console.log('Testing push notification for user:', userId);
+    
+    // Call the background job to send a test notification
+    const { data, error } = await supabase.functions.invoke('process-connection-notifications', {
+      body: { 
+        doctorId: userId, 
+        patientName: 'Test Patient',
+        isTest: true,
+        customTitle: title,
+        customMessage: message
+      }
+    });
+    
+    if (error) {
+      console.error('Error sending test push notification:', error);
+      return false;
+    }
+    
+    console.log('Test push notification sent successfully:', data);
+    return true;
+  } catch (error) {
+    console.error('Exception sending test push notification:', error);
+    return false;
+  }
+};

@@ -1,72 +1,64 @@
 
 import { supabase } from '@/lib/supabase';
 
-export const sendConnectionRequestNotification = async (doctorId: string, patientName: string) => {
+// Background job approach for connection request notifications
+export async function sendConnectionRequestNotification(doctorId: string, patientName: string) {
   try {
-    console.log('=== Starting notification creation process ===');
-    console.log('Doctor ID:', doctorId);
-    console.log('Patient name:', patientName);
+    console.log('Sending connection request notification via background job:', { doctorId, patientName });
     
-    // First, let's verify the doctor exists and get their tenant info
-    const { data: doctorProfile, error: doctorError } = await supabase
-      .from('profiles')
-      .select('id, full_name, email, tenant_id')
-      .eq('id', doctorId)
-      .single();
+    // Call the background job edge function
+    const { data, error } = await supabase.functions.invoke('process-connection-notifications', {
+      body: { doctorId, patientName }
+    });
     
-    if (doctorError) {
-      console.error('Error fetching doctor profile:', doctorError);
-      throw new Error(`Doctor not found: ${doctorError.message}`);
+    if (error) {
+      console.error('Error calling background job:', error);
+      throw new Error(`Background job failed: ${error.message}`);
     }
     
-    if (!doctorProfile) {
-      console.error('Doctor profile not found for ID:', doctorId);
-      throw new Error('Doctor profile not found');
-    }
+    console.log('Background job completed successfully:', data);
+    return data;
     
-    console.log('Doctor profile found:', doctorProfile);
+  } catch (error) {
+    console.error('Error in sendConnectionRequestNotification:', error);
+    throw error;
+  }
+}
+
+// Alternative direct approach (fallback if background job fails)
+export async function sendConnectionRequestNotificationDirect(doctorId: string, patientName: string) {
+  try {
+    console.log('Sending connection request notification directly:', { doctorId, patientName });
     
-    // Create notification in database with tenant awareness
-    console.log('Creating notification in database...');
-    const notificationData = {
-      user_id: doctorId,
-      type: 'connection_request',
-      title: 'New Connection Request',
-      message: `${patientName} has requested to connect with you`,
-      read: false,
-      tenant_id: doctorProfile.tenant_id, // Include tenant_id for proper scoping
-      created_at: new Date().toISOString()
-    };
-    
-    console.log('Notification data to insert:', notificationData);
-    
+    // Create in-app notification directly
     const { data: notification, error } = await supabase
       .from('notifications')
-      .insert(notificationData)
+      .insert({
+        user_id: doctorId,
+        type: 'connection_request',
+        title: 'New Patient Connection Request',
+        message: `${patientName} has requested to connect with you as a patient.`,
+        link: '/dashboard?section=patients&profileTab=active',
+        meta: {
+          patientName,
+          timestamp: new Date().toISOString(),
+          source: 'direct_fallback'
+        },
+        read: false
+      })
       .select()
       .single();
-
+    
     if (error) {
-      console.error('Database error creating notification:', error);
-      console.error('Error details:', error.details);
-      console.error('Error hint:', error.hint);
-      console.error('Error message:', error.message);
-      throw new Error(`Failed to create notification: ${error.message}`);
+      console.error('Error creating direct notification:', error);
+      throw error;
     }
     
-    if (!notification) {
-      console.error('Notification was not created - no data returned');
-      throw new Error('Notification creation failed - no data returned');
-    }
-    
-    console.log('✅ Notification created successfully in database:', notification);
-    console.log('=== Notification creation process completed successfully ===');
+    console.log('Direct notification created successfully:', notification);
     return notification;
     
   } catch (error) {
-    console.error('=== NOTIFICATION CREATION FAILED ===');
-    console.error('Error in sendConnectionRequestNotification:', error);
-    console.error('Error stack:', error.stack);
-    throw error; // Re-throw to let the caller handle the error
+    console.error('Error in sendConnectionRequestNotificationDirect:', error);
+    throw error;
   }
-};
+}

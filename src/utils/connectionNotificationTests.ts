@@ -299,8 +299,8 @@ export class ConnectionNotificationTester {
   }
 
   async testConnectionNotificationFlow() {
-    return this.runTest('Connection Notification Flow', async () => {
-      console.log('🔗 Testing connection notification flow...');
+    return this.runTest('Connection Notification Flow (Background Job)', async () => {
+      console.log('🔗 Testing connection notification flow with background job...');
       
       // Ensure we're authenticated
       console.log('🔐 Ensuring authentication for connection flow test...');
@@ -323,17 +323,94 @@ export class ConnectionNotificationTester {
       );
 
       const queryTime = Date.now() - startTime;
-      console.log(`Connection notification flow took ${queryTime}ms`);
+      console.log(`Background job notification flow took ${queryTime}ms`);
 
       if (!result) {
-        throw new Error('Connection notification flow returned null');
+        throw new Error('Background job notification flow returned null');
       }
 
-      console.log('✅ Connection notification flow successful:', result);
+      console.log('✅ Background job notification flow successful:', result);
       return {
-        notification: result,
+        notification: result.notification,
+        pushResults: result.pushResults,
         doctorId: TEST_ACCOUNTS.doctor.id,
         patientName: TEST_ACCOUNTS.patient.name,
+        queryTime,
+        backgroundJobUsed: true
+      };
+    });
+  }
+
+  async testBackgroundJobDirectly() {
+    return this.runTest('Background Job Direct Call', async () => {
+      console.log('🚀 Testing background job direct call...');
+      
+      const startTime = Date.now();
+      const { data, error } = await supabase.functions.invoke('process-connection-notifications', {
+        body: { 
+          doctorId: TEST_ACCOUNTS.doctor.id, 
+          patientName: TEST_ACCOUNTS.patient.name + ' (Direct Test)'
+        }
+      });
+
+      const queryTime = Date.now() - startTime;
+      console.log(`Background job direct call took ${queryTime}ms`);
+
+      if (error) {
+        throw new Error(`Background job failed: ${error.message}`);
+      }
+
+      if (!data) {
+        throw new Error('Background job returned no data');
+      }
+
+      console.log('✅ Background job direct call successful:', data);
+      return {
+        backgroundJobResult: data,
+        doctorId: TEST_ACCOUNTS.doctor.id,
+        patientName: TEST_ACCOUNTS.patient.name,
+        queryTime
+      };
+    });
+  }
+
+  async testFCMTokenRegistration() {
+    return this.runTest('FCM Token Registration', async () => {
+      console.log('📱 Testing FCM token registration...');
+      
+      // Generate a mock FCM token for testing
+      const mockToken = `test_fcm_token_${crypto.randomUUID()}`;
+      
+      const startTime = Date.now();
+      const { error } = await supabase
+        .from('user_notification_tokens')
+        .upsert({
+          user_id: TEST_ACCOUNTS.doctor.id,
+          token: mockToken,
+          platform: 'web',
+          created_at: new Date().toISOString()
+        });
+
+      const queryTime = Date.now() - startTime;
+      console.log(`FCM token registration took ${queryTime}ms`);
+
+      if (error) {
+        throw new Error(`FCM token registration failed: ${error.message}`);
+      }
+
+      // Verify the token was stored
+      const { data: storedToken } = await supabase
+        .from('user_notification_tokens')
+        .select('*')
+        .eq('user_id', TEST_ACCOUNTS.doctor.id)
+        .eq('token', mockToken)
+        .single();
+
+      console.log('✅ FCM token registration successful:', storedToken);
+      return {
+        tokenStored: !!storedToken,
+        mockToken,
+        userId: TEST_ACCOUNTS.doctor.id,
         queryTime
       };
     });
@@ -394,7 +471,7 @@ export class ConnectionNotificationTester {
   }
 
   async runAllTests() {
-    console.log('🚀 Starting Connection Notification Test Suite');
+    console.log('🚀 Starting Connection Notification Test Suite (Background Jobs + Firebase)');
     console.log('📋 Test Accounts:', TEST_ACCOUNTS);
     
     this.results = [];
@@ -408,8 +485,10 @@ export class ConnectionNotificationTester {
       await this.testCurrentAuthenticationState();
       await this.testDoctorProfileExists();
       await this.testPatientProfileExists();
+      await this.testFCMTokenRegistration();
       await this.testNotificationCreationDirect();
       await this.testNotificationHelperFunction();
+      await this.testBackgroundJobDirectly();
       await this.testConnectionNotificationFlow();
       await this.testNotificationQuery();
       await this.testFirebaseIntegration();
