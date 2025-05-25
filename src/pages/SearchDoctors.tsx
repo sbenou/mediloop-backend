@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -40,16 +41,17 @@ const SearchDoctors = () => {
   const location = useLocation();
   const { profile } = useAuth();
 
-  // Fetch user's connected doctor
+  // Fetch user's connected doctor using the correct table
   const { data: connectedDoctor } = useQuery({
     queryKey: ['connectedDoctor', profile?.id],
     enabled: !!profile?.id,
     queryFn: async () => {
       try {
         const { data, error } = await supabase
-          .from('user_doctors')
-          .select('doctor_id')
-          .eq('user_id', profile?.id)
+          .from('doctor_patient_connections')
+          .select('doctor_id, status')
+          .eq('patient_id', profile?.id)
+          .eq('status', 'accepted')
           .maybeSingle();
         
         if (error && error.code !== 'PGRST116') throw error;
@@ -82,7 +84,7 @@ const SearchDoctors = () => {
     }
   };
 
-  const handleConnectDoctor = async (doctorId: string, source?: 'database' | 'overpass') => {
+  const handleDoctorConnect = async (doctorId: string, source?: 'database' | 'overpass') => {
     if (!profile?.id) {
       toast({
         title: "Login Required",
@@ -174,7 +176,7 @@ const SearchDoctors = () => {
               <DoctorList
                 doctors={doctors}
                 isLoading={isLoading}
-                onConnect={handleConnectDoctor}
+                onConnect={handleDoctorConnect}
                 searchCity="nearby location"
               />
             </div>
@@ -187,7 +189,7 @@ const SearchDoctors = () => {
                 onDoctorSelect={(doctorId) => {
                   const doctor = doctors.find(d => d.id === doctorId);
                   if (doctor) {
-                    handleConnectDoctor(doctorId, doctor.source || 'database');
+                    handleDoctorConnect(doctorId, doctor.source || 'database');
                   }
                 }}
               />

@@ -110,7 +110,7 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
           console.log('✅ Notification process completed successfully:', notificationResult);
         } catch (notificationError) {
           console.error('❌ CRITICAL: Notification creation failed:', notificationError);
-          // Still don't throw here as the connection was successful
+          // Don't throw here as the connection was successful
           console.warn('⚠️ Connection created but doctor notification failed');
         }
 
@@ -128,6 +128,7 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
         description: "Your connection request has been sent to the doctor.",
       });
       queryClient.invalidateQueries({ queryKey: ['doctorConnections'] });
+      queryClient.invalidateQueries({ queryKey: ['connectedDoctor'] });
     },
     onError: (error: Error) => {
       console.error('Connection request failed:', error);
@@ -145,6 +146,10 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
         description: errorMessage,
       });
     },
+    onSettled: () => {
+      // Always reset loading state
+      console.log('Connection mutation settled');
+    }
   });
 
   const handleConnect = async (doctorId: string, source: 'database' | 'overpass') => {
@@ -175,6 +180,7 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
       await connectMutation.mutateAsync(doctorId);
     } catch (error) {
       console.error('Error in handleConnect:', error);
+      // Error handling is done in the mutation's onError callback
     }
   };
 
