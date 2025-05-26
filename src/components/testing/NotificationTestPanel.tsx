@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -91,17 +92,32 @@ const NotificationTestPanel = () => {
 
   return (
     <div className="space-y-6 p-6">
-      {/* Critical connectivity issues detected */}
-      <Card className="border-red-200 bg-red-50">
+      {/* Supabase client configuration issues detected */}
+      <Card className="border-orange-200 bg-orange-50">
         <CardContent className="pt-6">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5" />
+            <AlertTriangle className="h-5 w-5 text-orange-500 mt-0.5" />
             <div>
-              <h3 className="font-semibold text-red-800 mb-2">Critical Connectivity Issues Detected</h3>
-              <p className="text-sm text-red-700 mb-3">
-                All Supabase operations are timing out. This indicates a network connectivity problem between your application and the Supabase servers.
+              <h3 className="font-semibold text-orange-800 mb-2">Supabase Client Configuration Issues Detected</h3>
+              <p className="text-sm text-orange-700 mb-3">
+                Network connectivity to Supabase servers is working (HTTP calls succeed), but the Supabase JavaScript client is timing out on operations. 
+                This indicates a client-side configuration or initialization issue rather than a network problem.
               </p>
               <div className="flex gap-2 flex-wrap">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setShowTargetedTest(!showTargetedTest)}
+                >
+                  {showTargetedTest ? 'Hide' : 'Show'} Targeted Test (Shows HTTP works)
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setShowSimpleTest(!showSimpleTest)}
+                >
+                  {showSimpleTest ? 'Hide' : 'Show'} Simple Test (Shows client issues)
+                </Button>
                 <Button 
                   variant="outline" 
                   size="sm"
@@ -109,28 +125,11 @@ const NotificationTestPanel = () => {
                 >
                   {showNetworkTest ? 'Hide' : 'Show'} Network Diagnostics
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setShowTargetedTest(!showTargetedTest)}
-                >
-                  {showTargetedTest ? 'Hide' : 'Show'} Targeted Test
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setShowSimpleTest(!showSimpleTest)}
-                >
-                  {showSimpleTest ? 'Hide' : 'Show'} Simple Test
-                </Button>
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
-
-      {/* Network diagnostic test */}
-      {showNetworkTest && <NetworkDiagnosticTest />}
 
       {/* Targeted Supabase test */}
       {showTargetedTest && <TargetedSupabaseTest />}
@@ -138,20 +137,23 @@ const NotificationTestPanel = () => {
       {/* Simple connectivity test */}
       {showSimpleTest && <SimpleConnectivityTest />}
 
+      {/* Network diagnostic test */}
+      {showNetworkTest && <NetworkDiagnosticTest />}
+
       {/* Original test suite */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bug className="h-5 w-5" />
             Full Connection Notification Test Suite
-            <Badge variant="destructive">Currently Non-Functional</Badge>
+            <Badge variant="destructive">Client Configuration Issues</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <p className="text-sm text-yellow-800">
-              <strong>Note:</strong> The full test suite will not work until the connectivity issues are resolved. 
-              Please run the Network Diagnostics first to identify the root cause.
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+            <p className="text-sm text-orange-800">
+              <strong>Note:</strong> The full test suite will not work until the Supabase client configuration issues are resolved. 
+              Network connectivity is fine - the problem is with how the Supabase client is initialized or configured.
             </p>
           </div>
           
@@ -167,7 +169,7 @@ const NotificationTestPanel = () => {
               ) : (
                 <Play className="h-4 w-4" />
               )}
-              {isRunning ? 'Running Tests...' : 'Run Full Test Suite (Will Fail)'}
+              {isRunning ? 'Running Tests...' : 'Run Full Test Suite (Will Have Client Issues)'}
             </Button>
             
             <Button 
