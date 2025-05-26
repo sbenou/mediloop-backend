@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import { sendConnectionRequestNotification } from './doctorConnectionNotifications';
 import { createNotification, createTenantNotification } from './notifications';
@@ -18,7 +17,7 @@ const TEST_ACCOUNTS = {
   pharmacist: {
     id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
     email: 'saady.london@gmail.com',
-    name: 'Ahmed Saady'
+    name: 'David Banner'
   }
 };
 
