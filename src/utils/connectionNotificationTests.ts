@@ -40,7 +40,7 @@ interface TestSummary {
 
 export class ConnectionNotificationTester {
   private results: TestResult[] = [];
-  private testTimeout = 10000; // Increased to 10 seconds
+  private testTimeout = 10000; // 10 seconds
   private isTestingStopped = false;
 
   private async runTest(testName: string, testFn: () => Promise<any>): Promise<TestResult> {
@@ -84,18 +84,41 @@ export class ConnectionNotificationTester {
     return this.runTest('Database Connectivity', async () => {
       console.log('🔍 Testing database connection...');
       
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id')
-        .limit(1);
-      
-      if (error) {
-        console.error('❌ Database connectivity error:', error);
-        throw error;
+      // First test a simple query that should always work
+      try {
+        console.log('🔍 Testing basic database connection with SELECT 1...');
+        const { data: basicTest, error: basicError } = await supabase
+          .rpc('get_current_user_role');
+        
+        console.log('Basic test result:', { basicTest, basicError });
+        
+        if (basicError) {
+          console.error('❌ Basic database test failed:', basicError);
+          throw new Error(`Basic database test failed: ${basicError.message}`);
+        }
+        
+        console.log('✅ Basic database connection successful');
+        
+        // Now test profiles table access
+        console.log('🔍 Testing profiles table access...');
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id')
+          .limit(1);
+        
+        console.log('Profiles query result:', { data, error });
+        
+        if (error) {
+          console.error('❌ Profiles table access error:', error);
+          throw new Error(`Profiles table access failed: ${error.message}`);
+        }
+        
+        console.log('✅ Database connection and profiles access successful');
+        return { message: 'Database connection successful', count: data?.length || 0, profilesAccessible: true };
+      } catch (queryError) {
+        console.error('Database connectivity query error:', queryError);
+        throw queryError;
       }
-      
-      console.log('✅ Database connection successful');
-      return { message: 'Database connection successful', count: data?.length || 0 };
     });
   }
 
@@ -103,27 +126,40 @@ export class ConnectionNotificationTester {
     return this.runTest('Current Authentication State', async () => {
       console.log('🔐 Testing current authentication state...');
       
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        throw new Error(`Session error: ${sessionError.message}`);
+      try {
+        console.log('🔍 Getting current session...');
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        console.log('Session data:', { 
+          hasSession: !!sessionData?.session,
+          hasUser: !!sessionData?.session?.user,
+          userId: sessionData?.session?.user?.id,
+          sessionError 
+        });
+        
+        if (sessionError) {
+          throw new Error(`Session error: ${sessionError.message}`);
+        }
+
+        const isAuthenticated = !!sessionData?.session?.user;
+        const userId = sessionData?.session?.user?.id;
+
+        console.log('🔍 Current authentication state:', {
+          isAuthenticated,
+          userId,
+          sessionExists: !!sessionData?.session
+        });
+
+        return {
+          isAuthenticated,
+          userId,
+          sessionExists: !!sessionData?.session,
+          userEmail: sessionData?.session?.user?.email
+        };
+      } catch (authError) {
+        console.error('Authentication state query error:', authError);
+        throw authError;
       }
-
-      const isAuthenticated = !!sessionData?.session?.user;
-      const userId = sessionData?.session?.user?.id;
-
-      console.log('🔍 Current authentication state:', {
-        isAuthenticated,
-        userId,
-        sessionExists: !!sessionData?.session
-      });
-
-      return {
-        isAuthenticated,
-        userId,
-        sessionExists: !!sessionData?.session,
-        userEmail: sessionData?.session?.user?.email
-      };
     });
   }
 
