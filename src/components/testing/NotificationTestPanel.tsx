@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { runConnectionNotificationTests, debugFirebaseIntegration } from '@/utils/connectionNotificationTests';
 import { Play, RefreshCw, Bug, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react';
 import SimpleConnectivityTest from './SimpleConnectivityTest';
+import NetworkDiagnosticTest from './NetworkDiagnosticTest';
 
 interface TestResult {
   test: string;
@@ -32,6 +33,7 @@ const NotificationTestPanel = () => {
   const [firebaseDebug, setFirebaseDebug] = useState<any>(null);
   const [logs, setLogs] = useState<string[]>([]);
   const [showSimpleTest, setShowSimpleTest] = useState(true);
+  const [showNetworkTest, setShowNetworkTest] = useState(false);
 
   const addLog = (message: string) => {
     const timestamp = new Date().toLocaleTimeString();
@@ -88,27 +90,39 @@ const NotificationTestPanel = () => {
 
   return (
     <div className="space-y-6 p-6">
-      {/* Warning about test issues */}
-      <Card className="border-orange-200 bg-orange-50">
+      {/* Critical connectivity issues detected */}
+      <Card className="border-red-200 bg-red-50">
         <CardContent className="pt-6">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-orange-500 mt-0.5" />
+            <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5" />
             <div>
-              <h3 className="font-semibold text-orange-800 mb-2">Test Suite Issues Detected</h3>
-              <p className="text-sm text-orange-700 mb-3">
-                The full test suite is experiencing timeout issues. This suggests connectivity or authentication problems with Supabase.
+              <h3 className="font-semibold text-red-800 mb-2">Critical Connectivity Issues Detected</h3>
+              <p className="text-sm text-red-700 mb-3">
+                All Supabase operations are timing out. This indicates a network connectivity problem between your application and the Supabase servers.
               </p>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setShowSimpleTest(!showSimpleTest)}
-              >
-                {showSimpleTest ? 'Hide' : 'Show'} Simple Connectivity Test
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setShowNetworkTest(!showNetworkTest)}
+                >
+                  {showNetworkTest ? 'Hide' : 'Show'} Network Diagnostics
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setShowSimpleTest(!showSimpleTest)}
+                >
+                  {showSimpleTest ? 'Hide' : 'Show'} Simple Test
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Network diagnostic test */}
+      {showNetworkTest && <NetworkDiagnosticTest />}
 
       {/* Simple connectivity test */}
       {showSimpleTest && <SimpleConnectivityTest />}
@@ -119,9 +133,17 @@ const NotificationTestPanel = () => {
           <CardTitle className="flex items-center gap-2">
             <Bug className="h-5 w-5" />
             Full Connection Notification Test Suite
+            <Badge variant="destructive">Currently Non-Functional</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <p className="text-sm text-yellow-800">
+              <strong>Note:</strong> The full test suite will not work until the connectivity issues are resolved. 
+              Please run the Network Diagnostics first to identify the root cause.
+            </p>
+          </div>
+          
           <div className="flex gap-4">
             <Button 
               onClick={runTests} 
@@ -134,7 +156,7 @@ const NotificationTestPanel = () => {
               ) : (
                 <Play className="h-4 w-4" />
               )}
-              {isRunning ? 'Running Tests...' : 'Run Full Test Suite'}
+              {isRunning ? 'Running Tests...' : 'Run Full Test Suite (Will Fail)'}
             </Button>
             
             <Button 
