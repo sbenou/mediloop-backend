@@ -38,6 +38,13 @@ export async function createNotification({
   tenantId
 }: CreateNotificationParams) {
   try {
+    // Ensure we have a valid session before creating notifications
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !session) {
+      console.error('No valid session for notification creation:', sessionError);
+      return null;
+    }
+
     // If no tenant ID provided, try to get it from the user's profile
     let finalTenantId = tenantId;
     if (!finalTenantId) {
