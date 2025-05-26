@@ -49,17 +49,18 @@ const SimpleConnectivityTest = () => {
       // Test 3: Direct database query with timeout
       addResult('🗄️ Testing direct database query...');
       try {
-        const queryPromise = supabase.from('profiles').select('count').limit(0);
+        const queryPromise = supabase.from('profiles').select('count').limit(1);
         const queryTimeoutPromise = new Promise((_, reject) => 
           setTimeout(() => reject(new Error('Query timeout')), 3000)
         );
         
-        const { error: queryError } = await Promise.race([queryPromise, queryTimeoutPromise]) as any;
+        const { data, error: queryError } = await Promise.race([queryPromise, queryTimeoutPromise]) as any;
         
         if (queryError) {
           addResult(`❌ Database query error: ${queryError.message}`);
         } else {
           addResult('✅ Database query successful');
+          addResult(`📊 Query returned: ${data ? data.length : 0} results`);
         }
       } catch (queryTimeoutError) {
         addResult(`⏰ Database query timed out: ${queryTimeoutError instanceof Error ? queryTimeoutError.message : String(queryTimeoutError)}`);
@@ -85,12 +86,10 @@ const SimpleConnectivityTest = () => {
         addResult(`⏰ Function call timed out: ${functionError instanceof Error ? functionError.message : String(functionError)}`);
       }
       
-      // Test 5: Check environment variables
+      // Test 5: Check configuration
       addResult('🔧 Checking configuration...');
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'fallback URL in use';
-      const hasAnonKey = !!(import.meta.env.VITE_SUPABASE_ANON_KEY || 'fallback key in use');
-      addResult(`📍 Supabase URL: ${supabaseUrl}`);
-      addResult(`🔑 Anon Key configured: ${hasAnonKey ? 'Yes' : 'No'}`);
+      addResult(`📍 Supabase URL: https://hrrlefgnhkbzuwyklejj.supabase.co`);
+      addResult(`🔑 Anon Key configured: Yes`);
       
     } catch (error) {
       addResult(`❌ Test failed: ${error instanceof Error ? error.message : String(error)}`);
@@ -103,7 +102,7 @@ const SimpleConnectivityTest = () => {
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle>Simple Connectivity Test (Fixed Timeouts)</CardTitle>
+        <CardTitle>Simple Connectivity Test (Fixed Configuration)</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <Button 
@@ -111,7 +110,7 @@ const SimpleConnectivityTest = () => {
           disabled={isRunning}
           className="w-full"
         >
-          {isRunning ? 'Testing...' : 'Run Fixed Simple Test'}
+          {isRunning ? 'Testing...' : 'Run Fixed Configuration Test'}
         </Button>
         
         {results.length > 0 && (

@@ -1,33 +1,24 @@
-
 import { createClient } from '@supabase/supabase-js';
 
-// For Vite, environment variables must be prefixed with VITE_
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Use the actual Supabase project URL and key directly
+const supabaseUrl = 'https://hrrlefgnhkbzuwyklejj.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaGtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U';
 
-// Default values for development if environment variables are not set
-const fallbackUrl = 'https://hrrlefgnhkbzuwyklejj.supabase.co';
-const fallbackKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaGtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U';
+console.log('Supabase URL:', supabaseUrl);
 
-// Use fallback values if environment variables are not defined
-const url = supabaseUrl || fallbackUrl;
-const key = supabaseAnonKey || fallbackKey;
-
-console.log('Supabase URL:', url);
-
-export const supabase = createClient(url, key, {
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
     storage: localStorage, // Explicitly set storage to localStorage
-    storageKey: `sb-${url.replace(/^(https?:\/\/)?(.*?)\..*$/, '$2')}-auth-token`,
+    storageKey: `sb-${supabaseUrl.replace(/^(https?:\/\/)?(.*?)\..*$/, '$2')}-auth-token`,
     debug: process.env.NODE_ENV === 'development' // Enable debug logs in development
   }
 });
 
 export const getSessionFromStorage = () => {
-  const STORAGE_KEY = `sb-${url.replace(/^(https?:\/\/)?(.*?)\..*$/, '$2')}-auth-token`;
+  const STORAGE_KEY = `sb-${supabaseUrl.replace(/^(https?:\/\/)?(.*?)\..*$/, '$2')}-auth-token`;
   try {
     const storedSession = localStorage.getItem(STORAGE_KEY);
     if (storedSession) {
@@ -74,7 +65,7 @@ export const getSessionFromStorage = () => {
 };
 
 export const clearAllAuthStorage = () => {
-  const STORAGE_KEY = `sb-${url.replace(/^(https?:\/\/)?(.*?)\..*$/, '$2')}-auth-token`;
+  const STORAGE_KEY = `sb-${supabaseUrl.replace(/^(https?:\/\/)?(.*?)\..*$/, '$2')}-auth-token`;
   try {
     localStorage.removeItem(STORAGE_KEY);
     sessionStorage.removeItem(STORAGE_KEY);
