@@ -1,19 +1,34 @@
+
 import { createClient } from '@supabase/supabase-js';
 
 // Use the actual Supabase project URL and key directly
 const supabaseUrl = 'https://hrrlefgnhkbzuwyklejj.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaGtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaWtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U';
 
 console.log('Supabase URL:', supabaseUrl);
 
+// Create a single client instance with optimized configuration for Lovable environment
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    storage: localStorage, // Explicitly set storage to localStorage
+    storage: localStorage,
     storageKey: `sb-${supabaseUrl.replace(/^(https?:\/\/)?(.*?)\..*$/, '$2')}-auth-token`,
-    debug: process.env.NODE_ENV === 'development' // Enable debug logs in development
+    debug: process.env.NODE_ENV === 'development'
+  },
+  global: {
+    headers: {
+      'x-client-info': 'supabase-js-web'
+    }
+  },
+  db: {
+    schema: 'public'
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 10
+    }
   }
 });
 

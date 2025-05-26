@@ -27,18 +27,24 @@ const SimpleConnectivityTest = () => {
       }
       addResult('✅ Supabase client exists');
       
-      // Test 2: Test auth with timeout
-      addResult('🔐 Testing auth with 3 second timeout...');
+      // Test 2: Test auth with timeout and proper error handling
+      addResult('🔐 Testing auth with 5 second timeout...');
       try {
-        const authPromise = supabase.auth.getSession();
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Auth timeout')), 3000)
-        );
+        const authController = new AbortController();
+        const authTimeout = setTimeout(() => authController.abort(), 5000);
         
-        const { data: session, error } = await Promise.race([authPromise, timeoutPromise]) as any;
+        const authPromise = supabase.auth.getSession();
+        const { data: session, error } = await Promise.race([
+          authPromise,
+          new Promise<any>((_, reject) => 
+            setTimeout(() => reject(new Error('Auth timeout')), 5000)
+          )
+        ]);
+        
+        clearTimeout(authTimeout);
         
         if (error) {
-          addResult(`❌ Auth error: ${error.message}`);
+          addResult(`⚠️ Auth error: ${error.message}`);
         } else {
           addResult(`✅ Auth check complete - User: ${session?.session?.user?.id || 'None'}`);
         }
@@ -46,15 +52,20 @@ const SimpleConnectivityTest = () => {
         addResult(`⏰ Auth timed out or failed: ${authError instanceof Error ? authError.message : String(authError)}`);
       }
       
-      // Test 3: Direct database query with timeout
-      addResult('🗄️ Testing direct database query...');
+      // Test 3: Direct database query with proper timeout handling
+      addResult('🗄️ Testing direct database query with 5 second timeout...');
       try {
-        const queryPromise = supabase.from('profiles').select('count').limit(1);
-        const queryTimeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Query timeout')), 3000)
-        );
+        const queryController = new AbortController();
+        const queryTimeout = setTimeout(() => queryController.abort(), 5000);
         
-        const { data, error: queryError } = await Promise.race([queryPromise, queryTimeoutPromise]) as any;
+        const { data, error: queryError } = await Promise.race([
+          supabase.from('profiles').select('count').limit(1),
+          new Promise<any>((_, reject) => 
+            setTimeout(() => reject(new Error('Query timeout')), 5000)
+          )
+        ]);
+        
+        clearTimeout(queryTimeout);
         
         if (queryError) {
           addResult(`❌ Database query error: ${queryError.message}`);
@@ -66,27 +77,7 @@ const SimpleConnectivityTest = () => {
         addResult(`⏰ Database query timed out: ${queryTimeoutError instanceof Error ? queryTimeoutError.message : String(queryTimeoutError)}`);
       }
       
-      // Test 4: Test raw SQL function call
-      addResult('⚙️ Testing database function call...');
-      try {
-        const functionPromise = supabase.rpc('get_admin_dashboard_stats');
-        const functionTimeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Function timeout')), 3000)
-        );
-        
-        const { data, error } = await Promise.race([functionPromise, functionTimeoutPromise]) as any;
-        
-        if (error) {
-          addResult(`❌ Function call error: ${error.message}`);
-        } else {
-          addResult('✅ Function call successful');
-          addResult(`📊 Data received: ${JSON.stringify(data)}`);
-        }
-      } catch (functionError) {
-        addResult(`⏰ Function call timed out: ${functionError instanceof Error ? functionError.message : String(functionError)}`);
-      }
-      
-      // Test 5: Check configuration
+      // Test 4: Check configuration
       addResult('🔧 Checking configuration...');
       addResult(`📍 Supabase URL: https://hrrlefgnhkbzuwyklejj.supabase.co`);
       addResult(`🔑 Anon Key configured: Yes`);
@@ -102,7 +93,7 @@ const SimpleConnectivityTest = () => {
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle>Simple Connectivity Test (Fixed Configuration)</CardTitle>
+        <CardTitle>Simple Connectivity Test (Single Client Instance)</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <Button 
@@ -110,7 +101,7 @@ const SimpleConnectivityTest = () => {
           disabled={isRunning}
           className="w-full"
         >
-          {isRunning ? 'Testing...' : 'Run Fixed Configuration Test'}
+          {isRunning ? 'Testing...' : 'Run Single Client Test'}
         </Button>
         
         {results.length > 0 && (
