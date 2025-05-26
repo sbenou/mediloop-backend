@@ -82,24 +82,12 @@ export class ConnectionNotificationTester {
 
   async testDatabaseConnectivity() {
     return this.runTest('Database Connectivity', async () => {
-      console.log('🔍 Testing database connection with timeout protection...');
+      console.log('🔍 Testing database connection...');
       
-      const startTime = Date.now();
-      
-      // Create a timeout wrapper for the query
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Database query timeout')), 8000);
-      });
-      
-      const queryPromise = supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('id')
         .limit(1);
-      
-      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
-      
-      const queryTime = Date.now() - startTime;
-      console.log(`Database query took ${queryTime}ms`);
       
       if (error) {
         console.error('❌ Database connectivity error:', error);
@@ -107,26 +95,15 @@ export class ConnectionNotificationTester {
       }
       
       console.log('✅ Database connection successful');
-      return { message: 'Database connection successful', count: data?.length || 0, queryTime };
+      return { message: 'Database connection successful', count: data?.length || 0 };
     });
   }
 
   async testCurrentAuthenticationState() {
     return this.runTest('Current Authentication State', async () => {
-      console.log('🔐 Testing current authentication state with timeout protection...');
+      console.log('🔐 Testing current authentication state...');
       
-      const startTime = Date.now();
-      
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Auth state query timeout')), 8000);
-      });
-      
-      const authPromise = supabase.auth.getSession();
-      
-      const { data: sessionData, error: sessionError } = await Promise.race([authPromise, timeoutPromise]) as any;
-      
-      const sessionTime = Date.now() - startTime;
-      console.log(`Session query took ${sessionTime}ms`);
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {
         throw new Error(`Session error: ${sessionError.message}`);
@@ -145,32 +122,20 @@ export class ConnectionNotificationTester {
         isAuthenticated,
         userId,
         sessionExists: !!sessionData?.session,
-        userEmail: sessionData?.session?.user?.email,
-        sessionTime
+        userEmail: sessionData?.session?.user?.email
       };
     });
   }
 
   async testDoctorProfileExists() {
     return this.runTest('Doctor Profile Exists', async () => {
-      console.log('👨‍⚕️ Testing if doctor profile exists with timeout protection...');
+      console.log('👨‍⚕️ Testing if doctor profile exists...');
       
-      const startTime = Date.now();
-      
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Doctor profile query timeout')), 8000);
-      });
-      
-      const profilePromise = supabase
+      const { data: profile, error } = await supabase
         .from('profiles')
         .select('id, full_name, role')
         .eq('id', TEST_ACCOUNTS.doctor.id)
         .maybeSingle();
-
-      const { data: profile, error } = await Promise.race([profilePromise, timeoutPromise]) as any;
-
-      const queryTime = Date.now() - startTime;
-      console.log(`Doctor profile query took ${queryTime}ms`);
 
       if (error) {
         console.error('❌ Doctor profile fetch error:', error);
@@ -184,32 +149,20 @@ export class ConnectionNotificationTester {
       console.log('✅ Doctor profile found:', profile);
       return {
         profile,
-        doctorId: TEST_ACCOUNTS.doctor.id,
-        queryTime
+        doctorId: TEST_ACCOUNTS.doctor.id
       };
     });
   }
 
   async testPatientProfileExists() {
     return this.runTest('Patient Profile Exists', async () => {
-      console.log('🤒 Testing if patient profile exists with timeout protection...');
+      console.log('🤒 Testing if patient profile exists...');
       
-      const startTime = Date.now();
-      
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Patient profile query timeout')), 8000);
-      });
-      
-      const profilePromise = supabase
+      const { data: profile, error } = await supabase
         .from('profiles')
         .select('id, full_name, role')
         .eq('id', TEST_ACCOUNTS.patient.id)
         .maybeSingle();
-
-      const { data: profile, error } = await Promise.race([profilePromise, timeoutPromise]) as any;
-
-      const queryTime = Date.now() - startTime;
-      console.log(`Patient profile query took ${queryTime}ms`);
 
       if (error) {
         console.error('❌ Patient profile fetch error:', error);
@@ -223,19 +176,15 @@ export class ConnectionNotificationTester {
       console.log('✅ Patient profile found:', profile);
       return {
         profile,
-        patientId: TEST_ACCOUNTS.patient.id,
-        queryTime
+        patientId: TEST_ACCOUNTS.patient.id
       };
     });
   }
 
   async testNotificationCreationDirect() {
     return this.runTest('Direct Notification Creation', async () => {
-      console.log('🔔 Testing direct notification creation with timeout protection...');
+      console.log('🔔 Testing direct notification creation...');
       
-      // Skip auth - assume we're already signed in based on logs
-      console.log('🔐 Assuming already authenticated, proceeding with notification creation...');
-
       const notificationData = {
         user_id: TEST_ACCOUNTS.doctor.id,
         type: 'connection_request',
@@ -247,22 +196,11 @@ export class ConnectionNotificationTester {
 
       console.log('📝 Creating test notification:', notificationData);
       
-      const startTime = Date.now();
-      
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Notification creation timeout')), 8000);
-      });
-      
-      const notificationPromise = supabase
+      const { data, error } = await supabase
         .from('notifications')
         .insert(notificationData)
         .select()
         .maybeSingle();
-
-      const { data, error } = await Promise.race([notificationPromise, timeoutPromise]) as any;
-
-      const queryTime = Date.now() - startTime;
-      console.log(`Notification creation query took ${queryTime}ms`);
 
       if (error) {
         console.error('❌ Direct notification creation error:', error);
@@ -276,47 +214,21 @@ export class ConnectionNotificationTester {
       console.log('✅ Direct notification created successfully:', data);
       return {
         notification: data,
-        targetUserId: TEST_ACCOUNTS.doctor.id,
-        queryTime
+        targetUserId: TEST_ACCOUNTS.doctor.id
       };
     });
   }
 
   async testNotificationHelperFunction() {
     return this.runTest('Notification Helper Function', async () => {
-      console.log('🔧 Testing notification helper function with timeout protection...');
+      console.log('🔧 Testing notification helper function...');
       
-      // Ensure we're authenticated
-      console.log('🔐 Ensuring authentication for helper function test...');
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: TEST_ACCOUNTS.doctor.email,
-        password: 'testpassword123'
-      });
-
-      if (signInError) {
-        console.log('⚠️ Sign in failed, trying to proceed anyway:', signInError.message);
-      }
-
-      // Wait a moment for auth to propagate
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      const startTime = Date.now();
-      
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Helper function timeout')), 8000);
-      });
-      
-      const helperPromise = createNotification({
+      const result = await createNotification({
         userId: TEST_ACCOUNTS.doctor.id,
         type: 'connection_request',
         title: 'Test Function Notification',
         message: 'Testing notification helper function (TEST)'
       });
-
-      const result = await Promise.race([helperPromise, timeoutPromise]);
-
-      const queryTime = Date.now() - startTime;
-      console.log(`Notification helper function took ${queryTime}ms`);
 
       if (!result) {
         throw new Error('Notification helper function returned null');
@@ -325,45 +237,19 @@ export class ConnectionNotificationTester {
       console.log('✅ Notification helper function test successful:', result);
       return {
         notification: result,
-        userId: TEST_ACCOUNTS.doctor.id,
-        queryTime
+        userId: TEST_ACCOUNTS.doctor.id
       };
     });
   }
 
   async testConnectionNotificationFlow() {
     return this.runTest('Connection Notification Flow (Background Job)', async () => {
-      console.log('🔗 Testing connection notification flow with background job and timeout protection...');
+      console.log('🔗 Testing connection notification flow with background job...');
       
-      // Ensure we're authenticated
-      console.log('🔐 Ensuring authentication for connection flow test...');
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: TEST_ACCOUNTS.doctor.email,
-        password: 'testpassword123'
-      });
-
-      if (signInError) {
-        console.log('⚠️ Sign in failed, trying to proceed anyway:', signInError.message);
-      }
-
-      // Wait a moment for auth to propagate
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      const startTime = Date.now();
-      
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Background job timeout')), 8000);
-      });
-      
-      const flowPromise = sendConnectionRequestNotification(
+      const result = await sendConnectionRequestNotification(
         TEST_ACCOUNTS.doctor.id,
         TEST_ACCOUNTS.patient.name
       );
-
-      const result = await Promise.race([flowPromise, timeoutPromise]);
-
-      const queryTime = Date.now() - startTime;
-      console.log(`Background job notification flow took ${queryTime}ms`);
 
       if (!result) {
         throw new Error('Background job notification flow returned null');
@@ -375,7 +261,6 @@ export class ConnectionNotificationTester {
         pushResults: result.pushResults,
         doctorId: TEST_ACCOUNTS.doctor.id,
         patientName: TEST_ACCOUNTS.patient.name,
-        queryTime,
         backgroundJobUsed: true
       };
     });
@@ -383,25 +268,14 @@ export class ConnectionNotificationTester {
 
   async testBackgroundJobDirectly() {
     return this.runTest('Background Job Direct Call', async () => {
-      console.log('🚀 Testing background job direct call with timeout protection...');
+      console.log('🚀 Testing background job direct call...');
       
-      const startTime = Date.now();
-      
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Direct background job timeout')), 8000);
-      });
-      
-      const jobPromise = supabase.functions.invoke('process-connection-notifications', {
+      const { data, error } = await supabase.functions.invoke('process-connection-notifications', {
         body: { 
           doctorId: TEST_ACCOUNTS.doctor.id, 
           patientName: TEST_ACCOUNTS.patient.name + ' (Direct Test)'
         }
       });
-
-      const { data, error } = await Promise.race([jobPromise, timeoutPromise]) as any;
-
-      const queryTime = Date.now() - startTime;
-      console.log(`Background job direct call took ${queryTime}ms`);
 
       if (error) {
         throw new Error(`Background job failed: ${error.message}`);
@@ -415,25 +289,18 @@ export class ConnectionNotificationTester {
       return {
         backgroundJobResult: data,
         doctorId: TEST_ACCOUNTS.doctor.id,
-        patientName: TEST_ACCOUNTS.patient.name,
-        queryTime
+        patientName: TEST_ACCOUNTS.patient.name
       };
     });
   }
 
   async testFCMTokenRegistration() {
     return this.runTest('FCM Token Registration', async () => {
-      console.log('📱 Testing FCM token registration with timeout protection...');
+      console.log('📱 Testing FCM token registration...');
       
       const mockToken = `test_fcm_token_${crypto.randomUUID()}`;
       
-      const startTime = Date.now();
-      
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('FCM token registration timeout')), 8000);
-      });
-      
-      const tokenPromise = supabase
+      const { error } = await supabase
         .from('user_notification_tokens')
         .upsert({
           user_id: TEST_ACCOUNTS.doctor.id,
@@ -442,56 +309,37 @@ export class ConnectionNotificationTester {
           created_at: new Date().toISOString()
         });
 
-      const { error } = await Promise.race([tokenPromise, timeoutPromise]) as any;
-
-      const queryTime = Date.now() - startTime;
-      console.log(`FCM token registration took ${queryTime}ms`);
-
       if (error) {
         throw new Error(`FCM token registration failed: ${error.message}`);
       }
 
       // Verify the token was stored
-      const verifyPromise = supabase
+      const { data: storedToken } = await supabase
         .from('user_notification_tokens')
         .select('*')
         .eq('user_id', TEST_ACCOUNTS.doctor.id)
         .eq('token', mockToken)
         .single();
 
-      const { data: storedToken } = await Promise.race([verifyPromise, timeoutPromise]) as any;
-
       console.log('✅ FCM token registration successful:', storedToken);
       return {
         tokenStored: !!storedToken,
         mockToken,
-        userId: TEST_ACCOUNTS.doctor.id,
-        queryTime
+        userId: TEST_ACCOUNTS.doctor.id
       };
     });
   }
 
   async testNotificationQuery() {
     return this.runTest('Notification Query', async () => {
-      console.log('📋 Testing notification query with timeout protection...');
+      console.log('📋 Testing notification query...');
       
-      const startTime = Date.now();
-      
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Notification query timeout')), 8000);
-      });
-      
-      const queryPromise = supabase
+      const { data: notifications, error } = await supabase
         .from('notifications')
         .select('id, title, message, created_at')
         .eq('user_id', TEST_ACCOUNTS.doctor.id)
         .order('created_at', { ascending: false })
         .limit(5);
-
-      const { data: notifications, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
-
-      const queryTime = Date.now() - startTime;
-      console.log(`Notification query took ${queryTime}ms`);
 
       if (error) {
         console.error('❌ Notification query error:', error);
@@ -502,8 +350,7 @@ export class ConnectionNotificationTester {
       return {
         notifications,
         count: notifications?.length || 0,
-        userId: TEST_ACCOUNTS.doctor.id,
-        queryTime
+        userId: TEST_ACCOUNTS.doctor.id
       };
     });
   }
@@ -542,7 +389,7 @@ export class ConnectionNotificationTester {
     try {
       console.log('✅ Using pre-existing test accounts, running individual tests...');
 
-      // Run tests in sequence with better timeout handling
+      // Run tests in sequence
       await this.testDatabaseConnectivity();
       await this.testCurrentAuthenticationState();
       await this.testDoctorProfileExists();
