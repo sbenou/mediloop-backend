@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,7 @@ import { runConnectionNotificationTests, debugFirebaseIntegration } from '@/util
 import { Play, RefreshCw, Bug, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react';
 import SimpleConnectivityTest from './SimpleConnectivityTest';
 import NetworkDiagnosticTest from './NetworkDiagnosticTest';
+import TargetedSupabaseTest from './TargetedSupabaseTest';
 
 interface TestResult {
   test: string;
@@ -34,6 +34,7 @@ const NotificationTestPanel = () => {
   const [logs, setLogs] = useState<string[]>([]);
   const [showSimpleTest, setShowSimpleTest] = useState(true);
   const [showNetworkTest, setShowNetworkTest] = useState(false);
+  const [showTargetedTest, setShowTargetedTest] = useState(false);
 
   const addLog = (message: string) => {
     const timestamp = new Date().toLocaleTimeString();
@@ -100,13 +101,20 @@ const NotificationTestPanel = () => {
               <p className="text-sm text-red-700 mb-3">
                 All Supabase operations are timing out. This indicates a network connectivity problem between your application and the Supabase servers.
               </p>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Button 
                   variant="outline" 
                   size="sm"
                   onClick={() => setShowNetworkTest(!showNetworkTest)}
                 >
                   {showNetworkTest ? 'Hide' : 'Show'} Network Diagnostics
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setShowTargetedTest(!showTargetedTest)}
+                >
+                  {showTargetedTest ? 'Hide' : 'Show'} Targeted Test
                 </Button>
                 <Button 
                   variant="outline" 
@@ -123,6 +131,9 @@ const NotificationTestPanel = () => {
 
       {/* Network diagnostic test */}
       {showNetworkTest && <NetworkDiagnosticTest />}
+
+      {/* Targeted Supabase test */}
+      {showTargetedTest && <TargetedSupabaseTest />}
 
       {/* Simple connectivity test */}
       {showSimpleTest && <SimpleConnectivityTest />}
