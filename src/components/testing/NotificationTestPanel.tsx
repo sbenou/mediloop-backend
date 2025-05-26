@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { runConnectionNotificationTests, debugFirebaseIntegration } from '@/utils/connectionNotificationTests';
-import { Play, RefreshCw, Bug, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Play, RefreshCw, Bug, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react';
+import SimpleConnectivityTest from './SimpleConnectivityTest';
 
 interface TestResult {
   test: string;
@@ -30,6 +31,7 @@ const NotificationTestPanel = () => {
   const [summary, setSummary] = useState<TestSummary | null>(null);
   const [firebaseDebug, setFirebaseDebug] = useState<any>(null);
   const [logs, setLogs] = useState<string[]>([]);
+  const [showSimpleTest, setShowSimpleTest] = useState(true);
 
   const addLog = (message: string) => {
     const timestamp = new Date().toLocaleTimeString();
@@ -86,11 +88,37 @@ const NotificationTestPanel = () => {
 
   return (
     <div className="space-y-6 p-6">
+      {/* Warning about test issues */}
+      <Card className="border-orange-200 bg-orange-50">
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-orange-500 mt-0.5" />
+            <div>
+              <h3 className="font-semibold text-orange-800 mb-2">Test Suite Issues Detected</h3>
+              <p className="text-sm text-orange-700 mb-3">
+                The full test suite is experiencing timeout issues. This suggests connectivity or authentication problems with Supabase.
+              </p>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowSimpleTest(!showSimpleTest)}
+              >
+                {showSimpleTest ? 'Hide' : 'Show'} Simple Connectivity Test
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Simple connectivity test */}
+      {showSimpleTest && <SimpleConnectivityTest />}
+
+      {/* Original test suite */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bug className="h-5 w-5" />
-            Connection Notification Test Suite
+            Full Connection Notification Test Suite
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -99,13 +127,14 @@ const NotificationTestPanel = () => {
               onClick={runTests} 
               disabled={isRunning}
               className="flex items-center gap-2"
+              variant="outline"
             >
               {isRunning ? (
                 <RefreshCw className="h-4 w-4 animate-spin" />
               ) : (
                 <Play className="h-4 w-4" />
               )}
-              {isRunning ? 'Running Tests...' : 'Run Connection Tests'}
+              {isRunning ? 'Running Tests...' : 'Run Full Test Suite'}
             </Button>
             
             <Button 
