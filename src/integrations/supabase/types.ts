@@ -1334,6 +1334,10 @@ export type Database = {
         Args: { tenant_id: string }
         Returns: boolean
       }
+      can_create_notification: {
+        Args: { target_user_id: string }
+        Returns: boolean
+      }
       can_truncate_products: {
         Args: Record<PropertyKey, never>
         Returns: boolean
