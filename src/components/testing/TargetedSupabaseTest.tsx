@@ -110,33 +110,44 @@ const TargetedSupabaseTest = () => {
         addResult(`❌ CORS preflight failed: ${corsError instanceof Error ? corsError.message : String(corsError)}`);
       }
       
-      // Test 5: Test with single Supabase client instance
-      addResult('🔧 Testing single Supabase client instance...');
+      // Test 5: Test with minimal Supabase client
+      addResult('🔧 Creating minimal Supabase client...');
       try {
-        // Import the single Supabase client instance
-        const { supabase } = await import('@/lib/supabase');
+        // Import Supabase dynamically to test client creation
+        const { createClient } = await import('@supabase/supabase-js');
         
-        addResult('✅ Single Supabase client imported successfully');
+        const testClient = createClient(
+          'https://hrrlefgnhkbzuwyklejj.supabase.co',
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaGtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U',
+          {
+            auth: {
+              persistSession: false,
+              autoRefreshToken: false
+            }
+          }
+        );
         
-        // Test a simple query with timeout
-        addResult('📊 Testing single client query with timeout...');
+        addResult('✅ Minimal Supabase client created successfully');
         
-        const queryPromise = supabase
+        // Test a simple query with the minimal client
+        addResult('📊 Testing minimal client query...');
+        
+        const queryPromise = testClient
           .from('profiles')
           .select('count')
           .limit(1);
           
         const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Single client timeout')), 5000)
+          setTimeout(() => reject(new Error('Minimal client timeout')), 2000)
         );
         
         const result = await Promise.race([queryPromise, timeoutPromise]);
         
-        addResult('✅ Single client query successful');
+        addResult('✅ Minimal client query successful');
         addResult(`📊 Result: ${JSON.stringify(result)}`);
         
       } catch (clientError) {
-        addResult(`❌ Single client test failed: ${clientError instanceof Error ? clientError.message : String(clientError)}`);
+        addResult(`❌ Minimal client test failed: ${clientError instanceof Error ? clientError.message : String(clientError)}`);
       }
       
     } catch (error) {

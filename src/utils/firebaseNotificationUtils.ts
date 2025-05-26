@@ -13,13 +13,6 @@ export const registerFCMToken = async (userId: string, token: string) => {
   try {
     console.log('Registering FCM token for user:', userId);
     
-    // Ensure we have a valid session before attempting the operation
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError || !session) {
-      console.error('No valid session for FCM token registration:', sessionError);
-      return false;
-    }
-    
     const { error } = await supabase
       .from('user_notification_tokens')
       .upsert({
@@ -78,13 +71,6 @@ export const updateNotificationPreferences = async (userId: string, preferences:
   }
 
   try {
-    // Ensure we have a valid session
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError || !session) {
-      console.error('No valid session for preference update:', sessionError);
-      return false;
-    }
-
     const { error } = await supabase
       .from('user_notification_preferences')
       .upsert({
@@ -111,13 +97,6 @@ export const updateNotificationPreferences = async (userId: string, preferences:
 export const testPushNotification = async (userId: string, title: string, message: string) => {
   try {
     console.log('Testing push notification for user:', userId);
-    
-    // Ensure we have a valid session
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError || !session) {
-      console.error('No valid session for push notification test:', sessionError);
-      return false;
-    }
     
     // Call the background job to send a test notification
     const { data, error } = await supabase.functions.invoke('process-connection-notifications', {
