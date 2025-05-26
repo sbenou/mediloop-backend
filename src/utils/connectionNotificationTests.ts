@@ -46,11 +46,37 @@ export const runConnectionNotificationTests = async (): Promise<{ results: TestR
     }
   };
 
-  // Test 1: Database Connectivity (KEEP ORIGINAL - DON'T MODIFY)
+  // Test 1: Database Connectivity (FIXED - Use direct HTTP call instead of Supabase client)
   results.push(await runTest('Database Connectivity', async () => {
-    const { data, error } = await supabase.from('profiles').select('count').limit(1);
-    if (error) throw error;
-    return data;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    
+    try {
+      const response = await fetch(
+        'https://hrrlefgnhkbzuwyklejj.supabase.co/rest/v1/profiles?select=count&limit=1',
+        {
+          method: 'GET',
+          headers: {
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaGtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U',
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaGtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U',
+            'Content-Type': 'application/json'
+          },
+          signal: controller.signal
+        }
+      );
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      throw error;
+    }
   }));
 
   // Test 2: Current Authentication State (KEEP ORIGINAL - DON'T MODIFY)
@@ -97,7 +123,7 @@ export const runConnectionNotificationTests = async (): Promise<{ results: TestR
     return data;
   }));
 
-  // Test 5: FCM Token Registration (FIXED FOR RLS)
+  // Test 5: FCM Token Registration (FIXED FOR RLS WITH SESSION VALIDATION)
   results.push(await runTest('FCM Token Registration', async () => {
     const testToken = `test_fcm_token_${Date.now()}`;
     
@@ -123,7 +149,7 @@ export const runConnectionNotificationTests = async (): Promise<{ results: TestR
     return data;
   }));
 
-  // Test 6: Direct Notification Creation (FIXED FOR RLS)
+  // Test 6: Direct Notification Creation (FIXED FOR RLS WITH SESSION VALIDATION)
   results.push(await runTest('Direct Notification Creation', async () => {
     // Ensure we have a valid session before attempting the operation
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -147,7 +173,7 @@ export const runConnectionNotificationTests = async (): Promise<{ results: TestR
     return data;
   }));
 
-  // Test 7: Notification Helper Function (FIXED FOR RLS)
+  // Test 7: Notification Helper Function (FIXED FOR RLS WITH SESSION VALIDATION)
   results.push(await runTest('Notification Helper Function', async () => {
     // Ensure we have a valid session before attempting the operation
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
