@@ -27,50 +27,70 @@ const SimpleConnectivityTest = () => {
       }
       addResult('✅ Supabase client exists');
       
-      // Test 2: Simple auth check (no query)
-      addResult('🔐 Checking auth state...');
-      const { data: session } = await supabase.auth.getSession();
-      addResult(`✅ Auth check complete - User: ${session?.session?.user?.id || 'None'}`);
-      
-      // Test 3: Very simple query with timeout
-      addResult('🗄️ Testing database with simple query...');
-      
-      const queryPromise = supabase.rpc('get_admin_dashboard_stats');
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Query timeout')), 5000)
-      );
-      
+      // Test 2: Test auth with timeout
+      addResult('🔐 Testing auth with 3 second timeout...');
       try {
-        const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
-        
-        if (error) {
-          addResult(`❌ Database query error: ${error.message}`);
-        } else {
-          addResult('✅ Database query successful');
-          addResult(`📊 Data received: ${JSON.stringify(data)}`);
-        }
-      } catch (timeoutError) {
-        addResult('⏰ Database query timed out after 5 seconds');
-      }
-      
-      // Test 4: Direct table access
-      addResult('📋 Testing direct table access...');
-      try {
-        const tablePromise = supabase.from('profiles').select('count').limit(0);
-        const tableTimeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Table query timeout')), 3000)
+        const authPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Auth timeout')), 3000)
         );
         
-        const { error: tableError } = await Promise.race([tablePromise, tableTimeoutPromise]) as any;
+        const { data: session, error } = await Promise.race([authPromise, timeoutPromise]) as any;
         
-        if (tableError) {
-          addResult(`❌ Table access error: ${tableError.message}`);
+        if (error) {
+          addResult(`❌ Auth error: ${error.message}`);
         } else {
-          addResult('✅ Table access successful');
+          addResult(`✅ Auth check complete - User: ${session?.session?.user?.id || 'None'}`);
         }
-      } catch (tableTimeoutError) {
-        addResult('⏰ Table query timed out after 3 seconds');
+      } catch (authError) {
+        addResult(`⏰ Auth timed out or failed: ${authError instanceof Error ? authError.message : String(authError)}`);
       }
+      
+      // Test 3: Direct database query with timeout
+      addResult('🗄️ Testing direct database query...');
+      try {
+        const queryPromise = supabase.from('profiles').select('count').limit(0);
+        const queryTimeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Query timeout')), 3000)
+        );
+        
+        const { error: queryError } = await Promise.race([queryPromise, queryTimeoutPromise]) as any;
+        
+        if (queryError) {
+          addResult(`❌ Database query error: ${queryError.message}`);
+        } else {
+          addResult('✅ Database query successful');
+        }
+      } catch (queryTimeoutError) {
+        addResult(`⏰ Database query timed out: ${queryTimeoutError instanceof Error ? queryTimeoutError.message : String(queryTimeoutError)}`);
+      }
+      
+      // Test 4: Test raw SQL function call
+      addResult('⚙️ Testing database function call...');
+      try {
+        const functionPromise = supabase.rpc('get_admin_dashboard_stats');
+        const functionTimeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Function timeout')), 3000)
+        );
+        
+        const { data, error } = await Promise.race([functionPromise, functionTimeoutPromise]) as any;
+        
+        if (error) {
+          addResult(`❌ Function call error: ${error.message}`);
+        } else {
+          addResult('✅ Function call successful');
+          addResult(`📊 Data received: ${JSON.stringify(data)}`);
+        }
+      } catch (functionError) {
+        addResult(`⏰ Function call timed out: ${functionError instanceof Error ? functionError.message : String(functionError)}`);
+      }
+      
+      // Test 5: Check environment variables
+      addResult('🔧 Checking configuration...');
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'fallback URL in use';
+      const hasAnonKey = !!(import.meta.env.VITE_SUPABASE_ANON_KEY || 'fallback key in use');
+      addResult(`📍 Supabase URL: ${supabaseUrl}`);
+      addResult(`🔑 Anon Key configured: ${hasAnonKey ? 'Yes' : 'No'}`);
       
     } catch (error) {
       addResult(`❌ Test failed: ${error instanceof Error ? error.message : String(error)}`);
@@ -83,7 +103,7 @@ const SimpleConnectivityTest = () => {
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle>Simple Connectivity Test</CardTitle>
+        <CardTitle>Simple Connectivity Test (Fixed Timeouts)</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <Button 
@@ -91,7 +111,7 @@ const SimpleConnectivityTest = () => {
           disabled={isRunning}
           className="w-full"
         >
-          {isRunning ? 'Testing...' : 'Run Simple Test'}
+          {isRunning ? 'Testing...' : 'Run Fixed Simple Test'}
         </Button>
         
         {results.length > 0 && (
