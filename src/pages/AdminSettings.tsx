@@ -1,106 +1,78 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { AdminTabs } from "@/components/admin/tabs/AdminTabs";
-import { useAdminData } from "@/hooks/admin/useAdminData";
-import Header from "@/components/layout/Header";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/auth/useAuth";
-import { Skeleton } from "@/components/ui/skeleton";
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
+import Header from '@/components/layout/Header';
+import UserManagementTable from '@/components/admin/UserManagementTable';
+import RoleManagementTable from '@/components/admin/RoleManagementTable';
+import TenantManagement from '@/components/admin/TenantManagement';
+import DashboardCards from '@/components/admin/DashboardCards';
 
 const AdminSettings = () => {
-  const navigate = useNavigate();
-  const { profile, isLoading: authLoading } = useAuth();
-  
-  const { users, isLoading: adminDataLoading, updateUserRole } = useAdminData(profile);
-
-  // Show loading state while checking auth
-  if (authLoading) {
-    return (
-      <div className="container mx-auto py-8 px-4">
-        <Header showUserMenu={false} showBackLink={true} />
-        <div className="space-y-4">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-64 w-full" />
-        </div>
-      </div>
-    );
-  }
-
-  // Check if user is superadmin
-  if (!profile || profile.role !== 'superadmin') {
-    return (
-      <div className="container mx-auto py-8 px-4">
-        <Header showUserMenu={false} showBackLink={true} />
-        <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-        <p>You don't have permission to access this page.</p>
-      </div>
-    );
-  }
-
-  console.log('Admin Settings - Current users:', users);
-  console.log('Admin Settings - Loading state:', adminDataLoading);
-  console.log('Admin Settings - Current profile:', profile);
-
-  const handleBackNavigation = () => {
-    // Redirect back to superadmin dashboard if user is superadmin
-    if (profile.role === 'superadmin') {
-      navigate('/superadmin/dashboard');
-    } else {
-      navigate('/');
-    }
-  };
+  const [activeTab, setActiveTab] = useState("dashboard");
 
   return (
-    <div>
-      <Header 
-        showUserMenu={false} 
-        showBackLink={true} 
-        onBackClick={handleBackNavigation}
-      />
-      <div className="container mx-auto py-4 px-4">
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink onClick={() => navigate('/')}>
-                Home
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink onClick={() => navigate('/profile')}>
-                Profile
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink>Admin Settings</BreadcrumbLink>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-      </div>
-      <div className="container mx-auto py-8 px-4">
-        <h1 className="text-2xl font-bold mb-6">Admin Settings</h1>
-        {adminDataLoading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-          </div>
-        ) : (
-          <AdminTabs 
-            users={users}
-            isLoading={adminDataLoading}
-            updateUserRole={updateUserRole}
-          />
-        )}
-        <Toaster />
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      <div className="container mx-auto py-6 px-4">
+        <div className="flex items-center gap-4 mb-6">
+          <Link to="/dashboard">
+            <Button variant="ghost" size="sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
+            </Button>
+          </Link>
+          <h1 className="text-3xl font-bold">Admin Settings</h1>
+        </div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="roles">Roles</TabsTrigger>
+            <TabsTrigger value="tenants">Tenants</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dashboard">
+            <DashboardCards />
+          </TabsContent>
+
+          <TabsContent value="users">
+            <Card>
+              <CardHeader>
+                <CardTitle>User Management</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <UserManagementTable />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="roles">
+            <Card>
+              <CardHeader>
+                <CardTitle>Role Management</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <RoleManagementTable />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="tenants">
+            <Card>
+              <CardHeader>
+                <CardTitle>Tenant Management</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <TenantManagement />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
