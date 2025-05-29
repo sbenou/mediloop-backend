@@ -23,12 +23,12 @@ const TargetedSupabaseTest = () => {
       addResult('📡 Testing raw REST API call...');
       try {
         const response = await fetch(
-          'https://hrrlefgnhkbzuwyklejj.supabase.co/rest/v1/profiles?select=count&limit=1',
+          'https://reaeyxplttbuejktjrdh.supabase.co/rest/v1/profiles?select=count&limit=1',
           {
             method: 'GET',
             headers: {
-              'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaGtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U',
-              'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaGtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U',
+              'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJlYWV5eHBsdHRidWVqa3RqcmRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg0NjEwMzEsImV4cCI6MjA2NDAzNzAzMX0.7fYR9pUSjfSvLZx9WaFrz31Pr33Lsp10zYckoWbhTTo',
+              'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJlYWV5eHBsdHRidWVqa3RqcmRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg0NjEwMzEsImV4cCI6MjA2NDAzNzAzMX0.7fYR9pUSjfSvLZx9WaFrz31Pr33Lsp10zYckoWbhTTo',
               'Content-Type': 'application/json'
             },
             signal: AbortSignal.timeout(5000)
@@ -50,8 +50,8 @@ const TargetedSupabaseTest = () => {
         const { createClient } = await import('@supabase/supabase-js');
         
         const isolatedClient = createClient(
-          'https://hrrlefgnhkbzuwyklejj.supabase.co',
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaWtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U',
+          'https://reaeyxplttbuejktjrdh.supabase.co',
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJlYWV5eHBsdHRidWVqa3RqcmRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg0NjEwMzEsImV4cCI6MjA2NDAzNzAzMX0.7fYR9pUSjfSvLZx9WaFrz31Pr33Lsp10zYckoWbhTTo',
           {
             auth: {
               persistSession: false,

@@ -79,7 +79,7 @@ const SimpleConnectivityTest = () => {
       
       // Test 4: Check configuration
       addResult('🔧 Checking configuration...');
-      addResult(`📍 Supabase URL: https://hrrlefgnhkbzuwyklejj.supabase.co`);
+      addResult(`📍 Supabase URL: https://reaeyxplttbuejktjrdh.supabase.co`);
       addResult(`🔑 Anon Key configured: Yes`);
       
     } catch (error) {
