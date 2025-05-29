@@ -1,122 +1,89 @@
 
-import React, { createContext, useContext, useEffect } from 'react';
-import { RecoilRoot } from 'recoil';
-import { useSessionManagement } from '@/hooks/auth/useSessionManagement';
-import { useSessionPolling } from '@/hooks/auth/useSessionPolling';
-import { supabase } from '@/lib/supabase';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { User, Session } from '@supabase/supabase-js';
+import { authService } from '@/services/authService';
 
-// Create context that will provide authentication functionality
-const AuthContext = createContext<null>(null);
+interface AuthContextType {
+  user: User | null;
+  session: Session | null;
+  isLoading: boolean;
+  signOut: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const useAuthContext = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuthContext must be used within an AuthProvider');
+  }
+  return context;
+};
 
 interface AuthProviderProps {
   children: React.ReactNode;
 }
 
-/**
- * AuthProvider wraps the application and provides authentication state
- * and functionality to all child components
- */
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const { updateAuthState } = useSessionManagement();
-  
-  // Set up session polling for token refresh
-  useSessionPolling();
-  
-  // On initial load, check for existing session
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
-    let isMounted = true;
-    let initTimeoutId: NodeJS.Timeout;
+    console.log('[AuthContext] Initializing auth state');
     
-    const initializeAuth = async () => {
+    // Get initial session
+    const getInitialSession = async () => {
       try {
-        console.log("Starting auth initialization");
-        
-        // Create a timeout promise with increased timeout (8 seconds instead of 5)
-        const sessionPromise = supabase.auth.getSession().then(({ data }) => data.session);
-        const timeoutPromise = new Promise<null>(resolve => {
-          initTimeoutId = setTimeout(() => {
-            console.warn('Auth initialization is taking longer than expected (8 seconds)');
-            resolve(null);
-          }, 8000);
-        });
-        
-        // Race the session fetch against the timeout
-        const session = await Promise.race([sessionPromise, timeoutPromise]);
-        
-        if (!isMounted) return;
-        
-        if (session) {
-          console.log("Found existing session, updating auth state");
-          // Use a setTimeout to prevent blocking the UI
-          setTimeout(() => {
-            if (isMounted) {
-              updateAuthState(session);
-            }
-          }, 0);
+        const { session, error } = await authService.getCurrentSession();
+        if (error) {
+          console.error('[AuthContext] Error getting initial session:', error);
         } else {
-          console.log("No existing session found or session fetch timed out");
-          // Still update auth state but with null session
-          if (isMounted) {
-            updateAuthState(null);
-          }
+          console.log('[AuthContext] Initial session:', session?.user?.id || 'none');
+          setSession(session);
+          setUser(session?.user || null);
         }
       } catch (error) {
-        console.error("Error initializing auth:", error);
-        // Update auth state with null on error
-        if (isMounted) {
-          updateAuthState(null);
-        }
+        console.error('[AuthContext] Unexpected error getting initial session:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
-    
-    initializeAuth();
-    
-    // Listen for auth changes from other tabs with a more robust approach
-    const handleStorageEvent = (event: StorageEvent) => {
-      if (event.key?.includes('auth-token')) {
-        console.log('Auth token changed in another tab, refreshing session');
-        setTimeout(async () => {
-          if (!isMounted) return;
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session && isMounted) {
-            updateAuthState(session);
-          } else if (isMounted) {
-            // If no session is found after a storage event, it might mean logout
-            updateAuthState(null);
-          }
-        }, 0);
-      }
-    };
-    
-    window.addEventListener('storage', handleStorageEvent);
-    
+
+    getInitialSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = authService.onAuthStateChange((event, session) => {
+      console.log('[AuthContext] Auth state changed:', event, session?.user?.id || 'none');
+      setSession(session);
+      setUser(session?.user || null);
+      setIsLoading(false);
+    });
+
     return () => {
-      isMounted = false;
-      window.removeEventListener('storage', handleStorageEvent);
-      if (initTimeoutId) clearTimeout(initTimeoutId);
+      console.log('[AuthContext] Cleaning up auth subscription');
+      subscription.unsubscribe();
     };
-  }, [updateAuthState]);
-  
+  }, []);
+
+  const signOut = async () => {
+    console.log('[AuthContext] Signing out user');
+    const { error } = await authService.signOut();
+    if (error) {
+      console.error('[AuthContext] Sign out error:', error);
+    }
+  };
+
+  const value: AuthContextType = {
+    user,
+    session,
+    isLoading,
+    signOut,
+  };
+
   return (
-    <AuthContext.Provider value={null}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
-};
-
-/**
- * Wrap the AuthProvider with RecoilRoot to ensure Recoil state management
- * is available throughout the authentication context
- */
-export const AuthProviderWithRecoil: React.FC<AuthProviderProps> = ({ children }) => {
-  return (
-    <RecoilRoot>
-      <AuthProvider>{children}</AuthProvider>
-    </RecoilRoot>
-  );
-};
-
-// Export a hook for using the auth context
-export const useAuthContext = () => {
-  return useContext(AuthContext);
 };
