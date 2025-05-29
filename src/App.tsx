@@ -1,48 +1,29 @@
 
-import { useState, useEffect } from 'react'
-import './App.css'
-import { BrowserRouter } from 'react-router-dom';
-import AppRoutes from './AppRoutes';
-import { RecoilRoot } from 'recoil';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
-import { AuthProvider } from '@/providers/AuthProvider';
-import { ThemeProvider } from './components/theme-provider';
-import { TenantProvider } from './contexts/TenantContext';
-import { FirebaseNotificationProvider } from './providers/FirebaseNotificationProvider';
+import AuthGuard from '@/components/auth/AuthGuard';
+import Header from '@/components/layout/Header';
+import ProductsPage from '@/pages/ProductsPage';
+import NotificationTestPanel from '@/components/testing/NotificationTestPanel';
 
 function App() {
-  // Create QueryClient instance outside of render function to avoid recreation on each render
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: 1000 * 60 * 5, // 5 minutes
-        retry: 1,
-      },
-    },
-  });
-
-  useEffect(() => {
-    console.log('App rendering TenantProvider and AppRoutes');
-  }, []);
-
   return (
-    <RecoilRoot>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-          <AuthProvider>
-            <TenantProvider>
-              <FirebaseNotificationProvider>
-                <BrowserRouter>
-                  <AppRoutes />
-                  <Toaster />
-                </BrowserRouter>
-              </FirebaseNotificationProvider>
-            </TenantProvider>
-          </AuthProvider>
-        </ThemeProvider>
-      </QueryClientProvider>
-    </RecoilRoot>
+    <Router>
+      <div className="min-h-screen bg-gray-50">
+        <Toaster />
+        <AuthGuard>
+          <Header />
+          <main className="container mx-auto py-6">
+            <Routes>
+              <Route path="/" element={<ProductsPage />} />
+              <Route path="/products" element={<ProductsPage />} />
+              <Route path="/test-notifications" element={<NotificationTestPanel />} />
+            </Routes>
+          </main>
+        </AuthGuard>
+      </div>
+    </Router>
   );
 }
 

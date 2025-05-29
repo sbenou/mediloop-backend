@@ -1,42 +1,30 @@
 
 import React from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { useAuth } from '@/hooks/useAuth';
+import { LogOut, User } from 'lucide-react';
 
-interface HeaderProps {
-  showBackLink?: boolean;
-  onBackClick?: () => void;
-  showUserMenu?: boolean;
-}
+const Header: React.FC = () => {
+  const { profile, signOut } = useAuth();
 
-export const Header: React.FC<HeaderProps> = ({
-  showBackLink = false,
-  onBackClick,
-  showUserMenu = true,
-}) => {
-  const handleBackClick = () => {
-    if (onBackClick) {
-      onBackClick();
-    } else {
-      window.history.back();
-    }
-  };
-  
   return (
-    <header className="bg-white border-b sticky top-0 z-10">
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          {showBackLink ? (
-            <button 
-              onClick={handleBackClick} 
-              className="flex items-center text-primary hover:text-primary/80"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </button>
-          ) : null}
-        </div>
-        <div className="flex items-center space-x-4">
-          {/* User menu will be added here if needed */}
+    <header className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-900">Healthcare Platform</h1>
+        
+        <div className="flex items-center gap-4">
+          {profile && (
+            <div className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              <span className="text-sm font-medium">{profile.full_name}</span>
+              <span className="text-xs text-gray-500 capitalize">({profile.role})</span>
+            </div>
+          )}
+          
+          <Button onClick={signOut} variant="outline" size="sm">
+            <LogOut className="h-4 w-4 mr-2" />
+            Sign Out
+          </Button>
         </div>
       </div>
     </header>
