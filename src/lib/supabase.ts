@@ -1,9 +1,9 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// Use the actual Supabase project URL and key directly
-const supabaseUrl = 'https://hrrlefgnhkbzuwyklejj.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaWtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U';
+// Use the new Supabase project URL and key for Frankfurt region
+const supabaseUrl = 'https://reaeyxplttbuejktjrdh.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJlYWV5eHBsdHRidWVqa3RqcmRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg0NjEwMzEsImV4cCI6MjA2NDAzNzAzMX0.7fYR9pUSjfSvLZx9WaFrz31Pr33Lsp10zYckoWbhTTo';
 
 console.log('Supabase URL:', supabaseUrl);
 
