@@ -78,6 +78,8 @@ async function processLuxTrustJob(jobId: string) {
 }
 
 serve(async (req) => {
+  console.log('Request received:', req.method, req.url)
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -87,17 +89,6 @@ serve(async (req) => {
   const path = url.pathname
 
   try {
-    // Health check endpoint
-    if (path === '/health') {
-      return new Response(
-        JSON.stringify({ status: 'healthy', timestamp: new Date().toISOString() }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200 
-        }
-      )
-    }
-
     // LuxTrust Authentication - Start authentication process
     if (path === '/luxtrust/auth' && req.method === 'POST') {
       const { luxtrustId } = await req.json()
@@ -184,9 +175,29 @@ serve(async (req) => {
       )
     }
 
+    // Health check endpoint
+    if (path === '/health' || path === '/') {
+      return new Response(
+        JSON.stringify({ 
+          status: 'healthy', 
+          timestamp: new Date().toISOString(),
+          service: 'auth-service' 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200 
+        }
+      )
+    }
+
     // Route not found
     return new Response(
-      JSON.stringify({ error: 'Route not found' }),
+      JSON.stringify({ 
+        error: 'Route not found',
+        path: path,
+        method: req.method,
+        availableRoutes: ['/health', '/luxtrust/auth', '/luxtrust/status/{jobId}']
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 404 
@@ -196,7 +207,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Request processing error:', error)
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
+      JSON.stringify({ 
+        error: 'Internal server error',
+        message: error.message 
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500 
@@ -205,4 +219,4 @@ serve(async (req) => {
   }
 })
 
-console.log('Auth service starting...')
+console.log('Auth service starting on port 8000...')
