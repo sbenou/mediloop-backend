@@ -8,15 +8,6 @@ export interface LuxTrustProfile {
   isVerified: boolean;
 }
 
-export interface Certification {
-  id: string;
-  fileName: string;
-  type: 'doctor' | 'pharmacist' | 'nurse' | 'other';
-  status: 'pending' | 'verified' | 'rejected';
-  uploadedAt: string;
-  verifiedAt?: string;
-}
-
 export interface ProfessionalCertification {
   id: string;
   userId: string;

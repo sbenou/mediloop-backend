@@ -3,6 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Shield, FileCheck } from 'lucide-react';
+import { toast } from '@/components/ui/use-toast';
 import { LuxTrustProfile } from './types';
 
 interface LuxTrustAuthTestProps {
@@ -20,6 +21,18 @@ export const LuxTrustAuthTest: React.FC<LuxTrustAuthTestProps> = ({
   luxtrustProfile,
   onAuthenticate
 }) => {
+  const testLuxTrustAuth = async () => {
+    onAuthenticate();
+    
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    toast({
+      title: 'LuxTrust Authentication Successful',
+      description: 'Professional credentials verified successfully!'
+    });
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -31,7 +44,7 @@ export const LuxTrustAuthTest: React.FC<LuxTrustAuthTestProps> = ({
       <CardContent className="space-y-4">
         {!isAuthenticated ? (
           <Button
-            onClick={onAuthenticate}
+            onClick={testLuxTrustAuth}
             disabled={isAuthenticating || !isLuxembourg}
             className="w-full"
           >
