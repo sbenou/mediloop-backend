@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
@@ -23,6 +22,7 @@ const TestLuxembourg: React.FC = () => {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [luxtrustProfile, setLuxtrustProfile] = useState<LuxTrustProfile | null>(null);
+  const [authJobId, setAuthJobId] = useState<string | null>(null);
   
   // Professional Certification State
   const [certifications, setCertifications] = useState<Certification[]>([]);
@@ -63,22 +63,84 @@ const TestLuxembourg: React.FC = () => {
 
   const handleLuxTrustAuth = async () => {
     setIsAuthenticating(true);
+    setAuthJobId(null);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    const mockProfile: LuxTrustProfile = {
-      id: `lux-${Date.now()}`,
-      firstName: 'Dr. Jean',
-      lastName: 'Luxembourg',
-      professionalId: 'LUX-DOC-2024-001',
-      certificationLevel: 'professional',
-      isVerified: true
+    try {
+      // Call the auth service to initiate LuxTrust authentication
+      const response = await fetch('https://hrrlefgnhkbzuwyklejj.supabase.co/functions/v1/auth-service/luxtrust/auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          luxtrustId: luxtrustId || 'TEST-LUX-ID-123456',
+          testMode: true
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.jobId) {
+        setAuthJobId(result.jobId);
+        toast({
+          title: 'LuxTrust Authentication Queued',
+          description: `Authentication job created: ${result.jobId}`,
+        });
+
+        // Poll for results
+        pollAuthStatus(result.jobId);
+      } else {
+        throw new Error('Failed to create authentication job');
+      }
+    } catch (error) {
+      console.error('LuxTrust authentication error:', error);
+      toast({
+        title: 'Authentication Failed',
+        description: 'Failed to initiate LuxTrust authentication.',
+        variant: 'destructive'
+      });
+      setIsAuthenticating(false);
+    }
+  };
+
+  const pollAuthStatus = async (jobId: string) => {
+    const maxAttempts = 30; // 30 seconds
+    let attempts = 0;
+
+    const poll = async () => {
+      try {
+        const response = await fetch(`https://hrrlefgnhkbzuwyklejj.supabase.co/functions/v1/auth-service/luxtrust/status/${jobId}`);
+        const result = await response.json();
+
+        if (result.status === 'completed' && result.profile) {
+          setLuxtrustProfile(result.profile);
+          setIsAuthenticated(true);
+          setIsAuthenticating(false);
+          toast({
+            title: 'LuxTrust Authentication Successful',
+            description: 'Professional credentials verified successfully!',
+          });
+          return;
+        } else if (result.status === 'failed') {
+          throw new Error(result.error || 'Authentication failed');
+        } else if (attempts < maxAttempts) {
+          attempts++;
+          setTimeout(poll, 1000);
+        } else {
+          throw new Error('Authentication timeout');
+        }
+      } catch (error) {
+        console.error('Polling error:', error);
+        setIsAuthenticating(false);
+        toast({
+          title: 'Authentication Failed',
+          description: 'Authentication process failed or timed out.',
+          variant: 'destructive'
+        });
+      }
     };
-    
-    setLuxtrustProfile(mockProfile);
-    setIsAuthenticated(true);
-    setIsAuthenticating(false);
+
+    poll();
   };
 
   const handleCertificationUpload = async () => {
@@ -171,6 +233,7 @@ const TestLuxembourg: React.FC = () => {
     setIsLuxembourg(true);
     setIsAuthenticated(false);
     setLuxtrustProfile(null);
+    setAuthJobId(null);
     setCertifications([]);
     setLuxtrustId('');
     setIdVerificationStatus('unverified');
@@ -195,6 +258,11 @@ const TestLuxembourg: React.FC = () => {
           <Button onClick={resetAllTests} variant="outline" className="mt-4">
             Reset All Tests
           </Button>
+          {authJobId && (
+            <div className="mt-2 p-2 bg-blue-50 rounded text-sm text-blue-800">
+              Current Auth Job ID: {authJobId}
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

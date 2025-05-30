@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { Hono } from "https://deno.land/x/hono@v3.12.11/mod.ts"
 import { cors } from "https://deno.land/x/hono@v3.12.11/middleware.ts"
@@ -18,6 +17,9 @@ app.use('/*', cors({
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+// Initialize Deno KV
+const kv = await Deno.openKv()
 
 // JWT secret for signing tokens
 const JWT_SECRET = Deno.env.get('JWT_SECRET') || 'your-super-secret-jwt-key'
@@ -106,6 +108,38 @@ async function getOrCreateUserProfile(email: string, fullName: string, authMetho
   return newProfile
 }
 
+// LuxTrust authentication queue handler
+async function processLuxTrustAuth(luxtrustId: string, testMode: boolean = false): Promise<any> {
+  console.log('Processing LuxTrust authentication for:', luxtrustId)
+  
+  // Simulate LuxTrust API call delay
+  await new Promise(resolve => setTimeout(resolve, 2000))
+  
+  if (testMode) {
+    // Mock successful response for testing
+    return {
+      success: true,
+      profile: {
+        id: `lux-${Date.now()}`,
+        firstName: 'Dr. Jean',
+        lastName: 'Luxembourg',
+        professionalId: 'LUX-DOC-2024-001',
+        certificationLevel: 'professional',
+        isVerified: true
+      },
+      signature: `LuxTrust-Signature-${Date.now()}`,
+      verificationId: `VER-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
+    }
+  }
+  
+  // In production, this would make actual LuxTrust API calls
+  // For now, return mock data
+  return {
+    success: false,
+    error: 'LuxTrust integration not yet configured for production'
+  }
+}
+
 // OAuth configuration
 const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_CLIENT_ID')
 const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_CLIENT_SECRET')
@@ -117,6 +151,65 @@ const LUXTRUST_CLIENT_SECRET = Deno.env.get('LUXTRUST_CLIENT_SECRET')
 // Health check endpoint
 app.get('/health', (c) => {
   return c.json({ status: 'healthy', timestamp: new Date().toISOString() })
+})
+
+// LuxTrust authentication initiation endpoint
+app.post('/luxtrust/auth', async (c) => {
+  try {
+    const { luxtrustId, testMode = false } = await c.req.json()
+    
+    if (!luxtrustId) {
+      return c.json({ error: 'LuxTrust ID required' }, 400)
+    }
+
+    // Generate job ID
+    const jobId = `luxtrust-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`
+    
+    // Store job in KV with initial status
+    await kv.set(['luxtrust_jobs', jobId], {
+      status: 'pending',
+      luxtrustId,
+      testMode,
+      createdAt: new Date().toISOString()
+    })
+
+    // Queue the authentication job
+    await kv.enqueue({
+      type: 'luxtrust_auth',
+      jobId,
+      luxtrustId,
+      testMode
+    })
+
+    console.log('LuxTrust authentication job queued:', jobId)
+
+    return c.json({ 
+      jobId,
+      status: 'queued',
+      message: 'LuxTrust authentication job has been queued'
+    })
+  } catch (error) {
+    console.error('LuxTrust auth initiation error:', error)
+    return c.json({ error: 'Failed to initiate LuxTrust authentication' }, 500)
+  }
+})
+
+// LuxTrust authentication status endpoint
+app.get('/luxtrust/status/:jobId', async (c) => {
+  try {
+    const jobId = c.req.param('jobId')
+    
+    const jobData = await kv.get(['luxtrust_jobs', jobId])
+    
+    if (!jobData.value) {
+      return c.json({ error: 'Job not found' }, 404)
+    }
+
+    return c.json(jobData.value)
+  } catch (error) {
+    console.error('LuxTrust status check error:', error)
+    return c.json({ error: 'Failed to check job status' }, 500)
+  }
 })
 
 // JWT verification endpoint
@@ -459,6 +552,68 @@ app.post('/logout', authMiddleware, async (c) => {
   return c.json({ message: 'Logged out successfully' })
 })
 
-console.log('Auth service starting...')
+// Deno KV queue listener for LuxTrust authentication
+kv.listenQueue(async (msg) => {
+  if (msg.type === 'luxtrust_auth') {
+    const { jobId, luxtrustId, testMode } = msg
+    
+    console.log('Processing LuxTrust authentication job:', jobId)
+    
+    try {
+      // Update job status to processing
+      await kv.set(['luxtrust_jobs', jobId], {
+        status: 'processing',
+        luxtrustId,
+        testMode,
+        createdAt: new Date().toISOString(),
+        startedAt: new Date().toISOString()
+      })
+
+      // Process the authentication
+      const result = await processLuxTrustAuth(luxtrustId, testMode)
+      
+      // Update job with results
+      if (result.success) {
+        await kv.set(['luxtrust_jobs', jobId], {
+          status: 'completed',
+          luxtrustId,
+          testMode,
+          createdAt: new Date().toISOString(),
+          startedAt: new Date().toISOString(),
+          completedAt: new Date().toISOString(),
+          profile: result.profile,
+          signature: result.signature,
+          verificationId: result.verificationId
+        })
+        console.log('LuxTrust authentication completed successfully:', jobId)
+      } else {
+        await kv.set(['luxtrust_jobs', jobId], {
+          status: 'failed',
+          luxtrustId,
+          testMode,
+          createdAt: new Date().toISOString(),
+          startedAt: new Date().toISOString(),
+          failedAt: new Date().toISOString(),
+          error: result.error || 'Authentication failed'
+        })
+        console.log('LuxTrust authentication failed:', jobId, result.error)
+      }
+    } catch (error) {
+      console.error('LuxTrust authentication job error:', jobId, error)
+      
+      // Update job with error
+      await kv.set(['luxtrust_jobs', jobId], {
+        status: 'failed',
+        luxtrustId,
+        testMode,
+        createdAt: new Date().toISOString(),
+        failedAt: new Date().toISOString(),
+        error: error.message || 'Processing error'
+      })
+    }
+  }
+})
+
+console.log('Auth service starting with LuxTrust queue support...')
 
 serve(app.fetch)
