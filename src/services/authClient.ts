@@ -1,4 +1,3 @@
-
 interface AuthResponse {
   access_token: string
   token_type: string
@@ -126,7 +125,9 @@ class AuthClient {
   }
 
   initiateLuxTrustAuth(): void {
-    window.location.href = `${this.baseUrl}/oauth/luxtrust`
+    // For now, we'll handle LuxTrust authentication locally using the useLuxTrustAuth hook
+    // rather than redirecting to the edge function
+    console.log('LuxTrust authentication should be handled by the useLuxTrustAuth hook')
   }
 
   // Handle OAuth callback

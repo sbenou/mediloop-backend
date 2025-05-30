@@ -2,9 +2,14 @@
 import { Button } from '@/components/ui/button'
 import { authClient } from '@/services/authClient'
 import { useLocationDetection } from '@/hooks/useLocationDetection'
+import { useLuxTrustAuth } from '@/hooks/useLuxTrustAuth'
+import { toast } from '@/components/ui/use-toast'
+import { useNavigate } from 'react-router-dom'
 
 export const OAuthButtons = () => {
   const { locationPreference } = useLocationDetection()
+  const { authenticateWithLuxTrust, isAuthenticating } = useLuxTrustAuth()
+  const navigate = useNavigate()
 
   const handleGoogleAuth = () => {
     authClient.initiateGoogleAuth()
@@ -14,8 +19,25 @@ export const OAuthButtons = () => {
     authClient.initiateFranceConnectAuth()
   }
 
-  const handleLuxTrustAuth = () => {
-    authClient.initiateLuxTrustAuth()
+  const handleLuxTrustAuth = async () => {
+    try {
+      const response = await authenticateWithLuxTrust()
+      if (response?.success) {
+        toast({
+          title: 'LuxTrust Authentication Successful',
+          description: 'You have been successfully authenticated with LuxTrust.',
+        })
+        // Redirect to dashboard after successful authentication
+        navigate('/dashboard')
+      }
+    } catch (error) {
+      console.error('LuxTrust authentication error:', error)
+      toast({
+        title: 'Authentication Failed',
+        description: 'Failed to authenticate with LuxTrust. Please try again.',
+        variant: 'destructive'
+      })
+    }
   }
 
   return (
@@ -82,11 +104,12 @@ export const OAuthButtons = () => {
             type="button"
             className="w-full h-14"
             onClick={handleLuxTrustAuth}
+            disabled={isAuthenticating}
           >
             <div className="mr-2 h-4 w-4 rounded bg-red-600 flex items-center justify-center">
               <span className="text-white text-xs font-bold">LT</span>
             </div>
-            Continue with LuxTrust
+            {isAuthenticating ? 'Authenticating...' : 'Continue with LuxTrust'}
           </Button>
         )}
       </div>
