@@ -1,7 +1,12 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { corsHeaders } from "../_shared/cors.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS'
+}
 
 // Initialize Supabase client
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
@@ -141,8 +146,11 @@ async function processLuxTrustJob(msg: any) {
 }
 
 serve(async (req: Request) => {
+  console.log(`Incoming ${req.method} request to ${req.url}`)
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('Handling CORS preflight request')
     return new Response(null, { 
       status: 200,
       headers: corsHeaders 
@@ -152,7 +160,7 @@ serve(async (req: Request) => {
   const url = new URL(req.url)
   const path = url.pathname
 
-  console.log(`${req.method} ${path}`)
+  console.log(`Processing ${req.method} ${path}`)
 
   try {
     // Health check endpoint
@@ -168,6 +176,7 @@ serve(async (req: Request) => {
 
     // LuxTrust authentication initiation endpoint
     if (path === '/luxtrust/auth' && req.method === 'POST') {
+      console.log('Processing LuxTrust auth request')
       const { luxtrustId, testMode = false } = await req.json()
       
       if (!luxtrustId) {
@@ -233,6 +242,7 @@ serve(async (req: Request) => {
     }
 
     // Default 404 response
+    console.log('Endpoint not found:', path)
     return new Response(JSON.stringify({ error: 'Endpoint not found' }), {
       status: 404,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
