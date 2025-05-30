@@ -18,8 +18,44 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-// Initialize Deno KV
-const kv = await Deno.openKv()
+// Initialize Deno KV with fallback
+let kv: any = null
+try {
+  kv = await Deno.openKv()
+  console.log('Deno KV initialized successfully')
+} catch (error) {
+  console.warn('Deno KV not available, falling back to in-memory storage:', error.message)
+}
+
+// Fallback storage for when KV is not available
+const memoryStorage = new Map()
+
+// Helper functions for storage abstraction
+async function setJob(jobId: string, data: any) {
+  if (kv) {
+    await kv.set(['luxtrust_jobs', jobId], data)
+  } else {
+    memoryStorage.set(jobId, data)
+  }
+}
+
+async function getJob(jobId: string) {
+  if (kv) {
+    const result = await kv.get(['luxtrust_jobs', jobId])
+    return result
+  } else {
+    return { value: memoryStorage.get(jobId) || null }
+  }
+}
+
+async function enqueueJob(data: any) {
+  if (kv) {
+    await kv.enqueue(data)
+  } else {
+    // Process immediately in memory fallback
+    setTimeout(() => processLuxTrustJob(data), 100)
+  }
+}
 
 // JWT secret for signing tokens
 const JWT_SECRET = Deno.env.get('JWT_SECRET') || 'your-super-secret-jwt-key'
@@ -150,7 +186,11 @@ const LUXTRUST_CLIENT_SECRET = Deno.env.get('LUXTRUST_CLIENT_SECRET')
 
 // Health check endpoint
 app.get('/health', (c) => {
-  return c.json({ status: 'healthy', timestamp: new Date().toISOString() })
+  return c.json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    kvAvailable: kv !== null
+  })
 })
 
 // LuxTrust authentication initiation endpoint
@@ -165,8 +205,8 @@ app.post('/luxtrust/auth', async (c) => {
     // Generate job ID
     const jobId = `luxtrust-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`
     
-    // Store job in KV with initial status
-    await kv.set(['luxtrust_jobs', jobId], {
+    // Store job with initial status
+    await setJob(jobId, {
       status: 'pending',
       luxtrustId,
       testMode,
@@ -174,7 +214,7 @@ app.post('/luxtrust/auth', async (c) => {
     })
 
     // Queue the authentication job
-    await kv.enqueue({
+    await enqueueJob({
       type: 'luxtrust_auth',
       jobId,
       luxtrustId,
@@ -199,7 +239,7 @@ app.get('/luxtrust/status/:jobId', async (c) => {
   try {
     const jobId = c.req.param('jobId')
     
-    const jobData = await kv.get(['luxtrust_jobs', jobId])
+    const jobData = await getJob(jobId)
     
     if (!jobData.value) {
       return c.json({ error: 'Job not found' }, 404)
@@ -552,8 +592,8 @@ app.post('/logout', authMiddleware, async (c) => {
   return c.json({ message: 'Logged out successfully' })
 })
 
-// Deno KV queue listener for LuxTrust authentication
-kv.listenQueue(async (msg) => {
+// LuxTrust authentication queue handler
+async function processLuxTrustJob(msg: any) {
   if (msg.type === 'luxtrust_auth') {
     const { jobId, luxtrustId, testMode } = msg
     
@@ -561,7 +601,7 @@ kv.listenQueue(async (msg) => {
     
     try {
       // Update job status to processing
-      await kv.set(['luxtrust_jobs', jobId], {
+      await setJob(jobId, {
         status: 'processing',
         luxtrustId,
         testMode,
@@ -574,7 +614,7 @@ kv.listenQueue(async (msg) => {
       
       // Update job with results
       if (result.success) {
-        await kv.set(['luxtrust_jobs', jobId], {
+        await setJob(jobId, {
           status: 'completed',
           luxtrustId,
           testMode,
@@ -587,7 +627,7 @@ kv.listenQueue(async (msg) => {
         })
         console.log('LuxTrust authentication completed successfully:', jobId)
       } else {
-        await kv.set(['luxtrust_jobs', jobId], {
+        await setJob(jobId, {
           status: 'failed',
           luxtrustId,
           testMode,
@@ -602,7 +642,7 @@ kv.listenQueue(async (msg) => {
       console.error('LuxTrust authentication job error:', jobId, error)
       
       // Update job with error
-      await kv.set(['luxtrust_jobs', jobId], {
+      await setJob(jobId, {
         status: 'failed',
         luxtrustId,
         testMode,
@@ -612,7 +652,46 @@ kv.listenQueue(async (msg) => {
       })
     }
   }
-})
+}
+
+// Set up queue listener if KV is available
+if (kv) {
+  kv.listenQueue(processLuxTrustJob)
+  console.log('Deno KV queue listener started')
+} else {
+  console.log('Running without Deno KV queue, using immediate processing')
+}
+
+// LuxTrust authentication processing function
+async function processLuxTrustAuth(luxtrustId: string, testMode: boolean = false): Promise<any> {
+  console.log('Processing LuxTrust authentication for:', luxtrustId)
+  
+  // Simulate LuxTrust API call delay
+  await new Promise(resolve => setTimeout(resolve, 2000))
+  
+  if (testMode) {
+    // Mock successful response for testing
+    return {
+      success: true,
+      profile: {
+        id: `lux-${Date.now()}`,
+        firstName: 'Dr. Jean',
+        lastName: 'Luxembourg',
+        professionalId: 'LUX-DOC-2024-001',
+        certificationLevel: 'professional',
+        isVerified: true
+      },
+      signature: `LuxTrust-Signature-${Date.now()}`,
+      verificationId: `VER-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
+    }
+  }
+  
+  // In production, this would make actual LuxTrust API calls
+  return {
+    success: false,
+    error: 'LuxTrust integration not yet configured for production'
+  }
+}
 
 console.log('Auth service starting with LuxTrust queue support...')
 
