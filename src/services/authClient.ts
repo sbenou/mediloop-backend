@@ -1,3 +1,4 @@
+
 interface AuthResponse {
   access_token: string
   token_type: string
@@ -20,7 +21,7 @@ class AuthClient {
 
   constructor() {
     // Use the correct Supabase function URL
-    this.baseUrl = 'https://reaeyxplttbuejktjrdh.supabase.co/functions/v1/auth-service'
+    this.baseUrl = 'https://hrrlefgnhkbzuwyklejj.supabase.co/functions/v1/auth-service'
     
     // Load token from localStorage on initialization
     this.token = localStorage.getItem('auth_token')

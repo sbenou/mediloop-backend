@@ -58,7 +58,7 @@ export const useTestLuxembourgState = () => {
     try {
       console.log('Starting LuxTrust authentication...');
       
-      const response = await fetch('https://reaeyxplttbuejktjrdh.supabase.co/functions/v1/auth-service/luxtrust/auth', {
+      const response = await fetch('https://hrrlefgnhkbzuwyklejj.supabase.co/functions/v1/auth-service/luxtrust/auth', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -110,7 +110,7 @@ export const useTestLuxembourgState = () => {
       try {
         console.log(`Polling attempt ${attempts + 1}/${maxAttempts}`);
         
-        const response = await fetch(`https://reaeyxplttbuejktjrdh.supabase.co/functions/v1/auth-service/luxtrust/status/${jobId}`);
+        const response = await fetch(`https://hrrlefgnhkbzuwyklejj.supabase.co/functions/v1/auth-service/luxtrust/status/${jobId}`);
         const result = await response.json();
 
         console.log('Poll result:', result);
