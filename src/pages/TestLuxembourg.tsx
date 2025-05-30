@@ -19,21 +19,16 @@ const TestLuxembourg: React.FC = () => {
   const [currentCountry, setCurrentCountry] = useState('LU');
   const [isLuxembourg, setIsLuxembourg] = useState(true);
   
-  // LuxTrust Auth State
-  const [isAuthenticating, setIsAuthenticating] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [luxtrustProfile, setLuxtrustProfile] = useState<LuxTrustProfile | null>(null);
-  
-  // Professional Certification State
-  const [certifications, setCertifications] = useState<Certification[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  
   // LuxTrust ID Field State
   const [luxtrustId, setLuxtrustId] = useState('');
   const [isIdVisible, setIsIdVisible] = useState(false);
   const [idVerificationStatus, setIdVerificationStatus] = useState<IdVerificationStatus>('unverified');
   const [isVerifying, setIsVerifying] = useState(false);
+  
+  // Professional Certification State
+  const [certifications, setCertifications] = useState<Certification[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const countries: Country[] = [
     { code: 'LU', name: 'Luxembourg' },
@@ -59,26 +54,6 @@ const TestLuxembourg: React.FC = () => {
   const handleCountryChange = (countryCode: string) => {
     setCurrentCountry(countryCode);
     setIsLuxembourg(countryCode === 'LU');
-  };
-
-  const handleLuxTrustAuth = async () => {
-    setIsAuthenticating(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    const mockProfile: LuxTrustProfile = {
-      id: `lux-${Date.now()}`,
-      firstName: 'Dr. Jean',
-      lastName: 'Luxembourg',
-      professionalId: 'LUX-DOC-2024-001',
-      certificationLevel: 'professional',
-      isVerified: true
-    };
-    
-    setLuxtrustProfile(mockProfile);
-    setIsAuthenticated(true);
-    setIsAuthenticating(false);
   };
 
   const handleCertificationUpload = async () => {
@@ -169,11 +144,9 @@ const TestLuxembourg: React.FC = () => {
   const resetAllTests = () => {
     setCurrentCountry('LU');
     setIsLuxembourg(true);
-    setIsAuthenticated(false);
-    setLuxtrustProfile(null);
-    setCertifications([]);
     setLuxtrustId('');
     setIdVerificationStatus('unverified');
+    setCertifications([]);
     setSelectedFile(null);
     
     toast({
@@ -219,10 +192,6 @@ const TestLuxembourg: React.FC = () => {
 
           <LuxTrustAuthTest
             isLuxembourg={isLuxembourg}
-            isAuthenticating={isAuthenticating}
-            isAuthenticated={isAuthenticated}
-            luxtrustProfile={luxtrustProfile}
-            onAuthenticate={handleLuxTrustAuth}
           />
 
           <CertificationTest
