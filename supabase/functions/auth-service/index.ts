@@ -12,8 +12,8 @@ app.use('/*', cors({
   allowHeaders: ['Content-Type', 'Authorization', 'x-client-info', 'apikey'],
 }))
 
-// Initialize Deno KV
-const kv = await Deno.openKv()
+// In-memory storage for jobs (for testing purposes)
+const jobs = new Map()
 
 // LuxTrust Authentication - Start authentication process
 app.post('/luxtrust/auth', async (c) => {
@@ -29,7 +29,7 @@ app.post('/luxtrust/auth', async (c) => {
     // Create a unique job ID
     const jobId = crypto.randomUUID()
     
-    // Store the job in Deno KV with initial status
+    // Store the job in memory with initial status
     const jobData = {
       id: jobId,
       luxtrustId,
@@ -38,10 +38,12 @@ app.post('/luxtrust/auth', async (c) => {
       updatedAt: new Date().toISOString()
     }
     
-    await kv.set(['luxtrust_jobs', jobId], jobData)
+    jobs.set(jobId, jobData)
     
-    // Add job to processing queue
-    await kv.enqueue(jobData, { delay: 100 }) // Small delay to allow client to start polling
+    // Process job asynchronously
+    setTimeout(async () => {
+      await processLuxTrustJob(jobId)
+    }, 100)
     
     console.log('Created LuxTrust authentication job:', jobId)
     
@@ -63,14 +65,13 @@ app.get('/luxtrust/status/:jobId', async (c) => {
 
     console.log('Checking status for job:', jobId)
 
-    // Get job from Deno KV
-    const result = await kv.get(['luxtrust_jobs', jobId])
+    // Get job from memory
+    const jobData = jobs.get(jobId)
     
-    if (!result.value) {
+    if (!jobData) {
       return c.json({ error: 'Job not found' }, 404)
     }
 
-    const jobData = result.value as any
     console.log('Retrieved job status:', jobData.status, 'for job:', jobId)
     
     return c.json(jobData)
@@ -80,19 +81,24 @@ app.get('/luxtrust/status/:jobId', async (c) => {
   }
 })
 
-// Queue listener for processing LuxTrust authentication jobs
-kv.listenQueue(async (message) => {
-  const jobData = message as any
-  console.log('Processing LuxTrust job:', jobData.id)
+// Process LuxTrust authentication job
+async function processLuxTrustJob(jobId: string) {
+  console.log('Processing LuxTrust job:', jobId)
   
   try {
+    const jobData = jobs.get(jobId)
+    if (!jobData) {
+      console.error('Job not found:', jobId)
+      return
+    }
+
     // Update job status to processing
     const processingData = {
       ...jobData,
       status: 'processing',
       updatedAt: new Date().toISOString()
     }
-    await kv.set(['luxtrust_jobs', jobData.id], processingData)
+    jobs.set(jobId, processingData)
     
     // Simulate LuxTrust authentication process (2 seconds)
     await new Promise(resolve => setTimeout(resolve, 2000))
@@ -121,23 +127,26 @@ kv.listenQueue(async (message) => {
       updatedAt: new Date().toISOString()
     }
     
-    await kv.set(['luxtrust_jobs', jobData.id], completedData)
-    console.log('LuxTrust job completed:', jobData.id)
+    jobs.set(jobId, completedData)
+    console.log('LuxTrust job completed:', jobId)
     
   } catch (error) {
     console.error('Error processing LuxTrust job:', error)
     
-    // Update job with failed status
-    const failedData = {
-      ...jobData,
-      status: 'failed',
-      error: error.message,
-      updatedAt: new Date().toISOString()
+    const jobData = jobs.get(jobId)
+    if (jobData) {
+      // Update job with failed status
+      const failedData = {
+        ...jobData,
+        status: 'failed',
+        error: error.message,
+        updatedAt: new Date().toISOString()
+      }
+      
+      jobs.set(jobId, failedData)
     }
-    
-    await kv.set(['luxtrust_jobs', jobData.id], failedData)
   }
-})
+}
 
 // Health check endpoint
 app.get('/health', (c) => {
