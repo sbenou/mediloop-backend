@@ -133,7 +133,7 @@ const AppRoutes = () => {
         path="/pharmacy/dashboard"
         element={
           <ProtectedRoute allowedRoles={['pharmacist']}>
-            <RequireRoleGuard requiredRoles={['pharmacist']}>
+            <RequireRoleGuard allowedRoles={['pharmacist']}>
               <Suspense fallback={<Loader className="h-6 w-6 animate-spin" />}>
                 <PharmacyDashboard />
               </Suspense>
@@ -145,7 +145,7 @@ const AppRoutes = () => {
         path="/superadmin/dashboard"
         element={
           <ProtectedRoute allowedRoles={['superadmin']}>
-            <RequireRoleGuard requiredRoles={['superadmin']}>
+            <RequireRoleGuard allowedRoles={['superadmin']}>
               <Suspense fallback={<Loader className="h-6 w-6 animate-spin" />}>
                 <SuperAdminDashboard />
               </Suspense>
