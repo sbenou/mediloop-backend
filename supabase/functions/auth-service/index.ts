@@ -38,9 +38,6 @@ async function processLuxTrustAuth(luxtrustId: string, testMode: boolean = false
   }
 }
 
-// Simple in-memory storage for demo
-const jobs = new Map()
-
 serve(async (req: Request) => {
   console.log(`Incoming ${req.method} request to ${req.url}`)
   
@@ -59,6 +56,9 @@ serve(async (req: Request) => {
   console.log(`Processing ${req.method} ${path}`)
 
   try {
+    // Open Deno KV database
+    const kv = await Deno.openKv()
+
     // Health check endpoint
     if (path === '/health') {
       return new Response(JSON.stringify({ 
@@ -84,33 +84,34 @@ serve(async (req: Request) => {
       // Generate job ID
       const jobId = `luxtrust-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`
       
-      // Store job with initial status
-      jobs.set(jobId, {
+      // Store job with initial status in Deno KV
+      const jobData = {
         status: 'pending',
         luxtrustId,
         testMode,
         createdAt: new Date().toISOString()
-      })
+      }
+      
+      await kv.set(['luxtrust_jobs', jobId], jobData)
 
       // Process authentication immediately for demo
       setTimeout(async () => {
         try {
-          jobs.set(jobId, {
+          const kvInstance = await Deno.openKv()
+          
+          // Update status to processing
+          await kvInstance.set(['luxtrust_jobs', jobId], {
+            ...jobData,
             status: 'processing',
-            luxtrustId,
-            testMode,
-            createdAt: new Date().toISOString(),
             startedAt: new Date().toISOString()
           })
 
           const result = await processLuxTrustAuth(luxtrustId, testMode)
           
           if (result.success) {
-            jobs.set(jobId, {
+            await kvInstance.set(['luxtrust_jobs', jobId], {
+              ...jobData,
               status: 'completed',
-              luxtrustId,
-              testMode,
-              createdAt: new Date().toISOString(),
               startedAt: new Date().toISOString(),
               completedAt: new Date().toISOString(),
               profile: result.profile,
@@ -119,27 +120,27 @@ serve(async (req: Request) => {
             })
             console.log('LuxTrust authentication completed successfully:', jobId)
           } else {
-            jobs.set(jobId, {
+            await kvInstance.set(['luxtrust_jobs', jobId], {
+              ...jobData,
               status: 'failed',
-              luxtrustId,
-              testMode,
-              createdAt: new Date().toISOString(),
               startedAt: new Date().toISOString(),
               failedAt: new Date().toISOString(),
               error: result.error || 'Authentication failed'
             })
             console.log('LuxTrust authentication failed:', jobId, result.error)
           }
+          
+          kvInstance.close()
         } catch (error) {
           console.error('LuxTrust authentication job error:', jobId, error)
-          jobs.set(jobId, {
+          const kvInstance = await Deno.openKv()
+          await kvInstance.set(['luxtrust_jobs', jobId], {
+            ...jobData,
             status: 'failed',
-            luxtrustId,
-            testMode,
-            createdAt: new Date().toISOString(),
             failedAt: new Date().toISOString(),
             error: error.message || 'Processing error'
           })
+          kvInstance.close()
         }
       }, 100)
 
@@ -165,16 +166,16 @@ serve(async (req: Request) => {
         })
       }
 
-      const jobData = jobs.get(jobId)
+      const jobData = await kv.get(['luxtrust_jobs', jobId])
       
-      if (!jobData) {
+      if (!jobData.value) {
         return new Response(JSON.stringify({ error: 'Job not found' }), {
           status: 404,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         })
       }
 
-      return new Response(JSON.stringify(jobData), {
+      return new Response(JSON.stringify(jobData.value), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
@@ -188,11 +189,11 @@ serve(async (req: Request) => {
 
   } catch (error) {
     console.error('Request error:', error)
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+    return new Response(JSON.stringify({ error: 'Internal server error', details: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })
   }
 })
 
-console.log('Auth service starting with LuxTrust support...')
+console.log('Auth service starting with LuxTrust support and Deno KV...')
