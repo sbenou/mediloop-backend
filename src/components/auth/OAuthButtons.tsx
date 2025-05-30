@@ -36,7 +36,7 @@ export const OAuthButtons = () => {
         <Button
           variant="outline"
           type="button"
-          className="w-full"
+          className="w-full h-12"
           onClick={handleGoogleAuth}
         >
           <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
@@ -65,7 +65,7 @@ export const OAuthButtons = () => {
           <Button
             variant="outline"
             type="button"
-            className="w-full"
+            className="w-full h-12"
             onClick={handleFranceConnectAuth}
           >
             <div className="mr-2 h-4 w-4 rounded bg-blue-600 flex items-center justify-center">
@@ -80,7 +80,7 @@ export const OAuthButtons = () => {
           <Button
             variant="outline"
             type="button"
-            className="w-full"
+            className="w-full h-12"
             onClick={handleLuxTrustAuth}
           >
             <div className="mr-2 h-4 w-4 rounded bg-red-600 flex items-center justify-center">

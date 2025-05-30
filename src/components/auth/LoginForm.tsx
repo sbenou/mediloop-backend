@@ -106,8 +106,12 @@ export const LoginForm = () => {
         />
       )}
 
-      {/* OAuth buttons - only show when not in password or reset mode */}
-      {!showPassword && !showResetOptions && <OAuthButtons />}
+      {/* OAuth buttons - only show when not in password or reset mode, with extra spacing */}
+      {!showPassword && !showResetOptions && (
+        <div className="mt-6">
+          <OAuthButtons />
+        </div>
+      )}
     </div>
   );
 }
