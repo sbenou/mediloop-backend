@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
@@ -66,6 +67,8 @@ const TestLuxembourg: React.FC = () => {
     setAuthJobId(null);
     
     try {
+      console.log('Starting LuxTrust authentication...');
+      
       // Use the correct Supabase project URL
       const response = await fetch('https://reaeyxplttbuejktjrdh.supabase.co/functions/v1/auth-service/luxtrust/auth', {
         method: 'POST',
@@ -78,11 +81,14 @@ const TestLuxembourg: React.FC = () => {
         })
       });
 
+      console.log('Response status:', response.status);
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
+      console.log('Auth result:', result);
       
       if (result.jobId) {
         setAuthJobId(result.jobId);
@@ -108,14 +114,19 @@ const TestLuxembourg: React.FC = () => {
   };
 
   const pollAuthStatus = async (jobId: string) => {
+    console.log('Starting to poll auth status for job:', jobId);
     const maxAttempts = 30; // 30 seconds
     let attempts = 0;
 
     const poll = async () => {
       try {
+        console.log(`Polling attempt ${attempts + 1}/${maxAttempts}`);
+        
         // Use the correct Supabase project URL
         const response = await fetch(`https://reaeyxplttbuejktjrdh.supabase.co/functions/v1/auth-service/luxtrust/status/${jobId}`);
         const result = await response.json();
+
+        console.log('Poll result:', result);
 
         if (result.status === 'completed' && result.profile) {
           setLuxtrustProfile(result.profile);
