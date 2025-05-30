@@ -55,12 +55,27 @@ export const fetchTenantInfo = async (tenantDomain: string): Promise<Tenant | nu
   try {
     console.log('Fetching tenant info for domain:', tenantDomain);
     
+    // First check if tenants table exists by trying a simple query
+    const { data: testData, error: testError } = await supabase
+      .from('tenants')
+      .select('id')
+      .limit(1);
+    
+    if (testError) {
+      if (testError.code === '42P01') {
+        console.warn('Tenants table does not exist yet, skipping tenant lookup');
+        return null;
+      }
+      console.error('Error testing tenants table:', testError);
+      return null;
+    }
+    
     const { data, error } = await supabase
       .from('tenants')
       .select('*')
       .eq('domain', tenantDomain)
       .eq('is_active', true)
-      .single();
+      .maybeSingle();
     
     if (error) {
       console.error('Error fetching tenant info:', error);
@@ -94,12 +109,27 @@ export const fetchUserTenant = async (userId: string): Promise<Tenant | null> =>
   try {
     console.log('Fetching tenant info for user:', userId);
     
+    // First check if tenants table exists
+    const { data: testData, error: testError } = await supabase
+      .from('tenants')
+      .select('id')
+      .limit(1);
+    
+    if (testError) {
+      if (testError.code === '42P01') {
+        console.warn('Tenants table does not exist yet, skipping user tenant lookup');
+        return null;
+      }
+      console.error('Error testing tenants table:', testError);
+      return null;
+    }
+    
     const { data, error } = await supabase
       .from('tenants')
       .select('*')
       .eq('domain', userId)
       .eq('is_active', true)
-      .single();
+      .maybeSingle();
     
     if (error) {
       console.error('Error fetching user tenant info:', error);

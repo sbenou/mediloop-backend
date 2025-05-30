@@ -24,10 +24,17 @@ export const useLuxTrustAuth = () => {
     
     while (attempts < maxAttempts) {
       try {
-        const response = await fetch(`https://reaeyxplttbuejktjrdh.supabase.co/functions/v1/auth-service/luxtrust/status/${jobId}`);
+        const response = await fetch(`https://reaeyxplttbuejktjrdh.supabase.co/functions/v1/auth-service/luxtrust/status/${jobId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
         
         if (!response.ok) {
-          throw new Error(`Status check failed: ${response.status}`);
+          const errorText = await response.text();
+          console.error('Status check failed:', response.status, errorText);
+          throw new Error(`Status check failed: ${response.status} - ${errorText}`);
         }
         
         const jobStatus: JobStatus = await response.json();
@@ -71,10 +78,19 @@ export const useLuxTrustAuth = () => {
       });
 
       if (!response.ok) {
-        throw new Error(`Authentication request failed: ${response.status}`);
+        const errorText = await response.text();
+        console.error('Authentication request failed:', response.status, errorText);
+        throw new Error(`Authentication request failed: ${response.status} - ${errorText}`);
       }
 
-      const { jobId } = await response.json();
+      const responseData = await response.json();
+      const { jobId } = responseData;
+      
+      if (!jobId) {
+        console.error('No jobId in response:', responseData);
+        throw new Error('No job ID received from authentication service');
+      }
+      
       setCurrentJobId(jobId);
       console.log('Created authentication job:', jobId);
 
