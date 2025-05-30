@@ -1,6 +1,6 @@
 
 import { renderHook, act } from '@testing-library/react';
-import { useLuxTrustAuth } from '../useLuxTrustAuth';
+import { useLuxTrustAuth } from './useLuxTrustAuth';
 import { toast } from '@/components/ui/use-toast';
 
 // Mock toast
