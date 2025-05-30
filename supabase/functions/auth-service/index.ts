@@ -90,7 +90,7 @@ serve(async (req) => {
 
   try {
     // LuxTrust Authentication - Start authentication process
-    if (path === '/luxtrust/auth' && req.method === 'POST') {
+    if (path === '/auth' && req.method === 'POST') {
       const { luxtrustId } = await req.json()
       
       if (!luxtrustId) {
@@ -136,7 +136,7 @@ serve(async (req) => {
     }
 
     // LuxTrust Authentication - Check job status
-    if (path.startsWith('/luxtrust/status/') && req.method === 'GET') {
+    if (path.startsWith('/status/') && req.method === 'GET') {
       const jobId = path.split('/').pop()
       
       if (!jobId) {
@@ -176,12 +176,13 @@ serve(async (req) => {
     }
 
     // Health check endpoint
-    if (path === '/health' || path === '/') {
+    if (path === '/' || path === '/health') {
       return new Response(
         JSON.stringify({ 
           status: 'healthy', 
           timestamp: new Date().toISOString(),
-          service: 'auth-service' 
+          service: 'auth-service',
+          availableRoutes: ['/health', '/auth', '/status/{jobId}']
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -196,7 +197,7 @@ serve(async (req) => {
         error: 'Route not found',
         path: path,
         method: req.method,
-        availableRoutes: ['/health', '/luxtrust/auth', '/luxtrust/status/{jobId}']
+        availableRoutes: ['/health', '/auth', '/status/{jobId}']
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -219,4 +220,4 @@ serve(async (req) => {
   }
 })
 
-console.log('Auth service starting on port 8000...')
+console.log('Auth service starting...')

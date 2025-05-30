@@ -24,7 +24,7 @@ export const useLuxTrustAuth = () => {
     
     while (attempts < maxAttempts) {
       try {
-        const response = await fetch(`https://reaeyxplttbuejktjrdh.supabase.co/functions/v1/auth-service/luxtrust/status/${jobId}`, {
+        const response = await fetch(`https://reaeyxplttbuejktjrdh.supabase.co/functions/v1/auth-service/status/${jobId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -69,7 +69,7 @@ export const useLuxTrustAuth = () => {
       const idToUse = luxtrustId || 'TEST-LUX-ID-123456';
       
       // Start authentication job
-      const response = await fetch('https://reaeyxplttbuejktjrdh.supabase.co/functions/v1/auth-service/luxtrust/auth', {
+      const response = await fetch('https://reaeyxplttbuejktjrdh.supabase.co/functions/v1/auth-service/auth', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
