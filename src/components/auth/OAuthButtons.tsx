@@ -1,8 +1,11 @@
 
 import { Button } from '@/components/ui/button'
 import { authClient } from '@/services/authClient'
+import { useLocationDetection } from '@/hooks/useLocationDetection'
 
 export const OAuthButtons = () => {
+  const { locationPreference } = useLocationDetection()
+
   const handleGoogleAuth = () => {
     authClient.initiateGoogleAuth()
   }
@@ -29,6 +32,7 @@ export const OAuthButtons = () => {
       </div>
       
       <div className="space-y-2">
+        {/* Google - Always available */}
         <Button
           variant="outline"
           type="button"
@@ -56,29 +60,35 @@ export const OAuthButtons = () => {
           Continue with Google
         </Button>
         
-        <Button
-          variant="outline"
-          type="button"
-          className="w-full"
-          onClick={handleFranceConnectAuth}
-        >
-          <div className="mr-2 h-4 w-4 rounded bg-blue-600 flex items-center justify-center">
-            <span className="text-white text-xs font-bold">FC</span>
-          </div>
-          Continue with FranceConnect
-        </Button>
+        {/* FranceConnect - Only for France */}
+        {locationPreference.country === 'FR' && (
+          <Button
+            variant="outline"
+            type="button"
+            className="w-full"
+            onClick={handleFranceConnectAuth}
+          >
+            <div className="mr-2 h-4 w-4 rounded bg-blue-600 flex items-center justify-center">
+              <span className="text-white text-xs font-bold">FC</span>
+            </div>
+            Continue with FranceConnect
+          </Button>
+        )}
         
-        <Button
-          variant="outline"
-          type="button"
-          className="w-full"
-          onClick={handleLuxTrustAuth}
-        >
-          <div className="mr-2 h-4 w-4 rounded bg-red-600 flex items-center justify-center">
-            <span className="text-white text-xs font-bold">LT</span>
-          </div>
-          Continue with LuxTrust
-        </Button>
+        {/* LuxTrust - Only for Luxembourg */}
+        {locationPreference.isLuxembourg && (
+          <Button
+            variant="outline"
+            type="button"
+            className="w-full"
+            onClick={handleLuxTrustAuth}
+          >
+            <div className="mr-2 h-4 w-4 rounded bg-red-600 flex items-center justify-center">
+              <span className="text-white text-xs font-bold">LT</span>
+            </div>
+            Continue with LuxTrust
+          </Button>
+        )}
       </div>
     </div>
   )

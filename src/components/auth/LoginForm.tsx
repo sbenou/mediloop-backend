@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { PasswordFields } from "./login/PasswordFields";
 import { AuthOptions } from "./login/AuthOptions";
+import { OAuthButtons } from "./OAuthButtons";
 import { supabase } from "@/lib/supabase";
 import { ArrowLeft } from "lucide-react";
 
@@ -104,6 +105,9 @@ export const LoginForm = () => {
           onForgotPassword={handleForgotPassword}
         />
       )}
+
+      {/* OAuth buttons - only show when not in password or reset mode */}
+      {!showPassword && !showResetOptions && <OAuthButtons />}
     </div>
   );
 }
