@@ -15,22 +15,15 @@ export const useLocationDetection = () => {
 
   useEffect(() => {
     const detectLocation = async () => {
-      if (!profile?.id) return;
+      if (!profile?.id) {
+        setIsLoading(false);
+        return;
+      }
 
       try {
         setIsLoading(true);
         
-        // First check user's stored country preference
-        if (profile.country_preference) {
-          setLocationPreference({
-            country: profile.country_preference,
-            isLuxembourg: profile.country_preference === 'LU',
-            detectedFromAddress: false
-          });
-          return;
-        }
-
-        // If no preference, check user's address
+        // Check user's address to detect location
         const { data: addresses } = await supabase
           .from('addresses')
           .select('country')
@@ -45,31 +38,36 @@ export const useLocationDetection = () => {
             isLuxembourg: addressCountry === 'LU',
             detectedFromAddress: true
           });
-
-          // Save detected country as preference
-          await supabase
-            .from('profiles')
-            .update({ country_preference: addressCountry })
-            .eq('id', profile.id);
+        } else {
+          // Default to Luxembourg if no address found
+          setLocationPreference({
+            country: 'LU',
+            isLuxembourg: true,
+            detectedFromAddress: false
+          });
         }
       } catch (error) {
         console.error('Error detecting location:', error);
+        // Default to Luxembourg on error
+        setLocationPreference({
+          country: 'LU',
+          isLuxembourg: true,
+          detectedFromAddress: false
+        });
       } finally {
         setIsLoading(false);
       }
     };
 
     detectLocation();
-  }, [profile?.id, profile?.country_preference]);
+  }, [profile?.id]);
 
   const updateCountryPreference = async (country: string) => {
     if (!profile?.id) return;
 
     try {
-      await supabase
-        .from('profiles')
-        .update({ country_preference: country })
-        .eq('id', profile.id);
+      // Store the country preference in localStorage for now
+      localStorage.setItem(`country_preference_${profile.id}`, country);
 
       setLocationPreference({
         country,

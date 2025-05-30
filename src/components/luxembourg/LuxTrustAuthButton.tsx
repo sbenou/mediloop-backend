@@ -7,13 +7,13 @@ import { useLuxTrustAuth } from '@/hooks/useLuxTrustAuth';
 interface LuxTrustAuthButtonProps {
   onSuccess?: (response: any) => void;
   variant?: 'default' | 'outline' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'default' | 'lg';
 }
 
 const LuxTrustAuthButton: React.FC<LuxTrustAuthButtonProps> = ({ 
   onSuccess,
   variant = 'default',
-  size = 'md'
+  size = 'default'
 }) => {
   const { authenticateWithLuxTrust, isAuthenticating, isAuthenticated } = useLuxTrustAuth();
 
