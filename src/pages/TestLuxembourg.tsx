@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Shield, MapPin, Upload, FileCheck, Globe, Eye, EyeOff } from 'lucide-react';
+import { Shield, MapPin, Upload, FileCheck, Globe, Eye, EyeOff, CheckCircle, XCircle, Loader } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 
 const TestLuxembourg: React.FC = () => {
@@ -28,6 +28,8 @@ const TestLuxembourg: React.FC = () => {
   // LuxTrust ID Field State
   const [luxtrustId, setLuxtrustId] = useState('');
   const [isIdVisible, setIsIdVisible] = useState(false);
+  const [idVerificationStatus, setIdVerificationStatus] = useState<'unverified' | 'verifying' | 'verified' | 'failed'>('unverified');
+  const [isVerifying, setIsVerifying] = useState(false);
 
   const countries = [
     { code: 'LU', name: 'Luxembourg' },
@@ -36,6 +38,19 @@ const TestLuxembourg: React.FC = () => {
     { code: 'BE', name: 'Belgium' },
     { code: 'US', name: 'United States' }
   ];
+
+  // Validate LuxTrust ID format
+  const validateLuxTrustId = (id: string): boolean => {
+    // Mock validation - in production this would check proper LuxTrust format
+    const patterns = [
+      /^LUX-\d{4}-\d{6}$/,
+      /^LT-[A-Z]{3}-\d{6}$/,
+      /^LUXTRUST-\d{6}$/,
+      /^TEST-LUX-ID-\d{6}$/
+    ];
+    
+    return patterns.some(pattern => pattern.test(id));
+  };
 
   // Test Functions
   const testLocationDetection = (countryCode: string) => {
@@ -121,6 +136,58 @@ const TestLuxembourg: React.FC = () => {
     });
   };
 
+  const verifyLuxTrustId = async () => {
+    if (!luxtrustId.trim()) {
+      toast({
+        title: 'LuxTrust ID Required',
+        description: 'Please enter a LuxTrust ID first.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (!validateLuxTrustId(luxtrustId)) {
+      setIdVerificationStatus('failed');
+      toast({
+        title: 'Invalid LuxTrust ID Format',
+        description: 'Please check the format and try again.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setIsVerifying(true);
+    setIdVerificationStatus('verifying');
+
+    // Simulate verification process
+    await new Promise(resolve => setTimeout(resolve, 3000));
+
+    // Mock verification - 90% success rate for demo
+    const isVerificationSuccessful = Math.random() > 0.1;
+
+    if (isVerificationSuccessful) {
+      setIdVerificationStatus('verified');
+      toast({
+        title: 'LuxTrust ID Verified',
+        description: 'Your LuxTrust ID has been successfully verified and linked to your account.',
+      });
+    } else {
+      setIdVerificationStatus('failed');
+      toast({
+        title: 'Verification Failed',
+        description: 'Could not verify this LuxTrust ID. Please check and try again.',
+        variant: 'destructive'
+      });
+    }
+
+    setIsVerifying(false);
+  };
+
+  const resetVerification = () => {
+    setIdVerificationStatus('unverified');
+    setLuxtrustId('');
+  };
+
   const resetAllTests = () => {
     setCurrentCountry('LU');
     setIsLuxembourg(true);
@@ -128,12 +195,31 @@ const TestLuxembourg: React.FC = () => {
     setLuxtrustProfile(null);
     setCertifications([]);
     setLuxtrustId('');
+    setIdVerificationStatus('unverified');
     setSelectedFile(null);
     
     toast({
       title: 'Tests Reset',
       description: 'All test states have been reset.'
     });
+  };
+
+  const getVerificationStatusColor = () => {
+    switch (idVerificationStatus) {
+      case 'verified': return 'bg-green-100 text-green-800';
+      case 'failed': return 'bg-red-100 text-red-800';
+      case 'verifying': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getVerificationStatusIcon = () => {
+    switch (idVerificationStatus) {
+      case 'verified': return <CheckCircle className="h-4 w-4" />;
+      case 'failed': return <XCircle className="h-4 w-4" />;
+      case 'verifying': return <Loader className="h-4 w-4 animate-spin" />;
+      default: return null;
+    }
   };
 
   return (
@@ -216,6 +302,7 @@ const TestLuxembourg: React.FC = () => {
                     onChange={(e) => setLuxtrustId(e.target.value)}
                     placeholder="Enter test LuxTrust ID"
                     className="pr-10"
+                    disabled={idVerificationStatus === 'verified'}
                   />
                   <Button
                     type="button"
@@ -228,17 +315,87 @@ const TestLuxembourg: React.FC = () => {
                   </Button>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Test the masked input field functionality
+                  Valid formats: LUX-YYYY-XXXXXX, LT-XXX-XXXXXX, LUXTRUST-XXXXXX
                 </p>
               </div>
-              
-              <Button 
-                onClick={() => setLuxtrustId('TEST-LUX-ID-123456')}
-                variant="outline"
-                className="w-full"
-              >
-                Fill Test ID
-              </Button>
+
+              {/* Verification Status */}
+              <div className="flex items-center space-x-2">
+                <Badge className={getVerificationStatusColor()}>
+                  <div className="flex items-center space-x-1">
+                    {getVerificationStatusIcon()}
+                    <span className="capitalize">{idVerificationStatus}</span>
+                  </div>
+                </Badge>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="space-y-2">
+                <Button 
+                  onClick={() => setLuxtrustId('TEST-LUX-ID-123456')}
+                  variant="outline"
+                  className="w-full"
+                  disabled={idVerificationStatus === 'verified'}
+                >
+                  Fill Test ID
+                </Button>
+
+                {idVerificationStatus === 'unverified' || idVerificationStatus === 'failed' ? (
+                  <Button 
+                    onClick={verifyLuxTrustId}
+                    disabled={isVerifying || !luxtrustId.trim()}
+                    className="w-full"
+                  >
+                    {isVerifying ? (
+                      <>
+                        <Loader className="mr-2 h-4 w-4 animate-spin" />
+                        Verifying with LuxTrust...
+                      </>
+                    ) : (
+                      <>
+                        <Shield className="mr-2 h-4 w-4" />
+                        Verify LuxTrust ID
+                      </>
+                    )}
+                  </Button>
+                ) : idVerificationStatus === 'verified' ? (
+                  <Button 
+                    onClick={resetVerification}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    Reset Verification
+                  </Button>
+                ) : null}
+              </div>
+
+              {/* Verification Details */}
+              {idVerificationStatus === 'verified' && (
+                <div className="p-3 bg-green-50 rounded-lg">
+                  <p className="text-sm text-green-800">
+                    <strong>Status:</strong> ✅ Verified and linked to account
+                  </p>
+                  <p className="text-sm text-green-800">
+                    <strong>ID:</strong> {luxtrustId}
+                  </p>
+                  <p className="text-sm text-green-800">
+                    <strong>Verified:</strong> {new Date().toLocaleString()}
+                  </p>
+                </div>
+              )}
+
+              {idVerificationStatus === 'failed' && (
+                <div className="p-3 bg-red-50 rounded-lg">
+                  <p className="text-sm text-red-800">
+                    <strong>Verification failed.</strong> Common issues:
+                  </p>
+                  <ul className="text-sm text-red-800 list-disc list-inside mt-1">
+                    <li>Invalid ID format</li>
+                    <li>ID not found in LuxTrust database</li>
+                    <li>ID already linked to another account</li>
+                  </ul>
+                </div>
+              )}
             </CardContent>
           </Card>
 
