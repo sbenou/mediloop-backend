@@ -20,7 +20,7 @@ export const OAuthButtons = () => {
 
   return (
     <div className="space-y-3">
-      <div className="relative">
+      <div className="relative my-6">
         <div className="absolute inset-0 flex items-center">
           <span className="w-full border-t" />
         </div>
@@ -31,7 +31,7 @@ export const OAuthButtons = () => {
         </div>
       </div>
       
-      <div className="space-y-2">
+      <div className="space-y-2 mt-6">
         {/* Google - Always available */}
         <Button
           variant="outline"

@@ -108,7 +108,7 @@ export const LoginForm = () => {
 
       {/* OAuth buttons - only show when not in password or reset mode, with more spacing */}
       {!showPassword && !showResetOptions && (
-        <div className="mt-8">
+        <div className="mt-10">
           <OAuthButtons />
         </div>
       )}
