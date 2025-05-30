@@ -13,8 +13,8 @@ export const useLuxTrustAuth = () => {
     setJobId(null);
     
     try {
-      // Call the auth service to initiate LuxTrust authentication
-      const response = await fetch('https://hrrlefgnhkbzuwyklejj.supabase.co/functions/v1/auth-service/luxtrust/auth', {
+      // Use the correct Supabase project URL
+      const response = await fetch('https://reaeyxplttbuejktjrdh.supabase.co/functions/v1/auth-service/luxtrust/auth', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -67,7 +67,8 @@ export const useLuxTrustAuth = () => {
     return new Promise((resolve) => {
       const poll = async () => {
         try {
-          const response = await fetch(`https://hrrlefgnhkbzuwyklejj.supabase.co/functions/v1/auth-service/luxtrust/status/${authJobId}`);
+          // Use the correct Supabase project URL
+          const response = await fetch(`https://reaeyxplttbuejktjrdh.supabase.co/functions/v1/auth-service/luxtrust/status/${authJobId}`);
           const result = await response.json();
 
           if (result.status === 'completed' && result.profile) {
