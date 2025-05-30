@@ -14,7 +14,7 @@ export const useLuxTrustAuth = () => {
     
     try {
       // Use the correct Supabase project URL
-      const response = await fetch('https://hrrlefgnhkbzuwyklejj.supabase.co/functions/v1/auth-service/luxtrust/auth', {
+      const response = await fetch('https://reaeyxplttbuejktjrdh.supabase.co/functions/v1/auth-service/luxtrust/auth', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -68,7 +68,7 @@ export const useLuxTrustAuth = () => {
       const poll = async () => {
         try {
           // Use the correct Supabase project URL
-          const response = await fetch(`https://hrrlefgnhkbzuwyklejj.supabase.co/functions/v1/auth-service/luxtrust/status/${authJobId}`);
+          const response = await fetch(`https://reaeyxplttbuejktjrdh.supabase.co/functions/v1/auth-service/luxtrust/status/${authJobId}`);
           const result = await response.json();
 
           if (result.status === 'completed' && result.profile) {
