@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { Hono } from "https://deno.land/x/hono@v3.12.11/mod.ts"
 import { cors } from "https://deno.land/x/hono@v3.12.11/middleware.ts"
@@ -144,7 +145,7 @@ async function getOrCreateUserProfile(email: string, fullName: string, authMetho
   return newProfile
 }
 
-// LuxTrust authentication queue handler
+// LuxTrust authentication processing function
 async function processLuxTrustAuth(luxtrustId: string, testMode: boolean = false): Promise<any> {
   console.log('Processing LuxTrust authentication for:', luxtrustId)
   
@@ -169,7 +170,6 @@ async function processLuxTrustAuth(luxtrustId: string, testMode: boolean = false
   }
   
   // In production, this would make actual LuxTrust API calls
-  // For now, return mock data
   return {
     success: false,
     error: 'LuxTrust integration not yet configured for production'
@@ -660,37 +660,6 @@ if (kv) {
   console.log('Deno KV queue listener started')
 } else {
   console.log('Running without Deno KV queue, using immediate processing')
-}
-
-// LuxTrust authentication processing function
-async function processLuxTrustAuth(luxtrustId: string, testMode: boolean = false): Promise<any> {
-  console.log('Processing LuxTrust authentication for:', luxtrustId)
-  
-  // Simulate LuxTrust API call delay
-  await new Promise(resolve => setTimeout(resolve, 2000))
-  
-  if (testMode) {
-    // Mock successful response for testing
-    return {
-      success: true,
-      profile: {
-        id: `lux-${Date.now()}`,
-        firstName: 'Dr. Jean',
-        lastName: 'Luxembourg',
-        professionalId: 'LUX-DOC-2024-001',
-        certificationLevel: 'professional',
-        isVerified: true
-      },
-      signature: `LuxTrust-Signature-${Date.now()}`,
-      verificationId: `VER-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
-    }
-  }
-  
-  // In production, this would make actual LuxTrust API calls
-  return {
-    success: false,
-    error: 'LuxTrust integration not yet configured for production'
-  }
 }
 
 console.log('Auth service starting with LuxTrust queue support...')
