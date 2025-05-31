@@ -1,3 +1,5 @@
+
+
 import React from "react";
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -5,14 +7,16 @@ import { Button } from "@/components/ui/button";
 import { useCart } from '@/contexts/CartContext';
 import { ShoppingCart } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { getCartCount } from '@/utils/cartUtils';
 
 export default function UnifiedHeader() {
   const { isAuthenticated, profile } = useAuth();
   const { state } = useCart();
   const navigate = useNavigate();
 
-  const totalItems = getCartCount(state.items);
+  const totalItems = state.items.reduce((total, item) => {
+    // Only add quantity if the item has a quantity property (regular CartItem)
+    return total + ('quantity' in item ? item.quantity : 1);
+  }, 0);
 
   const handleLogout = async () => {
     try {
