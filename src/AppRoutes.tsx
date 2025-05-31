@@ -5,7 +5,7 @@ import { Loader } from 'lucide-react';
 import ProtectedRoute from './components/routing/ProtectedRoute';
 import RequireRoleGuard from './components/auth/RequireRoleGuard';
 import RequirePermissionGuard from './components/auth/RequirePermissionGuard';
-import { useAuth } from './hooks/auth/useAuth';
+import { useAuth } from './hooks/useAuth';
 
 const Home = lazy(() => import('./pages/Home'));
 const Login = lazy(() => import('./pages/Login'));
@@ -21,6 +21,7 @@ const TestNotifications = lazy(() => import('./pages/TestNotifications'));
 const PharmacyDashboard = lazy(() => import('./pages/pharmacy/PharmacyDashboard'));
 const SuperAdminDashboard = lazy(() => import('./pages/superadmin/SuperAdminDashboard'));
 const TestLuxembourg = lazy(() => import('./pages/TestLuxembourg'));
+const DevTools = lazy(() => import('./pages/DevTools'));
 
 const AppRoutes = () => {
   const { profile } = useAuth();
@@ -154,7 +155,17 @@ const AppRoutes = () => {
         }
       />
       
-      {/* Add test route for Luxembourg functionality */}
+      {/* Development tools */}
+      <Route 
+        path="/dev-tools" 
+        element={
+          <Suspense fallback={<Loader className="h-6 w-6 animate-spin" />}>
+            <DevTools />
+          </Suspense>
+        } 
+      />
+      
+      {/* Test routes */}
       <Route path="/test-luxembourg" element={<TestLuxembourg />} />
       
       <Route path="*" element={<Navigate to="/" />} />
