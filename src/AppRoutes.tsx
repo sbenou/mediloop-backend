@@ -1,4 +1,3 @@
-
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Loader } from 'lucide-react';
@@ -158,15 +157,13 @@ const AppRoutes = () => {
       {/* Add test route for Luxembourg functionality */}
       <Route path="/test-luxembourg" element={<TestLuxembourg />} />
       
-      {/* Add Deno backend management route */}
+      {/* Temporarily make Deno backend management accessible to all for development */}
       <Route 
         path="/deno-backend" 
         element={
-          <ProtectedRoute allowedRoles={['superadmin']}>
-            <Suspense fallback={<Loader className="h-6 w-6 animate-spin" />}>
-              <DenoBackendManagement />
-            </Suspense>
-          </ProtectedRoute>
+          <Suspense fallback={<Loader className="h-6 w-6 animate-spin" />}>
+            <DenoBackendManagement />
+          </Suspense>
         }
       />
       
