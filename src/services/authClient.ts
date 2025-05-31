@@ -19,8 +19,8 @@ class AuthClient {
   private token: string | null = null
 
   constructor() {
-    // Use the correct Supabase function URL
-    this.baseUrl = 'https://reaeyxplttbuejktjrdh.supabase.co/functions/v1/auth-service'
+    // Use the Supabase function URL
+    this.baseUrl = 'https://hrrlefgnhkbzuwyklejj.supabase.co/functions/v1/auth-service'
     
     // Load token from localStorage on initialization
     this.token = localStorage.getItem('auth_token')
