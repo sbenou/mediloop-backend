@@ -57,12 +57,19 @@ export const useLuxTrustIdVerification = () => {
         ? `${apiBaseUrl}/luxtrust/verify-id`
         : `${apiBaseUrl}/functions/v1/luxtrust-service/verify-id`;
 
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      // Add Supabase headers when using Supabase edge functions
+      if (!apiBaseUrl.includes('localhost:8000')) {
+        headers['apikey'] = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaGtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U';
+      }
+
       const response = await fetch(endpoint, {
         method: 'POST',
         mode: 'cors',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify({ luxtrustId })
       });
 
