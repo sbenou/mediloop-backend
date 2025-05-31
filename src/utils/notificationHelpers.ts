@@ -50,7 +50,7 @@ export const sendPatientNotification = async (
   try {
     await createNotification({
       userId: patientId,
-      type,
+      type: type as any, // Type assertion to handle the string type
       title,
       message,
       link,

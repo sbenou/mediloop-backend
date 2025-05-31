@@ -5,7 +5,34 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Phone, Clock, Search } from 'lucide-react';
-import { useLocationDetection } from '@/hooks/useLocationDetection';
+
+// Create a simple location detection hook for this component
+const useLocationDetection = () => {
+  const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      setIsLoading(true);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lon: position.coords.longitude
+          });
+          setIsLoading(false);
+        },
+        (err) => {
+          setError(new Error(err.message));
+          setIsLoading(false);
+        }
+      );
+    }
+  }, []);
+
+  return { userLocation, isLoading, error };
+};
 
 // Mock pharmacy data for testing
 const mockPharmacies = [

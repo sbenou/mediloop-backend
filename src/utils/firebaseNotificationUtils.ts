@@ -37,6 +37,33 @@ export const sendFirebaseNotification = async (
   }
 };
 
+export const registerFCMToken = async (userId: string, token: string): Promise<boolean> => {
+  try {
+    // Check if user has notification preferences - for now just continue without them
+    console.log('Registering FCM token for user:', userId);
+    
+    // Upsert the FCM token
+    const { error } = await supabase
+      .from('user_notification_tokens')
+      .upsert({
+        user_id: userId,
+        token,
+        platform: 'web',
+        updated_at: new Date().toISOString()
+      });
+
+    if (error) {
+      console.error('Error saving FCM token:', error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error registering FCM token:', error);
+    return false;
+  }
+};
+
 export const subscribeToFirebaseNotifications = async (userId: string, token: string): Promise<boolean> => {
   try {
     // Check if user has notification preferences - for now just continue without them

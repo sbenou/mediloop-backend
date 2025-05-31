@@ -1,251 +1,198 @@
 
-import { useCallback, useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Notification } from '@/types/supabase';
 import { toast } from '@/components/ui/use-toast';
-import { useTenant } from '@/contexts/TenantContext';
-import { useTenantSupabase } from './useTenantSupabase';
 import { useAuth } from '@/hooks/auth/useAuth';
 
-export const useNotifications = () => {
+export interface NotificationHookReturn {
+  notifications: Notification[];
+  unreadCount: number;
+  isLoading: boolean;
+  fetchNotifications: () => Promise<void>;
+  markAsRead: (id: string) => Promise<boolean>;
+  markAllAsRead: () => Promise<boolean>;
+  setupRealtimeSubscription: () => (() => void) | null;
+}
+
+export const useNotifications = (): NotificationHookReturn => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [fetchError, setFetchError] = useState<Error | null>(null);
-  const { currentTenant } = useTenant();
-  const { tenantTable } = useTenantSupabase();
+  const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
   
-  // Use refs to prevent infinite loops
-  const isFetching = useRef(false);
-  const lastFetchTime = useRef(0);
-  const subscriptionSetup = useRef(false);
-  const FETCH_COOLDOWN = 2000; // 2 seconds between fetches
+  // Use refs to prevent multiple subscriptions
+  const subscriptionRef = useRef<any>(null);
+  const hasSetupSubscription = useRef(false);
 
-  // Function to fetch notifications from database
+  // Calculate unread count whenever notifications change
+  useEffect(() => {
+    const count = notifications.filter(notification => !notification.read).length;
+    setUnreadCount(count);
+  }, [notifications]);
+
   const fetchNotifications = useCallback(async () => {
     if (!user?.id) {
       console.log('No user ID available for fetching notifications');
-      setNotifications([]);
-      setUnreadCount(0);
       return;
     }
 
-    // Prevent multiple simultaneous fetches
-    if (isFetching.current) {
-      console.log('Fetch already in progress, skipping...');
-      return;
-    }
-    
-    // Rate limiting - don't fetch too frequently
-    const now = Date.now();
-    if (now - lastFetchTime.current < FETCH_COOLDOWN) {
-      console.log('Fetch rate limited, skipping...');
-      return;
-    }
-    
-    isFetching.current = true;
-    lastFetchTime.current = now;
-    setIsLoading(true);
-    
     try {
+      setIsLoading(true);
       console.log('Fetching notifications for user:', user.id);
-      let response;
       
-      if (currentTenant) {
-        // Fetch notifications from tenant schema
-        response = await tenantTable<Notification>('notifications')
-          .select('*')
-          .eq('user_id', user.id)
-          .is('deleted_at', null)
-          .order('created_at', { ascending: false });
-      } else {
-        // Fetch notifications from public schema
-        response = await supabase
-          .from('notifications')
-          .select('*')
-          .eq('user_id', user.id)
-          .is('deleted_at', null)
-          .order('created_at', { ascending: false });
-      }
-
-      const { data, error } = response;
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
 
       if (error) {
         console.error('Error fetching notifications:', error);
         throw error;
       }
 
-      if (data) {
-        console.log('Fetched notifications:', data);
-        setNotifications(data);
-        const unread = data.filter(n => !n.read).length;
-        setUnreadCount(unread);
-        console.log('Unread count:', unread);
-        setFetchError(null);
-      }
+      console.log('Fetched notifications:', data?.length || 0);
+      setNotifications(data || []);
     } catch (error) {
-      console.error('Error fetching notifications:', error);
-      setFetchError(error as Error);
+      console.error('Error in fetchNotifications:', error);
+      toast({
+        title: 'Error loading notifications',
+        description: 'Could not load your notifications',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
-      isFetching.current = false;
     }
-  }, [currentTenant, tenantTable, user?.id]);
+  }, [user?.id]);
 
-  // Clear fetch error when dependencies change
-  useEffect(() => {
-    setFetchError(null);
-  }, [currentTenant, tenantTable]);
-
-  const markAsRead = useCallback(async (id: string) => {
-    if (!user?.id) return;
-
+  const markAsRead = useCallback(async (id: string): Promise<boolean> => {
     try {
-      if (currentTenant) {
-        // Use tenant schema for marking read
-        const { error } = await tenantTable<Notification>('notifications')
-          .update({ read: true })
-          .eq('id', id)
-          .eq('user_id', user.id);
-          
-        if (error) throw error;
-      } else {
-        // Use public schema function
-        const { error } = await supabase.rpc('mark_notification_read', {
-          notification_id: id
-        });
-        
-        if (error) throw error;
-      }
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('id', id);
+
+      if (error) throw error;
 
       // Update local state
-      setNotifications((prevNotifications) =>
-        prevNotifications.map((notification) =>
+      setNotifications(prev =>
+        prev.map(notification =>
           notification.id === id ? { ...notification, read: true } : notification
         )
       );
-      setUnreadCount((prevCount) => Math.max(0, prevCount - 1));
-
-      toast({
-        title: 'Notification marked as read',
-      });
+      
+      return true;
     } catch (error) {
       console.error('Error marking notification as read:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to mark notification as read',
-        variant: 'destructive',
-      });
+      return false;
     }
-  }, [currentTenant, tenantTable, user?.id]);
+  }, []);
 
-  const markAllAsRead = useCallback(async () => {
-    if (!user?.id) return;
-
+  const markAllAsRead = useCallback(async (): Promise<boolean> => {
+    if (!user?.id) return false;
+    
     try {
-      if (currentTenant) {
-        // Use tenant schema for marking all read
-        const { error } = await tenantTable<Notification>('notifications')
-          .update({ read: true })
-          .eq('user_id', user.id)
-          .eq('read', false);
-          
-        if (error) throw error;
-      } else {
-        // Use public schema function
-        const { error } = await supabase.rpc('mark_all_notifications_read');
-        
-        if (error) throw error;
-      }
+      const unreadNotificationIds = notifications
+        .filter(notification => !notification.read)
+        .map(notification => notification.id);
+      
+      if (unreadNotificationIds.length === 0) return false;
+      
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .in('id', unreadNotificationIds);
+
+      if (error) throw error;
 
       // Update local state
-      setNotifications((prevNotifications) =>
-        prevNotifications.map((notification) => ({ ...notification, read: true }))
+      setNotifications(prev =>
+        prev.map(notification => ({ ...notification, read: true }))
       );
-      setUnreadCount(0);
-
+      
       toast({
         title: 'All notifications marked as read',
+        variant: 'default',
       });
+      
+      return true;
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
       toast({
         title: 'Error',
-        description: 'Failed to mark all notifications as read',
+        description: 'Could not mark notifications as read',
         variant: 'destructive',
       });
+      return false;
     }
-  }, [currentTenant, tenantTable, user?.id]);
+  }, [user?.id, notifications]);
 
   const setupRealtimeSubscription = useCallback(() => {
-    if (!user?.id) {
-      console.log('No user ID for realtime subscription');
-      return () => {};
+    if (!user?.id || hasSetupSubscription.current) {
+      console.log('Skipping subscription setup - no user or already setup');
+      return null;
     }
 
-    if (subscriptionSetup.current) {
-      console.log('Subscription already set up, skipping...');
-      return () => {};
-    }
-    
-    subscriptionSetup.current = true;
-    let channelToCleanup = null;
-    
-    console.log('Setting up realtime subscription for notifications, user:', user.id);
-    
-    // If we have a tenant, subscribe to tenant-specific table
-    if (currentTenant?.schema) {
-      const tenantChannel = supabase
-        .channel(`${currentTenant.schema}_notifications_${user.id}`)
-        .on('postgres_changes', {
-          event: '*',
-          schema: currentTenant.schema,
-          table: 'notifications',
-          filter: `user_id=eq.${user.id}`
-        }, (payload) => {
-          console.log('Tenant notification change for user:', user.id, payload);
-          // Immediate refresh for better UX
-          setTimeout(() => {
-            fetchNotifications();
-          }, 500);
-        })
-        .subscribe((status) => {
-          console.log(`Tenant notification channel status: ${status}`);
-        });
-        
-      channelToCleanup = tenantChannel;
-    } else {
-      // Default public schema subscription
+    console.log('Setting up realtime subscription for notifications');
+    hasSetupSubscription.current = true;
+
+    try {
       const channel = supabase
-        .channel(`notifications_changes_${user.id}`)
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${user.id}`
-        }, (payload) => {
-          console.log('Public notification change for user:', user.id, payload);
-          // Immediate refresh for better UX
-          setTimeout(() => {
-            fetchNotifications();
-          }, 500);
-        })
-        .subscribe((status) => {
-          console.log(`Public notification channel status: ${status}`);
-        });
+        .channel(`notifications:${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload) => {
+            console.log('Realtime notification update:', payload);
+            
+            if (payload.eventType === 'INSERT') {
+              const newNotification = payload.new as Notification;
+              setNotifications(prev => [newNotification, ...prev]);
+              
+              toast({
+                title: newNotification.title,
+                description: newNotification.message,
+                variant: 'default',
+              });
+            } else if (payload.eventType === 'UPDATE') {
+              const updatedNotification = payload.new as Notification;
+              setNotifications(prev =>
+                prev.map(notification =>
+                  notification.id === updatedNotification.id ? updatedNotification : notification
+                )
+              );
+            } else if (payload.eventType === 'DELETE') {
+              const deletedId = payload.old.id;
+              setNotifications(prev => prev.filter(notification => notification.id !== deletedId));
+            }
+          }
+        )
+        .subscribe();
 
-      channelToCleanup = channel;  
-    }
-    
-    return () => { 
-      if (channelToCleanup) {
+      subscriptionRef.current = channel;
+
+      // Return cleanup function
+      return () => {
         console.log('Cleaning up notification subscription');
-        supabase.removeChannel(channelToCleanup);
-      }
-      subscriptionSetup.current = false;
-    };
-  }, [currentTenant, fetchNotifications, user?.id]);
+        if (subscriptionRef.current) {
+          supabase.removeChannel(subscriptionRef.current);
+          subscriptionRef.current = null;
+        }
+        hasSetupSubscription.current = false;
+      };
+    } catch (error) {
+      console.error('Error setting up realtime subscription:', error);
+      hasSetupSubscription.current = false;
+      return null;
+    }
+  }, [user?.id]);
 
   return {
     notifications,
@@ -254,7 +201,6 @@ export const useNotifications = () => {
     fetchNotifications,
     markAsRead,
     markAllAsRead,
-    setupRealtimeSubscription,
-    fetchError
+    setupRealtimeSubscription
   };
 };
