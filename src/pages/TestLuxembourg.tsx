@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
@@ -42,7 +41,7 @@ const TestLuxembourg: React.FC = () => {
     { code: 'US', name: 'United States' }
   ];
 
-  // Location detection with direct API call
+  // Location detection with direct API call to auth-service
   const handleCountryChange = async (countryCode: string) => {
     setCurrentCountry(countryCode);
     setIsLuxembourg(countryCode === 'LU');
@@ -55,18 +54,20 @@ const TestLuxembourg: React.FC = () => {
         if (!healthCheck.ok) throw new Error('Local backend not available');
       } catch {
         apiBaseUrl = import.meta.env.DEV 
-          ? 'http://localhost:54327'
-          : 'https://hrrlefgnhkbzuwyklejj.supabase.co/functions/v1';
+          ? 'http://localhost:54321'
+          : 'https://hrrlefgnhkbzuwyklejj.supabase.co';
       }
 
+      // Use the auth-service endpoints that we specifically designed
       const endpoint = apiBaseUrl.includes('localhost:8000') 
         ? `${apiBaseUrl}/location/detect`
-        : `${apiBaseUrl}/auth-service/location/detect`;
+        : `${apiBaseUrl}/functions/v1/auth-service/location/detect`;
 
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaGtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U',
         },
         body: JSON.stringify({ countryCode })
       });
