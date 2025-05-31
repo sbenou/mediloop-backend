@@ -1,8 +1,15 @@
 
 import { useState } from 'react';
 import { toast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import type { LuxTrustAuthResponse } from '@/types/luxembourg';
+
+// Configuration for different environments
+const API_BASE_URL = import.meta.env.DEV 
+  ? 'http://localhost:54327' // Supabase local edge functions
+  : 'https://hrrlefgnhkbzuwyklejj.supabase.co/functions/v1'; // Supabase hosted functions
+
+// This will be easy to change to your OVH endpoint later:
+// const API_BASE_URL = 'https://your-ovh-backend.com/api';
 
 export const useLuxTrustAuth = () => {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -14,18 +21,23 @@ export const useLuxTrustAuth = () => {
     try {
       console.log('Starting LuxTrust authentication...');
       
-      // Call the edge function
-      const { data, error } = await supabase.functions.invoke('auth-service', {
-        body: { 
-          action: 'luxtrust_auth',
+      // Direct API call instead of supabase.functions.invoke
+      const response = await fetch(`${API_BASE_URL}/auth-service/luxtrust/auth`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Add any auth headers you need
+        },
+        body: JSON.stringify({ 
           timestamp: new Date().toISOString()
-        }
+        })
       });
 
-      if (error) {
-        console.error('LuxTrust authentication error:', error);
-        throw error;
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      const data = await response.json();
 
       if (data?.success) {
         setAuthResponse(data);

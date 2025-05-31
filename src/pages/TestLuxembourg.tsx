@@ -1,8 +1,6 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import {
   LocationDetectionTest,
   LuxTrustIdTest,
@@ -14,27 +12,26 @@ import {
   Certification,
   IdVerificationStatus
 } from '@/components/test-luxembourg';
+import { useLuxTrustAuth } from '@/hooks/useLuxTrustAuth';
+import { useLuxTrustIdVerification } from '@/hooks/useLuxTrustIdVerification';
 
 const TestLuxembourg: React.FC = () => {
   // Location Detection State
   const [currentCountry, setCurrentCountry] = useState('LU');
   const [isLuxembourg, setIsLuxembourg] = useState(true);
   
-  // LuxTrust Auth State
-  const [isAuthenticating, setIsAuthenticating] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [luxtrustProfile, setLuxtrustProfile] = useState<LuxTrustProfile | null>(null);
+  // LuxTrust Auth using the new hook
+  const { authenticateWithLuxTrust, isAuthenticating, isAuthenticated, authResponse } = useLuxTrustAuth();
   
   // Professional Certification State
   const [certifications, setCertifications] = useState<Certification[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   
-  // LuxTrust ID Field State
+  // LuxTrust ID Field using the new hook
   const [luxtrustId, setLuxtrustId] = useState('');
   const [isIdVisible, setIsIdVisible] = useState(false);
-  const [idVerificationStatus, setIdVerificationStatus] = useState<IdVerificationStatus>('unverified');
-  const [isVerifying, setIsVerifying] = useState(false);
+  const { verifyLuxTrustId, resetVerification, isVerifying, verificationStatus } = useLuxTrustIdVerification();
 
   const countries: Country[] = [
     { code: 'LU', name: 'Luxembourg' },
@@ -56,21 +53,28 @@ const TestLuxembourg: React.FC = () => {
     return patterns.some(pattern => pattern.test(id));
   };
 
-  // Location detection with Deno KV
+  // Location detection with direct API call
   const handleCountryChange = async (countryCode: string) => {
     setCurrentCountry(countryCode);
     setIsLuxembourg(countryCode === 'LU');
 
     try {
-      const { data, error } = await supabase.functions.invoke('auth-service/location/detect', {
-        body: { 
-          countryCode: countryCode
-        }
+      const API_BASE_URL = import.meta.env.DEV 
+        ? 'http://localhost:54327'
+        : 'https://hrrlefgnhkbzuwyklejj.supabase.co/functions/v1';
+
+      const response = await fetch(`${API_BASE_URL}/auth-service/location/detect`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ countryCode })
       });
 
-      if (error) {
-        console.error('Location detection error:', error);
+      if (!response.ok) {
+        console.error('Location detection error: HTTP', response.status);
       } else {
+        const data = await response.json();
         console.log('Location detection result stored in KV:', data);
       }
     } catch (error) {
@@ -83,27 +87,16 @@ const TestLuxembourg: React.FC = () => {
     });
   };
 
-  const handleLuxTrustAuth = async () => {
-    setIsAuthenticating(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    const mockProfile: LuxTrustProfile = {
-      id: `lux-${Date.now()}`,
-      firstName: 'Dr. Jean',
-      lastName: 'Luxembourg',
-      professionalId: 'LUX-DOC-2024-001',
-      certificationLevel: 'professional',
-      isVerified: true
-    };
-    
-    setLuxtrustProfile(mockProfile);
-    setIsAuthenticated(true);
-    setIsAuthenticating(false);
-  };
+  // Convert LuxTrust profile from auth response
+  const luxtrustProfile: LuxTrustProfile | null = authResponse?.profile ? {
+    id: authResponse.profile.id,
+    firstName: authResponse.profile.firstName,
+    lastName: authResponse.profile.lastName,
+    professionalId: authResponse.profile.professionalId || '',
+    certificationLevel: authResponse.profile.certificationLevel,
+    isVerified: authResponse.profile.isVerified
+  } : null;
 
-  // Professional certification upload - restored to previous version
   const handleCertificationUpload = async () => {
     if (!selectedFile) return;
     
@@ -130,7 +123,6 @@ const TestLuxembourg: React.FC = () => {
     });
   };
 
-  // Professional certification verification - restored to previous version
   const handleCertificationVerification = async (certId: string) => {
     // Simulate verification process
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -149,56 +141,12 @@ const TestLuxembourg: React.FC = () => {
     });
   };
 
-  // LuxTrust ID verification - restored to previous version
-  const verifyLuxTrustId = async () => {
-    if (!luxtrustId.trim()) {
-      toast({
-        title: 'LuxTrust ID Required',
-        description: 'Please enter a LuxTrust ID first.',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    if (!validateLuxTrustId(luxtrustId)) {
-      setIdVerificationStatus('failed');
-      toast({
-        title: 'Invalid LuxTrust ID Format',
-        description: 'Please check the format and try again.',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    setIsVerifying(true);
-    setIdVerificationStatus('verifying');
-
-    // Simulate verification process
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    // Mock verification - 90% success rate for demo
-    const isVerificationSuccessful = Math.random() > 0.1;
-    
-    if (isVerificationSuccessful) {
-      setIdVerificationStatus('verified');
-      toast({
-        title: 'LuxTrust ID Verified',
-        description: `Your LuxTrust ID has been successfully verified and linked to your account. Verification ID: VER-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-      });
-    } else {
-      setIdVerificationStatus('failed');
-      toast({
-        title: 'Verification Failed',
-        description: 'Could not verify this LuxTrust ID. Please check and try again.',
-        variant: 'destructive'
-      });
-    }
-    
-    setIsVerifying(false);
+  const handleLuxTrustIdVerification = () => {
+    verifyLuxTrustId(luxtrustId);
   };
 
-  const resetVerification = () => {
-    setIdVerificationStatus('unverified');
+  const resetLuxTrustIdVerification = () => {
+    resetVerification();
     setLuxtrustId('');
   };
 
@@ -209,11 +157,9 @@ const TestLuxembourg: React.FC = () => {
   const resetAllTests = () => {
     setCurrentCountry('LU');
     setIsLuxembourg(true);
-    setIsAuthenticated(false);
-    setLuxtrustProfile(null);
     setCertifications([]);
     setLuxtrustId('');
-    setIdVerificationStatus('unverified');
+    resetVerification();
     setSelectedFile(null);
     
     toast({
@@ -248,12 +194,12 @@ const TestLuxembourg: React.FC = () => {
           <LuxTrustIdTest
             luxtrustId={luxtrustId}
             isIdVisible={isIdVisible}
-            idVerificationStatus={idVerificationStatus}
+            idVerificationStatus={verificationStatus}
             isVerifying={isVerifying}
             onIdChange={setLuxtrustId}
             onToggleVisibility={() => setIsIdVisible(!isIdVisible)}
-            onVerify={verifyLuxTrustId}
-            onReset={resetVerification}
+            onVerify={handleLuxTrustIdVerification}
+            onReset={resetLuxTrustIdVerification}
             onFillTestId={fillTestId}
           />
 
@@ -262,7 +208,7 @@ const TestLuxembourg: React.FC = () => {
             isAuthenticating={isAuthenticating}
             isAuthenticated={isAuthenticated}
             luxtrustProfile={luxtrustProfile}
-            onAuthenticate={handleLuxTrustAuth}
+            onAuthenticate={authenticateWithLuxTrust}
           />
 
           <CertificationTest
