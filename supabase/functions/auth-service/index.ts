@@ -7,217 +7,193 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, GET, OPTIONS'
 }
 
-// In-memory storage for jobs (for testing purposes)
-const jobs = new Map()
-
-// Process LuxTrust authentication job
-async function processLuxTrustJob(jobId: string) {
-  console.log('Processing LuxTrust job:', jobId)
+// LuxTrust authentication processing function
+async function processLuxTrustAuth(luxtrustId: string, testMode: boolean = false) {
+  console.log('Processing LuxTrust authentication for:', luxtrustId)
   
-  try {
-    const jobData = jobs.get(jobId)
-    if (!jobData) {
-      console.error('Job not found:', jobId)
-      return
-    }
-
-    // Update job status to processing
-    const processingData = {
-      ...jobData,
-      status: 'processing',
-      updatedAt: new Date().toISOString()
-    }
-    jobs.set(jobId, processingData)
-    
-    // Simulate LuxTrust authentication process (2 seconds)
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    // Mock successful authentication response
-    const authResponse = {
+  // Simulate LuxTrust API call delay
+  await new Promise(resolve => setTimeout(resolve, 2000))
+  
+  if (testMode) {
+    // Mock successful response for testing
+    return {
       success: true,
       profile: {
         id: `lux-${Date.now()}`,
         firstName: 'Dr. Jean',
         lastName: 'Luxembourg',
-        professionalId: jobData.luxtrustId,
+        professionalId: 'LUX-DOC-2024-001',
         certificationLevel: 'professional',
         isVerified: true
       },
       signature: `LuxTrust-Signature-${Date.now()}`,
-      timestamp: new Date().toISOString(),
       verificationId: `VER-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
     }
-    
-    // Update job with completed status and result
-    const completedData = {
-      ...jobData,
-      status: 'completed',
-      result: authResponse,
-      updatedAt: new Date().toISOString()
-    }
-    
-    jobs.set(jobId, completedData)
-    console.log('LuxTrust job completed:', jobId)
-    
-  } catch (error) {
-    console.error('Error processing LuxTrust job:', error)
-    
-    const jobData = jobs.get(jobId)
-    if (jobData) {
-      // Update job with failed status
-      const failedData = {
-        ...jobData,
-        status: 'failed',
-        error: error.message,
-        updatedAt: new Date().toISOString()
-      }
-      
-      jobs.set(jobId, failedData)
-    }
+  }
+  
+  // In production, this would make actual LuxTrust API calls
+  return {
+    success: false,
+    error: 'LuxTrust integration not yet configured for production'
   }
 }
 
-serve(async (req) => {
-  console.log('Request received:', req.method, req.url)
+serve(async (req: Request) => {
+  console.log(`Incoming ${req.method} request to ${req.url}`)
   
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    console.log('Handling CORS preflight request')
+    return new Response(null, { 
+      status: 200,
+      headers: corsHeaders 
+    })
   }
 
   const url = new URL(req.url)
   const path = url.pathname
 
+  console.log(`Processing ${req.method} ${path}`)
+
   try {
-    // LuxTrust Authentication - Start authentication process
-    if (path === '/auth' && req.method === 'POST') {
-      const { luxtrustId } = await req.json()
-      
-      if (!luxtrustId) {
-        return new Response(
-          JSON.stringify({ error: 'LuxTrust ID required' }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 400 
-          }
-        )
-      }
+    // Open Deno KV database
+    const kv = await Deno.openKv()
 
-      console.log('Starting LuxTrust authentication for ID:', luxtrustId)
-
-      // Create a unique job ID
-      const jobId = crypto.randomUUID()
-      
-      // Store the job in memory with initial status
-      const jobData = {
-        id: jobId,
-        luxtrustId,
-        status: 'pending',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-      
-      jobs.set(jobId, jobData)
-      
-      // Process job asynchronously
-      setTimeout(async () => {
-        await processLuxTrustJob(jobId)
-      }, 100)
-      
-      console.log('Created LuxTrust authentication job:', jobId)
-      
-      return new Response(
-        JSON.stringify({ jobId, status: 'pending' }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200 
-        }
-      )
+    // Health check endpoint
+    if (path === '/health') {
+      return new Response(JSON.stringify({ 
+        status: 'healthy', 
+        timestamp: new Date().toISOString()
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
     }
 
-    // LuxTrust Authentication - Check job status
-    if (path.startsWith('/status/') && req.method === 'GET') {
+    // LuxTrust authentication initiation endpoint
+    if (path === '/luxtrust/auth' && req.method === 'POST') {
+      console.log('Processing LuxTrust auth request')
+      const { luxtrustId, testMode = false } = await req.json()
+      
+      if (!luxtrustId) {
+        return new Response(JSON.stringify({ error: 'LuxTrust ID required' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+      }
+
+      // Generate job ID
+      const jobId = `luxtrust-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`
+      
+      // Store job with initial status in Deno KV
+      const jobData = {
+        status: 'pending',
+        luxtrustId,
+        testMode,
+        createdAt: new Date().toISOString()
+      }
+      
+      await kv.set(['luxtrust_jobs', jobId], jobData)
+
+      // Process authentication immediately for demo
+      setTimeout(async () => {
+        try {
+          const kvInstance = await Deno.openKv()
+          
+          // Update status to processing
+          await kvInstance.set(['luxtrust_jobs', jobId], {
+            ...jobData,
+            status: 'processing',
+            startedAt: new Date().toISOString()
+          })
+
+          const result = await processLuxTrustAuth(luxtrustId, testMode)
+          
+          if (result.success) {
+            await kvInstance.set(['luxtrust_jobs', jobId], {
+              ...jobData,
+              status: 'completed',
+              startedAt: new Date().toISOString(),
+              completedAt: new Date().toISOString(),
+              profile: result.profile,
+              signature: result.signature,
+              verificationId: result.verificationId
+            })
+            console.log('LuxTrust authentication completed successfully:', jobId)
+          } else {
+            await kvInstance.set(['luxtrust_jobs', jobId], {
+              ...jobData,
+              status: 'failed',
+              startedAt: new Date().toISOString(),
+              failedAt: new Date().toISOString(),
+              error: result.error || 'Authentication failed'
+            })
+            console.log('LuxTrust authentication failed:', jobId, result.error)
+          }
+          
+          kvInstance.close()
+        } catch (error) {
+          console.error('LuxTrust authentication job error:', jobId, error)
+          const kvInstance = await Deno.openKv()
+          await kvInstance.set(['luxtrust_jobs', jobId], {
+            ...jobData,
+            status: 'failed',
+            failedAt: new Date().toISOString(),
+            error: error.message || 'Processing error'
+          })
+          kvInstance.close()
+        }
+      }, 100)
+
+      console.log('LuxTrust authentication job queued:', jobId)
+
+      return new Response(JSON.stringify({ 
+        jobId,
+        status: 'queued',
+        message: 'LuxTrust authentication job has been queued'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
+    // LuxTrust authentication status endpoint
+    if (path.startsWith('/luxtrust/status/') && req.method === 'GET') {
       const jobId = path.split('/').pop()
       
       if (!jobId) {
-        return new Response(
-          JSON.stringify({ error: 'Job ID required' }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 400 
-          }
-        )
+        return new Response(JSON.stringify({ error: 'Job ID required' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
       }
 
-      console.log('Checking status for job:', jobId)
-
-      // Get job from memory
-      const jobData = jobs.get(jobId)
+      const jobData = await kv.get(['luxtrust_jobs', jobId])
       
-      if (!jobData) {
-        return new Response(
-          JSON.stringify({ error: 'Job not found' }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 404 
-          }
-        )
+      if (!jobData.value) {
+        return new Response(JSON.stringify({ error: 'Job not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
       }
 
-      console.log('Retrieved job status:', jobData.status, 'for job:', jobId)
-      
-      return new Response(
-        JSON.stringify(jobData),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200 
-        }
-      )
+      return new Response(JSON.stringify(jobData.value), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
     }
 
-    // Health check endpoint
-    if (path === '/' || path === '/health') {
-      return new Response(
-        JSON.stringify({ 
-          status: 'healthy', 
-          timestamp: new Date().toISOString(),
-          service: 'auth-service',
-          availableRoutes: ['/health', '/auth', '/status/{jobId}']
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200 
-        }
-      )
-    }
-
-    // Route not found
-    return new Response(
-      JSON.stringify({ 
-        error: 'Route not found',
-        path: path,
-        method: req.method,
-        availableRoutes: ['/health', '/auth', '/status/{jobId}']
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 404 
-      }
-    )
+    // Default 404 response
+    console.log('Endpoint not found:', path)
+    return new Response(JSON.stringify({ error: 'Endpoint not found' }), {
+      status: 404,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    })
 
   } catch (error) {
-    console.error('Request processing error:', error)
-    return new Response(
-      JSON.stringify({ 
-        error: 'Internal server error',
-        message: error.message 
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500 
-      }
-    )
+    console.error('Request error:', error)
+    return new Response(JSON.stringify({ error: 'Internal server error', details: error.message }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    })
   }
 })
 
-console.log('Auth service starting...')
+console.log('Auth service starting with LuxTrust support and Deno KV...')

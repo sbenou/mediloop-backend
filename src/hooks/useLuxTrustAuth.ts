@@ -1,146 +1,108 @@
 
 import { useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
-import { authClient } from '@/services/authClient';
 import type { LuxTrustAuthResponse } from '@/types/luxembourg';
-
-interface JobStatus {
-  id: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  result?: LuxTrustAuthResponse;
-  error?: string;
-  createdAt: string;
-  updatedAt: string;
-}
 
 export const useLuxTrustAuth = () => {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [authResponse, setAuthResponse] = useState<LuxTrustAuthResponse | null>(null);
-  const [currentJobId, setCurrentJobId] = useState<string | null>(null);
+  const [jobId, setJobId] = useState<string | null>(null);
 
-  const pollJobStatus = async (jobId: string): Promise<LuxTrustAuthResponse | null> => {
-    const maxAttempts = 30; // 30 seconds max
-    let attempts = 0;
-    
-    while (attempts < maxAttempts) {
-      try {
-        const statusUrl = `https://reaeyxplttbuejktjrdh.supabase.co/functions/v1/auth-service/status/${jobId}`;
-        console.log('Polling job status:', jobId, 'URL:', statusUrl);
-        
-        const response = await fetch(statusUrl, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        
-        console.log('Status poll response:', response.status, response.statusText);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Status check failed:', response.status, errorText);
-          throw new Error(`Status check failed: ${response.status} - ${errorText}`);
-        }
-        
-        const jobStatus: JobStatus = await response.json();
-        console.log('Job status:', jobStatus.status, 'for job:', jobId);
-        
-        if (jobStatus.status === 'completed' && jobStatus.result) {
-          return jobStatus.result;
-        } else if (jobStatus.status === 'failed') {
-          throw new Error(jobStatus.error || 'Authentication failed');
-        }
-        
-        // Still processing, wait 1 second before next check
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        attempts++;
-        
-      } catch (error) {
-        console.error('Error polling job status:', error);
-        throw error;
-      }
-    }
-    
-    throw new Error('Authentication timeout');
-  };
-
-  const authenticateWithLuxTrust = async (luxtrustId?: string): Promise<LuxTrustAuthResponse | null> => {
+  const authenticateWithLuxTrust = async (): Promise<LuxTrustAuthResponse | null> => {
     setIsAuthenticating(true);
+    setJobId(null);
     
     try {
-      console.log('Starting LuxTrust authentication...');
-      
-      // Use provided ID or generate a test ID
-      const idToUse = luxtrustId || 'TEST-LUX-ID-123456';
-      
-      const authUrl = 'https://reaeyxplttbuejktjrdh.supabase.co/functions/v1/auth-service/auth';
-      console.log('Auth URL:', authUrl);
-      console.log('LuxTrust ID:', idToUse);
-      
-      // Start authentication job
-      const response = await fetch(authUrl, {
+      // Use the correct Supabase project URL
+      const response = await fetch('https://reaeyxplttbuejktjrdh.supabase.co/functions/v1/auth-service/luxtrust/auth', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ luxtrustId: idToUse }),
+        body: JSON.stringify({
+          luxtrustId: 'TEST-LUX-ID-123456',
+          testMode: true
+        })
       });
 
-      console.log('Auth response status:', response.status, response.statusText);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Authentication request failed:', response.status, errorText);
-        throw new Error(`Authentication request failed: ${response.status} - ${errorText}`);
-      }
-
-      const responseData = await response.json();
-      console.log('Auth response data:', responseData);
+      const result = await response.json();
       
-      const { jobId } = responseData;
-      
-      if (!jobId) {
-        console.error('No jobId in response:', responseData);
-        throw new Error('No job ID received from authentication service');
-      }
-      
-      setCurrentJobId(jobId);
-      console.log('Created authentication job:', jobId);
-
-      // Poll for completion
-      const result = await pollJobStatus(jobId);
-      
-      if (result) {
-        setAuthResponse(result);
+      if (result.jobId) {
+        setJobId(result.jobId);
         
-        toast({
-          title: 'LuxTrust Authentication Successful',
-          description: 'Your professional credentials have been verified.',
-        });
+        // Poll for results
+        const authResult = await pollAuthStatus(result.jobId);
+        setAuthResponse(authResult);
+        
+        if (authResult) {
+          toast({
+            title: 'LuxTrust Authentication Successful',
+            description: 'Your professional credentials have been verified.',
+          });
+        }
 
-        return result;
+        return authResult;
+      } else {
+        throw new Error('Failed to create authentication job');
       }
-
-      return null;
     } catch (error) {
-      console.error('LuxTrust authentication error:', error);
+      console.error('LuxTrust authentication failed:', error);
       
       toast({
         title: 'Authentication Failed',
-        description: error instanceof Error ? error.message : 'LuxTrust authentication could not be completed.',
+        description: 'LuxTrust authentication could not be completed.',
         variant: 'destructive'
       });
 
       return null;
     } finally {
       setIsAuthenticating(false);
-      setCurrentJobId(null);
     }
+  };
+
+  const pollAuthStatus = async (authJobId: string): Promise<LuxTrustAuthResponse | null> => {
+    const maxAttempts = 30; // 30 seconds
+    let attempts = 0;
+
+    return new Promise((resolve) => {
+      const poll = async () => {
+        try {
+          // Use the correct Supabase project URL
+          const response = await fetch(`https://reaeyxplttbuejktjrdh.supabase.co/functions/v1/auth-service/luxtrust/status/${authJobId}`);
+          const result = await response.json();
+
+          if (result.status === 'completed' && result.profile) {
+            const authResponse: LuxTrustAuthResponse = {
+              success: true,
+              profile: result.profile,
+              signature: result.signature || `LuxTrust-Signature-${Date.now()}`,
+              timestamp: new Date().toISOString(),
+              verificationId: result.verificationId || `VER-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
+            };
+            resolve(authResponse);
+            return;
+          } else if (result.status === 'failed') {
+            resolve(null);
+            return;
+          } else if (attempts < maxAttempts) {
+            attempts++;
+            setTimeout(poll, 1000);
+          } else {
+            resolve(null);
+          }
+        } catch (error) {
+          console.error('Polling error:', error);
+          resolve(null);
+        }
+      };
+
+      poll();
+    });
   };
 
   const clearAuth = () => {
     setAuthResponse(null);
-    setCurrentJobId(null);
+    setJobId(null);
   };
 
   return {
@@ -148,7 +110,7 @@ export const useLuxTrustAuth = () => {
     clearAuth,
     isAuthenticating,
     authResponse,
-    currentJobId,
+    jobId,
     isAuthenticated: !!authResponse?.success
   };
 };

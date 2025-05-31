@@ -83,12 +83,8 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
       
     } catch (err) {
       console.error('Error initializing tenant:', err);
-      // Don't set error state for missing table, just log and continue
-      if (err instanceof Error && err.message.includes('relation "public.tenants" does not exist')) {
-        console.warn('Tenants table not found, continuing without tenant context');
-      } else {
-        console.warn('Error during tenant initialization, continuing without tenant context');
-      }
+      // Don't set error state, just log the error and continue
+      console.warn('Continuing without tenant context');
     } finally {
       setIsLoading(false);
     }
