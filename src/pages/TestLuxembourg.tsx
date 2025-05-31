@@ -58,7 +58,7 @@ const TestLuxembourg: React.FC = () => {
           : 'https://hrrlefgnhkbzuwyklejj.supabase.co';
       }
 
-      // Use the auth-service endpoints that we specifically designed
+      // Use the auth-service endpoints - location endpoint is at the root level
       const endpoint = apiBaseUrl.includes('localhost:8000') 
         ? `${apiBaseUrl}/location/detect`
         : `${apiBaseUrl}/functions/v1/auth-service/location/detect`;

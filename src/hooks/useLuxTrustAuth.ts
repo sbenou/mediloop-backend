@@ -42,7 +42,7 @@ export const useLuxTrustAuth = () => {
       console.log('Starting LuxTrust authentication...');
       
       const apiBaseUrl = await getApiBaseUrl();
-      // Use the auth-service endpoints that we specifically designed
+      // Use the auth-service endpoints - LuxTrust endpoints are at the root level
       const endpoint = apiBaseUrl.includes('localhost:8000') 
         ? `${apiBaseUrl}/luxtrust/auth`
         : `${apiBaseUrl}/functions/v1/auth-service/luxtrust/auth`;

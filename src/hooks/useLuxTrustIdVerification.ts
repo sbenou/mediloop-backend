@@ -53,7 +53,7 @@ export const useLuxTrustIdVerification = () => {
       console.log('Starting LuxTrust ID verification for:', luxtrustId);
       
       const apiBaseUrl = await getApiBaseUrl();
-      // Use the auth-service endpoints that we specifically designed
+      // Use the auth-service endpoints - LuxTrust endpoints are at the root level
       const endpoint = apiBaseUrl.includes('localhost:8000') 
         ? `${apiBaseUrl}/luxtrust/verify-id`
         : `${apiBaseUrl}/functions/v1/auth-service/luxtrust/verify-id`;
