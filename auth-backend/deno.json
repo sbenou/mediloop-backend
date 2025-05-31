@@ -1,0 +1,13 @@
+
+{
+  "tasks": {
+    "dev": "deno run --allow-net --allow-env --allow-read --unstable-kv --watch main.ts",
+    "start": "deno run --allow-net --allow-env --allow-read --unstable-kv main.ts",
+    "prod": "deno run --allow-net --allow-env --allow-read --unstable-kv --cached-only main.ts"
+  },
+  "imports": {
+    "hono": "https://deno.land/x/hono@v3.12.11/mod.ts",
+    "djwt": "https://deno.land/x/djwt@v3.0.1/mod.ts",
+    "supabase": "https://esm.sh/@supabase/supabase-js@2"
+  }
+}
