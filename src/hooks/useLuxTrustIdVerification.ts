@@ -24,7 +24,7 @@ const getApiBaseUrl = async () => {
     console.log('Local Deno backend not available, using Supabase');
   }
   
-  // Fallback to Supabase auth-service
+  // Fallback to Supabase luxtrust-service
   return import.meta.env.DEV 
     ? 'http://localhost:54321'
     : 'https://hrrlefgnhkbzuwyklejj.supabase.co';
@@ -53,10 +53,10 @@ export const useLuxTrustIdVerification = () => {
       console.log('Starting LuxTrust ID verification for:', luxtrustId);
       
       const apiBaseUrl = await getApiBaseUrl();
-      // Use the auth-service endpoints - LuxTrust endpoints are at the root level
+      // Use the existing luxtrust-service function
       const endpoint = apiBaseUrl.includes('localhost:8000') 
         ? `${apiBaseUrl}/luxtrust/verify-id`
-        : `${apiBaseUrl}/functions/v1/auth-service/luxtrust/verify-id`;
+        : `${apiBaseUrl}/functions/v1/luxtrust-service/verify-id`;
 
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',

@@ -41,46 +41,13 @@ const TestLuxembourg: React.FC = () => {
     { code: 'US', name: 'United States' }
   ];
 
-  // Location detection with direct API call to auth-service
+  // Location detection - using mock functionality since no location endpoint in luxtrust-service
   const handleCountryChange = async (countryCode: string) => {
     setCurrentCountry(countryCode);
     setIsLuxembourg(countryCode === 'LU');
 
-    try {
-      // Try local Deno backend first
-      let apiBaseUrl = 'http://localhost:8000';
-      try {
-        const healthCheck = await fetch(`${apiBaseUrl}/health`);
-        if (!healthCheck.ok) throw new Error('Local backend not available');
-      } catch {
-        apiBaseUrl = import.meta.env.DEV 
-          ? 'http://localhost:54321'
-          : 'https://hrrlefgnhkbzuwyklejj.supabase.co';
-      }
-
-      // Use the auth-service endpoints - location endpoint is at the root level
-      const endpoint = apiBaseUrl.includes('localhost:8000') 
-        ? `${apiBaseUrl}/location/detect`
-        : `${apiBaseUrl}/functions/v1/auth-service/location/detect`;
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaGtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U',
-        },
-        body: JSON.stringify({ countryCode })
-      });
-
-      if (!response.ok) {
-        console.error('Location detection error: HTTP', response.status);
-      } else {
-        const data = await response.json();
-        console.log('Location detection result stored:', data);
-      }
-    } catch (error) {
-      console.error('Location detection failed:', error);
-    }
+    // Since luxtrust-service doesn't have location endpoint, just do local state update
+    console.log('Location detection simulated for:', countryCode);
 
     toast({
       title: 'Location Updated',
