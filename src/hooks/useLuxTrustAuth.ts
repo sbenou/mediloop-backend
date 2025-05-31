@@ -13,7 +13,7 @@ export const useLuxTrustAuth = () => {
     setJobId(null);
     
     try {
-      // Use the correct Supabase project URL
+      // Use the correct Supabase project URL that matches our config
       const response = await fetch('https://reaeyxplttbuejktjrdh.supabase.co/functions/v1/auth-service/luxtrust/auth', {
         method: 'POST',
         headers: {
@@ -67,7 +67,7 @@ export const useLuxTrustAuth = () => {
     return new Promise((resolve) => {
       const poll = async () => {
         try {
-          // Use the correct Supabase project URL
+          // Use the correct Supabase project URL that matches our config
           const response = await fetch(`https://reaeyxplttbuejktjrdh.supabase.co/functions/v1/auth-service/luxtrust/status/${authJobId}`);
           const result = await response.json();
 

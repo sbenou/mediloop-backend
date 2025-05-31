@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import type { LuxTrustProfile, Certification, Country, IdVerificationStatus } from '@/components/test-luxembourg/types';
