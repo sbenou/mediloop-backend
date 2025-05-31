@@ -54,7 +54,14 @@ export const useNotifications = (): NotificationHookReturn => {
       }
 
       console.log('Fetched notifications:', data?.length || 0);
-      setNotifications(data || []);
+      
+      // Transform the data to match the Notification interface
+      const transformedNotifications: Notification[] = (data || []).map(item => ({
+        ...item,
+        meta: item.meta as Record<string, any> || {}
+      }));
+      
+      setNotifications(transformedNotifications);
     } catch (error) {
       console.error('Error in fetchNotifications:', error);
       toast({
@@ -153,7 +160,10 @@ export const useNotifications = (): NotificationHookReturn => {
             console.log('Realtime notification update:', payload);
             
             if (payload.eventType === 'INSERT') {
-              const newNotification = payload.new as Notification;
+              const newNotification = {
+                ...payload.new,
+                meta: payload.new.meta as Record<string, any> || {}
+              } as Notification;
               setNotifications(prev => [newNotification, ...prev]);
               
               toast({
@@ -162,7 +172,10 @@ export const useNotifications = (): NotificationHookReturn => {
                 variant: 'default',
               });
             } else if (payload.eventType === 'UPDATE') {
-              const updatedNotification = payload.new as Notification;
+              const updatedNotification = {
+                ...payload.new,
+                meta: payload.new.meta as Record<string, any> || {}
+              } as Notification;
               setNotifications(prev =>
                 prev.map(notification =>
                   notification.id === updatedNotification.id ? updatedNotification : notification
