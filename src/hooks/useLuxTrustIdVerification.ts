@@ -4,8 +4,14 @@ import { toast } from '@/hooks/use-toast';
 
 // Check if local Deno backend is running, fallback to Supabase
 const getApiBaseUrl = async () => {
+  // In Lovable preview environment, always use production Supabase
+  if (window.location.hostname.includes('lovableproject.com')) {
+    console.log('Using production Supabase edge function in Lovable preview');
+    return 'https://hrrlefgnhkbzuwyklejj.supabase.co';
+  }
+  
   try {
-    // Try local Deno backend first
+    // Try local Deno backend first (only in true local development)
     const localResponse = await fetch('http://localhost:8000/health', {
       method: 'GET',
       mode: 'cors'
@@ -18,10 +24,10 @@ const getApiBaseUrl = async () => {
     console.log('Local Deno backend not available, using Supabase');
   }
   
-  // Fallback to Supabase (corrected local development URL)
+  // Fallback to Supabase
   return import.meta.env.DEV 
     ? 'http://localhost:54321'
-    : 'https://hrrlefgnhkbzuwyklejj.supabase.co/functions/v1';
+    : 'https://hrrlefgnhkbzuwyklejj.supabase.co';
 };
 
 export type IdVerificationStatus = 'unverified' | 'verifying' | 'verified' | 'failed';
