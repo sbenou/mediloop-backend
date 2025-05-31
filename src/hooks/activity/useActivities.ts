@@ -11,7 +11,7 @@ export const useActivities = (userId?: string, limit = 10) => {
 
   // Calculate unread count from activities
   const unreadCount = useMemo(() => {
-    return activities.filter(activity => !activity.read && activity.status !== 'read').length;
+    return activities.filter(activity => !activity.read).length;
   }, [activities]);
 
   const fetchActivities = async (userId?: string, startFrom = 0) => {
@@ -33,10 +33,10 @@ export const useActivities = (userId?: string, limit = 10) => {
       // If we got fewer results than the limit, there are no more to fetch
       setHasMore(data.length === limit);
       
-      // Add read property based on status
+      // Add read property from the database field
       const processedData = data.map(item => ({
         ...item,
-        read: item.status === 'read'
+        read: item.read
       }));
       
       // If this is the first page, replace the state
@@ -71,7 +71,7 @@ export const useActivities = (userId?: string, limit = 10) => {
     try {
       const { error } = await supabase
         .from('activities')
-        .update({ status: 'read' })
+        .update({ read: true })
         .eq('id', activityId);
 
       if (error) throw error;
@@ -79,7 +79,7 @@ export const useActivities = (userId?: string, limit = 10) => {
       // Update the local state
       setActivities(prev =>
         prev.map(activity =>
-          activity.id === activityId ? { ...activity, status: 'read', read: true } : activity
+          activity.id === activityId ? { ...activity, read: true } : activity
         )
       );
       
@@ -95,26 +95,26 @@ export const useActivities = (userId?: string, limit = 10) => {
     
     try {
       const unreadActivityIds = activities
-        .filter(activity => activity.status !== 'read' || !activity.read)
+        .filter(activity => !activity.read)
         .map(activity => activity.id);
       
       if (unreadActivityIds.length === 0) return false;
       
       const { error } = await supabase
         .from('activities')
-        .update({ status: 'read' })
+        .update({ read: true })
         .in('id', unreadActivityIds);
 
       if (error) throw error;
 
       // Update the local state
       setActivities(prev =>
-        prev.map(activity => ({ ...activity, status: 'read', read: true }))
+        prev.map(activity => ({ ...activity, read: true }))
       );
       
       toast({
         title: 'All activities marked as read',
-        variant: 'success',
+        variant: 'default',
       });
       
       return true;

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { searchDoctors } from "@/lib/overpass";
@@ -26,10 +25,10 @@ export const useDoctorFinder = (
           selectedCountry
         });
 
-        // Get database doctors first - removed phone from the select query
+        // Get database doctors first - removed 'hours' column since it doesn't exist
         const { data: dbDoctors, error: dbError } = await supabase
           .from("profiles")
-          .select("id, full_name, city, license_number, email, hours")
+          .select("id, full_name, city, license_number, email")
           .eq("role", "doctor");
           
         if (dbError) {
@@ -45,7 +44,6 @@ export const useDoctorFinder = (
           city: doctor.city || 'Unknown location',
           license_number: doctor.license_number || 'Not specified',
           email: doctor.email,
-          hours: doctor.hours,
           source: 'database' as const,
           coordinates: null
         })) || [];

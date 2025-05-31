@@ -9,8 +9,12 @@ import { sendDoctorConnectionNotification } from '@/utils/notificationHelpers';
 export function useDoctorActivity() {
   const logDoctorView = useCallback(async (doctorId: string) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
       const { error } = await supabase.from('activities').insert([
         {
+          user_id: user.id,
           type: 'doctor_view',
           title: 'Doctor Profile Viewed',
           description: `Viewed doctor profile ${doctorId}`,
@@ -31,8 +35,12 @@ export function useDoctorActivity() {
     term?: string;
   }) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
       const { error } = await supabase.from('activities').insert([
         {
+          user_id: user.id,
           type: 'doctor_search',
           title: 'Doctor Search Performed',
           description: 'Searched for doctors',

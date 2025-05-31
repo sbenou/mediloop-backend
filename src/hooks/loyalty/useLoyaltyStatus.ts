@@ -64,9 +64,15 @@ export const useLoyaltyStatus = (): LoyaltyStatus => {
           return;
         }
 
-        setLoyaltyStatus(data || DEFAULT_STATUS);
+        // Ensure we only set data if it's a valid LoyaltyStatus object
+        if (data && typeof data === 'object' && !Array.isArray(data)) {
+          setLoyaltyStatus(data as LoyaltyStatus);
+        } else {
+          setLoyaltyStatus(DEFAULT_STATUS);
+        }
       } catch (err) {
         console.error('Error in useLoyaltyStatus:', err);
+        setLoyaltyStatus(DEFAULT_STATUS);
       }
     };
 
