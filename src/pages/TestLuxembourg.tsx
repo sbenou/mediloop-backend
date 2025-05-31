@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
@@ -20,7 +21,7 @@ const TestLuxembourg: React.FC = () => {
   const [currentCountry, setCurrentCountry] = useState('LU');
   const [isLuxembourg, setIsLuxembourg] = useState(true);
   
-  // LuxTrust Auth using the new hook
+  // LuxTrust Auth using the hook
   const { authenticateWithLuxTrust, isAuthenticating, isAuthenticated, authResponse } = useLuxTrustAuth();
   
   // Professional Certification State
@@ -28,7 +29,7 @@ const TestLuxembourg: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   
-  // LuxTrust ID Field using the new hook
+  // LuxTrust ID Field using the hook
   const [luxtrustId, setLuxtrustId] = useState('');
   const [isIdVisible, setIsIdVisible] = useState(false);
   const { verifyLuxTrustId, resetVerification, isVerifying, verificationStatus } = useLuxTrustIdVerification();
@@ -41,29 +42,28 @@ const TestLuxembourg: React.FC = () => {
     { code: 'US', name: 'United States' }
   ];
 
-  // Validate LuxTrust ID format
-  const validateLuxTrustId = (id: string): boolean => {
-    const patterns = [
-      /^LUX-\d{4}-\d{6}$/,
-      /^LT-[A-Z]{3}-\d{6}$/,
-      /^LUXTRUST-\d{6}$/,
-      /^TEST-LUX-ID-\d{6}$/
-    ];
-    
-    return patterns.some(pattern => pattern.test(id));
-  };
-
   // Location detection with direct API call
   const handleCountryChange = async (countryCode: string) => {
     setCurrentCountry(countryCode);
     setIsLuxembourg(countryCode === 'LU');
 
     try {
-      const API_BASE_URL = import.meta.env.DEV 
-        ? 'http://localhost:54327'
-        : 'https://hrrlefgnhkbzuwyklejj.supabase.co/functions/v1';
+      // Try local Deno backend first
+      let apiBaseUrl = 'http://localhost:8000';
+      try {
+        const healthCheck = await fetch(`${apiBaseUrl}/health`);
+        if (!healthCheck.ok) throw new Error('Local backend not available');
+      } catch {
+        apiBaseUrl = import.meta.env.DEV 
+          ? 'http://localhost:54327'
+          : 'https://hrrlefgnhkbzuwyklejj.supabase.co/functions/v1';
+      }
 
-      const response = await fetch(`${API_BASE_URL}/auth-service/location/detect`, {
+      const endpoint = apiBaseUrl.includes('localhost:8000') 
+        ? `${apiBaseUrl}/location/detect`
+        : `${apiBaseUrl}/auth-service/location/detect`;
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -75,7 +75,7 @@ const TestLuxembourg: React.FC = () => {
         console.error('Location detection error: HTTP', response.status);
       } else {
         const data = await response.json();
-        console.log('Location detection result stored in KV:', data);
+        console.log('Location detection result stored:', data);
       }
     } catch (error) {
       console.error('Location detection failed:', error);
@@ -85,6 +85,23 @@ const TestLuxembourg: React.FC = () => {
       title: 'Location Updated',
       description: `Country set to ${countries.find(c => c.code === countryCode)?.name}. LuxTrust ${countryCode === 'LU' ? 'enabled' : 'disabled'}.`
     });
+  };
+
+  // Handle LuxTrust authentication with success toast
+  const handleLuxTrustAuth = async () => {
+    const result = await authenticateWithLuxTrust();
+    if (result?.success) {
+      toast({
+        title: 'LuxTrust Authentication Successful',
+        description: 'Professional credentials verified successfully!'
+      });
+    } else {
+      toast({
+        title: 'Authentication Failed',
+        description: 'LuxTrust authentication could not be completed.',
+        variant: 'destructive'
+      });
+    }
   };
 
   // Convert LuxTrust profile from auth response
@@ -208,7 +225,7 @@ const TestLuxembourg: React.FC = () => {
             isAuthenticating={isAuthenticating}
             isAuthenticated={isAuthenticated}
             luxtrustProfile={luxtrustProfile}
-            onAuthenticate={authenticateWithLuxTrust}
+            onAuthenticate={handleLuxTrustAuth}
           />
 
           <CertificationTest

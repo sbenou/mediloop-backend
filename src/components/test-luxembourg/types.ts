@@ -8,16 +8,16 @@ export interface LuxTrustProfile {
   id: string;
   firstName: string;
   lastName: string;
-  professionalId: string;
-  certificationLevel: string;
+  professionalId?: string;
+  certificationLevel: 'basic' | 'professional' | 'advanced';
   isVerified: boolean;
 }
 
 export interface Certification {
   id: string;
   fileName: string;
-  type: string;
-  status: 'pending' | 'verified';
+  type: 'doctor' | 'pharmacist' | 'nurse' | 'other';
+  status: 'pending' | 'verified' | 'rejected';
   uploadedAt: string;
   verifiedAt?: string;
 }
