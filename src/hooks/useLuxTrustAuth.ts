@@ -24,17 +24,39 @@ export const useLuxTrustAuth = () => {
 
       if (error) {
         console.error('Supabase function error:', error);
-        throw new Error(`Supabase function error: ${error.message}`);
+        toast({
+          title: 'LuxTrust Error',
+          description: `Authentication failed: ${error.message}`,
+          variant: 'destructive'
+        });
+        return null;
       }
 
       if (data?.success) {
+        console.log('LuxTrust authentication successful:', data);
         setAuthResponse(data);
+        toast({
+          title: 'LuxTrust Success',
+          description: 'Authentication completed successfully!',
+          variant: 'default'
+        });
         return data;
       } else {
-        throw new Error('Authentication failed');
+        console.error('LuxTrust authentication failed:', data);
+        toast({
+          title: 'LuxTrust Failed',
+          description: 'Authentication was not successful',
+          variant: 'destructive'
+        });
+        return null;
       }
     } catch (error) {
       console.error('LuxTrust authentication failed:', error);
+      toast({
+        title: 'LuxTrust Error',
+        description: 'Failed to connect to authentication service',
+        variant: 'destructive'
+      });
       return null;
     } finally {
       setIsAuthenticating(false);

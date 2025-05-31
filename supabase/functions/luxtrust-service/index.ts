@@ -1,12 +1,21 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { corsHeaders } from "../_shared/cors.ts"
 
 console.log('LuxTrust Service starting...')
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+  'Access-Control-Max-Age': '86400'
+}
+
 serve(async (req) => {
+  console.log('LuxTrust service request received:', req.method, req.url)
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('Handling CORS preflight request')
     return new Response(null, {
       status: 200,
       headers: corsHeaders
@@ -15,7 +24,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json()
-    console.log('LuxTrust service request:', body)
+    console.log('LuxTrust service request body:', body)
     
     // Simulate LuxTrust authentication process
     await new Promise(resolve => setTimeout(resolve, 2000))
