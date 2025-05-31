@@ -132,6 +132,47 @@ app.get('/health', (c) => {
   return c.json({ status: 'healthy', timestamp: new Date().toISOString() })
 })
 
+// LuxTrust authentication endpoint
+app.post('/luxtrust/auth', async (c) => {
+  try {
+    console.log('LuxTrust authentication request received')
+    
+    // Simulate LuxTrust authentication process
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    
+    // Generate a unique session ID
+    const sessionId = crypto.randomUUID()
+    
+    // Mock successful LuxTrust response
+    const luxtrustResponse = {
+      success: true,
+      profile: {
+        id: `lux-${Date.now()}`,
+        firstName: 'Dr. Jean',
+        lastName: 'Luxembourg',
+        professionalId: 'LUX-DOC-2024-001',
+        certificationLevel: 'professional' as const,
+        isVerified: true
+      },
+      signature: `LuxTrust-Signature-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      verificationId: `VER-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      sessionId: sessionId
+    }
+
+    console.log('LuxTrust authentication successful with session:', sessionId)
+
+    return c.json(luxtrustResponse)
+  } catch (error) {
+    console.error('LuxTrust authentication error:', error)
+    return c.json({ 
+      success: false, 
+      error: 'LuxTrust authentication failed',
+      timestamp: new Date().toISOString()
+    }, 500)
+  }
+})
+
 // LuxTrust ID verification endpoint
 app.post('/luxtrust/verify-id', async (c) => {
   try {
@@ -284,47 +325,6 @@ app.post('/location/detect', async (c) => {
     return c.json({ 
       success: false, 
       error: 'Location detection failed',
-      timestamp: new Date().toISOString()
-    }, 500)
-  }
-})
-
-// LuxTrust authentication endpoint
-app.post('/luxtrust/auth', async (c) => {
-  try {
-    console.log('LuxTrust authentication request received')
-    
-    // Simulate LuxTrust authentication process
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    // Generate a unique session ID
-    const sessionId = crypto.randomUUID()
-    
-    // Mock successful LuxTrust response
-    const luxtrustResponse = {
-      success: true,
-      profile: {
-        id: `lux-${Date.now()}`,
-        firstName: 'Dr. Jean',
-        lastName: 'Luxembourg',
-        professionalId: 'LUX-DOC-2024-001',
-        certificationLevel: 'professional' as const,
-        isVerified: true
-      },
-      signature: `LuxTrust-Signature-${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      verificationId: `VER-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-      sessionId: sessionId
-    }
-
-    console.log('LuxTrust authentication successful with session:', sessionId)
-
-    return c.json(luxtrustResponse)
-  } catch (error) {
-    console.error('LuxTrust authentication error:', error)
-    return c.json({ 
-      success: false, 
-      error: 'LuxTrust authentication failed',
       timestamp: new Date().toISOString()
     }, 500)
   }
