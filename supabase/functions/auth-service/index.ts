@@ -32,9 +32,6 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-// Initialize Deno KV
-const kv = await Deno.openKv()
-
 // JWT secret for signing tokens
 const JWT_SECRET = Deno.env.get('JWT_SECRET') || 'your-super-secret-jwt-key'
 const key = await crypto.subtle.importKey(
@@ -135,7 +132,7 @@ app.get('/health', (c) => {
   return c.json({ status: 'healthy', timestamp: new Date().toISOString() })
 })
 
-// LuxTrust ID verification endpoint with Deno KV
+// LuxTrust ID verification endpoint
 app.post('/luxtrust/verify-id', async (c) => {
   try {
     const { luxtrustId } = await c.req.json()
@@ -176,11 +173,7 @@ app.post('/luxtrust/verify-id', async (c) => {
       sessionId: sessionId
     }
 
-    // Store the verification result in Deno KV
-    const kvKey = ['luxtrust_id_verification', sessionId]
-    await kv.set(kvKey, verificationResponse, { expireIn: 3600000 }) // 1 hour expiry
-
-    console.log('LuxTrust ID verification completed, stored in KV with session:', sessionId)
+    console.log('LuxTrust ID verification completed with session:', sessionId)
 
     return c.json(verificationResponse)
   } catch (error) {
@@ -194,7 +187,7 @@ app.post('/luxtrust/verify-id', async (c) => {
   }
 })
 
-// Professional certification upload endpoint with Deno KV
+// Professional certification upload endpoint
 app.post('/certification/upload', async (c) => {
   try {
     const { fileName, certificationType, userId } = await c.req.json()
@@ -218,11 +211,7 @@ app.post('/certification/upload', async (c) => {
       timestamp: new Date().toISOString()
     }
 
-    // Store the certification result in Deno KV
-    const kvKey = ['certification_upload', sessionId]
-    await kv.set(kvKey, certificationResponse, { expireIn: 3600000 }) // 1 hour expiry
-
-    console.log('Certification upload completed, stored in KV with session:', sessionId)
+    console.log('Certification upload completed with session:', sessionId)
 
     return c.json(certificationResponse)
   } catch (error) {
@@ -235,7 +224,7 @@ app.post('/certification/upload', async (c) => {
   }
 })
 
-// Professional certification verification endpoint with Deno KV
+// Professional certification verification endpoint
 app.post('/certification/verify', async (c) => {
   try {
     const { certificationId } = await c.req.json()
@@ -255,11 +244,7 @@ app.post('/certification/verify', async (c) => {
       timestamp: new Date().toISOString()
     }
 
-    // Store the verification result in Deno KV
-    const kvKey = ['certification_verification', sessionId]
-    await kv.set(kvKey, verificationResponse, { expireIn: 3600000 }) // 1 hour expiry
-
-    console.log('Certification verification completed, stored in KV with session:', sessionId)
+    console.log('Certification verification completed with session:', sessionId)
 
     return c.json(verificationResponse)
   } catch (error) {
@@ -272,7 +257,7 @@ app.post('/certification/verify', async (c) => {
   }
 })
 
-// Location detection endpoint with Deno KV
+// Location detection endpoint
 app.post('/location/detect', async (c) => {
   try {
     const { countryCode } = await c.req.json()
@@ -291,11 +276,7 @@ app.post('/location/detect', async (c) => {
       timestamp: new Date().toISOString()
     }
 
-    // Store the location result in Deno KV
-    const kvKey = ['location_detection', sessionId]
-    await kv.set(kvKey, locationResponse, { expireIn: 3600000 }) // 1 hour expiry
-
-    console.log('Location detection completed, stored in KV with session:', sessionId)
+    console.log('Location detection completed with session:', sessionId)
 
     return c.json(locationResponse)
   } catch (error) {
@@ -308,7 +289,7 @@ app.post('/location/detect', async (c) => {
   }
 })
 
-// LuxTrust authentication endpoint with Deno KV
+// LuxTrust authentication endpoint
 app.post('/luxtrust/auth', async (c) => {
   try {
     console.log('LuxTrust authentication request received')
@@ -336,11 +317,7 @@ app.post('/luxtrust/auth', async (c) => {
       sessionId: sessionId
     }
 
-    // Store the authentication result in Deno KV
-    const kvKey = ['luxtrust_auth', sessionId]
-    await kv.set(kvKey, luxtrustResponse, { expireIn: 3600000 }) // 1 hour expiry
-
-    console.log('LuxTrust authentication successful, stored in KV with session:', sessionId)
+    console.log('LuxTrust authentication successful with session:', sessionId)
 
     return c.json(luxtrustResponse)
   } catch (error) {
