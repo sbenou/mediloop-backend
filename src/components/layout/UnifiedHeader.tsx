@@ -1,97 +1,63 @@
 
-
-import React from "react";
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from "@/hooks/auth/useAuth";
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { useCart } from '@/contexts/CartContext';
-import { ShoppingCart } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import CartButton from './navigation/CartButton';
+import { MainNavigation } from './navigation/MainNavigation';
+import MobileMenu from './navigation/MobileMenu';
+import { useAuth } from '@/hooks/auth/useAuth';
+import { CurrencySelector } from '@/components/CurrencySelector';
+import LanguageSelector from '@/components/LanguageSelector';
+import NotificationBell from '@/components/NotificationBell';
+import { TenantDisplay } from '@/components/tenant/TenantDisplay';
+import { useIsMobile } from '@/hooks/use-mobile';
+import UserMenu from '@/components/UserMenu';
 
-export default function UnifiedHeader() {
-  const { isAuthenticated, profile } = useAuth();
-  const { state } = useCart();
-  const navigate = useNavigate();
-
-  const totalItems = state.items.reduce((total, item) => {
-    // Only add quantity if the item has a quantity property (regular CartItem)
-    return total + ('quantity' in item ? item.quantity : 1);
-  }, 0);
-
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      navigate('/');
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
+const UnifiedHeader = () => {
+  const { isAuthenticated } = useAuth();
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center space-x-6">
-          <Link to="/" className="flex items-center space-x-2">
-            <img 
-              src="https://hrrlefgnhkbzuwyklejj.supabase.co/storage/v1/object/public/media/logo.png" 
-              alt="Logo" 
-              className="h-8 w-8"
+    <header className="sticky top-0 z-50 w-full border-b bg-background">
+      <div className="container flex h-16 items-center justify-between px-4 md:px-6">
+        <div className="flex items-center gap-2">
+          {isMobile && (
+            <MobileMenu 
+              isOpen={isMobileMenuOpen} 
+              onOpenChange={setIsMobileMenuOpen} 
             />
-            <span className="hidden font-bold sm:inline-block">
-              HealthPlatform
-            </span>
-          </Link>
-
-          <Link to="/products" className="text-sm font-medium text-muted-foreground hover:text-foreground">
-            Products
-          </Link>
-          <Link to="/about" className="text-sm font-medium text-muted-foreground hover:text-foreground">
-            About
-          </Link>
-          <Link to="/contact" className="text-sm font-medium text-muted-foreground hover:text-foreground">
-            Contact
-          </Link>
-          
-          {import.meta.env.DEV && (
-            <Link 
-              to="/dev-tools"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground"
-            >
-              Dev Tools
-            </Link>
           )}
+          <Link to="/" className="flex items-center space-x-2">
+            <img
+              src="/lovable-uploads/187ef6ec-1e9e-4364-af00-215ade5361d3.png"
+              alt="Mediloop"
+              className="h-10 w-auto max-w-[220px] object-contain" 
+            />
+          </Link>
+          <TenantDisplay />
         </div>
-
-        <div className="flex items-center space-x-4">
-          {isAuthenticated && profile ? (
-            <>
-              <Link to="/profile" className="text-sm font-medium text-muted-foreground hover:text-foreground">
-                {profile.full_name}
-              </Link>
-              <Link to="/cart" className="relative">
-                <ShoppingCart className="h-5 w-5 text-muted-foreground hover:text-foreground" />
-                {totalItems > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-secondary text-secondary-foreground rounded-full px-1 text-xs">
-                    {totalItems}
-                  </span>
-                )}
-              </Link>
-              <Button variant="outline" size="sm" onClick={handleLogout}>
-                Logout
-              </Button>
-            </>
-          ) : (
-            <>
-              <Link to="/login" className="text-sm font-medium text-muted-foreground hover:text-foreground">
-                Login
-              </Link>
-              <Link to="/signup" className="text-sm font-medium text-muted-foreground hover:text-foreground">
-                Sign Up
-              </Link>
-            </>
-          )}
+        <div className="flex items-center gap-2">
+          <div className="hidden md:flex">
+            <MainNavigation />
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="hidden md:flex md:items-center md:gap-4">
+            <LanguageSelector />
+            <CurrencySelector />
+            {isAuthenticated && <NotificationBell />}
+          </div>
+          <CartButton 
+            isOpen={isCartOpen} 
+            onOpenChange={setIsCartOpen} 
+          />
+          <UserMenu />
         </div>
       </div>
     </header>
   );
-}
+};
+
+export default UnifiedHeader;

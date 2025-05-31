@@ -1,3 +1,4 @@
+
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Loader } from 'lucide-react';
@@ -20,7 +21,6 @@ const TestNotifications = lazy(() => import('./pages/TestNotifications'));
 const PharmacyDashboard = lazy(() => import('./pages/pharmacy/PharmacyDashboard'));
 const SuperAdminDashboard = lazy(() => import('./pages/superadmin/SuperAdminDashboard'));
 const TestLuxembourg = lazy(() => import('./pages/TestLuxembourg'));
-const DevTools = lazy(() => import('./pages/DevTools'));
 
 const AppRoutes = () => {
   const { profile } = useAuth();
@@ -154,17 +154,7 @@ const AppRoutes = () => {
         }
       />
       
-      {/* Development tools */}
-      <Route 
-        path="/dev-tools" 
-        element={
-          <Suspense fallback={<Loader className="h-6 w-6 animate-spin" />}>
-            <DevTools />
-          </Suspense>
-        } 
-      />
-      
-      {/* Test routes */}
+      {/* Add test route for Luxembourg functionality */}
       <Route path="/test-luxembourg" element={<TestLuxembourg />} />
       
       <Route path="*" element={<Navigate to="/" />} />
