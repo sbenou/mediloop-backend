@@ -14,7 +14,7 @@ export const useLuxTrustAuth = () => {
     try {
       console.log('Starting LuxTrust authentication...');
       
-      // Use Supabase client to invoke the luxtrust-service function
+      // Call the LuxTrust service without requiring authentication
       const { data, error } = await supabase.functions.invoke('luxtrust-service', {
         body: { 
           action: 'auth',
@@ -23,7 +23,7 @@ export const useLuxTrustAuth = () => {
       });
 
       if (error) {
-        console.error('Supabase function error:', error);
+        console.error('LuxTrust service error:', error);
         toast({
           title: 'LuxTrust Error',
           description: `Authentication failed: ${error.message}`,
