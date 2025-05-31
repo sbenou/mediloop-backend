@@ -21,6 +21,7 @@ const TestNotifications = lazy(() => import('./pages/TestNotifications'));
 const PharmacyDashboard = lazy(() => import('./pages/pharmacy/PharmacyDashboard'));
 const SuperAdminDashboard = lazy(() => import('./pages/superadmin/SuperAdminDashboard'));
 const TestLuxembourg = lazy(() => import('./pages/TestLuxembourg'));
+const DenoBackendManagement = lazy(() => import('./pages/DenoBackendManagement'));
 
 const AppRoutes = () => {
   const { profile } = useAuth();
@@ -156,6 +157,18 @@ const AppRoutes = () => {
       
       {/* Add test route for Luxembourg functionality */}
       <Route path="/test-luxembourg" element={<TestLuxembourg />} />
+      
+      {/* Add Deno backend management route */}
+      <Route 
+        path="/deno-backend" 
+        element={
+          <ProtectedRoute allowedRoles={['superadmin']}>
+            <Suspense fallback={<Loader className="h-6 w-6 animate-spin" />}>
+              <DenoBackendManagement />
+            </Suspense>
+          </ProtectedRoute>
+        }
+      />
       
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
