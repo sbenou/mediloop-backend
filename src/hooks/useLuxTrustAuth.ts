@@ -44,7 +44,7 @@ export const useLuxTrustAuth = () => {
       const apiBaseUrl = await getApiBaseUrl();
       const endpoint = apiBaseUrl.includes('localhost:8000') 
         ? `${apiBaseUrl}/luxtrust/auth`
-        : `${apiBaseUrl}/functions/v1/auth-service/luxtrust/auth`;
+        : `${apiBaseUrl}/functions/v1/luxtrust-service/auth`;
       
       const response = await fetch(endpoint, {
         method: 'POST',

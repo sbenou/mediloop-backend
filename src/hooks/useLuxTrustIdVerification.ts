@@ -55,7 +55,7 @@ export const useLuxTrustIdVerification = () => {
       const apiBaseUrl = await getApiBaseUrl();
       const endpoint = apiBaseUrl.includes('localhost:8000') 
         ? `${apiBaseUrl}/luxtrust/verify-id`
-        : `${apiBaseUrl}/functions/v1/auth-service/luxtrust/verify-id`;
+        : `${apiBaseUrl}/functions/v1/luxtrust-service/verify-id`;
 
       const response = await fetch(endpoint, {
         method: 'POST',
