@@ -290,6 +290,10 @@ vector_port = 54328
 # Configure one of the supported backends: `postgres`, `bigquery`.
 backend = "postgres"
 
+# Configure the auth-service edge function
+[functions.auth-service]
+verify_jwt = false
+
 # Experimental features may be deprecated any time
 [experimental]
 # Configures Postgres CDC via WAL. Enables the logical replication slot automatically.

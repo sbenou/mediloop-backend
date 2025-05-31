@@ -24,12 +24,17 @@ export const useLuxTrustAuth = () => {
     
     while (attempts < maxAttempts) {
       try {
-        const response = await fetch(`https://reaeyxplttbuejktjrdh.supabase.co/functions/v1/auth-service/status/${jobId}`, {
+        const statusUrl = `https://reaeyxplttbuejktjrdh.supabase.co/functions/v1/auth-service/status/${jobId}`;
+        console.log('Polling job status:', jobId, 'URL:', statusUrl);
+        
+        const response = await fetch(statusUrl, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
           },
         });
+        
+        console.log('Status poll response:', response.status, response.statusText);
         
         if (!response.ok) {
           const errorText = await response.text();
@@ -68,14 +73,20 @@ export const useLuxTrustAuth = () => {
       // Use provided ID or generate a test ID
       const idToUse = luxtrustId || 'TEST-LUX-ID-123456';
       
+      const authUrl = 'https://reaeyxplttbuejktjrdh.supabase.co/functions/v1/auth-service/auth';
+      console.log('Auth URL:', authUrl);
+      console.log('LuxTrust ID:', idToUse);
+      
       // Start authentication job
-      const response = await fetch('https://reaeyxplttbuejktjrdh.supabase.co/functions/v1/auth-service/auth', {
+      const response = await fetch(authUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ luxtrustId: idToUse }),
       });
+
+      console.log('Auth response status:', response.status, response.statusText);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -84,6 +95,8 @@ export const useLuxTrustAuth = () => {
       }
 
       const responseData = await response.json();
+      console.log('Auth response data:', responseData);
+      
       const { jobId } = responseData;
       
       if (!jobId) {
