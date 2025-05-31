@@ -19,6 +19,9 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+// Initialize Deno KV
+const kv = await Deno.openKv()
+
 // JWT secret for signing tokens
 const JWT_SECRET = Deno.env.get('JWT_SECRET') || 'your-super-secret-jwt-key'
 const key = await crypto.subtle.importKey(
@@ -117,6 +120,72 @@ const LUXTRUST_CLIENT_SECRET = Deno.env.get('LUXTRUST_CLIENT_SECRET')
 // Health check endpoint
 app.get('/health', (c) => {
   return c.json({ status: 'healthy', timestamp: new Date().toISOString() })
+})
+
+// LuxTrust authentication endpoint with Deno KV
+app.post('/luxtrust/auth', async (c) => {
+  try {
+    console.log('LuxTrust authentication request received')
+    
+    // Simulate LuxTrust authentication process
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    
+    // Generate a unique session ID
+    const sessionId = crypto.randomUUID()
+    
+    // Mock successful LuxTrust response
+    const luxtrustResponse = {
+      success: true,
+      profile: {
+        id: `lux-${Date.now()}`,
+        firstName: 'Dr. Jean',
+        lastName: 'Luxembourg',
+        professionalId: 'LUX-DOC-2024-001',
+        certificationLevel: 'professional' as const,
+        isVerified: true
+      },
+      signature: `LuxTrust-Signature-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      verificationId: `VER-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      sessionId: sessionId
+    }
+
+    // Store the authentication result in Deno KV
+    const kvKey = ['luxtrust_auth', sessionId]
+    await kv.set(kvKey, luxtrustResponse, { expireIn: 3600000 }) // 1 hour expiry
+
+    console.log('LuxTrust authentication successful, stored in KV with session:', sessionId)
+
+    return c.json(luxtrustResponse)
+  } catch (error) {
+    console.error('LuxTrust authentication error:', error)
+    return c.json({ 
+      success: false, 
+      error: 'LuxTrust authentication failed',
+      timestamp: new Date().toISOString()
+    }, 500)
+  }
+})
+
+// Handle POST requests with action parameter for backward compatibility
+app.post('/', async (c) => {
+  try {
+    const body = await c.req.json()
+    
+    if (body.action === 'luxtrust_auth') {
+      // Redirect to the specific LuxTrust endpoint
+      return await app.fetch(new Request(`${c.req.url}luxtrust/auth`, {
+        method: 'POST',
+        headers: c.req.headers,
+        body: JSON.stringify(body)
+      }))
+    }
+    
+    return c.json({ error: 'Unknown action' }, 400)
+  } catch (error) {
+    console.error('Request processing error:', error)
+    return c.json({ error: 'Invalid request' }, 400)
+  }
 })
 
 // JWT verification endpoint
