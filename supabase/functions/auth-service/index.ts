@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { Hono } from "https://deno.land/x/hono@v3.12.11/mod.ts"
 import { cors } from "https://deno.land/x/hono@v3.12.11/middleware.ts"
@@ -7,12 +6,26 @@ import { create, verify, getNumericDate } from "https://deno.land/x/djwt@v3.0.1/
 
 const app = new Hono()
 
-// CORS middleware
+// Enhanced CORS middleware with proper headers
 app.use('/*', cors({
   origin: ['*'],
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization', 'x-client-info', 'apikey'],
+  credentials: false
 }))
+
+// Handle OPTIONS requests explicitly
+app.options('/*', (c) => {
+  return new Response(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-client-info, apikey',
+      'Access-Control-Max-Age': '86400'
+    }
+  })
+})
 
 // Initialize Supabase client
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!

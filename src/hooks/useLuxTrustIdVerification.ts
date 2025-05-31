@@ -6,7 +6,10 @@ import { toast } from '@/hooks/use-toast';
 const getApiBaseUrl = async () => {
   try {
     // Try local Deno backend first
-    const localResponse = await fetch('http://localhost:8000/health');
+    const localResponse = await fetch('http://localhost:8000/health', {
+      method: 'GET',
+      mode: 'cors'
+    });
     if (localResponse.ok) {
       console.log('Using local Deno backend for ID verification');
       return 'http://localhost:8000';
@@ -15,9 +18,9 @@ const getApiBaseUrl = async () => {
     console.log('Local Deno backend not available, using Supabase');
   }
   
-  // Fallback to Supabase
+  // Fallback to Supabase (corrected local development URL)
   return import.meta.env.DEV 
-    ? 'http://localhost:54327'
+    ? 'http://localhost:54321'
     : 'https://hrrlefgnhkbzuwyklejj.supabase.co/functions/v1';
 };
 
@@ -46,10 +49,11 @@ export const useLuxTrustIdVerification = () => {
       const apiBaseUrl = await getApiBaseUrl();
       const endpoint = apiBaseUrl.includes('localhost:8000') 
         ? `${apiBaseUrl}/luxtrust/verify-id`
-        : `${apiBaseUrl}/auth-service/luxtrust/verify-id`;
+        : `${apiBaseUrl}/functions/v1/auth-service/luxtrust/verify-id`;
 
       const response = await fetch(endpoint, {
         method: 'POST',
+        mode: 'cors',
         headers: {
           'Content-Type': 'application/json',
         },
