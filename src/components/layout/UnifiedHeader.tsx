@@ -1,14 +1,27 @@
+
 import React from "react";
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Button } from "@/components/ui/button";
 import { useCart } from '@/contexts/CartContext';
 import { ShoppingCart } from 'lucide-react';
-import { CountrySelector } from "../CountrySelector";
+import { supabase } from '@/lib/supabase';
 
 export default function UnifiedHeader() {
-  const { isAuthenticated, logout, profile } = useAuth();
-  const { totalItems } = useCart();
+  const { isAuthenticated, profile } = useAuth();
+  const { state } = useCart();
+  const navigate = useNavigate();
+
+  const totalItems = state.items.reduce((total, item) => total + item.quantity, 0);
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -59,7 +72,7 @@ export default function UnifiedHeader() {
                   </span>
                 )}
               </Link>
-              <Button variant="outline" size="sm" onClick={logout}>
+              <Button variant="outline" size="sm" onClick={handleLogout}>
                 Logout
               </Button>
             </>

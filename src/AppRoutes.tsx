@@ -1,11 +1,10 @@
-
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Loader } from 'lucide-react';
 import ProtectedRoute from './components/routing/ProtectedRoute';
 import RequireRoleGuard from './components/auth/RequireRoleGuard';
 import RequirePermissionGuard from './components/auth/RequirePermissionGuard';
-import { useAuth } from './hooks/useAuth';
+import { useAuth } from './hooks/auth/useAuth';
 
 const Home = lazy(() => import('./pages/Home'));
 const Login = lazy(() => import('./pages/Login'));
