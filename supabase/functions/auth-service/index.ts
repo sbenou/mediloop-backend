@@ -122,6 +122,179 @@ app.get('/health', (c) => {
   return c.json({ status: 'healthy', timestamp: new Date().toISOString() })
 })
 
+// LuxTrust ID verification endpoint with Deno KV
+app.post('/luxtrust/verify-id', async (c) => {
+  try {
+    const { luxtrustId } = await c.req.json()
+    console.log('LuxTrust ID verification request for:', luxtrustId)
+    
+    // Validate LuxTrust ID format
+    const patterns = [
+      /^LUX-\d{4}-\d{6}$/,
+      /^LT-[A-Z]{3}-\d{6}$/,
+      /^LUXTRUST-\d{6}$/,
+      /^TEST-LUX-ID-\d{6}$/
+    ]
+    
+    const isValidFormat = patterns.some(pattern => pattern.test(luxtrustId))
+    
+    if (!isValidFormat) {
+      return c.json({
+        success: false,
+        status: 'failed',
+        error: 'Invalid LuxTrust ID format',
+        timestamp: new Date().toISOString()
+      })
+    }
+
+    // Simulate verification process
+    await new Promise(resolve => setTimeout(resolve, 3000))
+    
+    // Mock verification - 90% success rate for demo
+    const isVerificationSuccessful = Math.random() > 0.1
+    
+    const sessionId = crypto.randomUUID()
+    const verificationResponse = {
+      success: isVerificationSuccessful,
+      status: isVerificationSuccessful ? 'verified' : 'failed',
+      luxtrustId: luxtrustId,
+      verificationId: `VER-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      timestamp: new Date().toISOString(),
+      sessionId: sessionId
+    }
+
+    // Store the verification result in Deno KV
+    const kvKey = ['luxtrust_id_verification', sessionId]
+    await kv.set(kvKey, verificationResponse, { expireIn: 3600000 }) // 1 hour expiry
+
+    console.log('LuxTrust ID verification completed, stored in KV with session:', sessionId)
+
+    return c.json(verificationResponse)
+  } catch (error) {
+    console.error('LuxTrust ID verification error:', error)
+    return c.json({ 
+      success: false, 
+      status: 'failed',
+      error: 'LuxTrust ID verification failed',
+      timestamp: new Date().toISOString()
+    }, 500)
+  }
+})
+
+// Professional certification upload endpoint with Deno KV
+app.post('/certification/upload', async (c) => {
+  try {
+    const { fileName, certificationType, userId } = await c.req.json()
+    console.log('Certification upload request:', fileName, certificationType)
+    
+    // Simulate upload process
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    
+    const sessionId = crypto.randomUUID()
+    const certificationResponse = {
+      success: true,
+      certification: {
+        id: `cert-${Date.now()}`,
+        fileName: fileName,
+        type: certificationType,
+        status: 'pending',
+        uploadedAt: new Date().toISOString(),
+        userId: userId
+      },
+      sessionId: sessionId,
+      timestamp: new Date().toISOString()
+    }
+
+    // Store the certification result in Deno KV
+    const kvKey = ['certification_upload', sessionId]
+    await kv.set(kvKey, certificationResponse, { expireIn: 3600000 }) // 1 hour expiry
+
+    console.log('Certification upload completed, stored in KV with session:', sessionId)
+
+    return c.json(certificationResponse)
+  } catch (error) {
+    console.error('Certification upload error:', error)
+    return c.json({ 
+      success: false, 
+      error: 'Certification upload failed',
+      timestamp: new Date().toISOString()
+    }, 500)
+  }
+})
+
+// Professional certification verification endpoint with Deno KV
+app.post('/certification/verify', async (c) => {
+  try {
+    const { certificationId } = await c.req.json()
+    console.log('Certification verification request for:', certificationId)
+    
+    // Simulate verification process
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    
+    const sessionId = crypto.randomUUID()
+    const verificationResponse = {
+      success: true,
+      verificationId: `LUX-VER-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      status: 'verified',
+      verifiedAt: new Date().toISOString(),
+      certificationId: certificationId,
+      sessionId: sessionId,
+      timestamp: new Date().toISOString()
+    }
+
+    // Store the verification result in Deno KV
+    const kvKey = ['certification_verification', sessionId]
+    await kv.set(kvKey, verificationResponse, { expireIn: 3600000 }) // 1 hour expiry
+
+    console.log('Certification verification completed, stored in KV with session:', sessionId)
+
+    return c.json(verificationResponse)
+  } catch (error) {
+    console.error('Certification verification error:', error)
+    return c.json({ 
+      success: false, 
+      error: 'Certification verification failed',
+      timestamp: new Date().toISOString()
+    }, 500)
+  }
+})
+
+// Location detection endpoint with Deno KV
+app.post('/location/detect', async (c) => {
+  try {
+    const { countryCode } = await c.req.json()
+    console.log('Location detection request for:', countryCode)
+    
+    // Simulate location detection process
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    const sessionId = crypto.randomUUID()
+    const locationResponse = {
+      success: true,
+      detectedCountry: countryCode,
+      isLuxembourg: countryCode === 'LU',
+      luxtrustAvailable: countryCode === 'LU',
+      sessionId: sessionId,
+      timestamp: new Date().toISOString()
+    }
+
+    // Store the location result in Deno KV
+    const kvKey = ['location_detection', sessionId]
+    await kv.set(kvKey, locationResponse, { expireIn: 3600000 }) // 1 hour expiry
+
+    console.log('Location detection completed, stored in KV with session:', sessionId)
+
+    return c.json(locationResponse)
+  } catch (error) {
+    console.error('Location detection error:', error)
+    return c.json({ 
+      success: false, 
+      error: 'Location detection failed',
+      timestamp: new Date().toISOString()
+    }, 500)
+  }
+})
+
 // LuxTrust authentication endpoint with Deno KV
 app.post('/luxtrust/auth', async (c) => {
   try {

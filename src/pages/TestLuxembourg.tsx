@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import {
   LocationDetectionTest,
   LuxTrustIdTest,
@@ -55,10 +56,35 @@ const TestLuxembourg: React.FC = () => {
     return patterns.some(pattern => pattern.test(id));
   };
 
-  // Handlers
-  const handleCountryChange = (countryCode: string) => {
+  // Location detection with Deno KV
+  const handleCountryChange = async (countryCode: string) => {
     setCurrentCountry(countryCode);
     setIsLuxembourg(countryCode === 'LU');
+
+    try {
+      const { data, error } = await supabase.functions.invoke('auth-service', {
+        body: { 
+          countryCode: countryCode
+        }
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (error) {
+        console.error('Location detection error:', error);
+      } else {
+        console.log('Location detection result stored in KV:', data);
+      }
+    } catch (error) {
+      console.error('Location detection failed:', error);
+    }
+
+    toast({
+      title: 'Location Updated',
+      description: `Country set to ${countries.find(c => c.code === countryCode)?.name}. LuxTrust ${countryCode === 'LU' ? 'enabled' : 'disabled'}.`
+    });
   };
 
   const handleLuxTrustAuth = async () => {
@@ -81,35 +107,94 @@ const TestLuxembourg: React.FC = () => {
     setIsAuthenticating(false);
   };
 
+  // Professional certification upload with Deno KV
   const handleCertificationUpload = async () => {
+    if (!selectedFile) return;
+    
     setIsUploading(true);
     
-    // Simulate upload
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    const newCert: Certification = {
-      id: `cert-${Date.now()}`,
-      fileName: selectedFile!.name,
-      type: 'doctor',
-      status: 'pending',
-      uploadedAt: new Date().toISOString()
-    };
-    
-    setCertifications(prev => [newCert, ...prev]);
-    setSelectedFile(null);
-    setIsUploading(false);
+    try {
+      const { data, error } = await supabase.functions.invoke('auth-service', {
+        body: { 
+          fileName: selectedFile.name,
+          certificationType: 'doctor',
+          userId: 'test-user-id'
+        }
+      });
+
+      if (error) {
+        console.error('Certification upload error:', error);
+        toast({
+          title: 'Upload Failed',
+          description: 'Failed to upload certification.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      if (data?.success) {
+        const newCert: Certification = {
+          id: data.certification.id,
+          fileName: data.certification.fileName,
+          type: data.certification.type,
+          status: data.certification.status,
+          uploadedAt: data.certification.uploadedAt
+        };
+        
+        setCertifications(prev => [newCert, ...prev]);
+        setSelectedFile(null);
+        
+        toast({
+          title: 'Certification Uploaded',
+          description: 'File uploaded successfully and is pending verification.'
+        });
+      }
+    } catch (error) {
+      console.error('Certification upload failed:', error);
+      toast({
+        title: 'Upload Failed',
+        description: 'Failed to upload certification.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
+  // Professional certification verification with Deno KV
   const handleCertificationVerification = async (certId: string) => {
-    setCertifications(prev => 
-      prev.map(cert => 
-        cert.id === certId 
-          ? { ...cert, status: 'verified' as const, verifiedAt: new Date().toISOString() }
-          : cert
-      )
-    );
+    try {
+      const { data, error } = await supabase.functions.invoke('auth-service', {
+        body: { 
+          certificationId: certId
+        }
+      });
+
+      if (error) {
+        console.error('Certification verification error:', error);
+        return;
+      }
+
+      if (data?.success) {
+        setCertifications(prev => 
+          prev.map(cert => 
+            cert.id === certId 
+              ? { ...cert, status: 'verified' as const, verifiedAt: data.verifiedAt }
+              : cert
+          )
+        );
+        
+        toast({
+          title: 'Certification Verified',
+          description: `LuxTrust has verified your professional certification! Verification ID: ${data.verificationId}`,
+        });
+      }
+    } catch (error) {
+      console.error('Certification verification failed:', error);
+    }
   };
 
+  // LuxTrust ID verification with Deno KV
   const verifyLuxTrustId = async () => {
     if (!luxtrustId.trim()) {
       toast({
@@ -133,28 +218,49 @@ const TestLuxembourg: React.FC = () => {
     setIsVerifying(true);
     setIdVerificationStatus('verifying');
 
-    // Simulate verification process
-    await new Promise(resolve => setTimeout(resolve, 3000));
-
-    // Mock verification - 90% success rate for demo
-    const isVerificationSuccessful = Math.random() > 0.1;
-
-    if (isVerificationSuccessful) {
-      setIdVerificationStatus('verified');
-      toast({
-        title: 'LuxTrust ID Verified',
-        description: 'Your LuxTrust ID has been successfully verified and linked to your account.',
+    try {
+      const { data, error } = await supabase.functions.invoke('auth-service', {
+        body: { 
+          luxtrustId: luxtrustId
+        }
       });
-    } else {
+
+      if (error) {
+        console.error('LuxTrust ID verification error:', error);
+        setIdVerificationStatus('failed');
+        toast({
+          title: 'Verification Failed',
+          description: 'Could not verify this LuxTrust ID. Please check and try again.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      if (data?.success && data?.status === 'verified') {
+        setIdVerificationStatus('verified');
+        toast({
+          title: 'LuxTrust ID Verified',
+          description: `Your LuxTrust ID has been successfully verified and linked to your account. Verification ID: ${data.verificationId}`,
+        });
+      } else {
+        setIdVerificationStatus('failed');
+        toast({
+          title: 'Verification Failed',
+          description: 'Could not verify this LuxTrust ID. Please check and try again.',
+          variant: 'destructive'
+        });
+      }
+    } catch (error) {
+      console.error('LuxTrust ID verification failed:', error);
       setIdVerificationStatus('failed');
       toast({
         title: 'Verification Failed',
         description: 'Could not verify this LuxTrust ID. Please check and try again.',
         variant: 'destructive'
       });
+    } finally {
+      setIsVerifying(false);
     }
-
-    setIsVerifying(false);
   };
 
   const resetVerification = () => {
