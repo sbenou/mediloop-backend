@@ -66,7 +66,13 @@ export const useLoyaltyStatus = (): LoyaltyStatus => {
 
         // Ensure we only set data if it's a valid LoyaltyStatus object
         if (data && typeof data === 'object' && !Array.isArray(data)) {
-          setLoyaltyStatus(data as LoyaltyStatus);
+          // Safely cast the data by checking if it has the required properties
+          const loyaltyData = data as any;
+          if (loyaltyData.points !== undefined && loyaltyData.level !== undefined) {
+            setLoyaltyStatus(loyaltyData as LoyaltyStatus);
+          } else {
+            setLoyaltyStatus(DEFAULT_STATUS);
+          }
         } else {
           setLoyaltyStatus(DEFAULT_STATUS);
         }

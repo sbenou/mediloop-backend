@@ -115,7 +115,7 @@ export function useWearableConnections() {
         
         const { data, error } = await supabase.from("user_wearables").insert({
           user_id: user.id,
-          device_type: deviceType,
+          device_type: deviceType as any, // Cast to any to handle the type mismatch
           device_name: wearableInfo.name,
           device_id: mockDeviceId,
           connection_status: "connected",
