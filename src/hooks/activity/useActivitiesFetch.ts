@@ -48,7 +48,7 @@ export const useActivitiesFetch = (userId?: string) => {
       const processedActivities = data.map((activity): Activity => {
         return {
           ...activity,
-          read: activity.read !== undefined ? activity.read : activity.status === 'read',
+          read: activity.read !== undefined ? activity.read : false,
           timestamp: activity.timestamp || activity.created_at || new Date().toISOString(),
         };
       });

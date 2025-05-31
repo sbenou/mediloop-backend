@@ -12,8 +12,9 @@ export function useDoctorActivity() {
       const { error } = await supabase.from('activities').insert([
         {
           type: 'doctor_view',
-          details: { doctor_id: doctorId },
-          metadata: { source: 'doctor_finder' }
+          title: 'Doctor Profile Viewed',
+          description: `Viewed doctor profile ${doctorId}`,
+          meta: { doctor_id: doctorId, source: 'doctor_finder' }
         }
       ]);
       
@@ -33,8 +34,9 @@ export function useDoctorActivity() {
       const { error } = await supabase.from('activities').insert([
         {
           type: 'doctor_search',
-          details: searchParams,
-          metadata: { source: 'doctor_finder' }
+          title: 'Doctor Search Performed',
+          description: 'Searched for doctors',
+          meta: { ...searchParams, source: 'doctor_finder' }
         }
       ]);
       
@@ -57,7 +59,7 @@ export function useDoctorConnections() {
     queryFn: async () => {
       try {
         const { data, error } = await supabase
-          .from('doctor_connections')
+          .from('doctor_patient_connections')
           .select('*')
           .order('created_at', { ascending: false });
           
@@ -73,8 +75,6 @@ export function useDoctorConnections() {
   });
 
   const requestConnection = useCallback(async (doctorId: string) => {
-    const { profile } = useAuth();
-    
     if (!profile) {
       toast({
         title: "Authentication Error",
@@ -111,7 +111,7 @@ export function useDoctorConnections() {
       
       return false;
     }
-  }, []);
+  }, [profile]);
 
   return {
     connections,

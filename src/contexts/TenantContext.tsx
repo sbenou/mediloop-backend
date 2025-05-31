@@ -98,32 +98,7 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
   // Helper function to set both tenant id and schema in JWT claims
   const setTenantInSession = async (tenantId: string, tenantSchema: string): Promise<boolean> => {
     try {
-      // Set tenant_id claim
-      const { error: idError } = await supabase.rpc('set_claim', { 
-        name: 'tenant_id', 
-        value: tenantId 
-      });
-      
-      if (idError) {
-        console.error('Error setting tenant_id claim:', idError);
-        return false;
-      }
-      
-      // Set tenant schema claim (for backward compatibility)
-      const { error: schemaError } = await supabase.rpc('set_claim', { 
-        name: 'tenant', 
-        value: tenantSchema
-      });
-      
-      if (schemaError) {
-        console.error('Error setting tenant schema claim:', schemaError);
-        return false;
-      }
-
-      // Force refresh the session to include the new claims
-      await supabase.auth.refreshSession();
-      
-      // Also update the profile record with the tenant ID
+      // For now, just update the profile with tenant_id since set_claim doesn't exist
       if (user?.id) {
         await supabase
           .from('profiles')

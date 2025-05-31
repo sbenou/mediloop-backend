@@ -129,8 +129,8 @@ export interface BankHoliday {
   updated_at: string;
 }
 
-// Add the SupportedCountry type
-export type SupportedCountry = 'Luxembourg' | 'France' | 'Germany' | 'Belgium';
+// Add the SupportedCountry type - match what's actually in the database
+export type SupportedCountry = 'Luxembourg' | 'France';
 
 // Add the ConnectionStatus type
 export type ConnectionStatus = 'pending' | 'accepted' | 'rejected';
