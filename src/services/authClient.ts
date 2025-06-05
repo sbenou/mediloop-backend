@@ -1,3 +1,4 @@
+
 interface AuthResponse {
   access_token: string
   token_type: string
@@ -19,8 +20,8 @@ class AuthClient {
   private token: string | null = null
 
   constructor() {
-    // Use the Supabase function URL
-    this.baseUrl = 'https://hrrlefgnhkbzuwyklejj.supabase.co/functions/v1/auth-service'
+    // Use the consolidated Supabase auth-service function
+    this.baseUrl = 'https://reaeyxplttbuejktjrdh.supabase.co/functions/v1/auth-service'
     
     // Load token from localStorage on initialization
     this.token = localStorage.getItem('auth_token')
@@ -125,8 +126,8 @@ class AuthClient {
   }
 
   initiateLuxTrustAuth(): void {
-    // For now, we'll handle LuxTrust authentication locally using the useLuxTrustAuth hook
-    // rather than redirecting to the edge function
+    // For LuxTrust, we use the separate luxtrust-service for the authentication flow
+    // The authClient mainly handles the OAuth callback and token management
     console.log('LuxTrust authentication should be handled by the useLuxTrustAuth hook')
   }
 
