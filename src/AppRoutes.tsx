@@ -1,3 +1,4 @@
+
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Loader } from 'lucide-react';
@@ -5,10 +6,9 @@ import ProtectedRoute from './components/routing/ProtectedRoute';
 import RequireRoleGuard from './components/auth/RequireRoleGuard';
 import RequirePermissionGuard from './components/auth/RequirePermissionGuard';
 import { useAuth } from './hooks/auth/useAuth';
+import AuthSystemRouter from './auth-v2/components/AuthSystemRouter';
 
 const Home = lazy(() => import('./pages/Home'));
-const Login = lazy(() => import('./pages/Login'));
-const Signup = lazy(() => import('./pages/Signup'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Profile = lazy(() => import('./pages/Profile'));
 const AuthCallback = lazy(() => import('./pages/AuthCallback'));
@@ -39,7 +39,7 @@ const AppRoutes = () => {
         path="/login"
         element={
           <Suspense fallback={<Loader className="h-6 w-6 animate-spin" />}>
-            <Login />
+            <AuthSystemRouter type="login" />
           </Suspense>
         }
       />
@@ -47,7 +47,7 @@ const AppRoutes = () => {
         path="/signup"
         element={
           <Suspense fallback={<Loader className="h-6 w-6 animate-spin" />}>
-            <Signup />
+            <AuthSystemRouter type="signup" />
           </Suspense>
         }
       />
