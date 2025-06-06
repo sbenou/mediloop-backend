@@ -16,17 +16,12 @@ interface PasswordFieldsV2Props {
 export const PasswordFieldsV2 = ({ email, onSuccess, onForgotPassword }: PasswordFieldsV2Props) => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const { loginWithPassword, isLoading } = usePasswordLogin();
+  const { isLoading, handleLogin } = usePasswordLogin({ email, onSuccess });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('[PasswordFieldsV2] Attempting login with:', email);
-    
-    const success = await loginWithPassword(email, password);
-    if (success) {
-      console.log('[PasswordFieldsV2] Login successful');
-      onSuccess();
-    }
+    await handleLogin(password, true);
   };
 
   return (

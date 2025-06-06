@@ -14,12 +14,12 @@ interface AuthOptionsV2Props {
 
 export const AuthOptionsV2 = ({ email, onBack }: AuthOptionsV2Props) => {
   const [resetEmail, setResetEmail] = useState(email);
-  const { sendResetEmail, isLoading } = usePasswordReset();
+  const { handlePasswordReset, isSendingReset } = usePasswordReset();
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('[AuthOptionsV2] Sending reset email to:', resetEmail);
-    await sendResetEmail(resetEmail);
+    await handlePasswordReset(resetEmail);
   };
 
   return (
@@ -58,9 +58,9 @@ export const AuthOptionsV2 = ({ email, onBack }: AuthOptionsV2Props) => {
           <Button
             type="submit"
             className="w-full"
-            disabled={isLoading || !resetEmail}
+            disabled={isSendingReset || !resetEmail}
           >
-            {isLoading ? (
+            {isSendingReset ? (
               <>
                 <Loader className="mr-2 h-4 w-4 animate-spin" />
                 Sending reset email...
