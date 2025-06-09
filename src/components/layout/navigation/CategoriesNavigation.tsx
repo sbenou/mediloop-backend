@@ -7,7 +7,12 @@ export const CategoriesNavigation = () => {
     <NavigationMenuItem>
       <NavigationMenuTrigger>Medications</NavigationMenuTrigger>
       <NavigationMenuContent>
-        <CategoryContent />
+        <CategoryContent 
+          categories={[]}
+          getUniqueCategories={() => []}
+          selectedType=""
+          setSelectedType={() => {}}
+        />
       </NavigationMenuContent>
     </NavigationMenuItem>
   );

@@ -9,7 +9,6 @@ import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import GetStartedSteps from "@/components/home/GetStartedSteps";
 import { PartnerSection } from "@/components/home/PartnerSection";
 import { DeliveryPersonSection } from "@/components/home/DeliveryPersonSection";
-import UnifiedLayout from "@/components/layout/UnifiedLayout";
 import { useAuth } from "@/hooks/auth/useAuth";
 
 const Home = () => {
@@ -18,17 +17,15 @@ const Home = () => {
   console.log('[Home] Rendering home page, isAuthenticated:', isAuthenticated);
 
   return (
-    <UnifiedLayout>
-      <div className="min-h-screen">
-        <HeroSection />
-        <FeaturesGrid />
-        <StatsSection />
-        <TestimonialsSection />
-        <GetStartedSteps />
-        <PartnerSection />
-        <DeliveryPersonSection />
-      </div>
-    </UnifiedLayout>
+    <div className="min-h-screen">
+      <HeroSection />
+      <FeaturesGrid />
+      <StatsSection />
+      <TestimonialsSection />
+      <GetStartedSteps />
+      <PartnerSection />
+      <DeliveryPersonSection />
+    </div>
   );
 };
 
