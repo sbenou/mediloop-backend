@@ -49,9 +49,12 @@ const getAuthConfig = () => {
   return getAuthToggleConfig();
 };
 
+// Flag to prevent multiple setups
+let isSetupComplete = false;
+
 // Global functions setup with explicit window assignment
 const setupGlobalFunctions = () => {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || isSetupComplete) return;
   
   try {
     // Explicitly assign to window with type assertion
@@ -72,6 +75,9 @@ const setupGlobalFunctions = () => {
     
     // Log current config
     console.log('Current auth config:', getAuthConfig());
+    
+    // Mark setup as complete
+    isSetupComplete = true;
   } catch (error) {
     console.error('Error setting up global auth functions:', error);
   }
@@ -80,16 +86,6 @@ const setupGlobalFunctions = () => {
 // Set up immediately if window is available
 if (typeof window !== 'undefined') {
   setupGlobalFunctions();
-}
-
-// Also set up on DOMContentLoaded as a fallback
-if (typeof window !== 'undefined') {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupGlobalFunctions);
-  } else {
-    // DOM is already loaded, set up immediately
-    setupGlobalFunctions();
-  }
 }
 
 // Export the functions so they can be used programmatically too
