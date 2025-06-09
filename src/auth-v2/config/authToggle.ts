@@ -1,4 +1,5 @@
 
+
 // Auth system toggle configuration
 export interface AuthToggleConfig {
   useNewAuthService: boolean;
@@ -31,7 +32,7 @@ export const getAuthToggleConfig = (): AuthToggleConfig => {
 export const setAuthSystemToggle = (useNew: boolean) => {
   if (typeof window !== 'undefined') {
     localStorage.setItem('auth-system-toggle', useNew ? 'new' : 'legacy');
-    console.log(`Auth system switched to: ${useNew ? 'new' : 'legacy'}`);
+    // console.log(`Auth system switched to: ${useNew ? 'new' : 'legacy'}`);
     // Trigger storage event to update other components
     window.dispatchEvent(new Event('storage'));
   }
@@ -39,9 +40,9 @@ export const setAuthSystemToggle = (useNew: boolean) => {
 
 // Define the toggle function
 const toggleAuthSystem = (useNew: boolean) => {
-  console.log(`Toggling auth system to: ${useNew ? 'new (V2)' : 'legacy'}`);
+  // console.log(`Toggling auth system to: ${useNew ? 'new (V2)' : 'legacy'}`);
   setAuthSystemToggle(useNew);
-  console.log('Please refresh the page to see the changes');
+  console.log('Auth system toggled. Please refresh the page to see the changes');
 };
 
 // Define the config getter
@@ -65,16 +66,16 @@ const setupGlobalFunctions = () => {
     (globalThis as any).toggleAuthSystem = toggleAuthSystem;
     (globalThis as any).getAuthConfig = getAuthConfig;
     
-    console.log('Auth toggle functions available:');
-    console.log('- toggleAuthSystem(true) - Switch to V2');
-    console.log('- toggleAuthSystem(false) - Switch to legacy');
-    console.log('- getAuthConfig() - Check current config');
+    // console.log('Auth toggle functions available:');
+    // console.log('- toggleAuthSystem(true) - Switch to V2');
+    // console.log('- toggleAuthSystem(false) - Switch to legacy');
+    // console.log('- getAuthConfig() - Check current config');
     
     // Test that the functions are actually accessible
-    console.log('Function test:', typeof (window as any).toggleAuthSystem);
+    // console.log('Function test:', typeof (window as any).toggleAuthSystem);
     
     // Log current config
-    console.log('Current auth config:', getAuthConfig());
+    // console.log('Current auth config:', getAuthConfig());
     
     // Mark setup as complete
     isSetupComplete = true;
@@ -90,3 +91,4 @@ if (typeof window !== 'undefined') {
 
 // Export the functions so they can be used programmatically too
 export { toggleAuthSystem, getAuthConfig };
+
