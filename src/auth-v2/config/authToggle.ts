@@ -36,22 +36,45 @@ export const setAuthSystemToggle = (useNew: boolean) => {
   }
 };
 
-// Debug helper - accessible from browser console
-if (typeof window !== 'undefined') {
-  // Make sure the function is properly attached to window
-  (window as any).toggleAuthSystem = (useNew: boolean) => {
+// Global functions for browser console debugging
+const setupGlobalFunctions = () => {
+  if (typeof window === 'undefined') return;
+  
+  // Define the toggle function
+  const toggleAuthSystem = (useNew: boolean) => {
     console.log(`Toggling auth system to: ${useNew ? 'new (V2)' : 'legacy'}`);
     setAuthSystemToggle(useNew);
     console.log('Please refresh the page to see the changes');
   };
   
-  // Also expose the config getter for debugging
-  (window as any).getAuthConfig = () => {
+  // Define the config getter
+  const getAuthConfig = () => {
     return getAuthToggleConfig();
   };
   
-  console.log('Auth toggle functions available:');
-  console.log('- toggleAuthSystem(true) - Switch to V2');
-  console.log('- toggleAuthSystem(false) - Switch to legacy');
-  console.log('- getAuthConfig() - Check current config');
+  // Attach to window with error handling
+  try {
+    (window as any).toggleAuthSystem = toggleAuthSystem;
+    (window as any).getAuthConfig = getAuthConfig;
+    
+    console.log('Auth toggle functions available:');
+    console.log('- toggleAuthSystem(true) - Switch to V2');
+    console.log('- toggleAuthSystem(false) - Switch to legacy');
+    console.log('- getAuthConfig() - Check current config');
+  } catch (error) {
+    console.error('Error setting up global auth functions:', error);
+  }
+};
+
+// Set up global functions immediately
+setupGlobalFunctions();
+
+// Also set up on DOMContentLoaded as a fallback
+if (typeof window !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupGlobalFunctions);
+  } else {
+    // DOM is already loaded
+    setupGlobalFunctions();
+  }
 }
