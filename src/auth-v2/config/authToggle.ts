@@ -6,7 +6,7 @@ export interface AuthToggleConfig {
 }
 
 const DEFAULT_CONFIG: AuthToggleConfig = {
-  useNewAuthService: false, // Default to legacy system for safety
+  useNewAuthService: false, // Always default to legacy system
   allowRuntimeToggle: true, // Allow runtime switching via localStorage
 };
 
@@ -24,6 +24,7 @@ export const getAuthToggleConfig = (): AuthToggleConfig => {
     };
   }
 
+  // Always return legacy as default
   return DEFAULT_CONFIG;
 };
 
@@ -68,6 +69,9 @@ const setupGlobalFunctions = () => {
     
     // Test that the functions are actually accessible
     console.log('Function test:', typeof (window as any).toggleAuthSystem);
+    
+    // Log current config
+    console.log('Current auth config:', getAuthConfig());
   } catch (error) {
     console.error('Error setting up global auth functions:', error);
   }
