@@ -10,7 +10,7 @@ export const CategoriesNavigation = () => {
         <CategoryContent 
           categories={[]}
           getUniqueCategories={() => []}
-          selectedType=""
+          selectedType={null}
           setSelectedType={() => {}}
         />
       </NavigationMenuContent>
