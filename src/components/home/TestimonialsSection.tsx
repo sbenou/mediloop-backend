@@ -1,5 +1,5 @@
+
 import { useInView } from "react-intersection-observer";
-import { useTranslation } from "react-i18next";
 import {
   Carousel,
   CarouselContent,
@@ -13,38 +13,37 @@ export const TestimonialsSection = () => {
     triggerOnce: true,
     threshold: 0.1
   });
-  const { t } = useTranslation();
 
   const testimonials = [
     {
-      name: t('home.testimonials.reviews.sarah.name'),
-      role: t('home.testimonials.reviews.sarah.role'),
+      name: "Sarah Johnson",
+      role: "Patient",
       image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158",
-      quote: t('home.testimonials.reviews.sarah.quote')
+      quote: "The platform made it so easy to connect with my doctor and get my prescriptions filled. Highly recommended!"
     },
     {
-      name: t('home.testimonials.reviews.michael.name'),
-      role: t('home.testimonials.reviews.michael.role'),
+      name: "Dr. Michael Chen",
+      role: "Healthcare Provider",
       image: "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952",
-      quote: t('home.testimonials.reviews.michael.quote')
+      quote: "This system has streamlined my practice and improved patient care significantly."
     },
     {
-      name: t('home.testimonials.reviews.emily.name'),
-      role: t('home.testimonials.reviews.emily.role'),
+      name: "Emily Rodriguez",
+      role: "Pharmacist",
       image: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7",
-      quote: t('home.testimonials.reviews.emily.quote')
+      quote: "Managing prescriptions and connecting with patients has never been easier."
     },
     {
-      name: t('home.testimonials.reviews.david.name'),
-      role: t('home.testimonials.reviews.david.role'),
+      name: "David Thompson",
+      role: "Patient",
       image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e",
-      quote: t('home.testimonials.reviews.david.quote')
+      quote: "Quick delivery and excellent service. I can always count on getting my medications on time."
     },
     {
-      name: t('home.testimonials.reviews.lisa.name'),
-      role: t('home.testimonials.reviews.lisa.role'),
+      name: "Lisa Parker",
+      role: "Healthcare Provider",
       image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80",
-      quote: t('home.testimonials.reviews.lisa.quote')
+      quote: "The digital prescription system has made my workflow much more efficient."
     }
   ];
 
@@ -57,7 +56,7 @@ export const TestimonialsSection = () => {
     >
       <div className="container mx-auto px-4">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-          {t('home.testimonials.title')}
+          What Our Users Say
         </h2>
         <div className="max-w-6xl mx-auto">
           <Carousel

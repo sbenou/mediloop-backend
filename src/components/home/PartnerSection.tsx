@@ -3,7 +3,6 @@ import { Building, Users, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useInView } from "react-intersection-observer";
-import { useTranslation } from "react-i18next";
 
 export const PartnerSection = () => {
   const navigate = useNavigate();
@@ -11,23 +10,22 @@ export const PartnerSection = () => {
     triggerOnce: true,
     threshold: 0.1
   });
-  const { t } = useTranslation();
 
   const features = [
     {
       icon: Building,
-      title: t('home.partner.features.reach.title'),
-      description: t('home.partner.features.reach.description')
+      title: "Expand Your Reach",
+      description: "Connect with more patients and grow your pharmacy business"
     },
     {
       icon: Users,
-      title: t('home.partner.features.support.title'),
-      description: t('home.partner.features.support.description')
+      title: "Dedicated Support",
+      description: "Get personalized support to help you succeed on our platform"
     },
     {
       icon: CreditCard,
-      title: t('home.partner.features.pricing.title'),
-      description: t('home.partner.features.pricing.description')
+      title: "Competitive Pricing",
+      description: "Flexible pricing plans that grow with your business"
     }
   ];
 
@@ -39,17 +37,17 @@ export const PartnerSection = () => {
       <div className="container mx-auto px-4 max-w-6xl">
         <div className="max-w-3xl mx-auto text-center mb-12">
           <h2 className="text-3xl font-bold mb-4 text-gray-900">
-            {t('home.partner.title')}
+            Become a Partner Pharmacy
           </h2>
           <p className="text-lg text-gray-600 mb-8">
-            {t('home.partner.subtitle')}
+            Join our network of trusted pharmacies and expand your reach
           </p>
           <Button 
             onClick={() => navigate("/become-partner")}
             size="lg"
             className="bg-[#7E69AB] hover:bg-[#7E69AB]/90"
           >
-            {t('home.partner.button')}
+            Join Our Network
           </Button>
         </div>
 
