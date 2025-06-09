@@ -20,28 +20,6 @@ const Home = () => {
   return (
     <UnifiedLayout>
       <div className="min-h-screen">
-        {/* Quick auth navigation for testing */}
-        <div className="bg-gray-50 border-b p-4">
-          <div className="container mx-auto flex justify-between items-center">
-            <h1 className="text-lg font-semibold">Healthcare Platform</h1>
-            {!isAuthenticated && (
-              <div className="space-x-2">
-                <Button asChild variant="outline">
-                  <Link to="/login">Login</Link>
-                </Button>
-                <Button asChild>
-                  <Link to="/signup">Sign Up</Link>
-                </Button>
-              </div>
-            )}
-            {isAuthenticated && (
-              <Button asChild>
-                <Link to="/dashboard">Dashboard</Link>
-              </Button>
-            )}
-          </div>
-        </div>
-
         <HeroSection />
         <FeaturesGrid />
         <StatsSection />
