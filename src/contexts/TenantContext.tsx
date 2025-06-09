@@ -41,13 +41,6 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
       const isPreview = window.location.hostname.includes('lovable.app');
       setIsPreviewMode(isPreview);
       
-      // In preview mode, skip tenant fetching to avoid unnecessary errors
-      if (isPreview) {
-        // console.log('Preview mode detected - skipping tenant initialization');
-        setIsLoading(false);
-        return;
-      }
-      
       // Get tenant from hostname first
       const tenantDomain = getTenantFromHostname(window.location.hostname);
       

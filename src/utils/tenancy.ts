@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 
 export interface Tenant {
@@ -23,7 +24,7 @@ export const getTenantFromHostname = (hostname: string): string | null => {
       return tenantParam;
     }
     
-    // console.log('Running in Lovable preview environment - will use user-based tenant');
+    console.log('Running in Lovable preview environment - will use user-based tenant');
     // For preview environments, return null to use user-based tenant lookup
     return null;
   }
@@ -52,7 +53,7 @@ export const getTenantFromHostname = (hostname: string): string | null => {
  */
 export const fetchTenantInfo = async (tenantDomain: string): Promise<Tenant | null> => {
   try {
-    // console.log('Fetching tenant info for domain:', tenantDomain);
+    console.log('Fetching tenant info for domain:', tenantDomain);
     
     const { data, error } = await supabase
       .from('tenants')
@@ -62,15 +63,12 @@ export const fetchTenantInfo = async (tenantDomain: string): Promise<Tenant | nu
       .single();
     
     if (error) {
-      // Only log error if it's not the expected "no rows" error in preview environments
-      if (error.code !== 'PGRST116' || !window.location.hostname.includes('lovable.app')) {
-        console.error('Error fetching tenant info:', error);
-      }
+      console.error('Error fetching tenant info:', error);
       return null;
     }
     
     if (!data) {
-      // console.warn('No tenant found with domain:', tenantDomain);
+      console.warn('No tenant found with domain:', tenantDomain);
       return null;
     }
     
@@ -84,10 +82,7 @@ export const fetchTenantInfo = async (tenantDomain: string): Promise<Tenant | nu
       createdAt: data.created_at
     };
   } catch (error) {
-    // Only log error if not in preview environment
-    if (!window.location.hostname.includes('lovable.app')) {
-      console.error('Exception when fetching tenant:', error);
-    }
+    console.error('Exception when fetching tenant:', error);
     return null;
   }
 };
@@ -97,7 +92,7 @@ export const fetchTenantInfo = async (tenantDomain: string): Promise<Tenant | nu
  */
 export const fetchUserTenant = async (userId: string): Promise<Tenant | null> => {
   try {
-    // console.log('Fetching tenant info for user:', userId);
+    console.log('Fetching tenant info for user:', userId);
     
     const { data, error } = await supabase
       .from('tenants')
@@ -107,15 +102,12 @@ export const fetchUserTenant = async (userId: string): Promise<Tenant | null> =>
       .single();
     
     if (error) {
-      // Only log error if it's not the expected "no rows" error in preview environments
-      if (error.code !== 'PGRST116' || !window.location.hostname.includes('lovable.app')) {
-        console.error('Error fetching user tenant info:', error);
-      }
+      console.error('Error fetching user tenant info:', error);
       return null;
     }
     
     if (!data) {
-      // console.warn('No tenant found for user:', userId);
+      console.warn('No tenant found for user:', userId);
       return null;
     }
     
@@ -129,10 +121,7 @@ export const fetchUserTenant = async (userId: string): Promise<Tenant | null> =>
       createdAt: data.created_at
     };
   } catch (error) {
-    // Only log error if not in preview environment
-    if (!window.location.hostname.includes('lovable.app')) {
-      console.error('Exception when fetching user tenant:', error);
-    }
+    console.error('Exception when fetching user tenant:', error);
     return null;
   }
 };

@@ -1,10 +1,11 @@
-
 import { Bike, Bell, DollarSign } from "lucide-react";
 import { useInView } from "react-intersection-observer";
+import { useTranslation } from "react-i18next";
 import { DeliveryFeature } from "./delivery/DeliveryFeature";
 import { DeliveryHeader } from "./delivery/DeliveryHeader";
 
 export const DeliveryPersonSection = () => {
+  const { t } = useTranslation();
   const { ref, inView } = useInView({
     triggerOnce: true,
     threshold: 0.1
@@ -13,20 +14,20 @@ export const DeliveryPersonSection = () => {
   const features = [
     {
       icon: Bike,
-      title: "Flexible Requirements",
-      description: "Join our delivery network with minimal requirements and start earning",
+      title: t('home.deliveryPartner.features.requirements.title'),
+      description: t('home.deliveryPartner.features.requirements.description'),
       image: "/lovable-uploads/e1121849-4e5c-496c-b196-929ffe5eff11.png"
     },
     {
       icon: Bell,
-      title: "Real-time Notifications",
-      description: "Get instant notifications for new delivery opportunities in your area",
+      title: t('home.deliveryPartner.features.notifications.title'),
+      description: t('home.deliveryPartner.features.notifications.description'),
       image: "/lovable-uploads/5a25d363-d8b5-44bd-a39d-d9bfcc4d50c5.png"
     },
     {
       icon: DollarSign,
-      title: "Competitive Payments",
-      description: "Earn competitive rates with transparent pricing and monthly payments",
+      title: t('home.deliveryPartner.features.payments.title'),
+      description: t('home.deliveryPartner.features.payments.description'),
       image: "/lovable-uploads/8e0651b0-5b95-4f7d-bdf8-9d8995d6c915.png"
     }
   ];

@@ -1,5 +1,6 @@
 
 import { useInView } from "react-intersection-observer";
+import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -21,6 +22,7 @@ export const StatsSection = ({ stats }: { stats?: PlatformStats }) => {
     triggerOnce: true,
     threshold: 0.1
   });
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(!stats);
   const [platformStats, setPlatformStats] = useState<PlatformStats | null>(stats || null);
 
@@ -107,19 +109,19 @@ export const StatsSection = ({ stats }: { stats?: PlatformStats }) => {
   // Create stats items array
   const statsItems = platformStats ? [
     {
-      label: "Orders\nProcessed",
+      label: t('home.stats.orders').split(' ').join('\n'),
       value: platformStats.ordersCount
     },
     {
-      label: "Partner\nPharmacies",
+      label: t('home.stats.pharmacies').split(' ').join('\n'),
       value: platformStats.pharmaciesCount
     },
     {
-      label: "Healthcare\nProviders",
+      label: t('home.stats.providers').split(' ').join('\n'),
       value: platformStats.doctorsCount
     },
     {
-      label: "Digital\nPrescriptions",
+      label: t('home.stats.prescriptions').split(' ').join('\n'),
       value: platformStats.prescriptionsCount
     },
     {

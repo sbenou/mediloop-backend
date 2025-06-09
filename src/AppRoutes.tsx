@@ -1,3 +1,4 @@
+
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Loader } from 'lucide-react';
@@ -23,8 +24,6 @@ const DenoBackendManagement = lazy(() => import('./pages/DenoBackendManagement')
 
 const AppRoutes = () => {
   const { profile } = useAuth();
-
-  console.log('[AppRoutes] Rendering routes, current profile:', profile);
 
   return (
     <Routes>
@@ -52,7 +51,6 @@ const AppRoutes = () => {
           </Suspense>
         }
       />
-      
       <Route
         path="/auth/callback"
         element={

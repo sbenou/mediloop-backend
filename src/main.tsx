@@ -1,16 +1,24 @@
 
-import React from "react";
-import ReactDOM from "react-dom/client";
-import App from "./App.tsx";
-import "./index.css";
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.tsx'
+import './index.css'
+import { initializeI18n } from './i18n/config'
 
-// Import auth toggle setup to ensure global functions are available
-import './auth-v2/config/authToggle';
+// Initialize i18n before rendering the app
+initializeI18n();
 
-console.log("main.tsx is executing - Initializing React application");
+console.log('main.tsx is executing - Initializing React application');
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-);
+// Make sure we have a root element before trying to render
+const rootElement = document.getElementById('root');
+
+if (rootElement) {
+  ReactDOM.createRoot(rootElement).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>,
+  );
+} else {
+  console.error('Root element not found!');
+}

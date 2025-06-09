@@ -2,6 +2,7 @@
 import { useNavigate } from "react-router-dom";
 import { Search, ShoppingBag, Pill, FileText, Users } from "lucide-react";
 import { useInView } from "react-intersection-observer";
+import { useTranslation } from "react-i18next";
 
 export const FeaturesGrid = () => {
   const navigate = useNavigate();
@@ -9,18 +10,19 @@ export const FeaturesGrid = () => {
     triggerOnce: true,
     threshold: 0.1
   });
+  const { t } = useTranslation();
   
   const features = [
     {
       icon: <Search className="h-12 w-12 text-[#9b87f5]" />,
-      title: "Find Medications",
-      description: "Search and find medications from verified pharmacies in your area",
+      title: t('home.features.findMedications.title'),
+      description: t('home.features.findMedications.description'),
       action: () => navigate("/products"),
     },
     {
       icon: <ShoppingBag className="h-12 w-12 text-[#9b87f5]" />,
-      title: "Easy Ordering",
-      description: "Order your medications online with just a few clicks",
+      title: t('home.features.easyOrdering.title'),
+      description: t('home.features.easyOrdering.description'),
       action: () => navigate("/products"),
     },
     {
@@ -37,8 +39,8 @@ export const FeaturesGrid = () => {
     },
     {
       icon: <Pill className="h-12 w-12 text-[#9b87f5]" />,
-      title: "Manage Prescriptions",
-      description: "Keep track of all your prescriptions in one secure place",
+      title: t('home.features.managePrescriptions.title'),
+      description: t('home.features.managePrescriptions.description'),
       action: () => navigate("/my-prescriptions"),
     }
   ];
@@ -52,7 +54,7 @@ export const FeaturesGrid = () => {
     >
       <div className="container mx-auto">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-          Why Choose Our Platform
+          {t('home.features.title')}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature, index) => (
