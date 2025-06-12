@@ -66,5 +66,8 @@ verify_jwt = false
 [functions.auth-service]
 verify_jwt = false
 
+[functions.token-rotation]
+verify_jwt = false
+
 [global.env_variables]
 MAPBOX_TOKEN = "pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA"

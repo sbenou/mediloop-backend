@@ -5,6 +5,9 @@ import App from './App.tsx'
 import './index.css'
 import { initializeI18n } from './i18n/config'
 
+// Import auth toggle to ensure it's initialized
+import './auth-v2/config/authToggle'
+
 // Initialize i18n before rendering the app
 initializeI18n();
 
