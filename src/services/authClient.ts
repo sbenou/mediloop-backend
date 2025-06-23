@@ -20,7 +20,7 @@ class AuthClient {
   private token: string | null = null
 
   constructor() {
-    // Use the consolidated Supabase auth-service function
+    // Use the correct Supabase Functions URL format
     this.baseUrl = 'https://hrrlefgnhkbzuwyklejj.supabase.co/functions/v1/auth-service'
     
     // Load token from localStorage on initialization
@@ -42,14 +42,24 @@ class AuthClient {
       headers['Authorization'] = `Bearer ${this.token}`
     }
 
+    console.log('AuthClient: Making request to:', url)
+
     const response = await fetch(url, {
       ...options,
       headers
     })
 
+    console.log('AuthClient: Response status:', response.status)
+
     if (!response.ok) {
-      const errorData = await response.json() as AuthError
-      throw new Error(errorData.error || 'Request failed')
+      let errorMessage = 'Request failed'
+      try {
+        const errorData = await response.json() as AuthError
+        errorMessage = errorData.error || `HTTP ${response.status}: ${response.statusText}`
+      } catch (e) {
+        errorMessage = `HTTP ${response.status}: ${response.statusText}`
+      }
+      throw new Error(errorMessage)
     }
 
     return response.json()
