@@ -4,8 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader, Eye, EyeOff } from "lucide-react";
-// For now, we'll use legacy password login - will be replaced with auth service later
-import { usePasswordLogin } from "@/hooks/auth/usePasswordLogin";
+import { usePasswordLoginV2 } from "../hooks/usePasswordLoginV2";
 
 interface PasswordFieldsV2Props {
   email: string;
@@ -16,12 +15,15 @@ interface PasswordFieldsV2Props {
 export const PasswordFieldsV2 = ({ email, onSuccess, onForgotPassword }: PasswordFieldsV2Props) => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const { isLoading, handleLogin } = usePasswordLogin({ email, onSuccess });
+  const { isLoading, login } = usePasswordLoginV2();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('[PasswordFieldsV2] Attempting login with:', email);
-    await handleLogin(password, true);
+    const result = await login(email, password);
+    if (result.success) {
+      onSuccess();
+    }
   };
 
   return (
