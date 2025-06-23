@@ -26,7 +26,9 @@ serve(async (req) => {
 
   try {
     const url = new URL(req.url)
-    const path = url.pathname
+    const path = url.pathname.replace('/functions/v1/auth-service', '') || '/'
+    
+    console.log('Processing path:', path)
     
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
@@ -121,7 +123,7 @@ serve(async (req) => {
     }
 
     // Health check endpoint
-    if (path === '/health') {
+    if (path === '/health' || path === '/') {
       return new Response(JSON.stringify({ 
         status: 'healthy', 
         service: 'auth-service',
@@ -134,6 +136,7 @@ serve(async (req) => {
 
     // Email/password login endpoint
     if (path === '/login' && req.method === 'POST') {
+      console.log('Processing login request')
       const { email, password } = await req.json()
       
       if (!email || !password) {
@@ -143,6 +146,8 @@ serve(async (req) => {
         })
       }
 
+      console.log('Attempting login for email:', email)
+
       // Use Supabase Auth for email/password verification
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
@@ -150,11 +155,14 @@ serve(async (req) => {
       })
 
       if (authError || !authData.user) {
+        console.error('Supabase auth error:', authError)
         return new Response(JSON.stringify({ error: 'Invalid credentials' }), {
           status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         })
       }
+
+      console.log('Supabase auth successful, fetching profile')
 
       // Get user profile
       const { data: profile, error: profileError } = await supabase
@@ -164,11 +172,14 @@ serve(async (req) => {
         .single()
 
       if (profileError || !profile) {
+        console.error('Profile fetch error:', profileError)
         return new Response(JSON.stringify({ error: 'Profile not found' }), {
           status: 404,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         })
       }
+
+      console.log('Profile found, creating JWT token')
 
       // Create JWT token
       const jwtToken = await createJWT(
@@ -177,6 +188,8 @@ serve(async (req) => {
         profile.role,
         profile.tenant_id
       )
+
+      console.log('Login successful, returning token')
 
       return new Response(JSON.stringify({
         access_token: jwtToken,
@@ -509,7 +522,8 @@ serve(async (req) => {
       })
     }
 
-    return new Response(JSON.stringify({ error: 'Not found' }), {
+    console.log('No matching route found for path:', path)
+    return new Response(JSON.stringify({ error: 'Not found', path: path }), {
       status: 404,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })
@@ -519,6 +533,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: 'Internal server error',
+        message: error.message,
         timestamp: new Date().toISOString()
       }),
       {
