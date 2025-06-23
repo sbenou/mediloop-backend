@@ -156,7 +156,21 @@ serve(async (req) => {
 
       if (authError || !authData.user) {
         console.error('Supabase auth error:', authError)
-        return new Response(JSON.stringify({ error: 'Invalid credentials' }), {
+        
+        // Provide more specific error messages
+        let errorMessage = 'Invalid credentials'
+        if (authError?.message.includes('Invalid login credentials')) {
+          errorMessage = 'Invalid email or password. Please check your credentials.'
+        } else if (authError?.message.includes('Email not confirmed')) {
+          errorMessage = 'Please confirm your email address before signing in.'
+        } else if (authError?.message.includes('User not found')) {
+          errorMessage = 'No account found with this email address. Please sign up first.'
+        }
+        
+        return new Response(JSON.stringify({ 
+          error: errorMessage,
+          supabase_error: authError?.message 
+        }), {
           status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         })
@@ -164,19 +178,48 @@ serve(async (req) => {
 
       console.log('Supabase auth successful, fetching profile')
 
-      // Get user profile
+      // Get user profile from the profiles table
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('email', email)
-        .single()
+        .maybeSingle()
 
-      if (profileError || !profile) {
+      if (profileError) {
         console.error('Profile fetch error:', profileError)
-        return new Response(JSON.stringify({ error: 'Profile not found' }), {
-          status: 404,
+        return new Response(JSON.stringify({ error: 'Database error while fetching profile' }), {
+          status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         })
+      }
+
+      if (!profile) {
+        console.log('No profile found, creating one')
+        
+        // Create profile for existing auth user
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert({
+            id: authData.user.id,
+            email: authData.user.email,
+            full_name: authData.user.user_metadata?.full_name || email.split('@')[0],
+            role: 'patient', // Default role
+            auth_method: 'password',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .select()
+          .single()
+
+        if (createError) {
+          console.error('Error creating profile:', createError)
+          return new Response(JSON.stringify({ error: 'Failed to create user profile' }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          })
+        }
+
+        profile = newProfile
       }
 
       console.log('Profile found, creating JWT token')
