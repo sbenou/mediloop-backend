@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { create, verify } from "https://deno.land/x/djwt@v3.0.1/mod.ts"
@@ -26,14 +25,19 @@ serve(async (req) => {
 
   try {
     const url = new URL(req.url)
-    const path = url.pathname.replace('/functions/v1/auth-service', '') || '/'
+    const path = url.pathname.split('/').pop() || '/'
     
     console.log('Processing path:', path)
     
-    // Initialize Supabase client
+    // Initialize Supabase client with service key for admin operations
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    })
 
     // JWT secret for signing tokens
     const JWT_SECRET = Deno.env.get('JWT_SECRET') || 'your-super-secret-jwt-key'
@@ -123,7 +127,7 @@ serve(async (req) => {
     }
 
     // Health check endpoint
-    if (path === '/health' || path === '/') {
+    if (path === 'health' || path === '') {
       return new Response(JSON.stringify({ 
         status: 'healthy', 
         service: 'auth-service',
@@ -135,7 +139,7 @@ serve(async (req) => {
     }
 
     // Email/password login endpoint
-    if (path === '/login' && req.method === 'POST') {
+    if (path === 'login' && req.method === 'POST') {
       console.log('Processing login request')
       const { email, password } = await req.json()
       
@@ -148,8 +152,11 @@ serve(async (req) => {
 
       console.log('Attempting login for email:', email)
 
+      // Create a client-side supabase client for authentication
+      const supabaseClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!)
+      
       // Use Supabase Auth for email/password verification
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
         email,
         password
       })
@@ -178,7 +185,7 @@ serve(async (req) => {
 
       console.log('Supabase auth successful, fetching profile')
 
-      // Get user profile from the profiles table
+      // Get user profile from the profiles table using service client
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -192,6 +199,8 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         })
       }
+
+      let userProfile = profile
 
       if (!profile) {
         console.log('No profile found, creating one')
@@ -219,17 +228,17 @@ serve(async (req) => {
           })
         }
 
-        profile = newProfile
+        userProfile = newProfile
       }
 
       console.log('Profile found, creating JWT token')
 
       // Create JWT token
       const jwtToken = await createJWT(
-        profile.id,
-        profile.email,
-        profile.role,
-        profile.tenant_id
+        userProfile.id,
+        userProfile.email,
+        userProfile.role,
+        userProfile.tenant_id
       )
 
       console.log('Login successful, returning token')
@@ -239,10 +248,10 @@ serve(async (req) => {
         token_type: 'Bearer',
         expires_in: 86400,
         user: {
-          id: profile.id,
-          email: profile.email,
-          role: profile.role,
-          full_name: profile.full_name
+          id: userProfile.id,
+          email: userProfile.email,
+          role: userProfile.role,
+          full_name: userProfile.full_name
         }
       }), {
         status: 200,
@@ -251,7 +260,7 @@ serve(async (req) => {
     }
 
     // JWT verification endpoint
-    if (path === '/verify' && req.method === 'POST') {
+    if (path === 'verify' && req.method === 'POST') {
       const { token } = await req.json()
       
       if (!token) {
@@ -276,7 +285,7 @@ serve(async (req) => {
     }
 
     // Token refresh endpoint
-    if (path === '/refresh' && req.method === 'POST') {
+    if (path === 'refresh' && req.method === 'POST') {
       const { token } = await req.json()
       
       if (!token) {
@@ -339,7 +348,7 @@ serve(async (req) => {
     const FRANCECONNECT_CLIENT_SECRET = Deno.env.get('FRANCECONNECT_CLIENT_SECRET')
 
     // Google OAuth initiation
-    if (path === '/oauth/google' && req.method === 'GET') {
+    if (path === 'google' && req.method === 'GET') {
       const redirectUri = `${supabaseUrl}/functions/v1/auth-service/oauth/google/callback`
       const scope = 'openid email profile'
       const state = crypto.randomUUID()
@@ -357,8 +366,97 @@ serve(async (req) => {
       })
     }
 
+    // FranceConnect OAuth initiation
+    if (path === 'franceconnect' && req.method === 'GET') {
+      const redirectUri = `${supabaseUrl}/functions/v1/auth-service/oauth/franceconnect/callback`
+      const scope = 'openid email profile'
+      const state = crypto.randomUUID()
+      
+      const authUrl = new URL('https://fcp.integ01.dev-franceconnect.fr/api/v1/authorize')
+      authUrl.searchParams.set('client_id', FRANCECONNECT_CLIENT_ID!)
+      authUrl.searchParams.set('redirect_uri', redirectUri)
+      authUrl.searchParams.set('response_type', 'code')
+      authUrl.searchParams.set('scope', scope)
+      authUrl.searchParams.set('state', state)
+      
+      return new Response(null, {
+        status: 302,
+        headers: { ...corsHeaders, 'Location': authUrl.toString() }
+      })
+    }
+
+    // FranceConnect OAuth callback
+    if (path === 'franceconnect/callback' && req.method === 'GET') {
+      const url = new URL(req.url)
+      const code = url.searchParams.get('code')
+      
+      if (!code) {
+        return new Response(JSON.stringify({ error: 'Authorization code required' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+      }
+
+      // Exchange code for tokens
+      const tokenResponse = await fetch('https://fcp.integ01.dev-franceconnect.fr/api/v1/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          client_id: FRANCECONNECT_CLIENT_ID!,
+          client_secret: FRANCECONNECT_CLIENT_SECRET!,
+          code: code,
+          grant_type: 'authorization_code',
+          redirect_uri: `${supabaseUrl}/functions/v1/auth-service/oauth/franceconnect/callback`
+        })
+      })
+
+      const tokens = await tokenResponse.json()
+      
+      if (!tokens.access_token) {
+        console.error('FranceConnect token exchange failed:', tokens)
+        return new Response(JSON.stringify({ error: 'Token exchange failed' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+      }
+
+      // Get user info from FranceConnect
+      const userResponse = await fetch('https://fcp.integ01.dev-franceconnect.fr/api/v1/userinfo', {
+        headers: {
+          'Authorization': `Bearer ${tokens.access_token}`
+        }
+      })
+
+      const fcUser = await userResponse.json()
+      console.log('FranceConnect user info:', fcUser)
+
+      // Create or get user profile
+      const profile = await getOrCreateUserProfile(
+        fcUser.email,
+        `${fcUser.given_name} ${fcUser.family_name}`,
+        'franceconnect'
+      )
+
+      // Create JWT token
+      const jwtToken = await createJWT(
+        profile.id,
+        profile.email,
+        profile.role,
+        profile.tenant_id
+      )
+
+      // Redirect to frontend with token
+      const frontendUrl = req.headers.get('origin') || 'http://localhost:5173'
+      return new Response(null, {
+        status: 302,
+        headers: { ...corsHeaders, 'Location': `${frontendUrl}/auth/callback?token=${jwtToken}` }
+      })
+    }
+
     // Google OAuth callback
-    if (path === '/oauth/google/callback' && req.method === 'GET') {
+    if (path === 'google/callback' && req.method === 'GET') {
       const url = new URL(req.url)
       const code = url.searchParams.get('code')
       const state = url.searchParams.get('state')
@@ -428,97 +526,8 @@ serve(async (req) => {
       })
     }
 
-    // FranceConnect OAuth initiation
-    if (path === '/oauth/franceconnect' && req.method === 'GET') {
-      const redirectUri = `${supabaseUrl}/functions/v1/auth-service/oauth/franceconnect/callback`
-      const scope = 'openid email profile'
-      const state = crypto.randomUUID()
-      
-      const authUrl = new URL('https://fcp.integ01.dev-franceconnect.fr/api/v1/authorize')
-      authUrl.searchParams.set('client_id', FRANCECONNECT_CLIENT_ID!)
-      authUrl.searchParams.set('redirect_uri', redirectUri)
-      authUrl.searchParams.set('response_type', 'code')
-      authUrl.searchParams.set('scope', scope)
-      authUrl.searchParams.set('state', state)
-      
-      return new Response(null, {
-        status: 302,
-        headers: { ...corsHeaders, 'Location': authUrl.toString() }
-      })
-    }
-
-    // FranceConnect OAuth callback
-    if (path === '/oauth/franceconnect/callback' && req.method === 'GET') {
-      const url = new URL(req.url)
-      const code = url.searchParams.get('code')
-      
-      if (!code) {
-        return new Response(JSON.stringify({ error: 'Authorization code required' }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        })
-      }
-
-      // Exchange code for tokens
-      const tokenResponse = await fetch('https://fcp.integ01.dev-franceconnect.fr/api/v1/token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          client_id: FRANCECONNECT_CLIENT_ID!,
-          client_secret: FRANCECONNECT_CLIENT_SECRET!,
-          code: code,
-          grant_type: 'authorization_code',
-          redirect_uri: `${supabaseUrl}/functions/v1/auth-service/oauth/franceconnect/callback`
-        })
-      })
-
-      const tokens = await tokenResponse.json()
-      
-      if (!tokens.access_token) {
-        console.error('FranceConnect token exchange failed:', tokens)
-        return new Response(JSON.stringify({ error: 'Token exchange failed' }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        })
-      }
-
-      // Get user info from FranceConnect
-      const userResponse = await fetch('https://fcp.integ01.dev-franceconnect.fr/api/v1/userinfo', {
-        headers: {
-          'Authorization': `Bearer ${tokens.access_token}`
-        }
-      })
-
-      const fcUser = await userResponse.json()
-      console.log('FranceConnect user info:', fcUser)
-
-      // Create or get user profile
-      const profile = await getOrCreateUserProfile(
-        fcUser.email,
-        `${fcUser.given_name} ${fcUser.family_name}`,
-        'franceconnect'
-      )
-
-      // Create JWT token
-      const jwtToken = await createJWT(
-        profile.id,
-        profile.email,
-        profile.role,
-        profile.tenant_id
-      )
-
-      // Redirect to frontend with token
-      const frontendUrl = req.headers.get('origin') || 'http://localhost:5173'
-      return new Response(null, {
-        status: 302,
-        headers: { ...corsHeaders, 'Location': `${frontendUrl}/auth/callback?token=${jwtToken}` }
-      })
-    }
-
     // Logout endpoint
-    if (path === '/logout' && req.method === 'POST') {
+    if (path === 'logout' && req.method === 'POST') {
       return new Response(JSON.stringify({ message: 'Logged out successfully' }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -526,7 +535,7 @@ serve(async (req) => {
     }
 
     // User profile endpoint (protected)
-    if (path === '/user/profile' && req.method === 'GET') {
+    if (path === 'profile' && req.method === 'GET') {
       const authHeader = req.headers.get('Authorization')
       
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
