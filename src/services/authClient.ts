@@ -65,6 +65,18 @@ class AuthClient {
     return response.json()
   }
 
+  async register(email: string, password: string, fullName: string, role: string = 'patient'): Promise<AuthResponse> {
+    const response = await this.request<AuthResponse>('/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, fullName, role })
+    })
+
+    this.token = response.access_token
+    localStorage.setItem('auth_token', this.token)
+    
+    return response
+  }
+
   async login(email: string, password: string): Promise<AuthResponse> {
     const response = await this.request<AuthResponse>('/login', {
       method: 'POST',

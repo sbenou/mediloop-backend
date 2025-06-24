@@ -2,24 +2,24 @@
 import { Hono } from "https://deno.land/x/hono@v3.12.11/mod.ts"
 import { jwtService } from "../services/jwtService.ts"
 import { databaseService } from "../services/databaseService.ts"
+import { registrationService } from "../services/registrationService.ts"
 import { kvStore } from "../services/kvStore.ts"
 
 const authRoutes = new Hono()
 
-// Login with email/password
-authRoutes.post('/login', async (c) => {
+// User registration endpoint (NEW - V2 independent)
+authRoutes.post('/register', async (c) => {
   try {
-    const { email, password } = await c.req.json()
+    const { email, password, fullName, role = 'patient' } = await c.req.json()
     
-    if (!email || !password) {
-      return c.json({ error: 'Email and password required' }, 400)
+    if (!email || !password || !fullName) {
+      return c.json({ error: 'Email, password, and full name are required' }, 400)
     }
 
-    // Authenticate with database
-    const authData = await databaseService.signInWithPassword(email, password)
-    
-    // Get user profile
-    const profile = await databaseService.getUserProfile(authData.user.id)
+    console.log('V2 Registration: Attempting registration for:', email)
+
+    // Register user using our independent service
+    const profile = await registrationService.registerUser(email, password, fullName, role)
 
     // Create JWT token
     const jwtToken = await jwtService.createToken(
@@ -38,6 +38,8 @@ authRoutes.post('/login', async (c) => {
       loginTime: new Date().toISOString()
     })
 
+    console.log('V2 Registration: Registration successful for:', email)
+
     return c.json({
       access_token: jwtToken,
       token_type: 'Bearer',
@@ -51,8 +53,70 @@ authRoutes.post('/login', async (c) => {
       }
     })
   } catch (error) {
-    console.error('Login error:', error)
-    return c.json({ error: 'Login failed' }, 500)
+    console.error('V2 Registration error:', error)
+    return c.json({ error: error.message || 'Registration failed' }, 400)
+  }
+})
+
+// Login with email/password (UPDATED - V2 independent)
+authRoutes.post('/login', async (c) => {
+  try {
+    const { email, password } = await c.req.json()
+    
+    if (!email || !password) {
+      return c.json({ error: 'Email and password required' }, 400)
+    }
+
+    console.log('V2 Login: Attempting login for:', email)
+
+    // Verify password using our independent service (no Supabase Auth)
+    const profile = await databaseService.verifyUserPassword(email, password)
+
+    console.log('V2 Login: Password verification successful for:', email)
+
+    // Create JWT token
+    const jwtToken = await jwtService.createToken(
+      profile.id,
+      profile.email,
+      profile.role,
+      profile.tenant_id
+    )
+
+    // Store session in KV
+    const sessionId = crypto.randomUUID()
+    await kvStore.setSession(sessionId, {
+      userId: profile.id,
+      email: profile.email,
+      role: profile.role,
+      loginTime: new Date().toISOString()
+    })
+
+    console.log('V2 Login: Login successful for:', email)
+
+    return c.json({
+      access_token: jwtToken,
+      token_type: 'Bearer',
+      expires_in: 86400,
+      session_id: sessionId,
+      user: {
+        id: profile.id,
+        email: profile.email,
+        role: profile.role,
+        full_name: profile.full_name
+      }
+    })
+  } catch (error) {
+    console.error('V2 Login error:', error)
+    
+    // Provide user-friendly error messages
+    let errorMessage = 'Login failed'
+    if (error.message.includes('Invalid login credentials')) {
+      errorMessage = 'Invalid email or password. Please check your credentials.'
+    } else if (error.message.includes('Profile not found')) {
+      errorMessage = 'No account found with this email address. Please sign up first.'
+    }
+    
+    return c.json({ error: errorMessage }, 401)
   }
 })
 
@@ -129,7 +193,7 @@ authRoutes.post('/logout', async (c) => {
       
       if (verification.valid && verification.payload?.sub) {
         // Could implement token blacklisting here if needed
-        console.log('User logged out:', verification.payload.sub)
+        console.log('V2 User logged out:', verification.payload.sub)
       }
     }
 
