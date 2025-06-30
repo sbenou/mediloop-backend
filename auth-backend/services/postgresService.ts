@@ -72,7 +72,7 @@ export class PostgresService {
 
   async getUserProfile(userId: string) {
     const result = await this.query(
-      'SELECT * FROM profiles WHERE id = $1',
+      'SELECT * FROM profiles WHERE id = $1 AND deleted_at IS NULL',
       [userId]
     )
 
@@ -85,7 +85,7 @@ export class PostgresService {
 
   async getUserProfileByEmail(email: string) {
     const result = await this.query(
-      'SELECT * FROM profiles WHERE email = $1 LIMIT 1',
+      'SELECT * FROM profiles WHERE email = $1 AND deleted_at IS NULL LIMIT 1',
       [email]
     )
 
@@ -124,7 +124,7 @@ export class PostgresService {
     const profile = await this.getUserProfileByEmail(email);
     
     if (!profile.password_hash) {
-      throw new Error('Invalid login credentials')
+      throw new Error('Invalid login credentials - no password set for this account')
     }
 
     // Import password service here to avoid circular dependency
@@ -136,6 +136,62 @@ export class PostgresService {
     }
 
     return profile;
+  }
+
+  // Additional utility methods
+  async getAllProfiles() {
+    return await this.query('SELECT * FROM profiles WHERE deleted_at IS NULL ORDER BY created_at DESC')
+  }
+
+  async updateProfile(userId: string, updates: any) {
+    const setClause = Object.keys(updates)
+      .map((key, index) => `${key} = $${index + 2}`)
+      .join(', ')
+    
+    const values = [userId, ...Object.values(updates)]
+    
+    return await this.query(
+      `UPDATE profiles SET ${setClause}, updated_at = NOW() WHERE id = $1 RETURNING *`,
+      values
+    )
+  }
+
+  async softDeleteProfile(userId: string) {
+    return await this.query(
+      'UPDATE profiles SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 RETURNING *',
+      [userId]
+    )
+  }
+
+  async toggleBlockUser(userId: string) {
+    return await this.query(
+      'UPDATE profiles SET is_blocked = NOT is_blocked, updated_at = NOW() WHERE id = $1 RETURNING *',
+      [userId]
+    )
+  }
+
+  async getRoles() {
+    return await this.query('SELECT * FROM roles ORDER BY name')
+  }
+
+  async getPermissions() {
+    return await this.query('SELECT * FROM permissions ORDER BY name')
+  }
+
+  async getRolePermissions(roleId: string) {
+    return await this.query(
+      `SELECT p.* FROM permissions p 
+       JOIN role_permissions rp ON p.id = rp.permission_id 
+       WHERE rp.role_id = $1`,
+      [roleId]
+    )
+  }
+
+  async getUsersByRole(role: string) {
+    return await this.query(
+      'SELECT * FROM profiles WHERE role = $1 AND deleted_at IS NULL ORDER BY created_at DESC',
+      [role]
+    )
   }
 
   async close() {
