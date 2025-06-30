@@ -1,3 +1,4 @@
+
 interface AuthResponse {
   access_token: string
   token_type: string
@@ -19,8 +20,9 @@ class AuthClient {
   private token: string | null = null
 
   constructor() {
-    // Updated to use your Render deployment URL (you'll update this when you deploy)
-    this.baseUrl = Deno.env.get('AUTH_BACKEND_URL') || 'http://localhost:8000'
+    // Use Vite's environment variable system for the frontend
+    // This will use VITE_AUTH_BACKEND_URL from environment or fall back to localhost
+    this.baseUrl = import.meta.env.VITE_AUTH_BACKEND_URL || 'http://localhost:8000'
     
     // Load token from localStorage on initialization
     this.token = localStorage.getItem('auth_token')
