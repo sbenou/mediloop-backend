@@ -1,8 +1,8 @@
 
 // Environment configuration
 export const config = {
-  // Database connection (for when you migrate to OVH)
-  DATABASE_URL: Deno.env.get('DATABASE_URL') || 'postgresql://localhost:5432/auth_db',
+  // Database connection - now using Neon PostgreSQL
+  DATABASE_URL: Deno.env.get('DATABASE_URL') || 'postgresql://neondb_owner:npg_DUFXR9MiPsf1@ep-small-base-a900n0vb-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require',
   
   // JWT configuration
   JWT_SECRET: Deno.env.get('JWT_SECRET') || 'your-super-secret-jwt-key',
@@ -20,7 +20,7 @@ export const config = {
   FRONTEND_URL: Deno.env.get('FRONTEND_URL') || 'http://localhost:5173',
   SERVICE_URL: Deno.env.get('SERVICE_URL') || 'http://localhost:8000',
   
-  // For Supabase compatibility during transition
+  // Legacy Supabase for transition (will be removed)
   SUPABASE_URL: Deno.env.get('SUPABASE_URL') || '',
   SUPABASE_SERVICE_KEY: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 }

@@ -1,4 +1,3 @@
-
 interface AuthResponse {
   access_token: string
   token_type: string
@@ -20,8 +19,8 @@ class AuthClient {
   private token: string | null = null
 
   constructor() {
-    // Use the correct Supabase Functions URL format
-    this.baseUrl = 'https://hrrlefgnhkbzuwyklejj.supabase.co/functions/v1/auth-service'
+    // Updated to use your Render deployment URL (you'll update this when you deploy)
+    this.baseUrl = Deno.env.get('AUTH_BACKEND_URL') || 'http://localhost:8000'
     
     // Load token from localStorage on initialization
     this.token = localStorage.getItem('auth_token')
@@ -66,7 +65,7 @@ class AuthClient {
   }
 
   async register(email: string, password: string, fullName: string, role: string = 'patient'): Promise<AuthResponse> {
-    const response = await this.request<AuthResponse>('/register', {
+    const response = await this.request<AuthResponse>('/auth/register', {
       method: 'POST',
       body: JSON.stringify({ email, password, fullName, role })
     })
@@ -78,7 +77,7 @@ class AuthClient {
   }
 
   async login(email: string, password: string): Promise<AuthResponse> {
-    const response = await this.request<AuthResponse>('/login', {
+    const response = await this.request<AuthResponse>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password })
     })
@@ -94,7 +93,7 @@ class AuthClient {
       throw new Error('No token to refresh')
     }
 
-    const response = await this.request<AuthResponse>('/refresh', {
+    const response = await this.request<AuthResponse>('/auth/refresh', {
       method: 'POST',
       body: JSON.stringify({ token: this.token })
     })
@@ -111,7 +110,7 @@ class AuthClient {
     }
 
     try {
-      const response = await this.request<{ valid: boolean; payload: any }>('/verify', {
+      const response = await this.request<{ valid: boolean; payload: any }>('/auth/verify', {
         method: 'POST',
         body: JSON.stringify({ token: this.token })
       })
@@ -125,7 +124,7 @@ class AuthClient {
 
   async logout(): Promise<void> {
     try {
-      await this.request('/logout', {
+      await this.request('/auth/logout', {
         method: 'POST'
       })
     } finally {
@@ -135,10 +134,10 @@ class AuthClient {
   }
 
   async getUserProfile(): Promise<any> {
-    return this.request('/user/profile')
+    return this.request('/auth/profile')
   }
 
-  // OAuth methods
+  // OAuth methods - will point to your deployed backend
   initiateGoogleAuth(): void {
     window.location.href = `${this.baseUrl}/oauth/google`
   }
@@ -148,8 +147,6 @@ class AuthClient {
   }
 
   initiateLuxTrustAuth(): void {
-    // For LuxTrust, we use the separate luxtrust-service for the authentication flow
-    // The authClient mainly handles the OAuth callback and token management
     console.log('LuxTrust authentication should be handled by the useLuxTrustAuth hook')
   }
 
