@@ -1,4 +1,3 @@
-
 import { postgresService } from './postgresService.ts'
 
 // This service is now a wrapper around PostgreSQL operations
@@ -21,9 +20,13 @@ export class DatabaseService {
   }
 
   async signInWithPassword(email: string, password: string) {
-    // Verify password and get user profile
-    const profile = await postgresService.verifyUserPassword(email, password)
+    // This method is now independent - no Supabase Auth dependency
+    const profile = await this.getUserProfileByEmail(email);
     
+    if (!profile.password_hash) {
+      throw new Error('Invalid login credentials - no password set for this account')
+    }
+
     return {
       user: {
         id: profile.id,
@@ -34,53 +37,6 @@ export class DatabaseService {
 
   async verifyUserPassword(email: string, password: string): Promise<any> {
     return await postgresService.verifyUserPassword(email, password)
-  }
-
-  // Additional methods for the new database structure
-  async getAllUsers() {
-    return await postgresService.query('SELECT * FROM profiles WHERE deleted_at IS NULL ORDER BY created_at DESC')
-  }
-
-  async updateUserProfile(userId: string, updates: any) {
-    const setClause = Object.keys(updates)
-      .map((key, index) => `${key} = $${index + 2}`)
-      .join(', ')
-    
-    const values = [userId, ...Object.values(updates)]
-    
-    return await postgresService.query(
-      `UPDATE profiles SET ${setClause}, updated_at = NOW() WHERE id = $1 RETURNING *`,
-      values
-    )
-  }
-
-  async deleteUser(userId: string) {
-    return await postgresService.query(
-      'UPDATE profiles SET deleted_at = NOW() WHERE id = $1',
-      [userId]
-    )
-  }
-
-  async blockUser(userId: string) {
-    return await postgresService.query(
-      'UPDATE profiles SET is_blocked = NOT is_blocked WHERE id = $1',
-      [userId]
-    )
-  }
-
-  async getRoles() {
-    return await postgresService.query('SELECT * FROM roles ORDER BY name')
-  }
-
-  async getPermissions() {
-    return await postgresService.query('SELECT * FROM permissions ORDER BY name')
-  }
-
-  async getUsersByRole(role: string) {
-    return await postgresService.query(
-      'SELECT * FROM profiles WHERE role = $1 AND deleted_at IS NULL',
-      [role]
-    )
   }
 }
 

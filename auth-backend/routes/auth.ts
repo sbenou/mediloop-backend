@@ -7,7 +7,7 @@ import { kvStore } from "../services/kvStore.ts"
 
 const authRoutes = new Hono()
 
-// User registration endpoint (V2 independent)
+// User registration endpoint (NEW - V2 independent)
 authRoutes.post('/register', async (c) => {
   try {
     const { email, password, fullName, role = 'patient' } = await c.req.json()
@@ -58,7 +58,7 @@ authRoutes.post('/register', async (c) => {
   }
 })
 
-// Login with email/password (V2 independent)
+// Login with email/password (UPDATED - V2 independent)
 authRoutes.post('/login', async (c) => {
   try {
     const { email, password } = await c.req.json()
@@ -69,7 +69,7 @@ authRoutes.post('/login', async (c) => {
 
     console.log('V2 Login: Attempting login for:', email)
 
-    // Verify password using our independent service
+    // Verify password using our independent service (no Supabase Auth)
     const profile = await databaseService.verifyUserPassword(email, password)
 
     console.log('V2 Login: Password verification successful for:', email)
@@ -192,6 +192,7 @@ authRoutes.post('/logout', async (c) => {
       const verification = await jwtService.verifyToken(token)
       
       if (verification.valid && verification.payload?.sub) {
+        // Could implement token blacklisting here if needed
         console.log('V2 User logged out:', verification.payload.sub)
       }
     }
@@ -224,58 +225,6 @@ authRoutes.get('/profile', async (c) => {
   } catch (error) {
     console.error('Profile fetch error:', error)
     return c.json({ error: 'Profile not found' }, 404)
-  }
-})
-
-// Admin routes for user management
-authRoutes.get('/admin/users', async (c) => {
-  try {
-    const authHeader = c.req.header('Authorization')
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return c.json({ error: 'Authorization header required' }, 401)
-    }
-
-    const token = authHeader.substring(7)
-    const verification = await jwtService.verifyToken(token)
-    
-    if (!verification.valid) {
-      return c.json({ error: 'Invalid token' }, 401)
-    }
-
-    // Check if user is admin
-    const profile = await databaseService.getUserProfile(verification.payload.sub)
-    if (profile.role !== 'superadmin') {
-      return c.json({ error: 'Insufficient permissions' }, 403)
-    }
-
-    const users = await databaseService.getAllUsers()
-    return c.json({ users: users.rows })
-  } catch (error) {
-    console.error('Get users error:', error)
-    return c.json({ error: 'Failed to fetch users' }, 500)
-  }
-})
-
-// Get roles
-authRoutes.get('/admin/roles', async (c) => {
-  try {
-    const roles = await databaseService.getRoles()
-    return c.json({ roles: roles.rows })
-  } catch (error) {
-    console.error('Get roles error:', error)
-    return c.json({ error: 'Failed to fetch roles' }, 500)
-  }
-})
-
-// Get permissions
-authRoutes.get('/admin/permissions', async (c) => {
-  try {
-    const permissions = await databaseService.getPermissions()
-    return c.json({ permissions: permissions.rows })
-  } catch (error) {
-    console.error('Get permissions error:', error)
-    return c.json({ error: 'Failed to fetch permissions' }, 500)
   }
 })
 

@@ -1,7 +1,7 @@
 
 // Environment configuration
 export const config = {
-  // Database connection - using your Neon PostgreSQL database
+  // Database connection - now using Neon PostgreSQL
   DATABASE_URL: Deno.env.get('DATABASE_URL') || 'postgresql://neondb_owner:npg_DUFXR9MiPsf1@ep-small-base-a900n0vb-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require',
   
   // JWT configuration
@@ -20,17 +20,7 @@ export const config = {
   FRONTEND_URL: Deno.env.get('FRONTEND_URL') || 'http://localhost:5173',
   SERVICE_URL: Deno.env.get('SERVICE_URL') || 'http://localhost:8000',
   
-  // Environment
-  ENVIRONMENT: Deno.env.get('ENVIRONMENT') || 'development',
-  
-  // CORS settings
-  CORS_ORIGINS: Deno.env.get('CORS_ORIGINS')?.split(',') || ['http://localhost:5173'],
+  // Legacy Supabase for transition (will be removed)
+  SUPABASE_URL: Deno.env.get('SUPABASE_URL') || '',
+  SUPABASE_SERVICE_KEY: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 }
-
-console.log('Environment config loaded:', {
-  DATABASE_URL: config.DATABASE_URL ? 'Connected' : 'Not configured',
-  JWT_SECRET: config.JWT_SECRET ? 'Configured' : 'Not configured',
-  ENVIRONMENT: config.ENVIRONMENT,
-  FRONTEND_URL: config.FRONTEND_URL,
-  SERVICE_URL: config.SERVICE_URL,
-})
