@@ -23,8 +23,8 @@ const EmailTemplatePreview = () => {
     'connection-invitation': {
       SiteURL: 'https://localhost:5173',
       InviterName: 'Dr. Michael Johnson',
-      InviterType: 'doctor',
-      RecipientType: 'patient',
+      InviterTitle: 'Dr.',
+      InviterRole: 'doctor',
       RecipientEmail: 'patient@example.com',
       HasAccount: false, // This determines if user has account or not
       ConfirmationURL: 'https://localhost:5173/connections/accept?token=sample-token',
@@ -33,7 +33,8 @@ const EmailTemplatePreview = () => {
     'connection-response': {
       SiteURL: 'https://localhost:5173',
       ResponderName: 'John Doe',
-      ResponderType: 'patient',
+      ResponderTitle: 'Mr.',
+      ResponderRole: 'patient',
       Status: 'accepted',
       HasAccount: true, // This determines if user has account or not
       DashboardURL: 'https://localhost:5173/dashboard',
@@ -170,9 +171,9 @@ const EmailTemplatePreview = () => {
 
               <!-- Main Content -->
               <div style="color: #52525b; font-size: 16px; line-height: 24px; margin-bottom: 30px;">
-                  <p>Hello ${templateData['connection-invitation'].RecipientEmail},</p>
-                  <p><strong>${templateData['connection-invitation'].InviterName}</strong> (${templateData['connection-invitation'].InviterType}) would like to connect with you on our healthcare platform.</p>
-                  <p>This connection will enable secure communication and healthcare coordination between you both.</p>
+                  <p>Hello,</p>
+                  <p><strong>${templateData['connection-invitation'].InviterTitle} ${templateData['connection-invitation'].InviterName}</strong> (${templateData['connection-invitation'].InviterRole}) would like to connect with you on our platform.</p>
+                  <p>This connection will allow you to share medical information securely and facilitate better healthcare coordination.</p>
                   ${!templateData['connection-invitation'].HasAccount 
                     ? '<p><strong>Note:</strong> You will need to create an account to accept this connection request.</p>'
                     : '<p>Since you already have an account with us, you can review and respond to this connection request.</p>'
@@ -198,9 +199,8 @@ const EmailTemplatePreview = () => {
               <!-- Connection Details -->
               <div style="margin: 30px 0; padding: 20px; background-color: #f8fafc; border-radius: 6px; border-left: 4px solid #3b82f6;">
                   <h3 style="color: #18181b; font-size: 16px; margin: 0 0 10px 0;">Connection Details:</h3>
-                  <p style="color: #52525b; font-size: 14px; margin: 5px 0;"><strong>Requesting connection:</strong> ${templateData['connection-invitation'].InviterName}</p>
-                  <p style="color: #52525b; font-size: 14px; margin: 5px 0;"><strong>Role:</strong> ${templateData['connection-invitation'].InviterType}</p>
-                  <p style="color: #52525b; font-size: 14px; margin: 5px 0;"><strong>You will connect as:</strong> ${templateData['connection-invitation'].RecipientType}</p>
+                  <p style="color: #52525b; font-size: 14px; margin: 5px 0;"><strong>Requesting connection:</strong> ${templateData['connection-invitation'].InviterTitle} ${templateData['connection-invitation'].InviterName}</p>
+                  <p style="color: #52525b; font-size: 14px; margin: 5px 0;"><strong>Role:</strong> ${templateData['connection-invitation'].InviterRole}</p>
                   <p style="color: #52525b; font-size: 14px; margin: 5px 0;"><strong>Account status:</strong> ${templateData['connection-invitation'].HasAccount ? 'Existing user' : 'New user (account creation required)'}</p>
               </div>
 
@@ -244,13 +244,10 @@ const EmailTemplatePreview = () => {
               <div style="color: #52525b; font-size: 16px; line-height: 24px; margin-bottom: 30px;">
                   <p>Hello,</p>
                   ${templateData['connection-response'].Status === 'accepted' 
-                    ? `<p><strong>${templateData['connection-response'].ResponderName}</strong> (${templateData['connection-response'].ResponderType}) has accepted your connection request!</p>
+                    ? `<p><strong>${templateData['connection-response'].ResponderTitle} ${templateData['connection-response'].ResponderName}</strong> (${templateData['connection-response'].ResponderRole}) has accepted your connection request!</p>
                        <p>You can now communicate securely and coordinate healthcare through our platform.</p>
-                       ${templateData['connection-response'].HasAccount 
-                         ? '<p>Click the button below to access your dashboard and start collaborating.</p>'
-                         : '<p>You will need to create an account to start using this connection.</p>'
-                       }`
-                    : `<p>You have a connection request from <strong>${templateData['connection-response'].ResponderName}</strong> (${templateData['connection-response'].ResponderType}) that requires your response.</p>
+                       <p>Click the button below to access your dashboard and start collaborating.</p>`
+                    : `<p>You have a connection request from <strong>${templateData['connection-response'].ResponderTitle} ${templateData['connection-response'].ResponderName}</strong> (${templateData['connection-response'].ResponderRole}) that requires your response.</p>
                        <p>Please choose to accept or decline this connection request.</p>
                        ${!templateData['connection-response'].HasAccount 
                          ? '<p><strong>Note:</strong> You will need to create an account to respond to this request.</p>'
@@ -281,8 +278,8 @@ const EmailTemplatePreview = () => {
               <!-- Connection Details -->
               <div style="margin: 30px 0; padding: 20px; background-color: #f8fafc; border-radius: 6px; border-left: 4px solid ${templateData['connection-response'].Status === 'accepted' ? '#10b981' : '#3b82f6'};">
                   <h3 style="color: #18181b; font-size: 16px; margin: 0 0 10px 0;">Connection Details:</h3>
-                  <p style="color: #52525b; font-size: 14px; margin: 5px 0;"><strong>${templateData['connection-response'].Status === 'accepted' ? 'Connected with:' : 'Request from:'}</strong> ${templateData['connection-response'].ResponderName}</p>
-                  <p style="color: #52525b; font-size: 14px; margin: 5px 0;"><strong>Role:</strong> ${templateData['connection-response'].ResponderType}</p>
+                  <p style="color: #52525b; font-size: 14px; margin: 5px 0;"><strong>${templateData['connection-response'].Status === 'accepted' ? 'Connected with:' : 'Request from:'}</strong> ${templateData['connection-response'].ResponderTitle} ${templateData['connection-response'].ResponderName}</p>
+                  <p style="color: #52525b; font-size: 14px; margin: 5px 0;"><strong>Role:</strong> ${templateData['connection-response'].ResponderRole}</p>
                   <p style="color: #52525b; font-size: 14px; margin: 5px 0;"><strong>Status:</strong> ${templateData['connection-response'].Status === 'accepted' ? 'Connected' : 'Pending your response'}</p>
                   <p style="color: #52525b; font-size: 14px; margin: 5px 0;"><strong>Account:</strong> ${templateData['connection-response'].HasAccount ? 'Existing user' : 'Account creation required'}</p>
               </div>
