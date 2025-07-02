@@ -1,57 +1,175 @@
 
-import React from "react";
-import { Routes, Route } from "react-router-dom";
-import Index from "@/pages/Index";
-import Pricing from "@/pages/Pricing";
-import Contact from "@/pages/Contact";
-import About from "@/pages/About";
-import Blog from "@/pages/Blog";
-import BlogPost from "@/pages/BlogPost";
-import Login from "@/pages/Login";
-import Register from "@/pages/Register";
-import Dashboard from "@/pages/Dashboard";
-import Products from "@/pages/Products";
-import ProductDetails from "@/pages/ProductDetails";
-import Checkout from "@/pages/Checkout";
-import Profile from "@/pages/Profile";
-import Settings from "@/pages/Settings";
-import ForgotPassword from "@/pages/ForgotPassword";
-import ResetPassword from "@/pages/ResetPassword";
-import Confirmation from "@/pages/Confirmation";
-import Terms from "@/pages/Terms";
-import Privacy from "@/pages/Privacy";
-import NotFound from "@/pages/NotFound";
-import Unauthorized from "@/pages/Unauthorized";
-import UnauthorizedPage from "@/pages/UnauthorizedPage";
-import EmailTemplatePreview from "@/pages/EmailTemplatePreview";
+import React, { Suspense, lazy } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { Loader } from 'lucide-react';
+import ProtectedRoute from './components/routing/ProtectedRoute';
+import RequireRoleGuard from './components/auth/RequireRoleGuard';
+import RequirePermissionGuard from './components/auth/RequirePermissionGuard';
+import { useAuth } from './hooks/auth/useAuth';
+import AuthSystemRouter from './auth-v2/components/AuthSystemRouter';
 
-function AppRoutes() {
+const Home = lazy(() => import('./pages/Home'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Profile = lazy(() => import('./pages/Profile'));
+const AuthCallback = lazy(() => import('./pages/AuthCallback'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const Products = lazy(() => import('./pages/Products'));
+const ProductDetail = lazy(() => import('./pages/ProductDetail'));
+const Settings = lazy(() => import('./pages/Settings'));
+const TestNotifications = lazy(() => import('./pages/TestNotifications'));
+const PharmacyDashboard = lazy(() => import('./pages/pharmacy/PharmacyDashboard'));
+const SuperAdminDashboard = lazy(() => import('./pages/superadmin/SuperAdminDashboard'));
+const TestLuxembourg = lazy(() => import('./pages/TestLuxembourg'));
+const DenoBackendManagement = lazy(() => import('./pages/DenoBackendManagement'));
+
+const AppRoutes = () => {
+  const { profile } = useAuth();
+
   return (
     <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/pricing" element={<Pricing />} />
-      <Route path="/contact" element={<Contact />} />
-      <Route path="/about" element={<About />} />
-      <Route path="/blog" element={<Blog />} />
-      <Route path="/blog/:slug" element={<BlogPost />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/products" element={<Products />} />
-      <Route path="/products/:id" element={<ProductDetails />} />
-      <Route path="/checkout" element={<Checkout />} />
-      <Route path="/profile" element={<Profile />} />
-      <Route path="/settings" element={<Settings />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/confirmation" element={<Confirmation />} />
-      <Route path="/terms" element={<Terms />} />
-      <Route path="/privacy" element={<Privacy />} />
-      <Route path="/unauthorized" element={<Unauthorized />} />
-      <Route path="/email-preview" element={<EmailTemplatePreview />} />
-      <Route path="*" element={<NotFound />} />
+      <Route
+        path="/"
+        element={
+          <Suspense fallback={<Loader className="h-6 w-6 animate-spin" />}>
+            <Home />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/login"
+        element={
+          <Suspense fallback={<Loader className="h-6 w-6 animate-spin" />}>
+            <AuthSystemRouter type="login" />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/signup"
+        element={
+          <Suspense fallback={<Loader className="h-6 w-6 animate-spin" />}>
+            <AuthSystemRouter type="signup" />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/auth/callback"
+        element={
+          <Suspense fallback={<Loader className="h-6 w-6 animate-spin" />}>
+            <AuthCallback />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/reset-password"
+        element={
+          <Suspense fallback={<Loader className="h-6 w-6 animate-spin" />}>
+            <ResetPassword />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>
+            <Suspense fallback={<Loader className="h-6 w-6 animate-spin" />}>
+              <Dashboard />
+            </Suspense>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>
+            <Suspense fallback={<Loader className="h-6 w-6 animate-spin" />}>
+              <Profile />
+            </Suspense>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/products"
+        element={
+          <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>
+            <Suspense fallback={<Loader className="h-6 w-6 animate-spin" />}>
+              <Products />
+            </Suspense>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/products/:id"
+        element={
+          <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>
+            <Suspense fallback={<Loader className="h-6 w-6 animate-spin" />}>
+              <ProductDetail />
+            </Suspense>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>
+            <Suspense fallback={<Loader className="h-6 w-6 animate-spin" />}>
+              <Settings />
+            </Suspense>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/test-notifications"
+        element={
+          <ProtectedRoute allowedRoles={['superadmin']}>
+            <RequirePermissionGuard requiredPermissions={['view_admin']}>
+              <Suspense fallback={<Loader className="h-6 w-6 animate-spin" />}>
+                <TestNotifications />
+              </Suspense>
+            </RequirePermissionGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pharmacy/dashboard"
+        element={
+          <ProtectedRoute allowedRoles={['pharmacist']}>
+            <RequireRoleGuard allowedRoles={['pharmacist']}>
+              <Suspense fallback={<Loader className="h-6 w-6 animate-spin" />}>
+                <PharmacyDashboard />
+              </Suspense>
+            </RequireRoleGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/superadmin/dashboard"
+        element={
+          <ProtectedRoute allowedRoles={['superadmin']}>
+            <RequireRoleGuard allowedRoles={['superadmin']}>
+              <Suspense fallback={<Loader className="h-6 w-6 animate-spin" />}>
+                <SuperAdminDashboard />
+              </Suspense>
+            </RequireRoleGuard>
+          </ProtectedRoute>
+        }
+      />
+      
+      {/* Add test route for Luxembourg functionality */}
+      <Route path="/test-luxembourg" element={<TestLuxembourg />} />
+      
+      {/* Temporarily make Deno backend management accessible to all for development */}
+      <Route 
+        path="/deno-backend" 
+        element={
+          <Suspense fallback={<Loader className="h-6 w-6 animate-spin" />}>
+            <DenoBackendManagement />
+          </Suspense>
+        }
+      />
+      
+      <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );
-}
+};
 
 export default AppRoutes;
