@@ -1,0 +1,52 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to Luxmed</title>
+</head>
+<body style="margin: 0; padding: 20px; background-color: #f4f4f5; font-family: Arial, sans-serif;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; padding: 40px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+        <!-- Header -->
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #18181b; font-size: 24px; margin: 0;">Welcome to Luxmed!</h1>
+        </div>
+
+        <!-- Main Content -->
+        <div style="color: #52525b; font-size: 16px; line-height: 24px; margin-bottom: 30px;">
+            <p>Hello {{ .UserName }},</p>
+            <p>Welcome to Luxmed! Your account has been successfully created and verified.</p>
+            <p>You can now access all the features available to {{ .UserRole }} users.</p>
+        </div>
+
+        <!-- Call to Action -->
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{ .LoginURL }}" style="display: inline-block; padding: 12px 24px; background-color: #3b82f6; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                Get Started
+            </a>
+        </div>
+
+        <!-- Features Info -->
+        <div style="margin: 30px 0; padding: 20px; background-color: #f8fafc; border-radius: 6px;">
+            <h3 style="color: #374151; font-size: 16px; margin: 0 0 10px 0;">What's next?</h3>
+            <ul style="color: #64748b; font-size: 14px; margin: 0; padding-left: 20px;">
+                <li>Complete your profile setup</li>
+                <li>Explore the dashboard</li>
+                <li>Connect with healthcare professionals</li>
+                <li>Start managing your health journey</li>
+            </ul>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e4e4e7;">
+            <p style="color: #71717a; font-size: 14px; margin: 5px 0;">
+                Need help? Contact our support team anytime.
+            </p>
+            <p style="color: #71717a; font-size: 14px; margin: 5px 0;">
+                © 2024 Luxmed. All rights reserved.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
