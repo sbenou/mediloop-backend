@@ -1,6 +1,5 @@
 
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
 
 interface EmailTemplate {
   id: string;
@@ -37,19 +36,25 @@ export const useEmailTemplates = () => {
     setError(null);
 
     try {
-      const { data, error: functionError } = await supabase.functions.invoke('send-templated-email', {
-        body: {
+      // Call your Deno backend service instead of Supabase edge function
+      const response = await fetch('/api/send-templated-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           templateName,
           recipientEmail,
           variables
-        }
+        })
       });
 
-      if (functionError) {
-        throw functionError;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send email');
       }
 
-      return data;
+      return await response.json();
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to send email';
       setError(errorMessage);
@@ -60,31 +65,29 @@ export const useEmailTemplates = () => {
   };
 
   const getEmailTemplates = async (): Promise<EmailTemplate[]> => {
-    const { data, error } = await supabase
-      .from('email_templates')
-      .select('*')
-      .eq('is_active', true)
-      .order('name');
-
-    if (error) {
-      throw error;
+    try {
+      const response = await fetch('/api/email-templates');
+      if (!response.ok) {
+        throw new Error('Failed to fetch templates');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+      return [];
     }
-
-    return data || [];
   };
 
   const getEmailLogs = async (limit = 50): Promise<EmailLog[]> => {
-    const { data, error } = await supabase
-      .from('email_logs')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(limit);
-
-    if (error) {
-      throw error;
+    try {
+      const response = await fetch(`/api/email-logs?limit=${limit}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch logs');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching logs:', error);
+      return [];
     }
-
-    return data || [];
   };
 
   // Helper methods for specific email types

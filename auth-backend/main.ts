@@ -1,34 +1,32 @@
+import { Application } from "https://deno.land/x/oak@v12.6.1/mod.ts";
+import emailTemplateRouter from "./routes/emailTemplates.ts";
+// Import other routers and services as needed
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { Hono } from "https://deno.land/x/hono@v3.12.11/mod.ts"
-import { cors } from "https://deno.land/x/hono@v3.12.11/middleware.ts"
-import { authRoutes } from "./routes/auth.ts"
-import { luxtrustRoutes } from "./routes/luxtrust.ts"
-import { oauthRoutes } from "./routes/oauth.ts"
+const app = new Application();
 
-const app = new Hono()
+// Configure CORS
+app.use(async (ctx, next) => {
+  ctx.response.headers.set("Access-Control-Allow-Origin", "*");
+  ctx.response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  ctx.response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  
+  if (ctx.request.method === "OPTIONS") {
+    ctx.response.status = 200;
+    return;
+  }
+  
+  await next();
+});
 
-// CORS middleware
-app.use('/*', cors({
-  origin: ['*'],
-  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowHeaders: ['Content-Type', 'Authorization', 'x-client-info', 'apikey'],
-}))
+// Use other routers here
+// e.g. app.use(otherRouter.routes());
+// app.use(otherRouter.allowedMethods());
 
-// Health check endpoint
-app.get('/health', (c) => {
-  return c.json({ 
-    status: 'healthy', 
-    service: 'auth-backend',
-    timestamp: new Date().toISOString() 
-  })
-})
+// Add email template routes
+app.use(emailTemplateRouter.routes());
+app.use(emailTemplateRouter.allowedMethods());
 
-// Mount route groups
-app.route('/auth', authRoutes)
-app.route('/luxtrust', luxtrustRoutes)
-app.route('/oauth', oauthRoutes)
-
-console.log('Auth Backend Service starting on port 8000...')
-
-serve(app.fetch, { port: 8000 })
+// Start the server
+const PORT = Deno.env.get("PORT") || "8000";
+console.log(`Server running on port ${PORT}`);
+await app.listen({ port: parseInt(PORT) });
