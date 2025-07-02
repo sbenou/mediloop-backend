@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,6 +19,21 @@ const EmailTemplatePreview = () => {
       InvitationType: 'staff member',
       WorkplaceName: 'Mediloop Clinic',
       ConfirmationURL: 'https://localhost:5173/auth/invite?token=sample-token'
+    },
+    'connection-invitation': {
+      SiteURL: 'https://localhost:5173',
+      InviterName: 'Dr. Michael Johnson',
+      InviterType: 'doctor',
+      RecipientType: 'patient',
+      ConfirmationURL: 'https://localhost:5173/connections/accept?token=sample-token'
+    },
+    'connection-response': {
+      SiteURL: 'https://localhost:5173',
+      ResponderName: 'John Doe',
+      ResponderType: 'patient',
+      Status: 'accepted',
+      AcceptURL: 'https://localhost:5173/connections/accept?token=sample-token',
+      DeclineURL: 'https://localhost:5173/connections/decline?token=sample-token'
     },
     'magic-link': {
       Token: '123456'
@@ -132,6 +146,123 @@ const EmailTemplatePreview = () => {
                   <p style="margin: 5px 0;">
                       <a href="${templateData['invite-user'].SiteURL}/privacy" style="color: #3b82f6; text-decoration: none;">Privacy Policy</a> • 
                       <a href="${templateData['invite-user'].SiteURL}/terms" style="color: #3b82f6; text-decoration: none;">Terms of Service</a>
+                  </p>
+              </div>
+          </div>
+      </body>
+      </html>
+    `,
+    'connection-invitation': `
+      <!DOCTYPE html>
+      <html>
+      <body style="margin: 0; padding: 20px; background-color: #f4f4f5; font-family: Arial, sans-serif;">
+          <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; padding: 40px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+              <!-- Header with Logo Placeholder -->
+              <div style="text-align: center; margin-bottom: 30px;">
+                  <img src="${templateData['connection-invitation'].SiteURL}/logo.png" alt="Logo" style="max-height: 50px; margin-bottom: 20px;">
+                  <h1 style="color: #18181b; font-size: 24px; margin: 0;">Connection Request</h1>
+              </div>
+
+              <!-- Main Content -->
+              <div style="color: #52525b; font-size: 16px; line-height: 24px; margin-bottom: 30px;">
+                  <p>Hello,</p>
+                  <p><strong>${templateData['connection-invitation'].InviterName}</strong> (${templateData['connection-invitation'].InviterType}) would like to connect with you on our platform.</p>
+                  <p>This connection will allow you to share medical information securely and facilitate better healthcare coordination.</p>
+              </div>
+
+              <!-- Action Button -->
+              <div style="text-align: center; margin: 30px 0;">
+                  <a href="${templateData['connection-invitation'].ConfirmationURL}" style="display: inline-block; background-color: #3b82f6; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">View Connection Request</a>
+              </div>
+
+              <!-- Alternative Link -->
+              <div style="margin-bottom: 30px; text-align: center;">
+                  <p style="color: #71717a; font-size: 14px;">If the button doesn't work, copy and paste this link in your browser:</p>
+                  <p style="color: #3b82f6; font-size: 14px; word-break: break-all;">${templateData['connection-invitation'].ConfirmationURL}</p>
+              </div>
+
+              <!-- Connection Details -->
+              <div style="margin: 30px 0; padding: 20px; background-color: #f8fafc; border-radius: 6px; border-left: 4px solid #3b82f6;">
+                  <h3 style="color: #18181b; font-size: 16px; margin: 0 0 10px 0;">Connection Details:</h3>
+                  <p style="color: #52525b; font-size: 14px; margin: 5px 0;"><strong>Requesting connection:</strong> ${templateData['connection-invitation'].InviterName}</p>
+                  <p style="color: #52525b; font-size: 14px; margin: 5px 0;"><strong>Role:</strong> ${templateData['connection-invitation'].InviterType}</p>
+                  <p style="color: #52525b; font-size: 14px; margin: 5px 0;"><strong>You are connecting as:</strong> ${templateData['connection-invitation'].RecipientType}</p>
+              </div>
+
+              <!-- Security Notice -->
+              <div style="border-top: 1px solid #e4e4e7; padding-top: 20px; margin-top: 20px;">
+                  <p style="color: #71717a; font-size: 14px; margin: 0;">This connection request will expire in 7 days. You can accept or decline this request by clicking the link above.</p>
+              </div>
+
+              <!-- Footer -->
+              <div style="text-align: center; margin-top: 30px; color: #71717a; font-size: 14px;">
+                  <p style="margin: 5px 0;">© 2024 Mediloop. All rights reserved.</p>
+                  <p style="margin: 5px 0;">
+                      <a href="${templateData['connection-invitation'].SiteURL}/privacy" style="color: #3b82f6; text-decoration: none;">Privacy Policy</a> • 
+                      <a href="${templateData['connection-invitation'].SiteURL}/terms" style="color: #3b82f6; text-decoration: none;">Terms of Service</a>
+                  </p>
+              </div>
+          </div>
+      </body>
+      </html>
+    `,
+    'connection-response': `
+      <!DOCTYPE html>
+      <html>
+      <body style="margin: 0; padding: 20px; background-color: #f4f4f5; font-family: Arial, sans-serif;">
+          <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; padding: 40px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+              <!-- Header with Logo Placeholder -->
+              <div style="text-align: center; margin-bottom: 30px;">
+                  <img src="${templateData['connection-response'].SiteURL}/logo.png" alt="Logo" style="max-height: 50px; margin-bottom: 20px;">
+                  <h1 style="color: #18181b; font-size: 24px; margin: 0;">Connection Request ${templateData['connection-response'].Status === 'accepted' ? 'Accepted' : 'Response Required'}</h1>
+              </div>
+
+              <!-- Main Content -->
+              <div style="color: #52525b; font-size: 16px; line-height: 24px; margin-bottom: 30px;">
+                  <p>Hello,</p>
+                  ${templateData['connection-response'].Status === 'accepted' 
+                    ? `<p><strong>${templateData['connection-response'].ResponderName}</strong> (${templateData['connection-response'].ResponderType}) has accepted your connection request!</p>
+                       <p>You can now communicate securely and share medical information through our platform.</p>`
+                    : `<p>You have a connection request from <strong>${templateData['connection-response'].ResponderName}</strong> (${templateData['connection-response'].ResponderType}) that requires your response.</p>
+                       <p>Please choose to accept or decline this connection request.</p>`
+                  }
+              </div>
+
+              <!-- Action Buttons -->
+              ${templateData['connection-response'].Status === 'accepted' 
+                ? `<div style="text-align: center; margin: 30px 0;">
+                     <a href="${templateData['connection-response'].SiteURL}/dashboard" style="display: inline-block; background-color: #10b981; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">Go to Dashboard</a>
+                   </div>`
+                : `<div style="text-align: center; margin: 30px 0; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                     <a href="${templateData['connection-response'].AcceptURL}" style="display: inline-block; background-color: #10b981; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">Accept Connection</a>
+                     <a href="${templateData['connection-response'].DeclineURL}" style="display: inline-block; background-color: #ef4444; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">Decline Connection</a>
+                   </div>`
+              }
+
+              <!-- Connection Details -->
+              <div style="margin: 30px 0; padding: 20px; background-color: #f8fafc; border-radius: 6px; border-left: 4px solid ${templateData['connection-response'].Status === 'accepted' ? '#10b981' : '#3b82f6'};">
+                  <h3 style="color: #18181b; font-size: 16px; margin: 0 0 10px 0;">Connection Details:</h3>
+                  <p style="color: #52525b; font-size: 14px; margin: 5px 0;"><strong>${templateData['connection-response'].Status === 'accepted' ? 'Connected with:' : 'Request from:'}</strong> ${templateData['connection-response'].ResponderName}</p>
+                  <p style="color: #52525b; font-size: 14px; margin: 5px 0;"><strong>Role:</strong> ${templateData['connection-response'].ResponderType}</p>
+                  <p style="color: #52525b; font-size: 14px; margin: 5px 0;"><strong>Status:</strong> ${templateData['connection-response'].Status === 'accepted' ? 'Connected' : 'Pending your response'}</p>
+              </div>
+
+              <!-- Security Notice -->
+              <div style="border-top: 1px solid #e4e4e7; padding-top: 20px; margin-top: 20px;">
+                  <p style="color: #71717a; font-size: 14px; margin: 0;">
+                    ${templateData['connection-response'].Status === 'accepted' 
+                      ? 'This connection allows secure communication and medical information sharing between both parties.'
+                      : 'This connection request will expire in 7 days if no action is taken.'
+                    }
+                  </p>
+              </div>
+
+              <!-- Footer -->
+              <div style="text-align: center; margin-top: 30px; color: #71717a; font-size: 14px;">
+                  <p style="margin: 5px 0;">© 2024 Mediloop. All rights reserved.</p>
+                  <p style="margin: 5px 0;">
+                      <a href="${templateData['connection-response'].SiteURL}/privacy" style="color: #3b82f6; text-decoration: none;">Privacy Policy</a> • 
+                      <a href="${templateData['connection-response'].SiteURL}/terms" style="color: #3b82f6; text-decoration: none;">Terms of Service</a>
                   </p>
               </div>
           </div>
