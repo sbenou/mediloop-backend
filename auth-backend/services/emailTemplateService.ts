@@ -402,6 +402,69 @@ const emailTemplates = {
         </div>
     </body>
     </html>
+  `,
+  'medication-order': `
+    <!DOCTYPE html>
+    <html>
+    <body style="margin: 0; padding: 20px; background-color: #f4f4f5; font-family: Arial, sans-serif;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; padding: 40px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+            <!-- Header with Logo Placeholder -->
+            <div style="text-align: center; margin-bottom: 30px;">
+                <img src="{{SiteURL}}/logo.png" alt="Logo" style="max-height: 50px; margin-bottom: 20px;">
+                <h1 style="color: #18181b; font-size: 24px; margin: 0;">Your Medication Order Confirmation</h1>
+            </div>
+
+            <!-- Main Content -->
+            <div style="color: #52525b; font-size: 16px; line-height: 24px; margin-bottom: 30px;">
+                <p>Hello,</p>
+                <p>Thank you for your order! Your medication order has been confirmed and is being processed.</p>
+            </div>
+
+            <!-- Order Details -->
+            <div style="margin: 30px 0; padding: 20px; background-color: #f8fafc; border-radius: 6px; border-left: 4px solid #10b981;">
+                <h3 style="color: #18181b; font-size: 16px; margin: 0 0 15px 0;">Order Details:</h3>
+                <div style="margin-bottom: 15px;">
+                    {{#each items}}
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: #52525b;">{{name}} x {{quantity}}</span>
+                        <span style="color: #52525b; font-weight: bold;">€{{price}}</span>
+                    </div>
+                    {{/each}}
+                </div>
+                <div style="border-top: 1px solid #e4e4e7; padding-top: 15px; margin-top: 15px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: #52525b;">Delivery Fee:</span>
+                        <span style="color: #52525b;">€{{DeliveryFee}}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 18px;">
+                        <span style="color: #18181b;">Total:</span>
+                        <span style="color: #18181b;">€{{total}}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delivery Info -->
+            <div style="margin: 30px 0; padding: 20px; background-color: #f0f9ff; border-radius: 6px;">
+                <h3 style="color: #18181b; font-size: 16px; margin: 0 0 10px 0;">Delivery Information:</h3>
+                <p style="color: #52525b; font-size: 14px; margin: 0;">Your order will be processed and you will be notified when it's ready for delivery. Expected delivery time is 24-48 hours.</p>
+            </div>
+
+            <!-- Support Notice -->
+            <div style="border-top: 1px solid #e4e4e7; padding-top: 20px; margin-top: 20px;">
+                <p style="color: #71717a; font-size: 14px; margin: 0;">If you have any questions about your order, please contact our support team.</p>
+            </div>
+
+            <!-- Footer -->
+            <div style="text-align: center; margin-top: 30px; color: #71717a; font-size: 14px;">
+                <p style="margin: 5px 0;">© 2024 Mediloop. All rights reserved.</p>
+                <p style="margin: 5px 0;">
+                    <a href="{{SiteURL}}/privacy" style="color: #3b82f6; text-decoration: none;">Privacy Policy</a> • 
+                    <a href="{{SiteURL}}/terms" style="color: #3b82f6; text-decoration: none;">Terms of Service</a>
+                </p>
+            </div>
+        </div>
+    </body>
+    </html>
   `
 };
 
@@ -602,6 +665,20 @@ export class EmailTemplateService {
   async sendReauthentication(email: string, code: string): Promise<boolean> {
     return await this.sendTemplatedEmail('reauthentication', email, {
       Token: code
+    });
+  }
+
+  async sendMedicationOrderEmail(
+    email: string,
+    items: Array<{name: string, quantity: number, price: number}>,
+    total: number,
+    deliveryFee: number = 5.00
+  ): Promise<boolean> {
+    return await this.sendTemplatedEmail('medication-order', email, {
+      SiteURL: config.SITE_URL || '',
+      items,
+      total: total.toFixed(2),
+      DeliveryFee: deliveryFee.toFixed(2)
     });
   }
 }

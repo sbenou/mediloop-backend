@@ -37,7 +37,7 @@ export const useEmailTemplates = () => {
 
     try {
       // Call your Deno backend service instead of Supabase edge function
-      const response = await fetch('/api/send-templated-email', {
+      const response = await fetch('http://localhost:8000/api/send-templated-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -66,7 +66,7 @@ export const useEmailTemplates = () => {
 
   const getEmailTemplates = async (): Promise<EmailTemplate[]> => {
     try {
-      const response = await fetch('/api/email-templates');
+      const response = await fetch('http://localhost:8000/api/email-templates');
       if (!response.ok) {
         throw new Error('Failed to fetch templates');
       }
@@ -79,7 +79,7 @@ export const useEmailTemplates = () => {
 
   const getEmailLogs = async (limit = 50): Promise<EmailLog[]> => {
     try {
-      const response = await fetch(`/api/email-logs?limit=${limit}`);
+      const response = await fetch(`http://localhost:8000/api/email-logs?limit=${limit}`);
       if (!response.ok) {
         throw new Error('Failed to fetch logs');
       }
@@ -160,6 +160,20 @@ export const useEmailTemplates = () => {
     });
   };
 
+  // New method for medication order emails
+  const sendMedicationOrderEmail = (
+    email: string,
+    items: Array<{name: string, quantity: number, price: number}>,
+    total: number
+  ) => {
+    return sendTemplatedEmail('medication-order', email, {
+      SiteURL: window.location.origin,
+      items,
+      total: total.toFixed(2),
+      DeliveryFee: '5.00'
+    });
+  };
+
   return {
     loading,
     error,
@@ -172,6 +186,7 @@ export const useEmailTemplates = () => {
     sendConnectionInvitation,
     sendConnectionResponse,
     sendMagicLinkEmail,
-    sendPasswordResetEmail
+    sendPasswordResetEmail,
+    sendMedicationOrderEmail, // New helper method
   };
 };

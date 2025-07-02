@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from 'https://esm.sh/stripe@14.21.0'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
@@ -84,25 +85,27 @@ serve(async (req) => {
       cancel_url: `${req.headers.get('origin')}/my-orders?payment=cancelled`,
     })
 
-    // Send order confirmation email
+    // Send order confirmation email using Deno backend instead of Supabase edge function
     try {
-      await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-order-email`, {
+      // Call your Deno backend instead of the old Supabase edge function
+      await fetch('http://localhost:8000/api/send-templated-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': authHeader,
         },
         body: JSON.stringify({
-          type: 'medication',
-          email: user.email,
-          details: {
+          templateName: 'medication-order', // This would be a new template for medication orders
+          recipientEmail: user.email,
+          variables: {
             items,
-            total
+            total,
+            SiteURL: req.headers.get('origin') || '',
+            DeliveryFee: 5.00
           }
         })
       });
     } catch (emailError) {
-      console.error('Error sending order confirmation email:', emailError);
+      console.error('Error sending order confirmation email via Deno backend:', emailError);
       // Don't throw here, we still want to return the checkout session
     }
 
