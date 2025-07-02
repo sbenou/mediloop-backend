@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,11 +29,11 @@ const EmailTemplatePreview = () => {
     welcome: `
       <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; padding: 40px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
         <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="color: #18181b; font-size: 24px; margin: 0;">Welcome to Luxmed!</h1>
+          <h1 style="color: #18181b; font-size: 24px; margin: 0;">Welcome to Mediloop!</h1>
         </div>
         <div style="color: #52525b; font-size: 16px; line-height: 24px; margin-bottom: 30px;">
           <p>Hello ${templateData.welcome.UserName},</p>
-          <p>Welcome to Luxmed! Your account has been successfully created and verified.</p>
+          <p>Welcome to Mediloop! Your account has been successfully created and verified.</p>
           <p>You can now access all the features available to ${templateData.welcome.UserRole} users.</p>
         </div>
         <div style="text-align: center; margin: 30px 0;">
@@ -56,7 +55,7 @@ const EmailTemplatePreview = () => {
             Need help? Contact our support team anytime.
           </p>
           <p style="color: #71717a; font-size: 14px; margin: 5px 0;">
-            © 2024 Luxmed. All rights reserved.
+            © 2024 Mediloop. All rights reserved.
           </p>
         </div>
       </div>
@@ -86,7 +85,7 @@ const EmailTemplatePreview = () => {
         </div>
         <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e4e4e7;">
           <p style="color: #71717a; font-size: 14px; margin: 5px 0;">
-            © 2024 Luxmed. All rights reserved.
+            © 2024 Mediloop. All rights reserved.
           </p>
         </div>
       </div>
@@ -120,7 +119,7 @@ const EmailTemplatePreview = () => {
             If you didn't request a password reset, please contact our support team immediately.
           </p>
           <p style="color: #71717a; font-size: 14px; margin: 5px 0;">
-            © 2024 Luxmed. All rights reserved.
+            © 2024 Mediloop. All rights reserved.
           </p>
         </div>
       </div>
@@ -147,7 +146,7 @@ const EmailTemplatePreview = () => {
         </div>
         <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e4e4e7;">
           <p style="color: #71717a; font-size: 14px; margin: 5px 0;">
-            © 2024 Luxmed. All rights reserved.
+            © 2024 Mediloop. All rights reserved.
           </p>
         </div>
       </div>
