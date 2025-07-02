@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -34,7 +33,7 @@ const EmailTemplatePreview = () => {
     }
   };
 
-  // Template content matching exactly the Mediloop templates with Luxmed replaced by Mediloop
+  // Template content matching exactly the Mediloop templates with proper styling
   const templates = {
     'confirm-signup': `
       <!DOCTYPE html>
@@ -133,10 +132,40 @@ const EmailTemplatePreview = () => {
     'change-email': `
       <!DOCTYPE html>
       <html>
-      <body>
-          <h2>Confirm Change of Email</h2>
-          <p>Follow this link to confirm the update of your email from ${templateData['change-email'].Email} to ${templateData['change-email'].NewEmail}:</p>
-          <p><a href="${templateData['change-email'].ConfirmationURL}">Change Email</a></p>
+      <body style="margin: 0; padding: 20px; background-color: #f4f4f5; font-family: Arial, sans-serif;">
+          <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; padding: 40px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+              <!-- Header -->
+              <div style="text-align: center; margin-bottom: 30px;">
+                  <h1 style="color: #18181b; font-size: 24px; margin: 0;">Confirm Change of Email</h1>
+              </div>
+
+              <!-- Main Content -->
+              <div style="color: #52525b; font-size: 16px; line-height: 24px; margin-bottom: 30px;">
+                  <p>Hello,</p>
+                  <p>Follow this link to confirm the update of your email from ${templateData['change-email'].Email} to ${templateData['change-email'].NewEmail}:</p>
+              </div>
+
+              <!-- Action Button -->
+              <div style="text-align: center; margin: 30px 0;">
+                  <a href="${templateData['change-email'].ConfirmationURL}" style="display: inline-block; background-color: #3b82f6; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">Change Email</a>
+              </div>
+
+              <!-- Alternative Link -->
+              <div style="margin-bottom: 30px; text-align: center;">
+                  <p style="color: #71717a; font-size: 14px;">If the button doesn't work, copy and paste this link in your browser:</p>
+                  <p style="color: #3b82f6; font-size: 14px; word-break: break-all;">${templateData['change-email'].ConfirmationURL}</p>
+              </div>
+
+              <!-- Security Notice -->
+              <div style="border-top: 1px solid #e4e4e7; padding-top: 20px; margin-top: 20px;">
+                  <p style="color: #71717a; font-size: 14px; margin: 0;">For security reasons, this link will expire in 24 hours. If you didn't request this email change, please contact our support team immediately.</p>
+              </div>
+
+              <!-- Footer -->
+              <div style="text-align: center; margin-top: 30px; color: #71717a; font-size: 14px;">
+                  <p style="margin: 5px 0;">© 2024 Mediloop. All rights reserved.</p>
+              </div>
+          </div>
       </body>
       </html>
     `,
@@ -193,9 +222,39 @@ const EmailTemplatePreview = () => {
     'reauthentication': `
       <!DOCTYPE html>
       <html>
-      <body>
-          <h2>Confirm reauthentication</h2>
-          <p>Enter the code: ${templateData['reauthentication'].Token}</p>
+      <body style="margin: 0; padding: 20px; background-color: #f4f4f5; font-family: Arial, sans-serif;">
+          <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; padding: 40px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+              <!-- Header -->
+              <div style="text-align: center; margin-bottom: 30px;">
+                  <h1 style="color: #18181b; font-size: 24px; margin: 0;">Confirm Reauthentication</h1>
+              </div>
+
+              <!-- Main Content -->
+              <div style="color: #52525b; font-size: 16px; line-height: 24px; margin-bottom: 30px;">
+                  <p>Hello,</p>
+                  <p>For security purposes, we need to verify your identity. Please enter the code below to confirm your reauthentication:</p>
+                  <div style="text-align: center; margin: 30px 0;">
+                      <div style="font-size: 32px; font-weight: bold; color: #3b82f6; letter-spacing: 4px; padding: 20px; background-color: #f8fafc; border-radius: 6px;">
+                          ${templateData['reauthentication'].Token}
+                      </div>
+                  </div>
+                  <p>Enter this code to continue with your account verification.</p>
+              </div>
+
+              <!-- Security Notice -->
+              <div style="margin: 30px 0; padding: 20px; background-color: #f8fafc; border-radius: 6px;">
+                  <p style="color: #64748b; font-size: 14px; margin: 0;">
+                      For security reasons, this code will expire in 10 minutes. If you didn't request this verification, please contact our support team immediately.
+                  </p>
+              </div>
+
+              <!-- Footer -->
+              <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e4e4e7;">
+                  <p style="color: #71717a; font-size: 14px; margin: 5px 0;">
+                      © 2024 Mediloop. All rights reserved.
+                  </p>
+              </div>
+          </div>
       </body>
       </html>
     `
