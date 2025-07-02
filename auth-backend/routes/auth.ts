@@ -7,19 +7,19 @@ import { kvStore } from "../services/kvStore.ts"
 
 const authRoutes = new Hono()
 
-// User registration endpoint (NEW - V2 independent)
+// User registration endpoint (UPDATED - V2 with tenant creation)
 authRoutes.post('/register', async (c) => {
   try {
-    const { email, password, fullName, role = 'patient' } = await c.req.json()
+    const { email, password, fullName, role = 'patient', workplaceName, pharmacyName } = await c.req.json()
     
     if (!email || !password || !fullName) {
       return c.json({ error: 'Email, password, and full name are required' }, 400)
     }
 
-    console.log('V2 Registration: Attempting registration for:', email)
+    console.log('V2 Registration: Attempting registration for:', email, 'with role:', role)
 
-    // Register user using our independent service
-    const profile = await registrationService.registerUser(email, password, fullName, role)
+    // Register user using our independent service (now includes tenant creation)
+    const profile = await registrationService.registerUser(email, password, fullName, role, workplaceName, pharmacyName)
 
     // Create JWT token
     const jwtToken = await jwtService.createToken(
@@ -49,7 +49,8 @@ authRoutes.post('/register', async (c) => {
         id: profile.id,
         email: profile.email,
         role: profile.role,
-        full_name: profile.full_name
+        full_name: profile.full_name,
+        tenant_id: profile.tenant_id
       }
     })
   } catch (error) {
@@ -58,7 +59,7 @@ authRoutes.post('/register', async (c) => {
   }
 })
 
-// Login with email/password (UPDATED - V2 independent)
+// Login with email/password (UPDATED - V2 with proper role handling)
 authRoutes.post('/login', async (c) => {
   try {
     const { email, password } = await c.req.json()
@@ -69,16 +70,16 @@ authRoutes.post('/login', async (c) => {
 
     console.log('V2 Login: Attempting login for:', email)
 
-    // Verify password using our independent service (no Supabase Auth)
+    // Verify password using our independent service
     const profile = await databaseService.verifyUserPassword(email, password)
 
     console.log('V2 Login: Password verification successful for:', email)
 
-    // Create JWT token
+    // Create JWT token with proper role information
     const jwtToken = await jwtService.createToken(
       profile.id,
       profile.email,
-      profile.role,
+      profile.role, // This now comes from the roles table join
       profile.tenant_id
     )
 
@@ -102,7 +103,8 @@ authRoutes.post('/login', async (c) => {
         id: profile.id,
         email: profile.email,
         role: profile.role,
-        full_name: profile.full_name
+        full_name: profile.full_name,
+        tenant_id: profile.tenant_id
       }
     })
   } catch (error) {

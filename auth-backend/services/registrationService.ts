@@ -1,6 +1,8 @@
 
 import { databaseService } from "./databaseService.ts"
 import { passwordService } from "./passwordService.ts"
+import { postgresService } from "./postgresService.ts"
+import { emailService } from "./emailService.ts"
 
 export class RegistrationService {
   validateEmail(email: string): { isValid: boolean; error?: string } {
@@ -27,8 +29,8 @@ export class RegistrationService {
     }
   }
 
-  async registerUser(email: string, password: string, fullName: string, role: string = 'patient') {
-    console.log('Registration attempt for:', email);
+  async registerUser(email: string, password: string, fullName: string, role: string = 'patient', workplaceName?: string, pharmacyName?: string) {
+    console.log('Registration attempt for:', email, 'with role:', role);
 
     // Validate email
     const emailValidation = this.validateEmail(email);
@@ -61,8 +63,27 @@ export class RegistrationService {
       role
     );
 
+    // Create tenant for the user (all users get their own tenant)
+    await postgresService.createTenant(userId, role, fullName, workplaceName, pharmacyName);
+
+    // Send welcome email
+    const loginUrl = `${Deno.env.get('FRONTEND_URL') || 'http://localhost:5173'}/login`;
+    await emailService.sendWelcomeEmail(email, fullName, role, loginUrl);
+
     console.log('User registered successfully:', userId);
     return newProfile;
+  }
+
+  async sendEmailConfirmation(email: string, confirmationUrl: string) {
+    return await emailService.sendEmailConfirmation(email, confirmationUrl);
+  }
+
+  async sendPasswordReset(email: string, resetUrl: string) {
+    return await emailService.sendPasswordReset(email, resetUrl);
+  }
+
+  async sendLoginCode(email: string, code: string) {
+    return await emailService.sendLoginCode(email, code);
   }
 }
 
