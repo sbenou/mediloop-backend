@@ -136,9 +136,20 @@ const EmailTemplatePreview = () => {
               <!-- Invitation Details -->
               <div style="margin: 30px 0; padding: 20px; background-color: #f8fafc; border-radius: 6px; border-left: 4px solid #10b981;">
                   <h3 style="color: #18181b; font-size: 16px; margin: 0 0 10px 0;">Invitation Details:</h3>
-                  <p style="color: #52525b; font-size: 14px; margin: 5px 0;"><strong>Invited by:</strong> {{ .InviterName }}</p>
-                  <p style="color: #52525b; font-size: 14px; margin: 5px 0;"><strong>Organization:</strong> {{ .WorkplaceName }}</p>
-                  <p style="color: #52525b; font-size: 14px; margin: 5px 0;"><strong>Role:</strong> {{ .InvitationType }}</p>
+                  <table style="width: 100%; border-collapse: collapse;">
+                      <tr>
+                          <td style="color: #52525b; font-size: 14px; padding: 2px 10px 2px 0; text-align: right; font-weight: bold; vertical-align: top; width: 40%;">Invited by:</td>
+                          <td style="color: #52525b; font-size: 14px; padding: 2px 0; text-align: left; vertical-align: top;">{{ .InviterName }}</td>
+                      </tr>
+                      <tr>
+                          <td style="color: #52525b; font-size: 14px; padding: 2px 10px 2px 0; text-align: right; font-weight: bold; vertical-align: top; width: 40%;">Organization:</td>
+                          <td style="color: #52525b; font-size: 14px; padding: 2px 0; text-align: left; vertical-align: top;">{{ .WorkplaceName }}</td>
+                      </tr>
+                      <tr>
+                          <td style="color: #52525b; font-size: 14px; padding: 2px 10px 2px 0; text-align: right; font-weight: bold; vertical-align: top; width: 40%;">Role:</td>
+                          <td style="color: #52525b; font-size: 14px; padding: 2px 0; text-align: left; vertical-align: top;">{{ .InvitationType }}</td>
+                      </tr>
+                  </table>
               </div>
 
               <!-- Security Notice -->
@@ -191,8 +202,16 @@ const EmailTemplatePreview = () => {
               <!-- Connection Details -->
               <div style="margin: 30px 0; padding: 20px; background-color: #f8fafc; border-radius: 6px; border-left: 4px solid #3b82f6;">
                   <h3 style="color: #18181b; font-size: 16px; margin: 0 0 10px 0;">Connection Details:</h3>
-                  <p style="color: #52525b; font-size: 14px; margin: 5px 0;"><strong>Requesting connection:</strong> {{ .InviterTitle }} {{ .InviterName }}</p>
-                  <p style="color: #52525b; font-size: 14px; margin: 5px 0;"><strong>Role:</strong> {{ .InviterRole }}</p>
+                  <table style="width: 100%; border-collapse: collapse;">
+                      <tr>
+                          <td style="color: #52525b; font-size: 14px; padding: 2px 10px 2px 0; text-align: right; font-weight: bold; vertical-align: top; width: 40%;">Requesting connection:</td>
+                          <td style="color: #52525b; font-size: 14px; padding: 2px 0; text-align: left; vertical-align: top;">{{ .InviterTitle }} {{ .InviterName }}</td>
+                      </tr>
+                      <tr>
+                          <td style="color: #52525b; font-size: 14px; padding: 2px 10px 2px 0; text-align: right; font-weight: bold; vertical-align: top; width: 40%;">Role:</td>
+                          <td style="color: #52525b; font-size: 14px; padding: 2px 0; text-align: left; vertical-align: top;">{{ .InviterRole }}</td>
+                      </tr>
+                  </table>
               </div>
 
               <!-- Security Notice -->
@@ -239,9 +258,20 @@ const EmailTemplatePreview = () => {
               <!-- Connection Details -->
               <div style="margin: 30px 0; padding: 20px; background-color: #f8fafc; border-radius: 6px; border-left: 4px solid #10b981;">
                   <h3 style="color: #18181b; font-size: 16px; margin: 0 0 10px 0;">Connection Details:</h3>
-                  <p style="color: #52525b; font-size: 14px; margin: 5px 0;"><strong>Connected with:</strong> {{ .ResponderTitle }} {{ .ResponderName }}</p>
-                  <p style="color: #52525b; font-size: 14px; margin: 5px 0;"><strong>Role:</strong> {{ .ResponderRole }}</p>
-                  <p style="color: #52525b; font-size: 14px; margin: 5px 0;"><strong>Status:</strong> Connected</p>
+                  <table style="width: 100%; border-collapse: collapse;">
+                      <tr>
+                          <td style="color: #52525b; font-size: 14px; padding: 2px 10px 2px 0; text-align: right; font-weight: bold; vertical-align: top; width: 40%;">Connected with:</td>
+                          <td style="color: #52525b; font-size: 14px; padding: 2px 0; text-align: left; vertical-align: top;">{{ .ResponderTitle }} {{ .ResponderName }}</td>
+                      </tr>
+                      <tr>
+                          <td style="color: #52525b; font-size: 14px; padding: 2px 10px 2px 0; text-align: right; font-weight: bold; vertical-align: top; width: 40%;">Role:</td>
+                          <td style="color: #52525b; font-size: 14px; padding: 2px 0; text-align: left; vertical-align: top;">{{ .ResponderRole }}</td>
+                      </tr>
+                      <tr>
+                          <td style="color: #52525b; font-size: 14px; padding: 2px 10px 2px 0; text-align: right; font-weight: bold; vertical-align: top; width: 40%;">Status:</td>
+                          <td style="color: #52525b; font-size: 14px; padding: 2px 0; text-align: left; vertical-align: top;">Connected</td>
+                      </tr>
+                  </table>
               </div>
 
               <!-- Security Notice -->
