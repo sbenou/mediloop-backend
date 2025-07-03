@@ -4,6 +4,7 @@ import emailTemplateRouter from "./routes/emailTemplates.ts";
 import paymentsRouter from "./routes/payments.ts";
 import orderEmailsRouter from "./routes/orderEmails.ts";
 import loginEmailsRouter from "./routes/loginEmails.ts";
+import healthCheckRouter from "./routes/healthCheck.ts";
 
 const app = new Application();
 
@@ -22,6 +23,9 @@ app.use(async (ctx, next) => {
 });
 
 // Add all routers
+app.use(healthCheckRouter.routes());
+app.use(healthCheckRouter.allowedMethods());
+
 app.use(emailTemplateRouter.routes());
 app.use(emailTemplateRouter.allowedMethods());
 
