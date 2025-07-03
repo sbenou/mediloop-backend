@@ -32,15 +32,8 @@ export const DatabaseConnectivityTest = () => {
     role: 'patient'
   });
 
-  // Get the appropriate backend URL based on environment
+  // Backend URL - always point to the Neon database backend
   const getBackendUrl = () => {
-    // Check if we're in Lovable preview environment
-    if (window.location.hostname.includes('lovableproject.com')) {
-      // For Lovable preview, we should use a deployed backend or Supabase Edge Functions
-      // Since localhost:8000 won't work from Lovable preview environment
-      return 'https://hrrlefgnhkbzuwyklejj.supabase.co/functions/v1';
-    }
-    // For local development
     return 'http://localhost:8000';
   };
 
@@ -48,17 +41,13 @@ export const DatabaseConnectivityTest = () => {
     setLoading('health');
     try {
       const backendUrl = getBackendUrl();
-      console.log('Attempting to connect to backend at:', backendUrl);
+      console.log('Attempting to connect to Neon database backend at:', backendUrl);
       
-      // If we're using Supabase functions, we need to adjust the endpoint
-      const endpoint = backendUrl.includes('supabase.co') 
-        ? `${backendUrl}/health-check` 
-        : `${backendUrl}/api/health`;
-      
-      const response = await fetch(endpoint, {
-        headers: backendUrl.includes('supabase.co') ? {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaGtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U'}`
-        } : {}
+      const response = await fetch(`${backendUrl}/api/health`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
       });
       
       if (!response.ok) {
@@ -88,17 +77,10 @@ export const DatabaseConnectivityTest = () => {
     setLoading('user');
     try {
       const backendUrl = getBackendUrl();
-      const endpoint = backendUrl.includes('supabase.co') 
-        ? `${backendUrl}/test-user-creation` 
-        : `${backendUrl}/api/test-user-creation`;
-        
-      const response = await fetch(endpoint, {
+      const response = await fetch(`${backendUrl}/api/test-user-creation`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          ...(backendUrl.includes('supabase.co') ? {
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaGtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U'}`
-          } : {})
         },
         body: JSON.stringify({ ...testUserData, testMode: true })
       });
@@ -130,17 +112,10 @@ export const DatabaseConnectivityTest = () => {
     setLoading('email');
     try {
       const backendUrl = getBackendUrl();
-      const endpoint = backendUrl.includes('supabase.co') 
-        ? `${backendUrl}/test-email` 
-        : `${backendUrl}/api/test-email`;
-        
-      const response = await fetch(endpoint, {
+      const response = await fetch(`${backendUrl}/api/test-email`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          ...(backendUrl.includes('supabase.co') ? {
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaGtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U'}`
-          } : {})
         },
         body: JSON.stringify({ email: testEmail, testType: 'connectivity' })
       });
@@ -182,16 +157,16 @@ export const DatabaseConnectivityTest = () => {
         </CardHeader>
         <CardContent className="space-y-2">
           <div className="text-sm">
-            <strong>Current Environment:</strong> {window.location.hostname.includes('lovableproject.com') ? 'Lovable Preview' : 'Local Development'}
-          </div>
-          <div className="text-sm">
             <strong>Backend URL:</strong> {getBackendUrl()}
           </div>
+          <div className="text-sm">
+            <strong>Database:</strong> Neon PostgreSQL
+          </div>
+          <div className="text-sm">
+            <strong>Storage:</strong> Deno KV
+          </div>
           <div className="text-sm text-amber-600">
-            <strong>Note:</strong> {window.location.hostname.includes('lovableproject.com') 
-              ? 'In preview environment, tests will use Supabase Edge Functions instead of localhost:8000'
-              : 'Make sure your backend server is running on localhost:8000'
-            }
+            <strong>Note:</strong> Make sure your Deno backend server is running on localhost:8000
           </div>
         </CardContent>
       </Card>
@@ -369,15 +344,11 @@ export const DatabaseConnectivityTest = () => {
       <div className="bg-blue-50 p-4 rounded-lg">
         <h3 className="font-medium text-blue-900 mb-2">Testing Instructions:</h3>
         <ol className="text-sm text-blue-800 space-y-1">
-          <li>1. Run the Health Check first to verify database connectivity</li>
-          <li>2. Test user creation with safe mode to validate the process</li>
-          <li>3. Test email service with your email address</li>
-          <li>4. All tests should pass before proceeding to auth flow migration</li>
-          {window.location.hostname.includes('lovableproject.com') && (
-            <li className="text-amber-700 font-medium">
-              Note: Preview environment detected - tests will attempt to use Supabase Edge Functions
-            </li>
-          )}
+          <li>1. Make sure your Deno backend server is running on localhost:8000</li>
+          <li>2. Run the Health Check first to verify Neon database connectivity</li>
+          <li>3. Test user creation with safe mode to validate the process</li>
+          <li>4. Test email service with your email address</li>
+          <li>5. All tests should pass before proceeding to auth flow migration</li>
         </ol>
       </div>
     </div>
