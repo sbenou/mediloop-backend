@@ -43,8 +43,9 @@ const DenoBackendManagement = () => {
   ];
 
   const environmentVariables = [
-    { key: "DATABASE_URL", description: "PostgreSQL database connection string", required: true },
+    { key: "DATABASE_URL", description: "Neon PostgreSQL database connection string", required: true },
     { key: "JWT_SECRET", description: "Secret key for JWT token signing", required: true },
+    { key: "RESEND_API_KEY", description: "Resend email service API key", required: true },
     { key: "GOOGLE_CLIENT_ID", description: "Google OAuth client ID", required: false },
     { key: "GOOGLE_CLIENT_SECRET", description: "Google OAuth client secret", required: false },
     { key: "FRANCECONNECT_CLIENT_ID", description: "FranceConnect OAuth client ID", required: false },
@@ -52,9 +53,7 @@ const DenoBackendManagement = () => {
     { key: "LUXTRUST_CLIENT_ID", description: "LuxTrust OAuth client ID", required: false },
     { key: "LUXTRUST_CLIENT_SECRET", description: "LuxTrust OAuth client secret", required: false },
     { key: "FRONTEND_URL", description: "Frontend application URL", required: true },
-    { key: "SERVICE_URL", description: "Backend service URL", required: true },
-    { key: "SUPABASE_URL", description: "Supabase project URL (during transition)", required: false },
-    { key: "SUPABASE_SERVICE_ROLE_KEY", description: "Supabase service role key (during transition)", required: false }
+    { key: "SERVICE_URL", description: "Backend service URL", required: true }
   ];
 
   const simulateTerminalOutput = (command: string) => {
@@ -63,15 +62,18 @@ const DenoBackendManagement = () => {
     
     // Simulate starting the server
     setTimeout(() => {
-      setTerminalOutput(prev => prev + "Auth Backend Service starting on port 8000...\n");
+      setTerminalOutput(prev => prev + "Deno Backend Service starting on port 8000...\n");
     }, 500);
 
     setTimeout(() => {
       setTerminalOutput(prev => prev + "✅ Server is running at http://localhost:8000\n");
-      setTerminalOutput(prev => prev + "📋 Health check available at: http://localhost:8000/health\n");
+      setTerminalOutput(prev => prev + "📋 Health check available at: http://localhost:8000/api/health\n");
       setTerminalOutput(prev => prev + "🔐 Auth endpoints: /auth/*\n");
       setTerminalOutput(prev => prev + "🇱🇺 LuxTrust endpoints: /luxtrust/*\n");
       setTerminalOutput(prev => prev + "🔗 OAuth endpoints: /oauth/*\n");
+      setTerminalOutput(prev => prev + "📧 Email endpoints: /api/test-email\n");
+      setTerminalOutput(prev => prev + "👤 User test endpoints: /api/test-user-creation\n");
+      setTerminalOutput(prev => prev + "🗄️ Connected to Neon PostgreSQL database\n");
     }, 1000);
   };
 
@@ -103,14 +105,14 @@ const DenoBackendManagement = () => {
               <ul className="list-disc list-inside space-y-1 text-sm">
                 <li>Deno runtime installed on your system</li>
                 <li>Environment variables configured (see below)</li>
-                <li>Database connection available</li>
+                <li>Neon PostgreSQL database connection available</li>
               </ul>
             </div>
             
             <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-400">
               <p className="text-sm">
                 <strong>Note:</strong> The backend service runs independently and provides authentication, 
-                LuxTrust integration, and OAuth services for the main application.
+                LuxTrust integration, OAuth services, and database connectivity to your Neon PostgreSQL database.
               </p>
             </div>
           </CardContent>
@@ -219,7 +221,7 @@ const DenoBackendManagement = () => {
           </CardContent>
         </Card>
 
-        {/* Service Status */}
+        {/* Service Endpoints */}
         <Card>
           <CardHeader>
             <CardTitle>Service Endpoints</CardTitle>
@@ -228,10 +230,24 @@ const DenoBackendManagement = () => {
             <div className="space-y-3">
               <div className="flex items-center justify-between p-3 border rounded-lg">
                 <div>
-                  <code className="text-sm font-mono">http://localhost:8000/health</code>
-                  <p className="text-sm text-muted-foreground">Health check endpoint</p>
+                  <code className="text-sm font-mono">http://localhost:8000/api/health</code>
+                  <p className="text-sm text-muted-foreground">Health check and database connectivity test</p>
                 </div>
                 <CheckCircle className="h-5 w-5 text-green-500" />
+              </div>
+              
+              <div className="flex items-center justify-between p-3 border rounded-lg">
+                <div>
+                  <code className="text-sm font-mono">http://localhost:8000/api/test-user-creation</code>
+                  <p className="text-sm text-muted-foreground">Test user creation process</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between p-3 border rounded-lg">
+                <div>
+                  <code className="text-sm font-mono">http://localhost:8000/api/test-email</code>
+                  <p className="text-sm text-muted-foreground">Test email service connectivity</p>
+                </div>
               </div>
               
               <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -254,6 +270,24 @@ const DenoBackendManagement = () => {
                   <p className="text-sm text-muted-foreground">OAuth provider endpoints</p>
                 </div>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Database Connection Info */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Database Connection</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-green-50 p-4 rounded-lg border-l-4 border-green-400">
+              <h3 className="font-semibold text-green-900 mb-2">Neon PostgreSQL Database</h3>
+              <ul className="text-sm text-green-800 space-y-1">
+                <li>• Connected to your Neon PostgreSQL database</li>
+                <li>• SSL/TLS encrypted connection</li>
+                <li>• Pooled connections for better performance</li>
+                <li>• Health checks verify database connectivity</li>
+              </ul>
             </div>
           </CardContent>
         </Card>
