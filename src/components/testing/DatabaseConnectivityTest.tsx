@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +11,12 @@ interface TestResult {
   tests?: any;
   error?: string;
   timestamp?: string;
+  validations?: {
+    emailAvailable: boolean;
+    roleExists: boolean;
+    availableRoles: any[];
+  };
+  emailId?: string;
 }
 
 export const DatabaseConnectivityTest = () => {
