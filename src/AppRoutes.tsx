@@ -28,6 +28,7 @@ import BecomePartner from './pages/BecomePartner';
 // import PasswordReset from './pages/PasswordReset';
 // import MagicLink from './pages/MagicLink';
 import DatabaseTest from "@/pages/DatabaseTest";
+import DenoBackendManagement from "@/pages/DenoBackendManagement";
 
 const AppRoutes = () => {
   return (
@@ -61,6 +62,9 @@ const AppRoutes = () => {
       
       {/* Test route for database connectivity */}
       <Route path="/database-test" element={<DatabaseTest />} />
+      
+      {/* Deno Backend Management */}
+      <Route path="/deno-backend" element={<DenoBackendManagement />} />
     </Routes>
   );
 };
