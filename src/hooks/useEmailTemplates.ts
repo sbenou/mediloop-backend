@@ -174,6 +174,38 @@ export const useEmailTemplates = () => {
     });
   };
 
+  // Updated method for login emails - now calls Deno backend
+  const sendLoginEmail = async (email: string, otp: string) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('http://localhost:8000/api/send-login-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          otp
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send login email');
+      }
+
+      return await response.json();
+    } catch (err: any) {
+      const errorMessage = err.message || 'Failed to send login email';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     loading,
     error,
@@ -187,6 +219,7 @@ export const useEmailTemplates = () => {
     sendConnectionResponse,
     sendMagicLinkEmail,
     sendPasswordResetEmail,
-    sendMedicationOrderEmail, // New helper method
+    sendMedicationOrderEmail,
+    sendLoginEmail, // New method for login emails
   };
 };
