@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,13 +32,43 @@ export const DatabaseConnectivityTest = () => {
     role: 'patient'
   });
 
+  // Get the appropriate backend URL based on environment
+  const getBackendUrl = () => {
+    // Check if we're in Lovable preview environment
+    if (window.location.hostname.includes('lovableproject.com')) {
+      // For Lovable preview, we should use a deployed backend or Supabase Edge Functions
+      // Since localhost:8000 won't work from Lovable preview environment
+      return 'https://hrrlefgnhkbzuwyklejj.supabase.co/functions/v1';
+    }
+    // For local development
+    return 'http://localhost:8000';
+  };
+
   const runHealthCheck = async () => {
     setLoading('health');
     try {
-      const response = await fetch('http://localhost:8000/api/health');
+      const backendUrl = getBackendUrl();
+      console.log('Attempting to connect to backend at:', backendUrl);
+      
+      // If we're using Supabase functions, we need to adjust the endpoint
+      const endpoint = backendUrl.includes('supabase.co') 
+        ? `${backendUrl}/health-check` 
+        : `${backendUrl}/api/health`;
+      
+      const response = await fetch(endpoint, {
+        headers: backendUrl.includes('supabase.co') ? {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaGtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U'}`
+        } : {}
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
       const result = await response.json();
       setHealthResult(result);
     } catch (error) {
+      console.error('Health check error:', error);
       setHealthResult({
         success: false,
         error: error.message,
@@ -56,14 +87,30 @@ export const DatabaseConnectivityTest = () => {
 
     setLoading('user');
     try {
-      const response = await fetch('http://localhost:8000/api/test-user-creation', {
+      const backendUrl = getBackendUrl();
+      const endpoint = backendUrl.includes('supabase.co') 
+        ? `${backendUrl}/test-user-creation` 
+        : `${backendUrl}/api/test-user-creation`;
+        
+      const response = await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(backendUrl.includes('supabase.co') ? {
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaGtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U'}`
+          } : {})
+        },
         body: JSON.stringify({ ...testUserData, testMode: true })
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
       const result = await response.json();
       setUserTestResult(result);
     } catch (error) {
+      console.error('User creation test error:', error);
       setUserTestResult({
         success: false,
         error: error.message,
@@ -82,14 +129,30 @@ export const DatabaseConnectivityTest = () => {
 
     setLoading('email');
     try {
-      const response = await fetch('http://localhost:8000/api/test-email', {
+      const backendUrl = getBackendUrl();
+      const endpoint = backendUrl.includes('supabase.co') 
+        ? `${backendUrl}/test-email` 
+        : `${backendUrl}/api/test-email`;
+        
+      const response = await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(backendUrl.includes('supabase.co') ? {
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaGtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U'}`
+          } : {})
+        },
         body: JSON.stringify({ email: testEmail, testType: 'connectivity' })
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
       const result = await response.json();
       setEmailTestResult(result);
     } catch (error) {
+      console.error('Email test error:', error);
       setEmailTestResult({
         success: false,
         error: error.message,
@@ -108,6 +171,30 @@ export const DatabaseConnectivityTest = () => {
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <h1 className="text-2xl font-bold mb-6">Database Connectivity Tests</h1>
+      
+      {/* Environment Info */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Database className="h-5 w-5" />
+            Environment Information
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <div className="text-sm">
+            <strong>Current Environment:</strong> {window.location.hostname.includes('lovableproject.com') ? 'Lovable Preview' : 'Local Development'}
+          </div>
+          <div className="text-sm">
+            <strong>Backend URL:</strong> {getBackendUrl()}
+          </div>
+          <div className="text-sm text-amber-600">
+            <strong>Note:</strong> {window.location.hostname.includes('lovableproject.com') 
+              ? 'In preview environment, tests will use Supabase Edge Functions instead of localhost:8000'
+              : 'Make sure your backend server is running on localhost:8000'
+            }
+          </div>
+        </CardContent>
+      </Card>
       
       {/* Health Check */}
       <Card>
@@ -286,6 +373,11 @@ export const DatabaseConnectivityTest = () => {
           <li>2. Test user creation with safe mode to validate the process</li>
           <li>3. Test email service with your email address</li>
           <li>4. All tests should pass before proceeding to auth flow migration</li>
+          {window.location.hostname.includes('lovableproject.com') && (
+            <li className="text-amber-700 font-medium">
+              Note: Preview environment detected - tests will attempt to use Supabase Edge Functions
+            </li>
+          )}
         </ol>
       </div>
     </div>
