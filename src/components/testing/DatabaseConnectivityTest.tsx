@@ -12,12 +12,6 @@ interface TestResult {
   tests?: any;
   error?: string;
   timestamp?: string;
-  validations?: {
-    emailAvailable: boolean;
-    roleExists: boolean;
-    availableRoles?: any[];
-  };
-  emailId?: string;
 }
 
 export const DatabaseConnectivityTest = () => {
@@ -38,7 +32,7 @@ export const DatabaseConnectivityTest = () => {
       const response = await fetch('http://localhost:8000/api/health');
       const result = await response.json();
       setHealthResult(result);
-    } catch (error: any) {
+    } catch (error) {
       setHealthResult({
         success: false,
         error: error.message,
@@ -64,7 +58,7 @@ export const DatabaseConnectivityTest = () => {
       });
       const result = await response.json();
       setUserTestResult(result);
-    } catch (error: any) {
+    } catch (error) {
       setUserTestResult({
         success: false,
         error: error.message,
@@ -90,7 +84,7 @@ export const DatabaseConnectivityTest = () => {
       });
       const result = await response.json();
       setEmailTestResult(result);
-    } catch (error: any) {
+    } catch (error) {
       setEmailTestResult({
         success: false,
         error: error.message,
