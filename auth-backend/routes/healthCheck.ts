@@ -6,36 +6,49 @@ const router = new Router();
 
 // Health check endpoint to test database connectivity
 router.get("/api/health", async (ctx) => {
-  console.log('=== Health Check Started ===');
+  console.log('🏥 === Health Check Started ===');
+  console.log('📋 Request method:', ctx.request.method);
+  console.log('📋 Request URL:', ctx.request.url.pathname);
+  console.log('📋 Request headers:', Object.fromEntries(ctx.request.headers.entries()));
   
   try {
+    // Ensure CORS headers are set (backup in case global middleware fails)
+    console.log('🔧 Setting backup CORS headers...');
+    ctx.response.headers.set("Access-Control-Allow-Origin", "https://preview--mediloop.lovable.app");
+    ctx.response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    ctx.response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Client-Info, ApiKey");
+    ctx.response.headers.set("Access-Control-Allow-Credentials", "false");
+    
     // Test basic database connection
+    console.log('🔌 Testing database connection...');
     const connectionTest = await postgresService.query('SELECT 1 as test');
-    console.log('Database connection test:', connectionTest.rows);
+    console.log('✅ Database connection test:', connectionTest.rows);
 
     // Test profiles table structure
+    console.log('🏗️ Testing profiles table structure...');
     const profilesStructure = await postgresService.query(`
       SELECT column_name, data_type, is_nullable 
       FROM information_schema.columns 
       WHERE table_name = 'profiles' AND table_schema = 'public'
       ORDER BY ordinal_position
     `);
-    console.log('Profiles table structure:', profilesStructure.rows);
+    console.log('✅ Profiles table structure:', profilesStructure.rows);
 
     // Test roles table
+    console.log('👥 Testing roles table...');
     const rolesTest = await postgresService.query('SELECT id, name FROM roles LIMIT 5');
-    console.log('Roles table test:', rolesTest.rows);
+    console.log('✅ Roles table test:', rolesTest.rows);
 
     // Test a simple profile query (should return empty if no profiles exist)
+    console.log('👤 Testing profile count...');
     const profileCount = await postgresService.query('SELECT COUNT(*) as count FROM profiles');
-    console.log('Profile count:', profileCount.rows);
+    console.log('✅ Profile count:', profileCount.rows);
 
     // Test user creation simulation (without actually creating)
     const testUserId = crypto.randomUUID();
-    console.log('Generated test UUID:', testUserId);
+    console.log('🔑 Generated test UUID:', testUserId);
 
-    ctx.response.status = 200;
-    ctx.response.body = {
+    const responseData = {
       success: true,
       message: 'Database connectivity test passed',
       tests: {
@@ -45,22 +58,48 @@ router.get("/api/health", async (ctx) => {
         profileCount: profileCount.rows[0]?.count || 0,
         testUuid: testUserId
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      server: 'Deno backend',
+      corsHeaders: Object.fromEntries(ctx.response.headers.entries())
     };
+
+    console.log('📤 Sending successful response:', responseData);
+    ctx.response.status = 200;
+    ctx.response.body = responseData;
+    
   } catch (error) {
-    console.error('Health check failed:', error);
-    ctx.response.status = 500;
-    ctx.response.body = { 
+    console.error('❌ Health check failed:', error);
+    console.error('❌ Error stack:', error.stack);
+    console.error('❌ Error name:', error.name);
+    console.error('❌ Error message:', error.message);
+    
+    // Ensure CORS headers are set even on error
+    ctx.response.headers.set("Access-Control-Allow-Origin", "https://preview--mediloop.lovable.app");
+    ctx.response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    ctx.response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Client-Info, ApiKey");
+    ctx.response.headers.set("Access-Control-Allow-Credentials", "false");
+    
+    const errorResponse = { 
       success: false,
       error: error.message,
-      timestamp: new Date().toISOString()
+      errorName: error.name,
+      errorStack: error.stack,
+      timestamp: new Date().toISOString(),
+      server: 'Deno backend',
+      corsHeaders: Object.fromEntries(ctx.response.headers.entries())
     };
+    
+    console.log('📤 Sending error response:', errorResponse);
+    ctx.response.status = 500;
+    ctx.response.body = errorResponse;
   }
+  
+  console.log('🏥 === Health Check Completed ===');
 });
 
 // Test user creation endpoint (safe test mode)
 router.post("/api/test-user-creation", async (ctx) => {
-  console.log('=== Testing User Creation Process ===');
+  console.log('👤 === Testing User Creation Process ===');
   
   try {
     const body = await ctx.request.body().value;
@@ -127,7 +166,7 @@ router.post("/api/test-user-creation", async (ctx) => {
 
 // Test email service connectivity
 router.post("/api/test-email", async (ctx) => {
-  console.log('=== Testing Email Service ===');
+  console.log('📧 === Testing Email Service ===');
   
   try {
     const body = await ctx.request.body().value;
