@@ -1,25 +1,19 @@
-
 import { Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 import { postgresService } from "../services/postgresService.ts";
 
 const router = new Router();
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
 // Add CORS middleware for all routes
 router.use(async (ctx, next) => {
   // Set CORS headers for all requests
-  Object.entries(corsHeaders).forEach(([key, value]) => {
-    ctx.response.headers.set(key, value);
-  });
+  ctx.response.headers.set('Access-Control-Allow-Origin', '*');
+  ctx.response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  ctx.response.headers.set('Access-Control-Allow-Headers', 'authorization, x-client-info, apikey, content-type');
 
   // Handle preflight requests
   if (ctx.request.method === 'OPTIONS') {
     ctx.response.status = 200;
+    ctx.response.body = '';
     return;
   }
 
