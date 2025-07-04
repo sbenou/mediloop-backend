@@ -8,14 +8,22 @@ import healthCheckRouter from "./routes/healthCheck.ts";
 
 const app = new Application();
 
-// Configure CORS
+// Global CORS middleware - must be first
 app.use(async (ctx, next) => {
-  ctx.response.headers.set("Access-Control-Allow-Origin", "*");
-  ctx.response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  ctx.response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  console.log(`${ctx.request.method} ${ctx.request.url.pathname}`);
   
+  // Set CORS headers for all requests
+  ctx.response.headers.set("Access-Control-Allow-Origin", "https://preview--mediloop.lovable.app");
+  ctx.response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  ctx.response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Client-Info, ApiKey");
+  ctx.response.headers.set("Access-Control-Max-Age", "86400");
+  ctx.response.headers.set("Access-Control-Allow-Credentials", "false");
+  
+  // Handle preflight OPTIONS requests
   if (ctx.request.method === "OPTIONS") {
-    ctx.response.status = 200;
+    console.log("Handling OPTIONS preflight request");
+    ctx.response.status = 204;
+    ctx.response.body = null;
     return;
   }
   
