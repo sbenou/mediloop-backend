@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle, Clock, Database, Mail, User } from 'lucide-react';
+import { ServerConnectivityTest } from './ServerConnectivityTest';
 
 interface TestResult {
   success: boolean;
@@ -147,6 +147,9 @@ export const DatabaseConnectivityTest = () => {
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <h1 className="text-2xl font-bold mb-6">Database Connectivity Tests</h1>
       
+      {/* Add the new Server Connectivity Test at the top */}
+      <ServerConnectivityTest />
+      
       {/* Environment Info */}
       <Card>
         <CardHeader>
@@ -167,6 +170,9 @@ export const DatabaseConnectivityTest = () => {
           </div>
           <div className="text-sm text-amber-600">
             <strong>Note:</strong> Make sure your Deno backend server is running on localhost:8000
+          </div>
+          <div className="text-sm text-red-600">
+            <strong>Debug:</strong> Check your browser console and server logs for detailed CORS debugging information
           </div>
         </CardContent>
       </Card>

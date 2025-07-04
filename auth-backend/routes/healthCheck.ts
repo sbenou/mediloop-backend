@@ -1,4 +1,3 @@
-
 import { Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 import { postgresService } from "../services/postgresService.ts";
 
@@ -6,20 +5,13 @@ const router = new Router();
 
 // Health check endpoint to test database connectivity
 router.get("/api/health", async (ctx) => {
-  console.log('🏥 === Health Check Started ===');
-  console.log('📋 Request method:', ctx.request.method);
-  console.log('📋 Request URL:', ctx.request.url.pathname);
-  console.log('📋 Request headers:', Object.fromEntries(ctx.request.headers.entries()));
+  console.log('\n🏥 === HEALTH CHECK ROUTE ENTERED ===');
+  console.log('🏥 Request method:', ctx.request.method);
+  console.log('🏥 Request URL:', ctx.request.url.pathname);
+  console.log('🏥 Request headers:', Object.fromEntries(ctx.request.headers.entries()));
+  console.log('🏥 Current response headers:', Object.fromEntries(ctx.response.headers.entries()));
   
   try {
-    // Ensure CORS headers are set (backup in case global middleware fails)
-    console.log('🔧 Setting backup CORS headers...');
-    ctx.response.headers.set("Access-Control-Allow-Origin", "https://preview--mediloop.lovable.app");
-    ctx.response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    ctx.response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Client-Info, ApiKey");
-    ctx.response.headers.set("Access-Control-Allow-Credentials", "false");
-    
-    // Test basic database connection
     console.log('🔌 Testing database connection...');
     const connectionTest = await postgresService.query('SELECT 1 as test');
     console.log('✅ Database connection test:', connectionTest.rows);
@@ -63,21 +55,21 @@ router.get("/api/health", async (ctx) => {
       corsHeaders: Object.fromEntries(ctx.response.headers.entries())
     };
 
-    console.log('📤 Sending successful response:', responseData);
+    console.log('🏥 Setting successful response...');
+    console.log('📤 Response data:', responseData);
+    
     ctx.response.status = 200;
     ctx.response.body = responseData;
+    
+    console.log('🏥 Health check response set successfully');
+    console.log('📤 Final response status:', ctx.response.status);
+    console.log('📤 Final response headers:', Object.fromEntries(ctx.response.headers.entries()));
     
   } catch (error) {
     console.error('❌ Health check failed:', error);
     console.error('❌ Error stack:', error.stack);
     console.error('❌ Error name:', error.name);
     console.error('❌ Error message:', error.message);
-    
-    // Ensure CORS headers are set even on error
-    ctx.response.headers.set("Access-Control-Allow-Origin", "https://preview--mediloop.lovable.app");
-    ctx.response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    ctx.response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Client-Info, ApiKey");
-    ctx.response.headers.set("Access-Control-Allow-Credentials", "false");
     
     const errorResponse = { 
       success: false,
@@ -89,12 +81,17 @@ router.get("/api/health", async (ctx) => {
       corsHeaders: Object.fromEntries(ctx.response.headers.entries())
     };
     
-    console.log('📤 Sending error response:', errorResponse);
+    console.log('🏥 Setting error response...');
+    console.log('📤 Error response data:', errorResponse);
+    
     ctx.response.status = 500;
     ctx.response.body = errorResponse;
+    
+    console.log('📤 Error response status:', ctx.response.status);
+    console.log('📤 Error response headers:', Object.fromEntries(ctx.response.headers.entries()));
   }
   
-  console.log('🏥 === Health Check Completed ===');
+  console.log('🏥 === HEALTH CHECK ROUTE COMPLETED ===\n');
 });
 
 // Test user creation endpoint (safe test mode)
