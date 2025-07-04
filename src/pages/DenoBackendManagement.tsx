@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,17 +42,17 @@ const DenoBackendManagement = () => {
   ];
 
   const environmentVariables = [
-    { key: "DATABASE_URL", description: "Neon PostgreSQL database connection string", required: true },
-    { key: "JWT_SECRET", description: "Secret key for JWT token signing", required: true },
-    { key: "RESEND_API_KEY", description: "Resend email service API key", required: true },
-    { key: "GOOGLE_CLIENT_ID", description: "Google OAuth client ID", required: false },
-    { key: "GOOGLE_CLIENT_SECRET", description: "Google OAuth client secret", required: false },
-    { key: "FRANCECONNECT_CLIENT_ID", description: "FranceConnect OAuth client ID", required: false },
-    { key: "FRANCECONNECT_CLIENT_SECRET", description: "FranceConnect OAuth client secret", required: false },
-    { key: "LUXTRUST_CLIENT_ID", description: "LuxTrust OAuth client ID", required: false },
-    { key: "LUXTRUST_CLIENT_SECRET", description: "LuxTrust OAuth client secret", required: false },
-    { key: "FRONTEND_URL", description: "Frontend application URL", required: true },
-    { key: "SERVICE_URL", description: "Backend service URL", required: true }
+    { key: "DATABASE_URL", description: "Your Neon PostgreSQL database connection string", required: true, example: "postgresql://user:password@host.neon.tech/database?sslmode=require" },
+    { key: "JWT_SECRET", description: "Secret key for JWT token signing", required: true, example: "your-super-secret-jwt-key" },
+    { key: "RESEND_API_KEY", description: "Resend email service API key", required: true, example: "re_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" },
+    { key: "GOOGLE_CLIENT_ID", description: "Google OAuth client ID", required: false, example: "xxxxx.apps.googleusercontent.com" },
+    { key: "GOOGLE_CLIENT_SECRET", description: "Google OAuth client secret", required: false, example: "GOCSPX-xxxxxxxxxxxxxxxxxxxxxxxx" },
+    { key: "FRANCECONNECT_CLIENT_ID", description: "FranceConnect OAuth client ID", required: false, example: "your-franceconnect-client-id" },
+    { key: "FRANCECONNECT_CLIENT_SECRET", description: "FranceConnect OAuth client secret", required: false, example: "your-franceconnect-client-secret" },
+    { key: "LUXTRUST_CLIENT_ID", description: "LuxTrust OAuth client ID", required: false, example: "your-luxtrust-client-id" },
+    { key: "LUXTRUST_CLIENT_SECRET", description: "LuxTrust OAuth client secret", required: false, example: "your-luxtrust-client-secret" },
+    { key: "FRONTEND_URL", description: "Frontend application URL", required: true, example: "http://localhost:5173" },
+    { key: "SERVICE_URL", description: "Backend service URL", required: true, example: "http://localhost:8000" }
   ];
 
   const simulateTerminalOutput = (command: string) => {
@@ -111,8 +110,14 @@ const DenoBackendManagement = () => {
             
             <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-400">
               <p className="text-sm">
-                <strong>Note:</strong> The backend service runs independently and provides authentication, 
-                LuxTrust integration, OAuth services, and database connectivity to your Neon PostgreSQL database.
+                <strong>Important:</strong> You need to start your local Deno backend server first. 
+                The backend runs on localhost:8000 and connects to your Neon database in the cloud.
+              </p>
+            </div>
+            
+            <div className="bg-amber-50 p-4 rounded-lg border-l-4 border-amber-400">
+              <p className="text-sm">
+                <strong>Setup Flow:</strong> Frontend (localhost:5173) → Deno Backend (localhost:8000) → Neon Database (cloud)
               </p>
             </div>
           </CardContent>
@@ -121,26 +126,21 @@ const DenoBackendManagement = () => {
         {/* Environment Variables */}
         <Card>
           <CardHeader>
-            <CardTitle>Environment Variables</CardTitle>
+            <CardTitle>Environment Variables Configuration</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
+              <p className="text-sm text-muted-foreground mb-4">
+                Configure these environment variables in your system or create a .env file in the auth-backend directory:
+              </p>
               {environmentVariables.map((env) => (
-                <div key={env.key} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <code className="text-sm font-mono bg-muted px-2 py-1 rounded">{env.key}</code>
-                      {env.required && <Badge variant="destructive" className="text-xs">Required</Badge>}
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-1">{env.description}</p>
+                <div key={env.key} className="p-3 border rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <code className="text-sm font-mono bg-muted px-2 py-1 rounded">{env.key}</code>
+                    {env.required && <Badge variant="destructive" className="text-xs">Required</Badge>}
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => copyToClipboard(env.key)}
-                  >
-                    <Copy className="h-3 w-3" />
-                  </Button>
+                  <p className="text-sm text-muted-foreground mb-1">{env.description}</p>
+                  <p className="text-xs text-gray-500">Example: <code>{env.example}</code></p>
                 </div>
               ))}
             </div>
