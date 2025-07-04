@@ -6,8 +6,25 @@ const router = new Router();
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Add CORS middleware for all routes
+router.use(async (ctx, next) => {
+  // Set CORS headers for all requests
+  Object.entries(corsHeaders).forEach(([key, value]) => {
+    ctx.response.headers.set(key, value);
+  });
+
+  // Handle preflight requests
+  if (ctx.request.method === 'OPTIONS') {
+    ctx.response.status = 200;
+    return;
+  }
+
+  await next();
+});
 
 // Health check endpoint to test database connectivity
 router.get("/api/health", async (ctx) => {
