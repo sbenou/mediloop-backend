@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,9 +23,15 @@ const DenoBackendManagement = () => {
 
   const commands = [
     {
-      title: "Development Mode",
-      description: "Start the auth backend in development mode with hot reload",
+      title: "Development Mode (Task)",
+      description: "Start the auth backend in development mode with hot reload using Deno task",
       command: "cd auth-backend && deno task dev",
+      badge: "Development"
+    },
+    {
+      title: "Development Mode (Direct)",
+      description: "Start the auth backend directly with Deno run command",
+      command: "cd auth-backend && deno run --allow-net --allow-env --allow-read main.ts",
       badge: "Development"
     },
     {
