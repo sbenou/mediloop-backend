@@ -6,13 +6,14 @@ const router = new Router();
 
 // Add CORS middleware for all routes
 router.use(async (ctx, next) => {
-  // Set CORS headers for all requests
-  ctx.response.headers.set('Access-Control-Allow-Origin', '*');
+  // Set CORS headers for all requests (including OPTIONS)
+  ctx.response.headers.set('Access-Control-Allow-Origin', 'https://preview--mediloop.lovable.app');
   ctx.response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  ctx.response.headers.set('Access-Control-Allow-Headers', 'authorization, x-client-info, apikey, content-type');
+  ctx.response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Client-Info, ApiKey');
   ctx.response.headers.set('Access-Control-Max-Age', '86400');
+  ctx.response.headers.set('Access-Control-Allow-Credentials', 'false');
 
-  // Handle preflight requests
+  // Handle preflight OPTIONS requests immediately
   if (ctx.request.method === 'OPTIONS') {
     ctx.response.status = 204;
     ctx.response.body = null;
