@@ -1,3 +1,4 @@
+
 import { Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 import { postgresService } from "../services/postgresService.ts";
 
@@ -9,11 +10,12 @@ router.use(async (ctx, next) => {
   ctx.response.headers.set('Access-Control-Allow-Origin', '*');
   ctx.response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   ctx.response.headers.set('Access-Control-Allow-Headers', 'authorization, x-client-info, apikey, content-type');
+  ctx.response.headers.set('Access-Control-Max-Age', '86400');
 
   // Handle preflight requests
   if (ctx.request.method === 'OPTIONS') {
-    ctx.response.status = 200;
-    ctx.response.body = '';
+    ctx.response.status = 204;
+    ctx.response.body = null;
     return;
   }
 
