@@ -64,7 +64,7 @@ router.get("/api/health", async (ctx) => {
     if (profilesTableExists) {
       try {
         const profileCountResult = await postgresService.query('SELECT COUNT(*) as count FROM public.profiles');
-        profilesCount = profileCountResult.rows[0]?.count || 0;
+        profilesCount = parseInt(profileCountResult.rows[0]?.count || '0');
         console.log('✅ Profiles count:', profilesCount);
       } catch (error) {
         console.log('⚠️ Could not count profiles:', error.message);
@@ -74,7 +74,7 @@ router.get("/api/health", async (ctx) => {
     if (rolesTableExists) {
       try {
         const roleCountResult = await postgresService.query('SELECT COUNT(*) as count FROM public.roles');
-        rolesCount = roleCountResult.rows[0]?.count || 0;
+        rolesCount = parseInt(roleCountResult.rows[0]?.count || '0');
         console.log('✅ Roles count:', rolesCount);
       } catch (error) {
         console.log('⚠️ Could not count roles:', error.message);
@@ -84,7 +84,7 @@ router.get("/api/health", async (ctx) => {
     if (tenantsTableExists) {
       try {
         const tenantCountResult = await postgresService.query('SELECT COUNT(*) as count FROM public.tenants');
-        tenantsCount = tenantCountResult.rows[0]?.count || 0;
+        tenantsCount = parseInt(tenantCountResult.rows[0]?.count || '0');
         console.log('✅ Tenants count:', tenantsCount);
       } catch (error) {
         console.log('⚠️ Could not count tenants:', error.message);
@@ -103,7 +103,7 @@ router.get("/api/health", async (ctx) => {
       WHERE table_schema = 'public' 
       AND table_type = 'BASE TABLE'
     `);
-    const publicTablesCount = publicTablesQuery.rows[0]?.count || 0;
+    const publicTablesCount = parseInt(publicTablesQuery.rows[0]?.count || '0');
     console.log('✅ Public tables count:', publicTablesCount);
 
     const responseData = {
@@ -123,8 +123,8 @@ router.get("/api/health", async (ctx) => {
         tenantsCount: tenantsCount
       },
       warnings: {
-        missingTables: [],
-        recommendations: []
+        missingTables: [] as string[],
+        recommendations: [] as string[]
       },
       timestamp: new Date().toISOString(),
       server: 'Deno backend with Neon PostgreSQL',
