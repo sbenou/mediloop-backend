@@ -1,3 +1,4 @@
+
 import { Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 import { postgresService } from "../services/postgresService.ts";
 
@@ -16,27 +17,64 @@ router.get("/api/health", async (ctx) => {
     const connectionTest = await postgresService.query('SELECT 1 as test');
     console.log('✅ Database connection test:', connectionTest.rows);
 
-    // Test profiles table structure
-    console.log('🏗️ Testing profiles table structure...');
-    const profilesStructure = await postgresService.query(`
-      SELECT column_name, data_type, is_nullable 
-      FROM information_schema.columns 
-      WHERE table_name = 'profiles' AND table_schema = 'public'
-      ORDER BY ordinal_position
+    // Test public schema tables first
+    console.log('🏗️ Testing public schema tables...');
+    
+    // Test roles table in public schema
+    console.log('👥 Testing public roles table...');
+    const publicRolesTest = await postgresService.query('SELECT id, name FROM public.roles LIMIT 5');
+    console.log('✅ Public roles table test:', publicRolesTest.rows);
+
+    // Test if tenant schema exists
+    console.log('🏠 Testing tenant schema existence...');
+    const tenantSchemaTest = await postgresService.query(`
+      SELECT schema_name 
+      FROM information_schema.schemata 
+      WHERE schema_name = 'tenant_test_clinic'
     `);
-    console.log('✅ Profiles table structure:', profilesStructure.rows);
+    console.log('✅ Tenant schema test:', tenantSchemaTest.rows);
 
-    // Test roles table
-    console.log('👥 Testing roles table...');
-    const rolesTest = await postgresService.query('SELECT id, name FROM roles LIMIT 5');
-    console.log('✅ Roles table test:', rolesTest.rows);
+    let tenantProfilesCount = 0;
+    let tenantTablesCount = 0;
 
-    // Test a simple profile query (should return empty if no profiles exist)
-    console.log('👤 Testing profile count...');
-    const profileCount = await postgresService.query('SELECT COUNT(*) as count FROM profiles');
-    console.log('✅ Profile count:', profileCount.rows);
+    if (tenantSchemaTest.rows.length > 0) {
+      // Test tenant profiles table
+      console.log('👤 Testing tenant profiles table...');
+      try {
+        const tenantProfileCount = await postgresService.query('SELECT COUNT(*) as count FROM tenant_test_clinic.profiles');
+        tenantProfilesCount = tenantProfileCount.rows[0]?.count || 0;
+        console.log('✅ Tenant profile count:', tenantProfilesCount);
+      } catch (error) {
+        console.log('⚠️ Tenant profiles table not accessible:', error.message);
+      }
 
-    // Test user creation simulation (without actually creating)
+      // Count tenant tables
+      console.log('📊 Counting tenant tables...');
+      try {
+        const tenantTablesQuery = await postgresService.query(`
+          SELECT COUNT(*) as count 
+          FROM information_schema.tables 
+          WHERE table_schema = 'tenant_test_clinic'
+        `);
+        tenantTablesCount = tenantTablesQuery.rows[0]?.count || 0;
+        console.log('✅ Tenant tables count:', tenantTablesCount);
+      } catch (error) {
+        console.log('⚠️ Could not count tenant tables:', error.message);
+      }
+    }
+
+    // Test public schema tables count
+    console.log('📊 Counting public tables...');
+    const publicTablesQuery = await postgresService.query(`
+      SELECT COUNT(*) as count 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public' 
+      AND table_type = 'BASE TABLE'
+    `);
+    const publicTablesCount = publicTablesQuery.rows[0]?.count || 0;
+    console.log('✅ Public tables count:', publicTablesCount);
+
+    // Test UUID generation
     const testUserId = crypto.randomUUID();
     console.log('🔑 Generated test UUID:', testUserId);
 
@@ -45,10 +83,23 @@ router.get("/api/health", async (ctx) => {
       message: 'Database connectivity test passed',
       tests: {
         connection: connectionTest.rows.length > 0,
-        profilesTable: profilesStructure.rows.length > 0,
-        rolesTable: rolesTest.rows.length > 0,
-        profileCount: profileCount.rows[0]?.count || 0,
+        publicRolesTable: publicRolesTest.rows.length >= 0, // Can be 0 if empty
+        tenantSchemaExists: tenantSchemaTest.rows.length > 0,
+        tenantProfilesCount: tenantProfilesCount,
+        publicTablesCount: publicTablesCount,
+        tenantTablesCount: tenantTablesCount,
         testUuid: testUserId
+      },
+      schemas: {
+        public: {
+          tablesCount: publicTablesCount,
+          rolesCount: publicRolesTest.rows.length
+        },
+        tenant: {
+          schemaExists: tenantSchemaTest.rows.length > 0,
+          tablesCount: tenantTablesCount,
+          profilesCount: tenantProfilesCount
+        }
       },
       timestamp: new Date().toISOString(),
       server: 'Deno backend',
@@ -111,17 +162,15 @@ router.post("/api/test-user-creation", async (ctx) => {
     if (testMode) {
       // Test mode - just validate the process without creating
       
-      // Check if email already exists
+      // Check if email already exists in tenant schema
       const existingUser = await postgresService.query(
-        'SELECT id, email FROM profiles WHERE email = $1',
+        'SELECT id, email FROM tenant_test_clinic.profiles WHERE email = $1',
         [email]
       );
 
-      // Check if role exists
-      const roleCheck = await postgresService.query(
-        'SELECT id, name FROM roles WHERE name = $1',
-        [role]
-      );
+      // Check if role is valid (we're using simple text roles in tenant schema)
+      const validRoles = ['patient', 'doctor', 'pharmacist', 'admin', 'superadmin'];
+      const roleExists = validRoles.includes(role);
 
       ctx.response.status = 200;
       ctx.response.body = {
@@ -129,25 +178,40 @@ router.post("/api/test-user-creation", async (ctx) => {
         testMode: true,
         validations: {
           emailAvailable: existingUser.rows.length === 0,
-          roleExists: roleCheck.rows.length > 0,
-          availableRoles: roleCheck.rows
+          roleExists: roleExists,
+          availableRoles: validRoles,
+          targetSchema: 'tenant_test_clinic'
         },
         wouldCreate: {
           email,
           fullName,
           role,
-          userId: crypto.randomUUID()
+          userId: crypto.randomUUID(),
+          schema: 'tenant_test_clinic'
         },
         timestamp: new Date().toISOString()
       };
     } else {
-      // Actually create the user (we'll implement this after testing)
-      ctx.response.status = 200;
-      ctx.response.body = {
-        success: true,
-        message: 'Actual user creation not implemented yet - use testMode: true first',
-        timestamp: new Date().toISOString()
-      };
+      // Actually create the user in tenant schema
+      const newUserId = crypto.randomUUID();
+      
+      try {
+        await postgresService.query(`
+          INSERT INTO tenant_test_clinic.profiles (id, email, full_name, role, created_at, updated_at)
+          VALUES ($1, $2, $3, $4, NOW(), NOW())
+        `, [newUserId, email, fullName, role]);
+
+        ctx.response.status = 200;
+        ctx.response.body = {
+          success: true,
+          message: 'User created successfully in tenant schema',
+          userId: newUserId,
+          schema: 'tenant_test_clinic',
+          timestamp: new Date().toISOString()
+        };
+      } catch (createError) {
+        throw new Error(`Failed to create user: ${createError.message}`);
+      }
     }
 
   } catch (error) {
@@ -189,6 +253,8 @@ router.post("/api/test-email", async (ctx) => {
       <h1>Database Connectivity Test</h1>
       <p>This is a test email to verify that your email service is working correctly.</p>
       <p>Test Type: ${testType}</p>
+      <p>Backend: Deno with Neon PostgreSQL</p>
+      <p>Schema: Multi-tenant with tenant_test_clinic</p>
       <p>Timestamp: ${new Date().toISOString()}</p>
     </body>
     </html>`;
