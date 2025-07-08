@@ -4,7 +4,7 @@ import { postgresService } from "../services/postgresService.ts";
 
 const router = new Router();
 
-// Health check endpoint to test database connectivity
+// Health check endpoint to test database connectivity and multi-tenant schema
 router.get("/api/health", async (ctx) => {
   console.log('\n🏥 === HEALTH CHECK ROUTE ENTERED ===');
   console.log('🏥 Request method:', ctx.request.method);
@@ -17,77 +17,126 @@ router.get("/api/health", async (ctx) => {
     const connectionTest = await postgresService.query('SELECT 1 as test');
     console.log('✅ Database connection test:', connectionTest.rows);
 
-    // Test basic database functionality
-    console.log('🏗️ Testing database schema...');
+    console.log('🏗️ Testing database schema structure...');
     
-    // Check if profiles table exists in public schema
-    console.log('👥 Checking if profiles table exists...');
-    const profilesTableCheck = await postgresService.query(`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
-        AND table_name = 'profiles'
-      ) as table_exists
+    // First, check what schemas exist
+    console.log('📋 Checking available schemas...');
+    const schemasQuery = await postgresService.query(`
+      SELECT schema_name 
+      FROM information_schema.schemata 
+      WHERE schema_name NOT IN ('information_schema', 'pg_catalog', 'pg_toast')
+      ORDER BY schema_name
     `);
-    const profilesTableExists = profilesTableCheck.rows[0]?.table_exists || false;
-    console.log('✅ Profiles table exists:', profilesTableExists);
+    const availableSchemas = schemasQuery.rows.map(row => row.schema_name);
+    console.log('✅ Available schemas:', availableSchemas);
 
-    // Check if roles table exists in public schema
-    console.log('🏛️ Checking if roles table exists...');
-    const rolesTableCheck = await postgresService.query(`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
-        AND table_name = 'roles'
-      ) as table_exists
+    // Check for tenant schemas specifically
+    const tenantSchemas = availableSchemas.filter(schema => schema.startsWith('tenant_'));
+    console.log('🏠 Tenant schemas found:', tenantSchemas);
+
+    // Check public schema tables
+    console.log('🔍 Checking public schema tables...');
+    const publicTablesQuery = await postgresService.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public' 
+      AND table_type = 'BASE TABLE'
+      ORDER BY table_name
     `);
-    const rolesTableExists = rolesTableCheck.rows[0]?.table_exists || false;
-    console.log('✅ Roles table exists:', rolesTableExists);
+    const publicTables = publicTablesQuery.rows.map(row => row.table_name);
+    console.log('✅ Public schema tables:', publicTables);
 
-    // Check if tenants table exists
-    console.log('🏠 Checking if tenants table exists...');
-    const tenantsTableCheck = await postgresService.query(`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
-        AND table_name = 'tenants'
-      ) as table_exists
-    `);
-    const tenantsTableExists = tenantsTableCheck.rows[0]?.table_exists || false;
-    console.log('✅ Tenants table exists:', tenantsTableExists);
+    // Check if core tables exist in public schema
+    const publicRolesExists = publicTables.includes('roles');
+    const publicTenantsExists = publicTables.includes('tenants');
+    const publicProfilesExists = publicTables.includes('profiles');
 
-    // Count records if tables exist
-    let profilesCount = 0;
-    let rolesCount = 0;
-    let tenantsCount = 0;
+    console.log('📊 Public schema table status:');
+    console.log('  - roles:', publicRolesExists);
+    console.log('  - tenants:', publicTenantsExists);
+    console.log('  - profiles:', publicProfilesExists);
 
-    if (profilesTableExists) {
-      try {
-        const profileCountResult = await postgresService.query('SELECT COUNT(*) as count FROM public.profiles');
-        profilesCount = parseInt(profileCountResult.rows[0]?.count || '0');
-        console.log('✅ Profiles count:', profilesCount);
-      } catch (error) {
-        console.log('⚠️ Could not count profiles:', error.message);
+    // Check tenant schema tables (if any tenant schemas exist)
+    let tenantSchemaInfo = {};
+    if (tenantSchemas.length > 0) {
+      console.log('🏘️ Analyzing tenant schemas...');
+      
+      for (const schema of tenantSchemas.slice(0, 3)) { // Check first 3 tenant schemas
+        try {
+          console.log(`🔍 Checking schema: ${schema}`);
+          
+          const tenantTablesQuery = await postgresService.query(`
+            SELECT table_name 
+            FROM information_schema.tables 
+            WHERE table_schema = $1 
+            AND table_type = 'BASE TABLE'
+            ORDER BY table_name
+          `, [schema]);
+          
+          const tenantTables = tenantTablesQuery.rows.map(row => row.table_name);
+          console.log(`✅ Tables in ${schema}:`, tenantTables);
+          
+          // Count records in key tables
+          const tableCounts = {};
+          for (const table of ['profiles', 'orders', 'products']) {
+            if (tenantTables.includes(table)) {
+              try {
+                const countQuery = await postgresService.query(`SELECT COUNT(*) as count FROM ${schema}.${table}`);
+                tableCounts[table] = parseInt(countQuery.rows[0]?.count || '0');
+              } catch (error) {
+                console.log(`⚠️ Could not count ${table} in ${schema}:`, error.message);
+                tableCounts[table] = 'error';
+              }
+            }
+          }
+          
+          tenantSchemaInfo[schema] = {
+            tables: tenantTables,
+            tableCount: tenantTables.length,
+            recordCounts: tableCounts
+          };
+          
+        } catch (error) {
+          console.log(`❌ Error checking schema ${schema}:`, error.message);
+          tenantSchemaInfo[schema] = { error: error.message };
+        }
       }
     }
 
-    if (rolesTableExists) {
+    // Count records in public tables
+    let publicRecordCounts = {
+      roles: 0,
+      tenants: 0,
+      profiles: 0
+    };
+
+    if (publicRolesExists) {
       try {
         const roleCountResult = await postgresService.query('SELECT COUNT(*) as count FROM public.roles');
-        rolesCount = parseInt(roleCountResult.rows[0]?.count || '0');
-        console.log('✅ Roles count:', rolesCount);
+        publicRecordCounts.roles = parseInt(roleCountResult.rows[0]?.count || '0');
+        console.log('✅ Public roles count:', publicRecordCounts.roles);
       } catch (error) {
-        console.log('⚠️ Could not count roles:', error.message);
+        console.log('⚠️ Could not count public roles:', error.message);
       }
     }
 
-    if (tenantsTableExists) {
+    if (publicTenantsExists) {
       try {
         const tenantCountResult = await postgresService.query('SELECT COUNT(*) as count FROM public.tenants');
-        tenantsCount = parseInt(tenantCountResult.rows[0]?.count || '0');
-        console.log('✅ Tenants count:', tenantsCount);
+        publicRecordCounts.tenants = parseInt(tenantCountResult.rows[0]?.count || '0');
+        console.log('✅ Public tenants count:', publicRecordCounts.tenants);
       } catch (error) {
-        console.log('⚠️ Could not count tenants:', error.message);
+        console.log('⚠️ Could not count public tenants:', error.message);
+      }
+    }
+
+    if (publicProfilesExists) {
+      try {
+        const profileCountResult = await postgresService.query('SELECT COUNT(*) as count FROM public.profiles');
+        publicRecordCounts.profiles = parseInt(profileCountResult.rows[0]?.count || '0');
+        console.log('✅ Public profiles count:', publicRecordCounts.profiles);
+      } catch (error) {
+        console.log('⚠️ Could not count public profiles:', error.message);
       }
     }
 
@@ -95,65 +144,69 @@ router.get("/api/health", async (ctx) => {
     const testUserId = crypto.randomUUID();
     console.log('🔑 Generated test UUID:', testUserId);
 
-    // Count total tables in public schema
-    console.log('📊 Counting total public tables...');
-    const publicTablesQuery = await postgresService.query(`
-      SELECT COUNT(*) as count 
-      FROM information_schema.tables 
-      WHERE table_schema = 'public' 
-      AND table_type = 'BASE TABLE'
-    `);
-    const publicTablesCount = parseInt(publicTablesQuery.rows[0]?.count || '0');
+    // Count total public tables
+    const publicTablesCount = publicTables.length;
     console.log('✅ Public tables count:', publicTablesCount);
 
     const responseData = {
       success: true,
-      message: 'Database connectivity test passed',
+      message: 'Multi-tenant database connectivity test passed',
+      architecture: 'Multi-tenant with schema separation',
       tests: {
         connection: connectionTest.rows.length > 0,
-        profilesTableExists: profilesTableExists,
-        rolesTableExists: rolesTableExists,
-        tenantsTableExists: tenantsTableExists,
+        schemasFound: availableSchemas.length,
+        tenantSchemasFound: tenantSchemas.length,
         testUuid: testUserId
       },
       database: {
+        availableSchemas: availableSchemas,
+        tenantSchemas: tenantSchemas,
+        publicTables: publicTables,
         publicTablesCount: publicTablesCount,
-        profilesCount: profilesCount,
-        rolesCount: rolesCount,
-        tenantsCount: tenantsCount
+        publicSchema: {
+          rolesExists: publicRolesExists,
+          tenantsExists: publicTenantsExists,
+          profilesExists: publicProfilesExists,
+          recordCounts: publicRecordCounts
+        },
+        tenantSchemas: tenantSchemaInfo
       },
-      warnings: {
-        missingTables: [] as string[],
-        recommendations: [] as string[]
-      },
+      recommendations: [] as string[],
       timestamp: new Date().toISOString(),
-      server: 'Deno backend with Neon PostgreSQL',
+      server: 'Deno backend with Neon PostgreSQL (Multi-tenant)',
       corsHeaders: Object.fromEntries(ctx.response.headers.entries())
     };
 
-    // Add warnings for missing critical tables
-    if (!profilesTableExists) {
-      responseData.warnings.missingTables.push('profiles');
-      responseData.warnings.recommendations.push('Run Supabase migrations to create profiles table');
+    // Add recommendations based on findings
+    if (tenantSchemas.length === 0) {
+      responseData.recommendations.push('No tenant schemas found - consider creating tenant schemas for multi-tenant architecture');
     }
-    if (!rolesTableExists) {
-      responseData.warnings.missingTables.push('roles');
-      responseData.warnings.recommendations.push('Run Supabase migrations to create roles table');
+    
+    if (!publicRolesExists && !publicTenantsExists) {
+      responseData.recommendations.push('Core management tables (roles, tenants) missing from public schema');
     }
-    if (!tenantsTableExists) {
-      responseData.warnings.missingTables.push('tenants');
-      responseData.warnings.recommendations.push('Run Supabase migrations to create tenants table');
+    
+    if (publicProfilesExists && tenantSchemas.length > 0) {
+      responseData.recommendations.push('Profiles found in both public and tenant schemas - verify intended architecture');
+    }
+    
+    if (tenantSchemas.length > 0 && Object.keys(tenantSchemaInfo).length > 0) {
+      responseData.recommendations.push('Multi-tenant architecture detected - ensure tenant isolation is properly configured');
     }
 
     console.log('🏥 Setting successful response...');
-    console.log('📤 Response data:', responseData);
+    console.log('📤 Response data structure:', {
+      success: responseData.success,
+      schemasFound: responseData.tests.schemasFound,
+      tenantSchemas: responseData.database.tenantSchemas.length,
+      publicTables: responseData.database.publicTablesCount
+    });
     
     ctx.response.status = 200;
     ctx.response.body = responseData;
     
     console.log('🏥 Health check response set successfully');
     console.log('📤 Final response status:', ctx.response.status);
-    console.log('📤 Final response headers:', Object.fromEntries(ctx.response.headers.entries()));
     
   } catch (error) {
     console.error('❌ Health check failed:', error);
@@ -166,11 +219,12 @@ router.get("/api/health", async (ctx) => {
       error: error.message,
       errorName: error.name,
       errorStack: error.stack,
+      architecture: 'Multi-tenant (error during analysis)',
       recommendations: [
         'Check if your Neon database connection string is correct',
-        'Verify that your database has the required tables',
-        'Run Supabase migrations to create the necessary schema',
-        'Check if you need to sync your Neon database with Supabase schema'
+        'Verify database schema permissions',
+        'Ensure tenant schemas are properly created',
+        'Check if you need to run migrations to set up the database structure'
       ],
       timestamp: new Date().toISOString(),
       server: 'Deno backend with Neon PostgreSQL',
@@ -184,7 +238,6 @@ router.get("/api/health", async (ctx) => {
     ctx.response.body = errorResponse;
     
     console.log('📤 Error response status:', ctx.response.status);
-    console.log('📤 Error response headers:', Object.fromEntries(ctx.response.headers.entries()));
   }
   
   console.log('🏥 === HEALTH CHECK ROUTE COMPLETED ===\n');
