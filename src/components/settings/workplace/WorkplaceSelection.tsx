@@ -6,7 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Building2, MapPin, Phone, Clock, CheckCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
-import { updateUserTenantName } from "@/utils/tenancy";
 
 interface Workplace {
   id: string;
@@ -109,6 +108,9 @@ const WorkplaceSelection: React.FC<WorkplaceSelectionProps> = ({
     setIsSubmitting(true);
 
     try {
+      let workplaceName: string | undefined;
+      let pharmacyName: string | undefined;
+
       if (userRole === 'doctor') {
         // Link doctor to workplace
         const { error } = await supabase
@@ -124,16 +126,10 @@ const WorkplaceSelection: React.FC<WorkplaceSelectionProps> = ({
           throw error;
         }
 
-        // Update tenant name with workplace name
+        // Get workplace name for tenant creation
         const selectedWorkplace = workplaces.find(w => w.id === selectedId);
-        if (selectedWorkplace) {
-          await updateUserTenantName(userId, selectedWorkplace.name);
-        }
+        workplaceName = selectedWorkplace?.name;
 
-        toast({
-          title: "Success",
-          description: "Workplace selection saved successfully",
-        });
       } else if (userRole === 'pharmacist') {
         // Link pharmacist to pharmacy
         const { error } = await supabase
@@ -148,17 +144,46 @@ const WorkplaceSelection: React.FC<WorkplaceSelectionProps> = ({
           throw error;
         }
 
-        // Update tenant name with pharmacy name
+        // Get pharmacy name for tenant creation
         const selectedPharmacy = pharmacies.find(p => p.id === selectedId);
-        if (selectedPharmacy) {
-          await updateUserTenantName(userId, undefined, selectedPharmacy.name);
-        }
-
-        toast({
-          title: "Success",
-          description: "Pharmacy selection saved successfully",
-        });
+        pharmacyName = selectedPharmacy?.name;
       }
+
+      // Now create the tenant with workplace/pharmacy information
+      console.log(`Creating tenant for ${userRole} with workplace/pharmacy selection`);
+      
+      // Get user's full name for tenant creation
+      const { data: userProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', userId)
+        .single();
+
+      if (profileError) {
+        console.error('Error fetching user profile:', profileError);
+        throw profileError;
+      }
+
+      const { data: tenantData, error: tenantError } = await supabase.rpc("create_user_tenant", {
+        p_user_id: userId,
+        p_user_role: userRole,
+        p_user_name: userProfile.full_name || 'Unknown User',
+        p_workplace_name: workplaceName || null,
+        p_pharmacy_name: pharmacyName || null
+      });
+
+      if (tenantError) {
+        console.error('Error creating tenant:', tenantError);
+        // Don't fail the entire process if tenant creation fails
+        console.warn('Continuing without tenant creation');
+      } else {
+        console.log('Tenant created successfully:', tenantData);
+      }
+
+      toast({
+        title: "Success",
+        description: `${userRole === 'doctor' ? 'Workplace' : 'Pharmacy'} selection and setup completed successfully`,
+      });
 
       // Call completion callback
       if (onComplete) {
@@ -200,7 +225,7 @@ const WorkplaceSelection: React.FC<WorkplaceSelectionProps> = ({
           <span>Select Your {userRole === 'doctor' ? 'Workplace' : 'Pharmacy'}</span>
         </CardTitle>
         <CardDescription>
-          Choose the {optionType} where you work to complete your registration
+          Choose the {optionType} where you work to complete your registration and setup
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -273,10 +298,10 @@ const WorkplaceSelection: React.FC<WorkplaceSelectionProps> = ({
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
+              Setting up...
             </>
           ) : (
-            'Complete Registration'
+            'Complete Registration & Setup'
           )}
         </Button>
       </CardContent>

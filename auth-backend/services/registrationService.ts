@@ -63,8 +63,20 @@ export class RegistrationService {
       role
     );
 
-    // Create tenant for the user (all users get their own tenant)
-    await postgresService.createTenant(userId, role, fullName, workplaceName, pharmacyName);
+    // Create tenant based on role and context
+    if (role === 'patient') {
+      // For patients, create tenant immediately as they don't need workplace selection
+      console.log('Creating tenant immediately for patient');
+      await postgresService.createTenant(userId, role, fullName);
+    } else if (role === 'doctor' || role === 'pharmacist') {
+      // For doctors and pharmacists, tenant will be created after workplace/pharmacy selection
+      // in the WorkplaceSelection component
+      console.log(`Deferring tenant creation for ${role} until workplace/pharmacy is selected`);
+    } else {
+      // For other roles, create basic tenant
+      console.log(`Creating basic tenant for role: ${role}`);
+      await postgresService.createTenant(userId, role, fullName, workplaceName, pharmacyName);
+    }
 
     // Send welcome email
     const loginUrl = `${Deno.env.get('FRONTEND_URL') || 'http://localhost:5173'}/login`;

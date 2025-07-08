@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
-import { createUserTenant } from "@/utils/tenancy";
 import { UserRole } from "./SignupForm";
 
 const RATE_LIMIT_KEY = "signup_rate_limit";
@@ -152,12 +151,19 @@ export const useSignup = () => {
           throw profileError;
         }
         
-        // Create tenant for the user (for patients, create immediately)
+        // Create tenant immediately for patients (they don't need workplace selection)
         if (role === 'patient') {
-          console.log("Creating tenant for patient");
-          const tenantId = await createUserTenant(userId, role, name);
-          if (!tenantId) {
-            console.warn("Failed to create tenant for patient, but continuing with signup");
+          console.log("Creating tenant for patient immediately");
+          const { data: tenantData, error: tenantError } = await supabase.rpc("create_user_tenant", {
+            p_user_id: userId,
+            p_user_role: role,
+            p_user_name: name
+          });
+          
+          if (tenantError) {
+            console.warn("Failed to create tenant for patient:", tenantError);
+          } else {
+            console.log("Patient tenant created successfully:", tenantData);
           }
         }
         
