@@ -17,54 +17,86 @@ router.get("/api/health", async (ctx) => {
     const connectionTest = await postgresService.query('SELECT 1 as test');
     console.log('✅ Database connection test:', connectionTest.rows);
 
-    // Test public schema tables first
-    console.log('🏗️ Testing public schema tables...');
+    // Test basic database functionality
+    console.log('🏗️ Testing database schema...');
     
-    // Test roles table in public schema
-    console.log('👥 Testing public roles table...');
-    const publicRolesTest = await postgresService.query('SELECT id, name FROM public.roles LIMIT 5');
-    console.log('✅ Public roles table test:', publicRolesTest.rows);
-
-    // Test if tenant schema exists
-    console.log('🏠 Testing tenant schema existence...');
-    const tenantSchemaTest = await postgresService.query(`
-      SELECT schema_name 
-      FROM information_schema.schemata 
-      WHERE schema_name = 'tenant_test_clinic'
+    // Check if profiles table exists in public schema
+    console.log('👥 Checking if profiles table exists...');
+    const profilesTableCheck = await postgresService.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'profiles'
+      ) as table_exists
     `);
-    console.log('✅ Tenant schema test:', tenantSchemaTest.rows);
+    const profilesTableExists = profilesTableCheck.rows[0]?.table_exists || false;
+    console.log('✅ Profiles table exists:', profilesTableExists);
 
-    let tenantProfilesCount = 0;
-    let tenantTablesCount = 0;
+    // Check if roles table exists in public schema
+    console.log('🏛️ Checking if roles table exists...');
+    const rolesTableCheck = await postgresService.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'roles'
+      ) as table_exists
+    `);
+    const rolesTableExists = rolesTableCheck.rows[0]?.table_exists || false;
+    console.log('✅ Roles table exists:', rolesTableExists);
 
-    if (tenantSchemaTest.rows.length > 0) {
-      // Test tenant profiles table
-      console.log('👤 Testing tenant profiles table...');
+    // Check if tenants table exists
+    console.log('🏠 Checking if tenants table exists...');
+    const tenantsTableCheck = await postgresService.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'tenants'
+      ) as table_exists
+    `);
+    const tenantsTableExists = tenantsTableCheck.rows[0]?.table_exists || false;
+    console.log('✅ Tenants table exists:', tenantsTableExists);
+
+    // Count records if tables exist
+    let profilesCount = 0;
+    let rolesCount = 0;
+    let tenantsCount = 0;
+
+    if (profilesTableExists) {
       try {
-        const tenantProfileCount = await postgresService.query('SELECT COUNT(*) as count FROM tenant_test_clinic.profiles');
-        tenantProfilesCount = tenantProfileCount.rows[0]?.count || 0;
-        console.log('✅ Tenant profile count:', tenantProfilesCount);
+        const profileCountResult = await postgresService.query('SELECT COUNT(*) as count FROM public.profiles');
+        profilesCount = profileCountResult.rows[0]?.count || 0;
+        console.log('✅ Profiles count:', profilesCount);
       } catch (error) {
-        console.log('⚠️ Tenant profiles table not accessible:', error.message);
-      }
-
-      // Count tenant tables
-      console.log('📊 Counting tenant tables...');
-      try {
-        const tenantTablesQuery = await postgresService.query(`
-          SELECT COUNT(*) as count 
-          FROM information_schema.tables 
-          WHERE table_schema = 'tenant_test_clinic'
-        `);
-        tenantTablesCount = tenantTablesQuery.rows[0]?.count || 0;
-        console.log('✅ Tenant tables count:', tenantTablesCount);
-      } catch (error) {
-        console.log('⚠️ Could not count tenant tables:', error.message);
+        console.log('⚠️ Could not count profiles:', error.message);
       }
     }
 
-    // Test public schema tables count
-    console.log('📊 Counting public tables...');
+    if (rolesTableExists) {
+      try {
+        const roleCountResult = await postgresService.query('SELECT COUNT(*) as count FROM public.roles');
+        rolesCount = roleCountResult.rows[0]?.count || 0;
+        console.log('✅ Roles count:', rolesCount);
+      } catch (error) {
+        console.log('⚠️ Could not count roles:', error.message);
+      }
+    }
+
+    if (tenantsTableExists) {
+      try {
+        const tenantCountResult = await postgresService.query('SELECT COUNT(*) as count FROM public.tenants');
+        tenantsCount = tenantCountResult.rows[0]?.count || 0;
+        console.log('✅ Tenants count:', tenantsCount);
+      } catch (error) {
+        console.log('⚠️ Could not count tenants:', error.message);
+      }
+    }
+
+    // Test UUID generation
+    const testUserId = crypto.randomUUID();
+    console.log('🔑 Generated test UUID:', testUserId);
+
+    // Count total tables in public schema
+    console.log('📊 Counting total public tables...');
     const publicTablesQuery = await postgresService.query(`
       SELECT COUNT(*) as count 
       FROM information_schema.tables 
@@ -74,37 +106,44 @@ router.get("/api/health", async (ctx) => {
     const publicTablesCount = publicTablesQuery.rows[0]?.count || 0;
     console.log('✅ Public tables count:', publicTablesCount);
 
-    // Test UUID generation
-    const testUserId = crypto.randomUUID();
-    console.log('🔑 Generated test UUID:', testUserId);
-
     const responseData = {
       success: true,
       message: 'Database connectivity test passed',
       tests: {
         connection: connectionTest.rows.length > 0,
-        publicRolesTable: publicRolesTest.rows.length >= 0, // Can be 0 if empty
-        tenantSchemaExists: tenantSchemaTest.rows.length > 0,
-        tenantProfilesCount: tenantProfilesCount,
-        publicTablesCount: publicTablesCount,
-        tenantTablesCount: tenantTablesCount,
+        profilesTableExists: profilesTableExists,
+        rolesTableExists: rolesTableExists,
+        tenantsTableExists: tenantsTableExists,
         testUuid: testUserId
       },
-      schemas: {
-        public: {
-          tablesCount: publicTablesCount,
-          rolesCount: publicRolesTest.rows.length
-        },
-        tenant: {
-          schemaExists: tenantSchemaTest.rows.length > 0,
-          tablesCount: tenantTablesCount,
-          profilesCount: tenantProfilesCount
-        }
+      database: {
+        publicTablesCount: publicTablesCount,
+        profilesCount: profilesCount,
+        rolesCount: rolesCount,
+        tenantsCount: tenantsCount
+      },
+      warnings: {
+        missingTables: [],
+        recommendations: []
       },
       timestamp: new Date().toISOString(),
-      server: 'Deno backend',
+      server: 'Deno backend with Neon PostgreSQL',
       corsHeaders: Object.fromEntries(ctx.response.headers.entries())
     };
+
+    // Add warnings for missing critical tables
+    if (!profilesTableExists) {
+      responseData.warnings.missingTables.push('profiles');
+      responseData.warnings.recommendations.push('Run Supabase migrations to create profiles table');
+    }
+    if (!rolesTableExists) {
+      responseData.warnings.missingTables.push('roles');
+      responseData.warnings.recommendations.push('Run Supabase migrations to create roles table');
+    }
+    if (!tenantsTableExists) {
+      responseData.warnings.missingTables.push('tenants');
+      responseData.warnings.recommendations.push('Run Supabase migrations to create tenants table');
+    }
 
     console.log('🏥 Setting successful response...');
     console.log('📤 Response data:', responseData);
@@ -127,8 +166,14 @@ router.get("/api/health", async (ctx) => {
       error: error.message,
       errorName: error.name,
       errorStack: error.stack,
+      recommendations: [
+        'Check if your Neon database connection string is correct',
+        'Verify that your database has the required tables',
+        'Run Supabase migrations to create the necessary schema',
+        'Check if you need to sync your Neon database with Supabase schema'
+      ],
       timestamp: new Date().toISOString(),
-      server: 'Deno backend',
+      server: 'Deno backend with Neon PostgreSQL',
       corsHeaders: Object.fromEntries(ctx.response.headers.entries())
     };
     
