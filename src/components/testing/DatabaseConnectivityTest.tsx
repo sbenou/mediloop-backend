@@ -1,361 +1,115 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, Clock, Database, Mail, User } from 'lucide-react';
-import { ServerConnectivityTest } from './ServerConnectivityTest';
 
-interface TestResult {
-  success: boolean;
-  message?: string;
-  tests?: any;
-  error?: string;
-  timestamp?: string;
-  validations?: {
-    emailAvailable: boolean;
-    roleExists: boolean;
-    availableRoles: any[];
-  };
-  emailId?: string;
-}
+import React, { useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CheckCircle, XCircle, Clock, Database, AlertTriangle, Server } from 'lucide-react';
+import { ServerConnectivityTest } from './ServerConnectivityTest';
+import SimpleConnectivityTest from './SimpleConnectivityTest';
+import TargetedSupabaseTest from './TargetedSupabaseTest';
 
 export const DatabaseConnectivityTest = () => {
-  const [healthResult, setHealthResult] = useState<TestResult | null>(null);
-  const [userTestResult, setUserTestResult] = useState<TestResult | null>(null);
-  const [emailTestResult, setEmailTestResult] = useState<TestResult | null>(null);
-  const [loading, setLoading] = useState<string | null>(null);
-  const [testEmail, setTestEmail] = useState('');
-  const [testUserData, setTestUserData] = useState({
-    email: '',
-    fullName: '',
-    role: 'patient'
-  });
-
-  // Backend URL - always point to the Neon database backend
-  const getBackendUrl = () => {
-    return 'http://localhost:8000';
-  };
-
-  const runHealthCheck = async () => {
-    setLoading('health');
-    try {
-      const backendUrl = getBackendUrl();
-      console.log('Attempting to connect to Neon database backend at:', backendUrl);
-      
-      const response = await fetch(`${backendUrl}/api/health`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const result = await response.json();
-      setHealthResult(result);
-    } catch (error) {
-      console.error('Health check error:', error);
-      setHealthResult({
-        success: false,
-        error: error.message,
-        timestamp: new Date().toISOString()
-      });
-    } finally {
-      setLoading(null);
-    }
-  };
-
-  const testUserCreation = async () => {
-    if (!testUserData.email || !testUserData.fullName) {
-      alert('Please fill in email and full name');
-      return;
-    }
-
-    setLoading('user');
-    try {
-      const backendUrl = getBackendUrl();
-      const response = await fetch(`${backendUrl}/api/test-user-creation`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ...testUserData, testMode: true })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const result = await response.json();
-      setUserTestResult(result);
-    } catch (error) {
-      console.error('User creation test error:', error);
-      setUserTestResult({
-        success: false,
-        error: error.message,
-        timestamp: new Date().toISOString()
-      });
-    } finally {
-      setLoading(null);
-    }
-  };
-
-  const testEmailService = async () => {
-    if (!testEmail) {
-      alert('Please enter a test email address');
-      return;
-    }
-
-    setLoading('email');
-    try {
-      const backendUrl = getBackendUrl();
-      const response = await fetch(`${backendUrl}/api/test-email`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: testEmail, testType: 'connectivity' })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const result = await response.json();
-      setEmailTestResult(result);
-    } catch (error) {
-      console.error('Email test error:', error);
-      setEmailTestResult({
-        success: false,
-        error: error.message,
-        timestamp: new Date().toISOString()
-      });
-    } finally {
-      setLoading(null);
-    }
-  };
-
-  const ResultIcon = ({ success }: { success: boolean }) => 
-    success ? <CheckCircle className="h-5 w-5 text-green-500" /> : <XCircle className="h-5 w-5 text-red-500" />;
-
-  const LoadingIcon = () => <Clock className="h-5 w-5 animate-spin text-blue-500" />;
+  const [activeTest, setActiveTest] = useState<'backend' | 'supabase' | 'simple' | null>(null);
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <h1 className="text-2xl font-bold mb-6">Database Connectivity Tests</h1>
-      
-      {/* Add the new Server Connectivity Test at the top */}
-      <ServerConnectivityTest />
-      
-      {/* Environment Info */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Database className="h-5 w-5" />
-            Environment Information
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <div className="text-sm">
-            <strong>Backend URL:</strong> {getBackendUrl()}
-          </div>
-          <div className="text-sm">
-            <strong>Database:</strong> Neon PostgreSQL
-          </div>
-          <div className="text-sm">
-            <strong>Storage:</strong> Deno KV
-          </div>
-          <div className="text-sm text-amber-600">
-            <strong>Note:</strong> Make sure your Deno backend server is running on localhost:8000
-          </div>
-          <div className="text-sm text-red-600">
-            <strong>Debug:</strong> Check your browser console and server logs for detailed CORS debugging information
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* Health Check */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Database className="h-5 w-5" />
-            Database Health Check
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Button 
-            onClick={runHealthCheck} 
-            disabled={loading === 'health'}
-            className="w-full"
-          >
-            {loading === 'health' ? <LoadingIcon /> : 'Run Health Check'}
-          </Button>
-          
-          {healthResult && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <ResultIcon success={healthResult.success} />
-                <span className="font-medium">
-                  {healthResult.success ? 'Health Check Passed' : 'Health Check Failed'}
-                </span>
-              </div>
-              
-              {healthResult.tests && (
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <Badge variant={healthResult.tests.connection ? 'default' : 'destructive'}>
-                    Connection: {healthResult.tests.connection ? 'OK' : 'Failed'}
-                  </Badge>
-                  <Badge variant={healthResult.tests.profilesTable ? 'default' : 'destructive'}>
-                    Profiles Table: {healthResult.tests.profilesTable ? 'OK' : 'Failed'}
-                  </Badge>
-                  <Badge variant={healthResult.tests.rolesTable ? 'default' : 'destructive'}>
-                    Roles Table: {healthResult.tests.rolesTable ? 'OK' : 'Failed'}
-                  </Badge>
-                  <Badge variant="outline">
-                    Profile Count: {healthResult.tests.profileCount}
-                  </Badge>
-                </div>
-              )}
-              
-              {healthResult.error && (
-                <div className="bg-red-50 p-3 rounded text-red-700 text-sm">
-                  Error: {healthResult.error}
-                </div>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Database Connectivity Testing</h1>
+          <p className="text-gray-600">Test your database connections and multi-tenant setup</p>
+        </div>
 
-      {/* User Creation Test */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            User Creation Test
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <Input
-              placeholder="test@example.com"
-              value={testUserData.email}
-              onChange={(e) => setTestUserData({...testUserData, email: e.target.value})}
-            />
-            <Input
-              placeholder="Test User"
-              value={testUserData.fullName}
-              onChange={(e) => setTestUserData({...testUserData, fullName: e.target.value})}
-            />
-            <select
-              className="px-3 py-2 border rounded-md"
-              value={testUserData.role}
-              onChange={(e) => setTestUserData({...testUserData, role: e.target.value})}
-            >
-              <option value="patient">Patient</option>
-              <option value="doctor">Doctor</option>
-              <option value="pharmacist">Pharmacist</option>
-            </select>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTest('backend')}>
+            <CardHeader className="text-center">
+              <Server className="h-12 w-12 mx-auto text-blue-600 mb-2" />
+              <CardTitle className="text-lg">Backend Server Test</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600 text-center">
+                Test connectivity to your Deno backend server and multi-tenant database structure
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTest('supabase')}>
+            <CardHeader className="text-center">
+              <Database className="h-12 w-12 mx-auto text-green-600 mb-2" />
+              <CardTitle className="text-lg">Supabase Test</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600 text-center">
+                Test direct Supabase connectivity and authentication flow
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTest('simple')}>
+            <CardHeader className="text-center">
+              <CheckCircle className="h-12 w-12 mx-auto text-purple-600 mb-2" />
+              <CardTitle className="text-lg">Simple Test</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600 text-center">
+                Basic connectivity test with minimal configuration
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {activeTest === 'backend' && (
+          <div className="mt-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Backend Server Connectivity Test</h2>
+              <Button variant="outline" onClick={() => setActiveTest(null)}>
+                Back to Tests
+              </Button>
+            </div>
+            <ServerConnectivityTest />
           </div>
-          
-          <Button 
-            onClick={testUserCreation} 
-            disabled={loading === 'user'}
-            className="w-full"
-          >
-            {loading === 'user' ? <LoadingIcon /> : 'Test User Creation (Safe Mode)'}
-          </Button>
-          
-          {userTestResult && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <ResultIcon success={userTestResult.success} />
-                <span className="font-medium">
-                  {userTestResult.success ? 'User Test Passed' : 'User Test Failed'}
-                </span>
-              </div>
-              
-              {userTestResult.validations && (
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <Badge variant={userTestResult.validations.emailAvailable ? 'default' : 'secondary'}>
-                    Email Available: {userTestResult.validations.emailAvailable ? 'Yes' : 'No'}
-                  </Badge>
-                  <Badge variant={userTestResult.validations.roleExists ? 'default' : 'destructive'}>
-                    Role Exists: {userTestResult.validations.roleExists ? 'Yes' : 'No'}
-                  </Badge>
-                </div>
-              )}
-              
-              {userTestResult.error && (
-                <div className="bg-red-50 p-3 rounded text-red-700 text-sm">
-                  Error: {userTestResult.error}
-                </div>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        )}
 
-      {/* Email Service Test */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Mail className="h-5 w-5" />
-            Email Service Test
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Input
-            placeholder="your-email@example.com"
-            value={testEmail}
-            onChange={(e) => setTestEmail(e.target.value)}
-          />
-          
-          <Button 
-            onClick={testEmailService} 
-            disabled={loading === 'email'}
-            className="w-full"
-          >
-            {loading === 'email' ? <LoadingIcon /> : 'Send Test Email'}
-          </Button>
-          
-          {emailTestResult && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <ResultIcon success={emailTestResult.success} />
-                <span className="font-medium">
-                  {emailTestResult.success ? 'Email Test Passed' : 'Email Test Failed'}
-                </span>
-              </div>
-              
-              {emailTestResult.success && emailTestResult.emailId && (
-                <Badge variant="outline">
-                  Email ID: {emailTestResult.emailId}
-                </Badge>
-              )}
-              
-              {emailTestResult.error && (
-                <div className="bg-red-50 p-3 rounded text-red-700 text-sm">
-                  Error: {emailTestResult.error}
-                </div>
-              )}
+        {activeTest === 'supabase' && (
+          <div className="mt-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Targeted Supabase Test</h2>
+              <Button variant="outline" onClick={() => setActiveTest(null)}>
+                Back to Tests
+              </Button>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <TargetedSupabaseTest />
+          </div>
+        )}
 
-      <div className="bg-blue-50 p-4 rounded-lg">
-        <h3 className="font-medium text-blue-900 mb-2">Testing Instructions:</h3>
-        <ol className="text-sm text-blue-800 space-y-1">
-          <li>1. Make sure your Deno backend server is running on localhost:8000</li>
-          <li>2. Run the Health Check first to verify Neon database connectivity</li>
-          <li>3. Test user creation with safe mode to validate the process</li>
-          <li>4. Test email service with your email address</li>
-          <li>5. All tests should pass before proceeding to auth flow migration</li>
-        </ol>
+        {activeTest === 'simple' && (
+          <div className="mt-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Simple Connectivity Test</h2>
+              <Button variant="outline" onClick={() => setActiveTest(null)}>
+                Back to Tests
+              </Button>
+            </div>
+            <SimpleConnectivityTest />
+          </div>
+        )}
+
+        {!activeTest && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-5 w-5 text-blue-600 mt-0.5" />
+              <div className="text-sm text-blue-800">
+                <h3 className="font-medium mb-2">Testing Instructions:</h3>
+                <ol className="list-decimal list-inside space-y-1">
+                  <li><strong>Backend Server Test:</strong> Tests your Deno server on localhost:8000 and the multi-tenant database structure</li>
+                  <li><strong>Supabase Test:</strong> Tests direct connection to Supabase for authentication and data access</li>
+                  <li><strong>Simple Test:</strong> Basic connectivity test with minimal setup</li>
+                </ol>
+                <p className="mt-2 text-xs">
+                  Start with the Backend Server Test to verify your multi-tenant setup is working correctly.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
