@@ -2,7 +2,7 @@ import { Application, Router } from "https://deno.land/x/oak@v12.6.1/mod.ts"
 import { oakCors } from "https://deno.land/x/cors@v1.2.2/mod.ts"
 import { config } from "./config/env.ts"
 import { authMiddleware } from "./middleware/authMiddleware.ts"
-import { oAuthRoutes } from "./routes/oauth.ts"
+import { oauthRoutes } from "./routes/oauth.ts"
 
 import healthCheckRouter from "./routes/healthCheck.ts"
 import { authRoutes } from "./routes/auth.ts"
@@ -75,8 +75,8 @@ app.use(authRoutes.allowedMethods())
 app.use(tenantTestingRouter.allowedMethods())
 
 // OAuth routes
-app.use(oAuthRoutes.routes())
-app.use(oAuthRoutes.allowedMethods())
+app.use(oauthRoutes.routes())
+app.use(oauthRoutes.allowedMethods())
 
 app.use(router.routes())
 app.use(router.allowedMethods())
