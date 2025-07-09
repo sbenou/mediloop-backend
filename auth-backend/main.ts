@@ -1,3 +1,4 @@
+
 import { Application, Router } from "https://deno.land/x/oak@v12.6.1/mod.ts"
 import { oakCors } from "https://deno.land/x/cors@v1.2.2/mod.ts"
 import { config } from "./config/env.ts"
@@ -10,6 +11,13 @@ import tenantTestingRouter from "./routes/tenantTesting.ts"
 
 const app = new Application()
 const router = new Router()
+
+// Debug: Log the port to see what we're getting
+console.log('Port from config:', config.PORT)
+console.log('Port type:', typeof config.PORT)
+
+// Ensure we have a valid port number
+const serverPort = typeof config.PORT === 'number' && !isNaN(config.PORT) ? config.PORT : 8000
 
 // Enable CORS for all routes
 app.use(oakCors({
@@ -81,5 +89,5 @@ app.use(oauthRoutes.allowedMethods())
 app.use(router.routes())
 app.use(router.allowedMethods())
 
-console.log(`Server running on port ${config.PORT}`)
-await app.listen({ port: config.PORT })
+console.log(`Server running on port ${serverPort}`)
+await app.listen({ port: serverPort })

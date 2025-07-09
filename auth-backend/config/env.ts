@@ -4,10 +4,13 @@ export const config = {
   // Server configuration
   PORT: (() => {
     const portEnv = Deno.env.get('PORT');
+    console.log('Raw PORT env var:', portEnv); // Debug log
     if (portEnv) {
       const parsed = parseInt(portEnv, 10);
+      console.log('Parsed PORT:', parsed); // Debug log
       return isNaN(parsed) ? 8000 : parsed;
     }
+    console.log('No PORT env var, defaulting to 8000'); // Debug log
     return 8000;
   })(),
   
@@ -34,3 +37,6 @@ export const config = {
   SUPABASE_URL: Deno.env.get('SUPABASE_URL') || '',
   SUPABASE_SERVICE_KEY: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 }
+
+// Debug: Log the final config PORT value
+console.log('Final config.PORT:', config.PORT);
