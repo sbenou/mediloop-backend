@@ -1,6 +1,9 @@
 
 // Environment configuration
 export const config = {
+  // Server configuration
+  PORT: parseInt(Deno.env.get('PORT') || '8000', 10),
+  
   // Database connection - now using Neon PostgreSQL
   DATABASE_URL: Deno.env.get('DATABASE_URL') || 'postgresql://neondb_owner:npg_DUFXR9MiPsf1@ep-small-base-a900n0vb-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require',
   
