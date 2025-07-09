@@ -1,14 +1,14 @@
 
-import { Hono } from "https://deno.land/x/hono@v3.12.11/mod.ts"
+import { Router } from "https://deno.land/x/oak@v12.6.1/mod.ts"
 import { config } from "../config/env.ts"
 import { jwtService } from "../services/jwtService.ts"
 import { databaseService } from "../services/databaseService.ts"
 import { kvStore } from "../services/kvStore.ts"
 
-const oauthRoutes = new Hono()
+const oauthRoutes = new Router()
 
 // Google OAuth initiation
-oauthRoutes.get('/google', (c) => {
+oauthRoutes.get('/oauth/google', (ctx) => {
   const redirectUri = `${config.SERVICE_URL}/oauth/google/callback`
   const scope = 'openid email profile'
   const state = crypto.randomUUID()
@@ -20,17 +20,20 @@ oauthRoutes.get('/google', (c) => {
   authUrl.searchParams.set('scope', scope)
   authUrl.searchParams.set('state', state)
   
-  return c.redirect(authUrl.toString())
+  ctx.response.redirect(authUrl.toString())
 })
 
 // Google OAuth callback
-oauthRoutes.get('/google/callback', async (c) => {
+oauthRoutes.get('/oauth/google/callback', async (ctx) => {
   try {
-    const code = c.req.query('code')
-    const state = c.req.query('state')
+    const url = ctx.request.url
+    const code = url.searchParams.get('code')
+    const state = url.searchParams.get('state')
     
     if (!code) {
-      return c.json({ error: 'Authorization code required' }, 400)
+      ctx.response.status = 400
+      ctx.response.body = { error: 'Authorization code required' }
+      return
     }
 
     // Exchange code for tokens
@@ -52,7 +55,9 @@ oauthRoutes.get('/google/callback', async (c) => {
     
     if (!tokens.access_token) {
       console.error('Token exchange failed:', tokens)
-      return c.json({ error: 'Token exchange failed' }, 400)
+      ctx.response.status = 400
+      ctx.response.body = { error: 'Token exchange failed' }
+      return
     }
 
     // Get user info from Google
@@ -91,16 +96,17 @@ oauthRoutes.get('/google/callback', async (c) => {
     })
 
     // Redirect to frontend with token
-    return c.redirect(`${config.FRONTEND_URL}/auth/callback?token=${jwtToken}`)
+    ctx.response.redirect(`${config.FRONTEND_URL}/auth/callback?token=${jwtToken}`)
 
   } catch (error) {
     console.error('Google OAuth callback error:', error)
-    return c.json({ error: 'OAuth callback failed' }, 500)
+    ctx.response.status = 500
+    ctx.response.body = { error: 'OAuth callback failed' }
   }
 })
 
 // FranceConnect OAuth initiation
-oauthRoutes.get('/franceconnect', (c) => {
+oauthRoutes.get('/oauth/franceconnect', (ctx) => {
   const redirectUri = `${config.SERVICE_URL}/oauth/franceconnect/callback`
   const scope = 'openid email profile'
   const state = crypto.randomUUID()
@@ -112,16 +118,19 @@ oauthRoutes.get('/franceconnect', (c) => {
   authUrl.searchParams.set('scope', scope)
   authUrl.searchParams.set('state', state)
   
-  return c.redirect(authUrl.toString())
+  ctx.response.redirect(authUrl.toString())
 })
 
 // FranceConnect OAuth callback
-oauthRoutes.get('/franceconnect/callback', async (c) => {
+oauthRoutes.get('/oauth/franceconnect/callback', async (ctx) => {
   try {
-    const code = c.req.query('code')
+    const url = ctx.request.url
+    const code = url.searchParams.get('code')
     
     if (!code) {
-      return c.json({ error: 'Authorization code required' }, 400)
+      ctx.response.status = 400
+      ctx.response.body = { error: 'Authorization code required' }
+      return
     }
 
     // Exchange code for tokens
@@ -143,7 +152,9 @@ oauthRoutes.get('/franceconnect/callback', async (c) => {
     
     if (!tokens.access_token) {
       console.error('FranceConnect token exchange failed:', tokens)
-      return c.json({ error: 'Token exchange failed' }, 400)
+      ctx.response.status = 400
+      ctx.response.body = { error: 'Token exchange failed' }
+      return
     }
 
     // Get user info from FranceConnect
@@ -182,18 +193,20 @@ oauthRoutes.get('/franceconnect/callback', async (c) => {
     })
 
     // Redirect to frontend with token
-    return c.redirect(`${config.FRONTEND_URL}/auth/callback?token=${jwtToken}`)
+    ctx.response.redirect(`${config.FRONTEND_URL}/auth/callback?token=${jwtToken}`)
 
   } catch (error) {
     console.error('FranceConnect OAuth callback error:', error)
-    return c.json({ error: 'OAuth callback failed' }, 500)
+    ctx.response.status = 500
+    ctx.response.body = { error: 'OAuth callback failed' }
   }
 })
 
 // LuxTrust OAuth placeholder
-oauthRoutes.get('/luxtrust', (c) => {
+oauthRoutes.get('/oauth/luxtrust', (ctx) => {
   // Note: This is a placeholder - actual LuxTrust endpoints would need to be configured
-  return c.json({ error: 'LuxTrust OAuth integration not yet configured' }, 501)
+  ctx.response.status = 501
+  ctx.response.body = { error: 'LuxTrust OAuth integration not yet configured' }
 })
 
 export { oauthRoutes }
