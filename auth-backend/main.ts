@@ -12,13 +12,6 @@ import tenantTestingRouter from "./routes/tenantTesting.ts"
 const app = new Application()
 const router = new Router()
 
-// Debug: Log the port to see what we're getting
-console.log('Port from config:', config.PORT)
-console.log('Port type:', typeof config.PORT)
-
-// Ensure we have a valid port number
-const serverPort = typeof config.PORT === 'number' && !isNaN(config.PORT) ? config.PORT : 8000
-
 // Enable CORS for all routes
 app.use(oakCors({
   origin: '*',
@@ -89,5 +82,5 @@ app.use(oauthRoutes.allowedMethods())
 app.use(router.routes())
 app.use(router.allowedMethods())
 
-console.log(`Server running on port ${serverPort}`)
-await app.listen({ port: serverPort })
+console.log(`Server running on port ${config.PORT}`)
+await app.listen({ port: config.PORT })
