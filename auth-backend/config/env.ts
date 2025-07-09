@@ -94,8 +94,31 @@ export const loadConfig = async () => {
   return environmentConfig.config;
 };
 
+// Define the config type properly
+type ConfigType = {
+  PORT: number;
+  HOST: string;
+  DATABASE_URL: string;
+  JWT_SECRET: string;
+  JWT_EXPIRES_IN: string;
+  JWT_ISSUER: string;
+  JWT_AUDIENCE: string;
+  GOOGLE_CLIENT_ID: string;
+  GOOGLE_CLIENT_SECRET: string;
+  FRANCECONNECT_CLIENT_ID: string;
+  FRANCECONNECT_CLIENT_SECRET: string;
+  LUXTRUST_CLIENT_ID: string;
+  LUXTRUST_CLIENT_SECRET: string;
+  FRONTEND_URL: string;
+  SERVICE_URL: string;
+  ENVIRONMENT: string;
+  LOG_LEVEL: string;
+  SUPABASE_URL: string;
+  SUPABASE_SERVICE_KEY: string;
+};
+
 // For backward compatibility, export config that throws if not initialized
-export let config: ReturnType<typeof environmentConfig.config>;
+export let config: ConfigType;
 
 // Initialize config on module load
 try {
