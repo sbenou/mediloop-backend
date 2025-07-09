@@ -9,18 +9,29 @@ import healthCheckRouter from "./routes/healthCheck.ts"
 import { authRoutes } from "./routes/auth.ts"
 import tenantTestingRouter from "./routes/tenantTesting.ts"
 
+console.log('=== MAIN.TS STARTING ===');
+console.log('Config imported:', !!config);
+console.log('config.PORT from import:', config.PORT);
+console.log('typeof config.PORT:', typeof config.PORT);
+
 const app = new Application()
 const router = new Router()
 
-// Debug the port issue
-console.log('Config import successful');
-console.log('config.PORT value:', config.PORT);
-console.log('config.PORT type:', typeof config.PORT);
+// Determine the port to use
+let serverPort: number;
 
-// Ensure we have a valid port number
-const serverPort = (typeof config.PORT === 'number' && !isNaN(config.PORT)) ? config.PORT : 8000;
+if (typeof config.PORT === 'number' && !isNaN(config.PORT) && config.PORT > 0) {
+  serverPort = config.PORT;
+} else {
+  console.log('WARNING: config.PORT is invalid, using fallback 8000');
+  console.log('config.PORT value was:', config.PORT);
+  console.log('config.PORT type was:', typeof config.PORT);
+  serverPort = 8000;
+}
+
+console.log('=== PORT RESOLUTION ===');
 console.log('Final serverPort:', serverPort);
-console.log('Final serverPort type:', typeof serverPort);
+console.log('typeof serverPort:', typeof serverPort);
 
 // Enable CORS for all routes
 app.use(oakCors({
@@ -92,5 +103,8 @@ app.use(oauthRoutes.allowedMethods())
 app.use(router.routes())
 app.use(router.allowedMethods())
 
-console.log(`Server running on port ${serverPort}`)
+console.log(`=== STARTING SERVER ===`);
+console.log(`About to listen on port: ${serverPort}`);
+console.log(`Type of port being passed to listen: ${typeof serverPort}`);
+
 await app.listen({ port: serverPort })

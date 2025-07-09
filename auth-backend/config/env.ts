@@ -1,8 +1,19 @@
 
 // Environment configuration
+console.log('=== ENV.TS LOADING ===');
+console.log('Deno.env.get(PORT):', Deno.env.get('PORT'));
+console.log('typeof Deno.env.get(PORT):', typeof Deno.env.get('PORT'));
+
+const portValue = Deno.env.get('PORT') || '8000';
+console.log('portValue after fallback:', portValue);
+
+const parsedPort = parseInt(portValue, 10);
+console.log('parsedPort:', parsedPort);
+console.log('isNaN(parsedPort):', isNaN(parsedPort));
+
 export const config = {
   // Server configuration
-  PORT: parseInt(Deno.env.get('PORT') || '8000', 10),
+  PORT: parsedPort,
   
   // Database connection - now using Neon PostgreSQL
   DATABASE_URL: Deno.env.get('DATABASE_URL') || 'postgresql://neondb_owner:npg_DUFXR9MiPsf1@ep-small-base-a900n0vb-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require',
@@ -28,7 +39,7 @@ export const config = {
   SUPABASE_SERVICE_KEY: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 }
 
-// Debug logging
-console.log('PORT env var:', Deno.env.get('PORT'));
-console.log('Parsed PORT:', config.PORT);
-console.log('PORT type:', typeof config.PORT);
+console.log('=== FINAL CONFIG ===');
+console.log('config.PORT:', config.PORT);
+console.log('typeof config.PORT:', typeof config.PORT);
+console.log('config object:', JSON.stringify(config, null, 2));
