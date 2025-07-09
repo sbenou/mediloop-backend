@@ -1,4 +1,5 @@
 
+
 import { Application, Router } from "https://deno.land/x/oak@v12.6.1/mod.ts"
 import { oakCors } from "https://deno.land/x/cors@v1.2.2/mod.ts"
 import { config } from "./config/env.ts"
@@ -10,15 +11,13 @@ import { authRoutes } from "./routes/auth.ts"
 import tenantTestingRouter from "./routes/tenantTesting.ts"
 
 console.log('Starting Deno server...');
-console.log(`Configuration PORT: ${config.PORT} (type: ${typeof config.PORT})`);
 
 const app = new Application()
 const router = new Router()
 
-// Ensure we have a valid port - this should never be needed but adding as safety
-const serverPort: number = typeof config.PORT === 'number' && config.PORT > 0 ? config.PORT : 8000;
-
-console.log(`Final server port: ${serverPort}`);
+// Use the port from config, ensure it's a valid number
+const PORT = config.PORT || 8000;
+console.log(`Server will start on port: ${PORT}`);
 
 // Enable CORS for all routes
 app.use(oakCors({
@@ -90,12 +89,12 @@ app.use(oauthRoutes.allowedMethods())
 app.use(router.routes())
 app.use(router.allowedMethods())
 
-console.log(`Server running on port ${serverPort}`)
+console.log(`🚀 Server running on http://localhost:${PORT}`)
 
 try {
-  await app.listen({ port: serverPort })
+  await app.listen({ port: PORT })
 } catch (error) {
-  console.error('Failed to start server:', error);
-  console.error('Port value:', serverPort, 'Type:', typeof serverPort);
+  console.error('❌ Failed to start server:', error);
   Deno.exit(1);
 }
+

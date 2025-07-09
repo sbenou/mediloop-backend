@@ -1,21 +1,9 @@
 
+
 // Environment configuration
 export const config = {
-  // Server configuration - ensure we always have a valid port number
-  PORT: (() => {
-    const envPort = Deno.env.get('PORT');
-    if (!envPort) {
-      console.log('No PORT environment variable set, using default 8000');
-      return 8000;
-    }
-    const parsed = parseInt(envPort, 10);
-    if (isNaN(parsed) || parsed <= 0) {
-      console.log(`Invalid PORT environment variable: ${envPort}, using default 8000`);
-      return 8000;
-    }
-    console.log(`Using PORT from environment: ${parsed}`);
-    return parsed;
-  })(),
+  // Server configuration - simple and reliable port setup
+  PORT: parseInt(Deno.env.get('PORT') || '8000', 10),
   
   // Database connection - now using Neon PostgreSQL
   DATABASE_URL: Deno.env.get('DATABASE_URL') || 'postgresql://neondb_owner:npg_DUFXR9MiPsf1@ep-small-base-a900n0vb-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require',
@@ -41,4 +29,5 @@ export const config = {
   SUPABASE_SERVICE_KEY: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 }
 
-console.log(`Configuration loaded. Server will use port: ${config.PORT}`);
+console.log(`Configuration loaded. Server will run on port: ${config.PORT}`);
+
