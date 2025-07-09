@@ -1,33 +1,40 @@
 
+import { appConfig } from './appConfig.ts'
 
-// Environment configuration
+// Environment configuration - combines app config with secrets
 export const config = {
-  // Server configuration - simple and reliable port setup
-  PORT: parseInt(Deno.env.get('PORT') || '8000', 10),
+  // Server configuration from app config
+  PORT: appConfig.server.port,
+  HOST: appConfig.server.host,
   
-  // Database connection - now using Neon PostgreSQL
+  // Database connection - SECRET from env/vault
   DATABASE_URL: Deno.env.get('DATABASE_URL') || 'postgresql://neondb_owner:npg_DUFXR9MiPsf1@ep-small-base-a900n0vb-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require',
   
-  // JWT configuration
+  // JWT configuration - SECRET from env/vault
   JWT_SECRET: Deno.env.get('JWT_SECRET') || 'your-super-secret-jwt-key',
-  JWT_EXPIRES_IN: '24h',
+  JWT_EXPIRES_IN: appConfig.jwt.expiresIn,
+  JWT_ISSUER: appConfig.jwt.issuer,
+  JWT_AUDIENCE: appConfig.jwt.audience,
   
-  // OAuth providers
-  GOOGLE_CLIENT_ID: Deno.env.get('GOOGLE_CLIENT_ID') || '',
+  // OAuth providers - mix of public config and secrets
+  GOOGLE_CLIENT_ID: appConfig.oauth.google.clientId,
   GOOGLE_CLIENT_SECRET: Deno.env.get('GOOGLE_CLIENT_SECRET') || '',
-  FRANCECONNECT_CLIENT_ID: Deno.env.get('FRANCECONNECT_CLIENT_ID') || '',
+  FRANCECONNECT_CLIENT_ID: appConfig.oauth.franceConnect.clientId,
   FRANCECONNECT_CLIENT_SECRET: Deno.env.get('FRANCECONNECT_CLIENT_SECRET') || '',
-  LUXTRUST_CLIENT_ID: Deno.env.get('LUXTRUST_CLIENT_ID') || '',
+  LUXTRUST_CLIENT_ID: appConfig.oauth.luxTrust.clientId,
   LUXTRUST_CLIENT_SECRET: Deno.env.get('LUXTRUST_CLIENT_SECRET') || '',
   
-  // Service URLs
-  FRONTEND_URL: Deno.env.get('FRONTEND_URL') || 'http://localhost:5173',
-  SERVICE_URL: Deno.env.get('SERVICE_URL') || 'http://localhost:8000',
+  // Service URLs from app config
+  FRONTEND_URL: appConfig.urls.frontend,
+  SERVICE_URL: appConfig.urls.service,
   
-  // Legacy Supabase for transition (will be removed)
+  // Application settings
+  ENVIRONMENT: appConfig.app.environment,
+  LOG_LEVEL: appConfig.app.logLevel,
+  
+  // Legacy Supabase for transition (SECRETS - will be removed)
   SUPABASE_URL: Deno.env.get('SUPABASE_URL') || '',
   SUPABASE_SERVICE_KEY: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 }
 
-console.log(`Configuration loaded. Server will run on port: ${config.PORT}`);
-
+console.log(`Configuration loaded. Server will run on port: ${config.PORT} in ${config.ENVIRONMENT} mode`);

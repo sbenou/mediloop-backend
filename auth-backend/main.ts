@@ -1,5 +1,3 @@
-
-
 import { Application, Router } from "https://deno.land/x/oak@v12.6.1/mod.ts"
 import { oakCors } from "https://deno.land/x/cors@v1.2.2/mod.ts"
 import { config } from "./config/env.ts"
@@ -15,9 +13,9 @@ console.log('Starting Deno server...');
 const app = new Application()
 const router = new Router()
 
-// Use the port from config, ensure it's a valid number
-const PORT = config.PORT || 8000;
-console.log(`Server will start on port: ${PORT}`);
+// Use the port from config
+const PORT = config.PORT;
+console.log(`Server will start on port: ${PORT} (${config.ENVIRONMENT} mode)`);
 
 // Enable CORS for all routes
 app.use(oakCors({
@@ -97,4 +95,3 @@ try {
   console.error('❌ Failed to start server:', error);
   Deno.exit(1);
 }
-
