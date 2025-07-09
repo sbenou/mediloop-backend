@@ -17,6 +17,16 @@ interface LoginResponse {
 
 interface RegisterResponse extends LoginResponse {}
 
+interface TokenVerification {
+  valid: boolean;
+  payload?: {
+    sub: string;
+    email: string;
+    role: string;
+    tenant_id?: string;
+  };
+}
+
 class AuthClient {
   private token: string | null = null;
 
@@ -105,6 +115,48 @@ class AuthClient {
     }
 
     return await response.json();
+  }
+
+  // OAuth methods
+  initiateGoogleAuth(): void {
+    window.location.href = `${API_BASE_URL}/oauth/google`;
+  }
+
+  initiateFranceConnectAuth(): void {
+    window.location.href = `${API_BASE_URL}/oauth/franceconnect`;
+  }
+
+  handleOAuthCallback(token: string): void {
+    this.token = token;
+    localStorage.setItem('auth_token', token);
+  }
+
+  async verifyToken(): Promise<TokenVerification> {
+    if (!this.token) {
+      return { valid: false };
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/verify-token`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        return { valid: false };
+      }
+
+      const data = await response.json();
+      return {
+        valid: true,
+        payload: data.payload
+      };
+    } catch (error) {
+      return { valid: false };
+    }
   }
 
   logout(): void {
