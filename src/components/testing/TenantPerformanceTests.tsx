@@ -9,6 +9,11 @@ import { CheckCircle, XCircle, Clock, Users, Database, Zap, Activity } from 'luc
 interface TestResult {
   success: boolean;
   testResults?: any;
+  performanceBreakdown?: {
+    fastest?: number;
+    slowest?: number;
+    median?: number;
+  };
   error?: string;
   timestamp: string;
 }
@@ -118,8 +123,12 @@ export const TenantPerformanceTests = () => {
                 <div>🔍 Lookups: {result.testResults.totalIterations}</div>
                 <div>⏱️ Average Time: {result.testResults.averageLookupTimeMs?.toFixed(2)}ms</div>
                 <div>📊 Throughput: {result.testResults.lookupsPerSecond?.toFixed(2)} lookups/sec</div>
-                <div>🚀 Fastest: {result.performanceBreakdown?.fastest?.toFixed(2)}ms</div>
-                <div>🐌 Slowest: {result.performanceBreakdown?.slowest?.toFixed(2)}ms</div>
+                {result.performanceBreakdown && (
+                  <>
+                    <div>🚀 Fastest: {result.performanceBreakdown.fastest?.toFixed(2)}ms</div>
+                    <div>🐌 Slowest: {result.performanceBreakdown.slowest?.toFixed(2)}ms</div>
+                  </>
+                )}
               </>
             )}
             
