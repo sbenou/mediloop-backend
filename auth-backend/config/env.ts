@@ -1,4 +1,5 @@
 
+
 // Environment configuration
 export const config = {
   // Server configuration
@@ -8,9 +9,11 @@ export const config = {
     if (portEnv) {
       const parsed = parseInt(portEnv, 10);
       console.log('Parsed PORT:', parsed); // Debug log
-      return isNaN(parsed) ? 8000 : parsed;
+      if (!isNaN(parsed)) {
+        return parsed;
+      }
     }
-    console.log('No PORT env var, defaulting to 8000'); // Debug log
+    console.log('No valid PORT env var, defaulting to 8000'); // Debug log
     return 8000;
   })(),
   
@@ -40,3 +43,5 @@ export const config = {
 
 // Debug: Log the final config PORT value
 console.log('Final config.PORT:', config.PORT);
+console.log('Final config.PORT type:', typeof config.PORT);
+
