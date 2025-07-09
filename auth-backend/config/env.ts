@@ -1,4 +1,5 @@
 
+
 // Environment configuration
 export const config = {
   // Server configuration
@@ -27,3 +28,4 @@ export const config = {
   SUPABASE_URL: Deno.env.get('SUPABASE_URL') || '',
   SUPABASE_SERVICE_KEY: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 }
+
