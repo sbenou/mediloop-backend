@@ -1,6 +1,7 @@
+
 import { Application, Router } from "https://deno.land/x/oak@v12.6.1/mod.ts"
 import { oakCors } from "https://deno.land/x/cors@v1.2.2/mod.ts"
-import { config } from "./config/env.ts"
+import { loadConfig } from "./config/env.ts"
 import { authMiddleware } from "./middleware/authMiddleware.ts"
 import { oauthRoutes } from "./routes/oauth.ts"
 
@@ -8,12 +9,14 @@ import healthCheckRouter from "./routes/healthCheck.ts"
 import { authRoutes } from "./routes/auth.ts"
 import tenantTestingRouter from "./routes/tenantTesting.ts"
 
-console.log('Starting Deno server...');
+console.log('🚀 Starting Deno server with HashiCorp Vault integration...');
+
+// Load configuration (including secrets from Vault)
+const config = await loadConfig();
 
 const app = new Application()
 const router = new Router()
 
-// Use the port from config
 const PORT = config.PORT;
 console.log(`Server will start on port: ${PORT} (${config.ENVIRONMENT} mode)`);
 
@@ -53,7 +56,7 @@ app.use(async (ctx, next) => {
 
 // Test route
 router.get("/", (ctx) => {
-  ctx.response.body = "Hello world!"
+  ctx.response.body = "Hello world! Vault integration active."
 })
 
 // Protected route (example)
@@ -87,6 +90,7 @@ app.use(oauthRoutes.allowedMethods())
 app.use(router.routes())
 app.use(router.allowedMethods())
 
+console.log(`🔐 Vault integration ready`)
 console.log(`🚀 Server running on http://localhost:${PORT}`)
 
 try {
