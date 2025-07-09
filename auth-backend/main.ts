@@ -9,29 +9,16 @@ import healthCheckRouter from "./routes/healthCheck.ts"
 import { authRoutes } from "./routes/auth.ts"
 import tenantTestingRouter from "./routes/tenantTesting.ts"
 
-console.log('=== MAIN.TS STARTING ===');
-console.log('Config imported:', !!config);
-console.log('config.PORT from import:', config.PORT);
-console.log('typeof config.PORT:', typeof config.PORT);
+console.log('Starting Deno server...');
+console.log(`Configuration PORT: ${config.PORT} (type: ${typeof config.PORT})`);
 
 const app = new Application()
 const router = new Router()
 
-// Determine the port to use
-let serverPort: number;
+// Ensure we have a valid port - this should never be needed but adding as safety
+const serverPort: number = typeof config.PORT === 'number' && config.PORT > 0 ? config.PORT : 8000;
 
-if (typeof config.PORT === 'number' && !isNaN(config.PORT) && config.PORT > 0) {
-  serverPort = config.PORT;
-} else {
-  console.log('WARNING: config.PORT is invalid, using fallback 8000');
-  console.log('config.PORT value was:', config.PORT);
-  console.log('config.PORT type was:', typeof config.PORT);
-  serverPort = 8000;
-}
-
-console.log('=== PORT RESOLUTION ===');
-console.log('Final serverPort:', serverPort);
-console.log('typeof serverPort:', typeof serverPort);
+console.log(`Final server port: ${serverPort}`);
 
 // Enable CORS for all routes
 app.use(oakCors({
@@ -103,8 +90,12 @@ app.use(oauthRoutes.allowedMethods())
 app.use(router.routes())
 app.use(router.allowedMethods())
 
-console.log(`=== STARTING SERVER ===`);
-console.log(`About to listen on port: ${serverPort}`);
-console.log(`Type of port being passed to listen: ${typeof serverPort}`);
+console.log(`Server running on port ${serverPort}`)
 
-await app.listen({ port: serverPort })
+try {
+  await app.listen({ port: serverPort })
+} catch (error) {
+  console.error('Failed to start server:', error);
+  console.error('Port value:', serverPort, 'Type:', typeof serverPort);
+  Deno.exit(1);
+}
