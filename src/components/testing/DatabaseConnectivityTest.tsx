@@ -8,6 +8,10 @@ import { ServerConnectivityTest } from './ServerConnectivityTest';
 export const DatabaseConnectivityTest = () => {
   const [activeTest, setActiveTest] = useState<'backend' | null>(null);
 
+  const handleCardClick = () => {
+    setActiveTest('backend');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -17,7 +21,10 @@ export const DatabaseConnectivityTest = () => {
         </div>
 
         <div className="grid grid-cols-1 gap-4 max-w-md mx-auto">
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTest('backend')}>
+          <Card 
+            className="cursor-pointer hover:shadow-md transition-shadow" 
+            onClick={handleCardClick}
+          >
             <CardHeader className="text-center">
               <Server className="h-12 w-12 mx-auto text-blue-600 mb-2" />
               <CardTitle className="text-lg">Neon Database Test</CardTitle>
