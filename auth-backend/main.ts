@@ -52,7 +52,18 @@ router.get("/", (ctx) => {
 
 // Protected route (example)
 router.get("/protected", authMiddleware, (ctx) => {
-  ctx.response.body = "Protected route accessed!"
+  ctx.response.body = {
+    message: "Protected route accessed!",
+    user: ctx.state.user
+  }
+})
+
+// Protected user profile route
+router.get("/api/me", authMiddleware, (ctx) => {
+  ctx.response.body = {
+    user: ctx.state.user,
+    timestamp: new Date().toISOString()
+  }
 })
 
 // Add routes

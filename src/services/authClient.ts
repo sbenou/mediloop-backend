@@ -1,181 +1,124 @@
 
-interface AuthResponse {
-  access_token: string
-  token_type: string
-  expires_in: number
+const API_BASE_URL = 'http://localhost:8000';
+
+interface LoginResponse {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  session_id: string;
   user: {
-    id: string
-    email: string
-    role: string
-    full_name: string
-  }
+    id: string;
+    email: string;
+    role: string;
+    full_name: string;
+    tenant_id?: string;
+  };
 }
 
-interface AuthError {
-  error: string
-}
+interface RegisterResponse extends LoginResponse {}
 
 class AuthClient {
-  private baseUrl: string
-  private token: string | null = null
+  private token: string | null = null;
 
   constructor() {
-    // Use Vite's environment variable system for the frontend
-    // This will use VITE_AUTH_BACKEND_URL from environment or fall back to localhost
-    this.baseUrl = import.meta.env.VITE_AUTH_BACKEND_URL || 'http://localhost:8000'
-    
     // Load token from localStorage on initialization
-    this.token = localStorage.getItem('auth_token')
+    this.token = localStorage.getItem('auth_token');
   }
 
-  private async request<T>(
-    endpoint: string, 
-    options: RequestInit = {}
-  ): Promise<T> {
-    const url = `${this.baseUrl}${endpoint}`
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...options.headers as Record<string, string>
-    }
-
-    if (this.token && !endpoint.includes('/oauth/')) {
-      headers['Authorization'] = `Bearer ${this.token}`
-    }
-
-    console.log('AuthClient: Making request to:', url)
-
-    const response = await fetch(url, {
-      ...options,
-      headers
-    })
-
-    console.log('AuthClient: Response status:', response.status)
+  async login(email: string, password: string): Promise<LoginResponse> {
+    const response = await fetch(`${API_BASE_URL}/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
 
     if (!response.ok) {
-      let errorMessage = 'Request failed'
-      try {
-        const errorData = await response.json() as AuthError
-        errorMessage = errorData.error || `HTTP ${response.status}: ${response.statusText}`
-      } catch (e) {
-        errorMessage = `HTTP ${response.status}: ${response.statusText}`
-      }
-      throw new Error(errorMessage)
+      const error = await response.json();
+      throw new Error(error.error || 'Login failed');
     }
 
-    return response.json()
+    const data: LoginResponse = await response.json();
+    this.token = data.access_token;
+    localStorage.setItem('auth_token', this.token);
+    return data;
   }
 
-  async register(email: string, password: string, fullName: string, role: string = 'patient'): Promise<AuthResponse> {
-    const response = await this.request<AuthResponse>('/auth/register', {
+  async register(email: string, password: string, fullName: string, role: string = 'patient'): Promise<RegisterResponse> {
+    const response = await fetch(`${API_BASE_URL}/register`, {
       method: 'POST',
-      body: JSON.stringify({ email, password, fullName, role })
-    })
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password, fullName, role }),
+    });
 
-    this.token = response.access_token
-    localStorage.setItem('auth_token', this.token)
-    
-    return response
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Registration failed');
+    }
+
+    const data: RegisterResponse = await response.json();
+    this.token = data.access_token;
+    localStorage.setItem('auth_token', this.token);
+    return data;
   }
 
-  async login(email: string, password: string): Promise<AuthResponse> {
-    const response = await this.request<AuthResponse>('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password })
-    })
-
-    this.token = response.access_token
-    localStorage.setItem('auth_token', this.token)
-    
-    return response
-  }
-
-  async refreshToken(): Promise<AuthResponse> {
+  async testProtectedRoute(): Promise<any> {
     if (!this.token) {
-      throw new Error('No token to refresh')
+      throw new Error('No authentication token available');
     }
 
-    const response = await this.request<AuthResponse>('/auth/refresh', {
-      method: 'POST',
-      body: JSON.stringify({ token: this.token })
-    })
+    const response = await fetch(`${API_BASE_URL}/protected`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${this.token}`,
+        'Content-Type': 'application/json',
+      },
+    });
 
-    this.token = response.access_token
-    localStorage.setItem('auth_token', this.token)
-    
-    return response
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Protected route access failed');
+    }
+
+    return await response.json();
   }
 
-  async verifyToken(): Promise<{ valid: boolean; payload?: any }> {
+  async getProfile(): Promise<any> {
     if (!this.token) {
-      return { valid: false }
+      throw new Error('No authentication token available');
     }
 
-    try {
-      const response = await this.request<{ valid: boolean; payload: any }>('/auth/verify', {
-        method: 'POST',
-        body: JSON.stringify({ token: this.token })
-      })
-      
-      return response
-    } catch (error) {
-      console.error('Token verification failed:', error)
-      return { valid: false }
+    const response = await fetch(`${API_BASE_URL}/api/me`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${this.token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Profile fetch failed');
     }
+
+    return await response.json();
   }
 
-  async logout(): Promise<void> {
-    try {
-      await this.request('/auth/logout', {
-        method: 'POST'
-      })
-    } finally {
-      this.token = null
-      localStorage.removeItem('auth_token')
-    }
-  }
-
-  async getUserProfile(): Promise<any> {
-    return this.request('/auth/profile')
-  }
-
-  // OAuth methods - will point to your deployed backend
-  initiateGoogleAuth(): void {
-    window.location.href = `${this.baseUrl}/oauth/google`
-  }
-
-  initiateFranceConnectAuth(): void {
-    window.location.href = `${this.baseUrl}/oauth/franceconnect`
-  }
-
-  initiateLuxTrustAuth(): void {
-    console.log('LuxTrust authentication should be handled by the useLuxTrustAuth hook')
-  }
-
-  // Handle OAuth callback
-  handleOAuthCallback(token: string): void {
-    this.token = token
-    localStorage.setItem('auth_token', token)
-  }
-
-  isAuthenticated(): boolean {
-    return !!this.token
+  logout(): void {
+    this.token = null;
+    localStorage.removeItem('auth_token');
   }
 
   getToken(): string | null {
-    return this.token
+    return this.token;
   }
 
-  setToken(token: string): void {
-    this.token = token
-    localStorage.setItem('auth_token', token)
-  }
-
-  clearToken(): void {
-    this.token = null
-    localStorage.removeItem('auth_token')
+  isAuthenticated(): boolean {
+    return !!this.token;
   }
 }
 
-export const authClient = new AuthClient()
-export type { AuthResponse, AuthError }
+export const authClient = new AuthClient();
