@@ -9,7 +9,7 @@ Usage: deno run --allow-net --allow-env scripts/vaultManager.ts <command> [args]
 Commands:
   setup                           - Initialize Vault with secrets from .env
   get <path>                      - Get secrets from path
-  set <path> <key=value> ...      - Set secrets at path
+  set <path> <key=value> ...      - Set secrets at path (merges with existing)
   delete <path>                   - Delete secrets at path
   list                           - List all secret paths
   health                         - Check Vault health
@@ -106,17 +106,31 @@ async function getCommand(path: string) {
 async function setCommand(path: string, keyValuePairs: string[]) {
   console.log(`📝 Setting secrets at: ${path}`);
   
-  const secrets: Record<string, string> = {};
+  // Parse new secrets from key=value pairs
+  const newSecrets: Record<string, string> = {};
   for (const pair of keyValuePairs) {
     const [key, value] = pair.split('=');
     if (!key || !value) {
       throw new Error(`Invalid key=value pair: ${pair}`);
     }
-    secrets[key] = value;
+    newSecrets[key] = value;
   }
   
-  await vaultService.setSecret(path, secrets);
+  // Get existing secrets first
+  let existingSecrets: Record<string, string> = {};
+  try {
+    existingSecrets = await vaultService.getSecret(path) || {};
+  } catch (error) {
+    console.log(`Path '${path}' doesn't exist yet, creating new secrets.`);
+  }
+  
+  // Merge existing secrets with new ones (new ones override existing)
+  const mergedSecrets = { ...existingSecrets, ...newSecrets };
+  
+  await vaultService.setSecret(path, mergedSecrets);
   console.log(`✅ Secrets updated at: ${path}`);
+  console.log(`Updated keys: ${Object.keys(newSecrets).join(', ')}`);
+  console.log(`Total keys at path: ${Object.keys(mergedSecrets).join(', ')}`);
 }
 
 async function deleteCommand(path: string) {
