@@ -1,3 +1,4 @@
+
 import { loadEnvironment } from './envLoader.ts';
 import { appConfig } from './appConfig.ts'
 import { vaultService } from '../services/vaultService.ts'
@@ -51,14 +52,45 @@ class EnvironmentConfig {
     return this.secrets[key] || fallback || '';
   }
 
+  private getDatabaseUrl(): string {
+    const environment = appConfig.app.environment;
+    
+    // Try to get environment-specific database URL from Vault
+    if (environment === 'production') {
+      const prodUrl = this.getSecret('DATABASE_URL_PROD');
+      if (prodUrl) {
+        console.log('🔗 Using production database URL from Vault');
+        return prodUrl;
+      }
+    } else {
+      const devUrl = this.getSecret('DATABASE_URL_DEV');
+      if (devUrl) {
+        console.log('🔗 Using development database URL from Vault');
+        return devUrl;
+      }
+    }
+    
+    // Fallback to generic DATABASE_URL from Vault
+    const genericUrl = this.getSecret('DATABASE_URL');
+    if (genericUrl) {
+      console.log(`🔗 Using generic database URL from Vault for ${environment}`);
+      return genericUrl;
+    }
+    
+    // Final fallback to environment variable
+    const envUrl = Deno.env.get('DATABASE_URL') || 'postgresql://neondb_owner:npg_DUFXR9MiPsf1@ep-small-base-a900n0vb-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require';
+    console.log(`🔗 Using fallback database URL from environment for ${environment}`);
+    return envUrl;
+  }
+
   get config() {
     return {
       // Server configuration from app config
       PORT: appConfig.server.port,
       HOST: appConfig.server.host,
       
-      // Database connection - SECRET from Vault
-      DATABASE_URL: this.getSecret('DATABASE_URL', 'postgresql://neondb_owner:npg_DUFXR9MiPsf1@ep-small-base-a900n0vb-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require'),
+      // Database connection - environment-specific SECRET from Vault
+      DATABASE_URL: this.getDatabaseUrl(),
       
       // JWT configuration - SECRET from Vault
       JWT_SECRET: this.getSecret('JWT_SECRET', 'your-super-secret-jwt-key'),
