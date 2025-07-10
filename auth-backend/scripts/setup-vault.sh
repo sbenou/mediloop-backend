@@ -10,6 +10,22 @@ echo "🔐 Starting HashiCorp Vault setup..."
 export VAULT_URL=http://localhost:8200
 export VAULT_TOKEN=myroot
 
+# Set application secrets (replace with your actual values)
+# Database connection (contains password - SECRET)
+export DATABASE_URL="postgresql://neondb_owner:npg_DUFXR9MiPsf1@ep-small-base-a900n0vb-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require"
+
+# JWT configuration (SECRET)
+export JWT_SECRET="your-super-secret-jwt-key"
+
+# OAuth provider secrets (SECRETS) - replace with your actual values
+export GOOGLE_CLIENT_SECRET=""
+export FRANCECONNECT_CLIENT_SECRET=""
+export LUXTRUST_CLIENT_SECRET=""
+
+# Supabase secrets (during transition - SECRETS) - replace with your actual values
+export SUPABASE_URL=""
+export SUPABASE_SERVICE_ROLE_KEY=""
+
 # Check if Docker is running
 if ! docker info > /dev/null 2>&1; then
     echo "❌ Docker is not running. Please start Docker and try again."

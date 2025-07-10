@@ -9,6 +9,22 @@ REM Set Vault environment variables
 set VAULT_URL=http://localhost:8200
 set VAULT_TOKEN=myroot
 
+REM Set application secrets (replace with your actual values)
+REM Database connection (contains password - SECRET)
+set DATABASE_URL=postgresql://neondb_owner:npg_DUFXR9MiPsf1@ep-small-base-a900n0vb-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require
+
+REM JWT configuration (SECRET)
+set JWT_SECRET=your-super-secret-jwt-key
+
+REM OAuth provider secrets (SECRETS) - replace with your actual values
+set GOOGLE_CLIENT_SECRET=
+set FRANCECONNECT_CLIENT_SECRET=
+set LUXTRUST_CLIENT_SECRET=
+
+REM Supabase secrets (during transition - SECRETS) - replace with your actual values
+set SUPABASE_URL=
+set SUPABASE_SERVICE_ROLE_KEY=
+
 REM Check if Docker is running
 docker info >nul 2>&1
 if %errorlevel% neq 0 (
