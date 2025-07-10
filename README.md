@@ -1,4 +1,3 @@
-
 # Welcome to medihop-delivery project
 
 ## Project info
@@ -106,71 +105,40 @@ This command will:
 - Initialize Vault with default secrets
 - Provide next steps
 
-### Manual Setup (Alternative)
-
-If the automatic setup doesn't work, follow these manual steps:
-
-#### 1. Start Vault Container
-
-```bash
-cd auth-backend
-docker-compose -f docker-compose.vault.yml up -d
-```
-
-#### 2. Set Environment Variables
-
-**Windows (Command Prompt):**
-```cmd
-set VAULT_URL=http://localhost:8200
-set VAULT_TOKEN=myroot
-set NODE_ENV=development
-```
-
-**Windows (PowerShell):**
-```powershell
-$env:VAULT_URL="http://localhost:8200"
-$env:VAULT_TOKEN="myroot"
-$env:NODE_ENV="development"
-```
-
-**Linux/macOS/Git Bash:**
-```bash
-export VAULT_URL=http://localhost:8200
-export VAULT_TOKEN=myroot
-export NODE_ENV=development
-```
-
-#### 3. Initialize Vault with Secrets
-
-```bash
-deno run --allow-net --allow-env --allow-read scripts/setupVault.ts
-```
-
 ### Starting the Deno Server
 
 After Vault is set up, start the development server:
 
 ```bash
-# Option 1: Using the cross-platform launcher (recommended)
+# Using the cross-platform launcher (recommended)
 deno task start-dev
 
-# Option 2: Direct command (make sure environment variables are set)
-deno run --allow-net --allow-env --allow-read --unstable-kv main.ts
+# Or direct command (if you prefer)
+deno task dev
 ```
 
-### Managing Vault Secrets
+### Managing Vault Secrets (New Simplified Commands)
 
-Use the vault manager to add or update secrets:
+Use the new vault task for all vault operations - **no need to set environment variables manually**:
 
 ```bash
 # Get secrets from a path
-deno run --allow-net --allow-env scripts/vaultManager.ts get auth
+deno task vault get auth
 
-# Set a new secret
-deno run --allow-net --allow-env scripts/vaultManager.ts set auth DATABASE_URL_DEV="your-dev-database-url"
+# Set a new secret (like your database URL)
+deno task vault set auth DATABASE_URL_DEV="your-dev-database-url"
+
+# Set multiple secrets at once
+deno task vault set auth DATABASE_URL_PROD="your-prod-url" JWT_SECRET="your-jwt-secret"
+
+# Delete secrets from a path
+deno task vault delete legacy
 
 # Check Vault health
-deno run --allow-net --allow-env scripts/vaultManager.ts health
+deno task vault health
+
+# Initialize/setup Vault with default secrets
+deno task vault setup
 ```
 
 ### Available Deno Tasks
@@ -187,23 +155,44 @@ deno task setup-vault
 
 # Start development server with Vault integration
 deno task start-dev
+
+# Vault management (handles environment variables automatically)
+deno task vault <command> [args...]
 ```
 
 ### Troubleshooting
 
 **"VAULT_TOKEN not set" Error:**
-- Make sure you've set the environment variables (see step 2 above)
-- On Windows, use `deno task setup-vault` instead of running bash scripts directly
+- Use `deno task vault` commands instead of running vault manager directly
+- The vault task automatically handles environment variables
 
 **"403 Forbidden" Error:**
-- Ensure Vault container is running: `docker ps`
-- Check if Vault is healthy: `curl http://localhost:8200/v1/sys/health`
-- Restart the setup process: `deno task setup-vault`
+- Run `deno task vault health` to check Vault status
+- If unhealthy, run `deno task setup-vault` to restart everything
 
 **Docker Issues:**
 - Make sure Docker is running
 - Check container logs: `docker logs vault-dev`
-- Restart containers: `docker-compose -f docker-compose.vault.yml restart`
+- Restart setup: `deno task setup-vault`
+
+### Examples
+
+```bash
+# Complete setup and configuration example:
+cd auth-backend
+
+# 1. Initial setup (starts Vault and configures default secrets)
+deno task setup-vault
+
+# 2. Add your development database URL
+deno task vault set auth DATABASE_URL_DEV="postgresql://user:pass@localhost:5432/mydb"
+
+# 3. Add your production database URL
+deno task vault set auth DATABASE_URL_PROD="postgresql://user:pass@prod-server:5432/mydb"
+
+# 4. Start the development server
+deno task start-dev
+```
 
 ### Vault Web UI
 

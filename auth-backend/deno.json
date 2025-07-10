@@ -2,14 +2,12 @@
 {
   "tasks": {
     "dev": "deno run --allow-net --allow-env --allow-read --unstable-kv --watch main.ts",
-    "start": "deno run --allow-net --allow-env --allow-read --unstable-kv main.ts",
-    "start-dev": "deno run --allow-run --allow-env scripts/start-dev-launcher.ts",
     "prod": "deno run --allow-net --allow-env --allow-read --unstable-kv --cached-only main.ts",
-    "setup-vault": "deno run --allow-run --allow-env scripts/setup-vault-launcher.ts"
+    "setup-vault": "deno run --allow-net --allow-env --allow-read --allow-run scripts/setup-vault-launcher.ts",
+    "start-dev": "deno run --allow-net --allow-env --allow-read --allow-run scripts/start-dev-launcher.ts",
+    "vault": "deno run --allow-net --allow-env --allow-read --allow-run scripts/vault-manager-launcher.ts"
   },
   "imports": {
-    "hono": "https://deno.land/x/hono@v3.12.11/mod.ts",
-    "djwt": "https://deno.land/x/djwt@v3.0.1/mod.ts",
-    "supabase": "https://esm.sh/@supabase/supabase-js@2"
+    "@std/dotenv": "https://deno.land/std@0.208.0/dotenv/mod.ts"
   }
 }
