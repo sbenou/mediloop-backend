@@ -1,3 +1,4 @@
+
 # Welcome to medihop-delivery project
 
 ## Project info
@@ -101,37 +102,42 @@ deno task setup-vault
 This command will:
 - Detect your operating system
 - Start the Vault Docker container
-- Set up environment variables
+- Set up environment variables automatically
 - Initialize Vault with default secrets
 - Provide next steps
 
-### Starting the Deno Server
+### Starting the Development Server
 
-After Vault is set up, start the development server:
+After Vault is set up, start the development server with the correct environment:
 
 ```bash
-# Using the cross-platform launcher (recommended)
+# Using the cross-platform launcher (recommended - handles environment automatically)
 deno task start-dev
-
-# Or direct command (if you prefer)
-deno task dev
 ```
+
+This command will:
+- Set the correct environment variables (VAULT_URL, VAULT_TOKEN, NODE_ENV)
+- Start the Deno server with Vault integration
+- Work on both Windows and Unix systems
 
 ### Managing Vault Secrets (New Simplified Commands)
 
-Use the new vault task for all vault operations - **no need to set environment variables manually**:
+Use the new vault task for all vault operations - **environment variables are handled automatically**:
 
 ```bash
 # Get secrets from a path
 deno task vault get auth
 
-# Set a new secret (like your database URL)
+# Set a new secret (merges with existing secrets at the same path)
 deno task vault set auth DATABASE_URL_DEV="your-dev-database-url"
 
-# Set multiple secrets at once
+# Set multiple secrets at once (all merge with existing)
 deno task vault set auth DATABASE_URL_PROD="your-prod-url" JWT_SECRET="your-jwt-secret"
 
-# Delete secrets from a path
+# Add more secrets without losing existing ones
+deno task vault set oauth GOOGLE_CLIENT_SECRET="your-google-secret"
+
+# Delete all secrets from a path
 deno task vault delete legacy
 
 # Check Vault health
@@ -141,29 +147,42 @@ deno task vault health
 deno task vault setup
 ```
 
+**Important**: The `set` command now **merges** with existing secrets instead of overwriting them. This means you can safely add new secrets without losing previously stored ones.
+
 ### Available Deno Tasks
 
 ```bash
-# Development server with auto-reload
-deno task dev
+# Development server with auto-reload and correct environment
+deno task start-dev
 
 # Production server
 deno task prod
 
-# Setup Vault (cross-platform)
+# Setup Vault (cross-platform, handles environment automatically)
 deno task setup-vault
-
-# Start development server with Vault integration
-deno task start-dev
 
 # Vault management (handles environment variables automatically)
 deno task vault <command> [args...]
+
+# Direct development server (if you prefer, but start-dev is recommended)
+deno task dev
 ```
+
+### Environment Management
+
+**No Manual Environment Setup Required!**
+
+The scripts automatically handle environment variables:
+- `VAULT_URL=http://localhost:8200`
+- `VAULT_TOKEN=myroot`
+- `NODE_ENV=development`
+
+You don't need to set these manually - the cross-platform launchers handle everything.
 
 ### Troubleshooting
 
 **"VAULT_TOKEN not set" Error:**
-- Use `deno task vault` commands instead of running vault manager directly
+- Use `deno task vault` commands instead of running scripts directly
 - The vault task automatically handles environment variables
 
 **"403 Forbidden" Error:**
@@ -175,7 +194,7 @@ deno task vault <command> [args...]
 - Check container logs: `docker logs vault-dev`
 - Restart setup: `deno task setup-vault`
 
-### Examples
+### Complete Setup Example
 
 ```bash
 # Complete setup and configuration example:
@@ -184,13 +203,16 @@ cd auth-backend
 # 1. Initial setup (starts Vault and configures default secrets)
 deno task setup-vault
 
-# 2. Add your development database URL
+# 2. Add your development database URL (merges with existing)
 deno task vault set auth DATABASE_URL_DEV="postgresql://user:pass@localhost:5432/mydb"
 
-# 3. Add your production database URL
+# 3. Add your production database URL (doesn't overwrite dev URL)
 deno task vault set auth DATABASE_URL_PROD="postgresql://user:pass@prod-server:5432/mydb"
 
-# 4. Start the development server
+# 4. Add OAuth secrets (stored separately, doesn't affect auth secrets)
+deno task vault set oauth GOOGLE_CLIENT_SECRET="your-google-secret"
+
+# 5. Start the development server with correct environment
 deno task start-dev
 ```
 
