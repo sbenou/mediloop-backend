@@ -3,7 +3,11 @@
   "tasks": {
     "dev": "deno run --allow-net --allow-env --allow-read --unstable-kv --watch main.ts",
     "start": "deno run --allow-net --allow-env --allow-read --unstable-kv main.ts",
-    "prod": "deno run --allow-net --allow-env --allow-read --unstable-kv --cached-only main.ts"
+    "start-dev": "./scripts/start-dev.sh",
+    "start-dev-win": "./scripts/start-dev.bat",
+    "prod": "deno run --allow-net --allow-env --allow-read --unstable-kv --cached-only main.ts",
+    "setup-vault": "./scripts/setup-vault.sh",
+    "setup-vault-win": "./scripts/setup-vault.bat"
   },
   "imports": {
     "hono": "https://deno.land/x/hono@v3.12.11/mod.ts",
