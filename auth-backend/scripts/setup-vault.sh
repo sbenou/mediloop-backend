@@ -9,6 +9,10 @@ echo "🔐 Starting HashiCorp Vault setup..."
 # Set environment for development
 export NODE_ENV=development
 
+# Set Vault environment variables
+export VAULT_URL=http://localhost:8200
+export VAULT_TOKEN=myroot
+
 # Check if Docker is running
 if ! docker info > /dev/null 2>&1; then
     echo "❌ Docker is not running. Please start Docker and try again."
@@ -32,9 +36,9 @@ fi
 
 echo "✅ Vault is ready!"
 
-# Run the Deno setup script
+# Run the Deno setup script with environment variables
 echo "🔧 Running Vault initialization script..."
-deno run --allow-net --allow-env --allow-read scripts/setupVault.ts
+VAULT_URL=$VAULT_URL VAULT_TOKEN=$VAULT_TOKEN NODE_ENV=$NODE_ENV deno run --allow-net --allow-env --allow-read scripts/setupVault.ts
 
 if [ $? -eq 0 ]; then
     echo ""
