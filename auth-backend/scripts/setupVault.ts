@@ -1,8 +1,12 @@
 
+import { loadEnvironment } from '../config/envLoader.ts';
 import { vaultService } from '../services/vaultService.ts';
 
 async function setupVault() {
   console.log('🔧 Setting up HashiCorp Vault with secrets...');
+
+  // Load environment variables first
+  await loadEnvironment();
 
   try {
     // Auth secrets

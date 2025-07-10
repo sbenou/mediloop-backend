@@ -6,25 +6,8 @@
 
 echo "🔐 Starting HashiCorp Vault setup..."
 
-# Set Vault environment variables
-export VAULT_URL=http://localhost:8200
-export VAULT_TOKEN=myroot
-
-# Set application secrets (replace with your actual values)
-# Database connection (contains password - SECRET)
-export DATABASE_URL="postgresql://neondb_owner:npg_DUFXR9MiPsf1@ep-small-base-a900n0vb-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require"
-
-# JWT configuration (SECRET)
-export JWT_SECRET="your-super-secret-jwt-key"
-
-# OAuth provider secrets (SECRETS) - replace with your actual values
-export GOOGLE_CLIENT_SECRET=""
-export FRANCECONNECT_CLIENT_SECRET=""
-export LUXTRUST_CLIENT_SECRET=""
-
-# Supabase secrets (during transition - SECRETS) - replace with your actual values
-export SUPABASE_URL=""
-export SUPABASE_SERVICE_ROLE_KEY=""
+# Set environment for development
+export NODE_ENV=development
 
 # Check if Docker is running
 if ! docker info > /dev/null 2>&1; then
@@ -51,7 +34,7 @@ echo "✅ Vault is ready!"
 
 # Run the Deno setup script
 echo "🔧 Running Vault initialization script..."
-deno run --allow-net --allow-env scripts/setupVault.ts
+deno run --allow-net --allow-env --allow-read scripts/setupVault.ts
 
 if [ $? -eq 0 ]; then
     echo ""
@@ -59,7 +42,7 @@ if [ $? -eq 0 ]; then
     echo ""
     echo "📋 Next steps:"
     echo "   1. Vault UI: http://localhost:8200 (token: myroot)"
-    echo "   2. Start your Deno server: deno run --allow-net --allow-env main.ts"
+    echo "   2. Start your Deno server: deno run --allow-net --allow-env --allow-read main.ts"
     echo ""
 else
     echo "❌ Vault setup failed. Check the error messages above."

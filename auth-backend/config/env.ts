@@ -1,4 +1,4 @@
-
+import { loadEnvironment } from './envLoader.ts';
 import { appConfig } from './appConfig.ts'
 import { vaultService } from '../services/vaultService.ts'
 
@@ -8,6 +8,9 @@ class EnvironmentConfig {
 
   async initialize(): Promise<void> {
     if (this.initialized) return;
+
+    // Load environment variables first
+    await loadEnvironment();
 
     try {
       // Load secrets from Vault
