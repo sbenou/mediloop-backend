@@ -4,6 +4,7 @@ import { config } from "../config/env.ts"
 // This service handles direct PostgreSQL operations using Neon
 export class PostgresService {
   private client: Client | null = null
+  private currentTenantSchema: string = 'public'
 
   constructor() {
     this.connect()
@@ -23,6 +24,17 @@ export class PostgresService {
     }
   }
 
+  // Set the current tenant schema to use
+  setTenantSchema(schema: string) {
+    this.currentTenantSchema = schema
+    console.log('Set tenant schema to:', schema)
+  }
+
+  // Get the current schema name (defaults to public)
+  getCurrentSchema(): string {
+    return this.currentTenantSchema
+  }
+
   async query(text: string, params?: any[]) {
     await this.ensureConnection()
     return await this.client!.queryObject(text, params)
@@ -31,7 +43,7 @@ export class PostgresService {
   async getOrCreateUserProfile(email: string, fullName: string, authMethod: string = 'oauth') {
     console.log('Getting or creating user profile for:', email)
     
-    // First check if user exists in public.profiles
+    // Always check in public schema for existing users during initial auth
     const existingResult = await this.query(
       `SELECT p.*, r.name as role_name 
        FROM public.profiles p 
@@ -45,7 +57,7 @@ export class PostgresService {
       return existingResult.rows[0]
     }
 
-    // Create new user profile with default patient role
+    // Create new user profile with default patient role in public schema
     console.log('Creating new user profile')
     const newUserId = crypto.randomUUID()
     
@@ -90,13 +102,27 @@ export class PostgresService {
   }
 
   async getUserProfile(userId: string) {
-    const result = await this.query(
+    // Try current tenant schema first, fallback to public
+    const schema = this.getCurrentSchema()
+    
+    let result = await this.query(
       `SELECT p.*, r.name as role_name, r.name as role 
-       FROM public.profiles p 
+       FROM "${schema}".profiles p 
        LEFT JOIN public.roles r ON p.role_id = r.id 
        WHERE p.id = $1`,
       [userId]
     )
+
+    // If not found in tenant schema and we're not already in public, try public
+    if (result.rows.length === 0 && schema !== 'public') {
+      result = await this.query(
+        `SELECT p.*, r.name as role_name, r.name as role 
+         FROM public.profiles p 
+         LEFT JOIN public.roles r ON p.role_id = r.id 
+         WHERE p.id = $1`,
+        [userId]
+      )
+    }
 
     if (result.rows.length === 0) {
       throw new Error('Profile not found')
@@ -106,13 +132,27 @@ export class PostgresService {
   }
 
   async getUserProfileByEmail(email: string) {
-    const result = await this.query(
+    // Try current tenant schema first, fallback to public
+    const schema = this.getCurrentSchema()
+    
+    let result = await this.query(
       `SELECT p.*, r.name as role_name, r.name as role 
-       FROM public.profiles p 
+       FROM "${schema}".profiles p 
        LEFT JOIN public.roles r ON p.role_id = r.id 
        WHERE p.email = $1 LIMIT 1`,
       [email]
     )
+
+    // If not found in tenant schema and we're not already in public, try public
+    if (result.rows.length === 0 && schema !== 'public') {
+      result = await this.query(
+        `SELECT p.*, r.name as role_name, r.name as role 
+         FROM public.profiles p 
+         LEFT JOIN public.roles r ON p.role_id = r.id 
+         WHERE p.email = $1 LIMIT 1`,
+        [email]
+      )
+    }
 
     if (result.rows.length === 0) {
       throw new Error('Profile not found')
@@ -138,6 +178,7 @@ export class PostgresService {
     // Get role ID from role name
     const role = await this.getRoleByName(roleName)
     
+    // Always create in public schema initially
     const result = await this.query(
       `INSERT INTO public.profiles (id, email, full_name, role_id, auth_method, password_hash, created_at, updated_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -247,6 +288,9 @@ export class PostgresService {
     // Create all tenant tables in the new schema
     await this.createTenantTables(schemaName)
 
+    // Set the current schema to the new tenant schema
+    this.setTenantSchema(schemaName)
+
     // Insert user profile into the tenant-specific profiles table
     await this.query(
       `INSERT INTO "${schemaName}".profiles (
@@ -289,6 +333,9 @@ export class PostgresService {
       'UPDATE public.profiles SET tenant_id = $1, updated_at = $2 WHERE id = $3',
       [tenantId, new Date().toISOString(), userId]
     )
+
+    // Reset schema back to public after tenant creation
+    this.setTenantSchema('public')
 
     console.log('Created tenant:', tenantId, 'for user:', userId)
     return result.rows[0]

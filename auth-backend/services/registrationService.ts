@@ -19,6 +19,9 @@ export class RegistrationService {
 
       console.log('Creating user with ID:', userId);
 
+      // Ensure we're using public schema for initial user creation
+      postgresService.setTenantSchema('public');
+
       // Create user profile in public.profiles first
       const profile = await postgresService.createUserWithPassword(
         userId,
@@ -55,6 +58,8 @@ export class RegistrationService {
 
   private async checkExistingUser(email: string) {
     try {
+      // Always check in public schema for existing users
+      postgresService.setTenantSchema('public');
       const result = await postgresService.getUserProfileByEmail(email);
       return result;
     } catch (error) {
