@@ -182,7 +182,7 @@ export class PostgresService {
     if (result.rows.length === 0 && !configService.isUsingDefaultSchema()) {
       result = await this.query(
         `SELECT p.*, r.name as role_name, r.name as role 
-         FROM "public".profiles p 
+         FROM "${schema}".profiles p 
          LEFT JOIN public.roles r ON p.role_id = r.id 
          WHERE p.id = $1`,
         [userId]
@@ -212,7 +212,7 @@ export class PostgresService {
     if (result.rows.length === 0 && !configService.isUsingDefaultSchema()) {
       result = await this.query(
         `SELECT p.*, r.name as role_name, r.name as role 
-         FROM "public".profiles p 
+         FROM "${schema}".profiles p 
          LEFT JOIN public.roles r ON p.role_id = r.id 
          WHERE p.email = $1 LIMIT 1`,
         [email]
