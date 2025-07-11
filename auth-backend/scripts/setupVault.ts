@@ -13,9 +13,9 @@ async function setupVault() {
     // Use environment variables if available, otherwise use the complete default URLs
     const databaseUrl = Deno.env.get('DATABASE_URL') || 'postgresql://neondb_owner:npg_DUFXR9MiPsf1@ep-small-base-a900n0vb-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require';
     
-    // Set complete URLs for both dev and prod environments
-    const databaseUrlDev = Deno.env.get('DATABASE_URL_DEV') || 'postgresql://neondb_owner:YOUR_DEV_PASSWORD@ep-lively-thunder-a9vxzytc-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require';
-    const databaseUrlProd = Deno.env.get('DATABASE_URL_PROD') || 'postgresql://neondb_owner:YOUR_PROD_PASSWORD@ep-small-base-a900n0vb-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require';
+    // Set complete URLs for both dev and prod environments - use same structure as DATABASE_URL
+    const databaseUrlDev = Deno.env.get('DATABASE_URL_DEV') || 'postgresql://neondb_owner:npg_DUFXR9MiPsf1@ep-lively-thunder-a9vxzytc-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require';
+    const databaseUrlProd = Deno.env.get('DATABASE_URL_PROD') || 'postgresql://neondb_owner:npg_DUFXR9MiPsf1@ep-small-base-a900n0vb-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require';
 
     console.log('🔍 Debug - URLs before storing:');
     console.log('  DATABASE_URL length:', databaseUrl.length);
@@ -52,9 +52,9 @@ async function setupVault() {
     console.log('   - sslmode=require');
     console.log('   - channel_binding=require');
     console.log('');
-    console.log('💡 To update with your actual passwords, edit the URLs in your environment variables and run setup again:');
-    console.log('   export DATABASE_URL_DEV="postgresql://neondb_owner:YOUR_DEV_PASSWORD@ep-lively-thunder-a9vxzytc-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require"');
-    console.log('   export DATABASE_URL_PROD="postgresql://neondb_owner:YOUR_PROD_PASSWORD@ep-small-base-a900n0vb-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require"');
+    console.log('💡 To update with your actual passwords, set environment variables and run setup again:');
+    console.log('   set DATABASE_URL_DEV=postgresql://neondb_owner:YOUR_DEV_PASSWORD@ep-lively-thunder-a9vxzytc-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require');
+    console.log('   set DATABASE_URL_PROD=postgresql://neondb_owner:YOUR_PROD_PASSWORD@ep-small-base-a900n0vb-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require');
     console.log('   deno task setup-vault');
   } catch (error) {
     console.error('❌ Failed to setup Vault:', error);
