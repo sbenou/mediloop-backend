@@ -1,4 +1,3 @@
-
 import { Application, Router } from "https://deno.land/x/oak@v12.6.1/mod.ts"
 import { oakCors } from "https://deno.land/x/cors@v1.2.2/mod.ts"
 import { loadConfig } from "./config/env.ts"
@@ -8,6 +7,7 @@ import { oauthRoutes } from "./routes/oauth.ts"
 import healthCheckRouter from "./routes/healthCheck.ts"
 import { authRoutes } from "./routes/auth.ts"
 import tenantTestingRouter from "./routes/tenantTesting.ts"
+import migrationRouter from "./routes/migrations.ts"
 
 console.log('🚀 Starting Deno server with HashiCorp Vault integration...');
 
@@ -79,9 +79,11 @@ router.get("/api/me", authMiddleware, (ctx) => {
 app.use(healthCheckRouter.routes())
 app.use(authRoutes.routes())
 app.use(tenantTestingRouter.routes())
+app.use(migrationRouter.routes())
 app.use(healthCheckRouter.allowedMethods())
 app.use(authRoutes.allowedMethods())
 app.use(tenantTestingRouter.allowedMethods())
+app.use(migrationRouter.allowedMethods())
 
 // OAuth routes
 app.use(oauthRoutes.routes())
