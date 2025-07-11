@@ -82,11 +82,15 @@ authRoutes.post('/login', async (ctx) => {
 
     console.log('V2 Login: Password verification successful for:', email)
 
-    // Get the tenant_id from the tenants table using the user's ID as domain
+    // Get the tenant_id - first check the current schema info
     const tenantResult = await databaseService.getCurrentSchemaInfo()
     let tenantId = null
     
+    console.log('V2 Login: Current schema info:', tenantResult)
+    
     if (tenantResult && tenantResult.currentSchema !== 'public') {
+      console.log('V2 Login: Looking up tenant for schema:', tenantResult.currentSchema)
+      
       // Get tenant record by schema name
       const { postgresService } = await import('../services/postgresService.ts')
       const tenantQuery = await postgresService.query(
@@ -94,9 +98,29 @@ authRoutes.post('/login', async (ctx) => {
         [tenantResult.currentSchema]
       )
       
+      console.log('V2 Login: Tenant query result:', tenantQuery.rows)
+      
       if (tenantQuery.rows.length > 0) {
         tenantId = tenantQuery.rows[0].id
         console.log('V2 Login: Found tenant_id:', tenantId, 'for schema:', tenantResult.currentSchema)
+      } else {
+        console.log('V2 Login: No tenant found for schema:', tenantResult.currentSchema)
+      }
+    } else {
+      console.log('V2 Login: Using public schema, will look up by user domain')
+      
+      // Fallback: Look up tenant by user ID as domain
+      const { postgresService } = await import('../services/postgresService.ts')
+      const tenantQuery = await postgresService.query(
+        'SELECT id FROM public.tenants WHERE domain = $1 LIMIT 1',
+        [profile.id]
+      )
+      
+      console.log('V2 Login: Tenant lookup by user domain result:', tenantQuery.rows)
+      
+      if (tenantQuery.rows.length > 0) {
+        tenantId = tenantQuery.rows[0].id
+        console.log('V2 Login: Found tenant_id by domain:', tenantId, 'for user:', profile.id)
       }
     }
 
@@ -104,7 +128,7 @@ authRoutes.post('/login', async (ctx) => {
     const jwtToken = await jwtService.createToken(
       profile.id,
       profile.email,
-      profile.role, // This now comes from the roles table join
+      profile.role,
       tenantId
     )
 
@@ -117,7 +141,7 @@ authRoutes.post('/login', async (ctx) => {
       loginTime: new Date().toISOString()
     })
 
-    console.log('V2 Login: Login successful for:', email)
+    console.log('V2 Login: Login successful for:', email, 'with tenant_id:', tenantId)
 
     ctx.response.body = {
       access_token: jwtToken,
