@@ -5,7 +5,8 @@
     "prod": "deno run --allow-net --allow-env --allow-read --unstable-kv --cached-only main.ts",
     "setup-vault": "deno run --allow-net --allow-env --allow-read --allow-run scripts/setup-vault-launcher.ts",
     "start-dev": "deno run --allow-net --allow-env --allow-read --allow-run scripts/start-dev-launcher.ts",
-    "vault": "deno run --allow-net --allow-env --allow-read --allow-run scripts/vault-manager-launcher.ts"
+    "vault": "deno run --allow-net --allow-env --allow-read --allow-run scripts/vault-manager-launcher.ts",
+    "debug-vault": "VAULT_URL=http://localhost:8200 VAULT_TOKEN=myroot deno run --allow-net --allow-env scripts/debug-vault.ts"
   },
   "imports": {
     "@std/dotenv": "https://deno.land/std@0.208.0/dotenv/mod.ts"

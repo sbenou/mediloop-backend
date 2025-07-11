@@ -26,6 +26,19 @@ class EnvironmentConfig {
       };
 
       console.log('✅ Secrets loaded from HashiCorp Vault');
+      
+      // Debug: Log the database URLs being used (without exposing passwords)
+      console.log('🔍 Debug - Database URLs found in Vault:');
+      if (this.secrets.DATABASE_URL_DEV) {
+        console.log('  - DATABASE_URL_DEV:', this.secrets.DATABASE_URL_DEV.replace(/:[^@]+@/, ':***@'));
+      }
+      if (this.secrets.DATABASE_URL_PROD) {
+        console.log('  - DATABASE_URL_PROD:', this.secrets.DATABASE_URL_PROD.replace(/:[^@]+@/, ':***@'));
+      }
+      if (this.secrets.DATABASE_URL) {
+        console.log('  - DATABASE_URL (generic):', this.secrets.DATABASE_URL.replace(/:[^@]+@/, ':***@'));
+      }
+      
       this.initialized = true;
     } catch (error) {
       console.error('❌ Failed to load secrets from Vault, falling back to environment variables:', error);
@@ -52,35 +65,68 @@ class EnvironmentConfig {
     return this.secrets[key] || fallback || '';
   }
 
+  private validateDatabaseUrl(url: string): string {
+    if (!url) {
+      throw new Error('Database URL is empty or undefined');
+    }
+    
+    // Check if URL has sslmode parameter
+    if (!url.includes('sslmode=')) {
+      console.log('⚠️  Database URL missing sslmode parameter, adding sslmode=require');
+      const separator = url.includes('?') ? '&' : '?';
+      return `${url}${separator}sslmode=require`;
+    }
+    
+    // Check for empty sslmode
+    if (url.includes('sslmode=&') || url.includes('sslmode=""') || url.includes("sslmode=''") || url.match(/sslmode=\s*$/)) {
+      console.log('⚠️  Database URL has empty sslmode, fixing to sslmode=require');
+      return url.replace(/sslmode=([^&]*)/g, 'sslmode=require');
+    }
+    
+    return url;
+  }
+
   private getDatabaseUrl(): string {
     const environment = appConfig.app.environment;
+    let databaseUrl = '';
     
     // Try to get environment-specific database URL from Vault
     if (environment === 'production') {
       const prodUrl = this.getSecret('DATABASE_URL_PROD');
       if (prodUrl) {
         console.log('🔗 Using production database URL from Vault');
-        return prodUrl;
+        databaseUrl = prodUrl;
       }
     } else {
       const devUrl = this.getSecret('DATABASE_URL_DEV');
       if (devUrl) {
         console.log('🔗 Using development database URL from Vault');
-        return devUrl;
+        databaseUrl = devUrl;
       }
     }
     
     // Fallback to generic DATABASE_URL from Vault
-    const genericUrl = this.getSecret('DATABASE_URL');
-    if (genericUrl) {
-      console.log(`🔗 Using generic database URL from Vault for ${environment}`);
-      return genericUrl;
+    if (!databaseUrl) {
+      const genericUrl = this.getSecret('DATABASE_URL');
+      if (genericUrl) {
+        console.log(`🔗 Using generic database URL from Vault for ${environment}`);
+        databaseUrl = genericUrl;
+      }
     }
     
-    // Final fallback to environment variable
-    const envUrl = Deno.env.get('DATABASE_URL') || 'postgresql://neondb_owner:npg_DUFXR9MiPsf1@ep-small-base-a900n0vb-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require';
-    console.log(`🔗 Using fallback database URL from environment for ${environment}`);
-    return envUrl;
+    // Final fallback to environment variable and default
+    if (!databaseUrl) {
+      databaseUrl = Deno.env.get('DATABASE_URL') || 'postgresql://neondb_owner:npg_DUFXR9MiPsf1@ep-small-base-a900n0vb-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require';
+      console.log(`🔗 Using fallback database URL from environment for ${environment}`);
+    }
+    
+    // Validate and fix the database URL
+    try {
+      return this.validateDatabaseUrl(databaseUrl);
+    } catch (error) {
+      console.error('❌ Database URL validation failed:', error.message);
+      throw error;
+    }
   }
 
   get config() {
