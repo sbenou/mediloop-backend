@@ -818,7 +818,7 @@ export class PostgresService {
       )
     `)
 
-    // 26. workplaces
+    // 27. workplaces
     await this.query(`
       CREATE TABLE "${schemaName}".workplaces (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -835,7 +835,85 @@ export class PostgresService {
       )
     `)
 
-    console.log('Successfully created all 26 tenant tables in schema:', schemaName)
+    // 28. jwt_sessions (NEW - Session Management)
+    await this.query(`
+      CREATE TABLE "${schemaName}".jwt_sessions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL,
+        session_id TEXT NOT NULL UNIQUE,
+        refresh_token_hash TEXT NOT NULL,
+        device_info JSONB,
+        ip_address INET,
+        user_agent TEXT,
+        is_active BOOLEAN DEFAULT true,
+        last_activity TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `)
+
+    // 29. jwt_blacklist (NEW - Token Blacklist)
+    await this.query(`
+      CREATE TABLE "${schemaName}".jwt_blacklist (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        token_jti TEXT NOT NULL UNIQUE,
+        user_id UUID NOT NULL,
+        blacklisted_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+        reason TEXT
+      )
+    `)
+
+    // 30. security_audit_log (NEW - Security Audit Trail)
+    await this.query(`
+      CREATE TABLE "${schemaName}".security_audit_log (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID,
+        session_id TEXT,
+        event_type TEXT NOT NULL,
+        event_data JSONB,
+        ip_address INET,
+        user_agent TEXT,
+        success BOOLEAN DEFAULT true,
+        risk_score INTEGER DEFAULT 0,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `)
+
+    // Create indexes for performance on new tables
+    await this.query(`CREATE INDEX idx_jwt_sessions_${schemaName.replace(/[^a-zA-Z0-9]/g, '_')}_user_id ON "${schemaName}".jwt_sessions(user_id)`)
+    await this.query(`CREATE INDEX idx_jwt_sessions_${schemaName.replace(/[^a-zA-Z0-9]/g, '_')}_session_id ON "${schemaName}".jwt_sessions(session_id)`)
+    await this.query(`CREATE INDEX idx_jwt_sessions_${schemaName.replace(/[^a-zA-Z0-9]/g, '_')}_active ON "${schemaName}".jwt_sessions(user_id, is_active)`)
+    await this.query(`CREATE INDEX idx_jwt_blacklist_${schemaName.replace(/[^a-zA-Z0-9]/g, '_')}_token_jti ON "${schemaName}".jwt_blacklist(token_jti)`)
+    await this.query(`CREATE INDEX idx_jwt_blacklist_${schemaName.replace(/[^a-zA-Z0-9]/g, '_')}_expires ON "${schemaName}".jwt_blacklist(expires_at)`)
+    await this.query(`CREATE INDEX idx_security_audit_${schemaName.replace(/[^a-zA-Z0-9]/g, '_')}_user_event ON "${schemaName}".security_audit_log(user_id, event_type)`)
+    await this.query(`CREATE INDEX idx_security_audit_${schemaName.replace(/[^a-zA-Z0-9]/g, '_')}_created ON "${schemaName}".security_audit_log(created_at)`)
+
+    // Enable RLS on new tables
+    await this.query(`ALTER TABLE "${schemaName}".jwt_sessions ENABLE ROW LEVEL SECURITY`)
+    await this.query(`ALTER TABLE "${schemaName}".jwt_blacklist ENABLE ROW LEVEL SECURITY`)
+    await this.query(`ALTER TABLE "${schemaName}".security_audit_log ENABLE ROW LEVEL SECURITY`)
+
+    // Create RLS policies for jwt_sessions
+    await this.query(`
+      CREATE POLICY "Users can manage own sessions" ON "${schemaName}".jwt_sessions
+        FOR ALL USING (user_id = auth.uid())
+    `)
+
+    // Create RLS policies for jwt_blacklist  
+    await this.query(`
+      CREATE POLICY "Users can view own blacklisted tokens" ON "${schemaName}".jwt_blacklist
+        FOR SELECT USING (user_id = auth.uid())
+    `)
+
+    // Create RLS policies for security_audit_log
+    await this.query(`
+      CREATE POLICY "Users can view own audit logs" ON "${schemaName}".security_audit_log
+        FOR SELECT USING (user_id = auth.uid())
+    `)
+
+    console.log('Successfully created all 30 tenant tables in schema:', schemaName)
   }
 
   async close() {
