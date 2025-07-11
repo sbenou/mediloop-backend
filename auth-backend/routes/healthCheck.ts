@@ -18,6 +18,10 @@ router.get("/api/health", async (ctx) => {
 
     console.log('🏗️ Testing database schema structure...');
     
+    // Get current schema for dynamic querying
+    const schema = postgresService.getCurrentSchema();
+    console.log('📋 Current schema:', schema);
+    
     // First, check what schemas exist
     console.log('📋 Checking available schemas...');
     const schemasQuery = await postgresService.query(`
@@ -131,7 +135,7 @@ router.get("/api/health", async (ctx) => {
 
     if (publicProfilesExists) {
       try {
-        const profileCountResult = await postgresService.query('SELECT COUNT(*) as count FROM public.profiles');
+        const profileCountResult = await postgresService.query(`SELECT COUNT(*) as count FROM "${schema}".profiles`);
         publicRecordCounts.profiles = parseInt(profileCountResult.rows[0]?.count || '0');
         console.log('✅ Public profiles count:', publicRecordCounts.profiles);
       } catch (error) {
