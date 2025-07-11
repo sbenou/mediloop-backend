@@ -18,7 +18,8 @@ migrationRouter.post("/api/migrate/tenants", async (ctx) => {
       details: {
         total: result.total,
         successful: result.successful,
-        failed: result.failed
+        failed: result.failed,
+        schemas: result.schemas || [] // Add schemas info for debugging
       }
     };
     
@@ -32,12 +33,14 @@ migrationRouter.post("/api/migrate/tenants", async (ctx) => {
     }
   } catch (error) {
     console.error('\n❌ Migration failed via API:', error.message);
+    console.error('Stack trace:', error.stack);
     
     ctx.response.status = 500;
     ctx.response.body = {
       success: false,
       message: 'Migration failed',
-      error: error.message
+      error: error.message,
+      stack: error.stack
     };
   }
 });
