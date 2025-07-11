@@ -88,23 +88,23 @@ authRoutes.post('/login', async (ctx) => {
     
     console.log('V2 Login: Current schema info:', tenantResult)
     
-    if (tenantResult && tenantResult.currentSchema !== 'public') {
-      console.log('V2 Login: Looking up tenant for schema:', tenantResult.currentSchema)
+    if (tenantResult && tenantResult.current !== 'public') {
+      console.log('V2 Login: Looking up tenant for schema:', tenantResult.current)
       
       // Get tenant record by schema name
       const { postgresService } = await import('../services/postgresService.ts')
       const tenantQuery = await postgresService.query(
         'SELECT id FROM public.tenants WHERE schema = $1 LIMIT 1',
-        [tenantResult.currentSchema]
+        [tenantResult.current]
       )
       
       console.log('V2 Login: Tenant query result:', tenantQuery.rows)
       
       if (tenantQuery.rows.length > 0) {
         tenantId = tenantQuery.rows[0].id
-        console.log('V2 Login: Found tenant_id:', tenantId, 'for schema:', tenantResult.currentSchema)
+        console.log('V2 Login: Found tenant_id:', tenantId, 'for schema:', tenantResult.current)
       } else {
-        console.log('V2 Login: No tenant found for schema:', tenantResult.currentSchema)
+        console.log('V2 Login: No tenant found for schema:', tenantResult.current)
       }
     } else {
       console.log('V2 Login: Using public schema, will look up by user domain')
