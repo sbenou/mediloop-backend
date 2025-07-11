@@ -1,4 +1,3 @@
-
 import { Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 import { postgresService } from "../services/postgresService.ts";
 
@@ -132,7 +131,7 @@ router.get("/api/health", async (ctx) => {
 
     if (publicProfilesExists) {
       try {
-        const profileCountResult = await postgresService.query('SELECT COUNT(*) as count FROM "public".profiles');
+        const profileCountResult = await postgresService.query('SELECT COUNT(*) as count FROM public.profiles');
         publicRecordCounts.profiles = parseInt(profileCountResult.rows[0]?.count || '0');
         console.log('✅ Public profiles count:', publicRecordCounts.profiles);
       } catch (error) {
