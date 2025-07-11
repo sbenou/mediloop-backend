@@ -1,15 +1,17 @@
 
-import { create, verify, getNumericDate } from "https://deno.land/x/djwt@v3.0.1/mod.ts"
+import * as jose from "https://deno.land/x/jose@v4.15.5/index.ts"
 import { config } from "../config/env.ts"
 
 export class JWTService {
-  private secret: string
+  private secret: Uint8Array
 
   constructor() {
-    this.secret = config.JWT_SECRET
-    if (!this.secret) {
+    const secretString = config.JWT_SECRET
+    if (!secretString) {
       throw new Error('JWT_SECRET is required')
     }
+    // Convert string secret to Uint8Array for JOSE
+    this.secret = new TextEncoder().encode(secretString)
   }
 
   async createToken(userId: string, email: string, role: string, tenantId?: string): Promise<string> {
@@ -20,37 +22,27 @@ export class JWTService {
       tenant_id: tenantId,
       iss: 'luxmed-auth',
       aud: 'luxmed-app',
-      iat: getNumericDate(new Date()),
-      exp: getNumericDate(new Date(Date.now() + 24 * 60 * 60 * 1000)) // 24 hours
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours
     }
 
-    const header = {
-      alg: "HS256" as const,
-      typ: "JWT"
-    }
+    // Create JWT using JOSE
+    const jwt = await new jose.SignJWT(payload)
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime('24h')
+      .sign(this.secret)
 
-    const key = await crypto.subtle.importKey(
-      "raw",
-      new TextEncoder().encode(this.secret),
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["sign", "verify"]
-    )
-
-    return await create(header, payload, key)
+    return jwt
   }
 
   async verifyToken(token: string): Promise<{ valid: boolean; payload?: any }> {
     try {
-      const key = await crypto.subtle.importKey(
-        "raw",
-        new TextEncoder().encode(this.secret),
-        { name: "HMAC", hash: "SHA-256" },
-        false,
-        ["sign", "verify"]
-      )
-
-      const payload = await verify(token, key)
+      const { payload } = await jose.jwtVerify(token, this.secret, {
+        issuer: 'luxmed-auth',
+        audience: 'luxmed-app'
+      })
+      
       return { valid: true, payload }
     } catch (error) {
       console.error('JWT verification error:', error)
