@@ -13,9 +13,10 @@ export class PostgresService {
 
   private async connect() {
     if (!this.client) {
+      console.log('Connecting to Neon PostgreSQL database...');
       this.client = new Client(config.DATABASE_URL)
       await this.client.connect()
-      console.log('Connected to Neon PostgreSQL database')
+      console.log('✓ Connected to Neon PostgreSQL database')
     }
   }
 
@@ -28,7 +29,7 @@ export class PostgresService {
   // Set the current tenant schema to use
   setTenantSchema(schema: string) {
     configService.setCurrentSchema(schema)
-    console.log('Set tenant schema to:', schema)
+    console.log('Schema updated to:', schema)
   }
 
   // Get the current schema name (defaults to public)
@@ -229,10 +230,14 @@ export class PostgresService {
   }
 
   async createTenant(userId: string, userRole: string, userName: string, workplaceName?: string, pharmacyName?: string) {
-    console.log('Creating tenant for user:', userId, 'with role:', userRole)
+    console.log('=== TENANT CREATION START ===');
+    console.log('Creating tenant for user:', { userId, userRole, userName, workplaceName, pharmacyName });
     
     // Get user's current profile data - check both schemas
-    const schema = this.getCurrentSchema()
+    console.log('Step 1: Fetching user profile...');
+    const schema = this.getCurrentSchema();
+    console.log('Current schema for user lookup:', schema);
+    
     let userProfile = await this.query(
       `SELECT * FROM "${schema}".profiles WHERE id = $1`,
       [userId]
@@ -240,6 +245,7 @@ export class PostgresService {
     
     // If not found in current schema, try public
     if (userProfile.rows.length === 0 && schema !== 'public') {
+      console.log('User not found in current schema, trying public...');
       userProfile = await this.query(
         'SELECT * FROM "public".profiles WHERE id = $1',
         [userId]
@@ -247,10 +253,12 @@ export class PostgresService {
     }
     
     if (userProfile.rows.length === 0) {
+      console.error('ERROR: User profile not found for ID:', userId);
       throw new Error('User profile not found')
     }
     
-    const profile = userProfile.rows[0]
+    const profile = userProfile.rows[0];
+    console.log('✓ User profile found:', { id: profile.id, email: profile.email, role: profile.role });
     
     // Determine tenant name based on role
     let tenantName: string
@@ -267,11 +275,14 @@ export class PostgresService {
       default:
         tenantName = `${userName} Workspace`
     }
+    console.log('Step 2: Determined tenant name:', tenantName);
     
     // Create schema name
-    const schemaName = `tenant_${userRole.toLowerCase()}_${userId.replace(/-/g, '_')}`
+    const schemaName = `tenant_${userRole.toLowerCase()}_${userId.replace(/-/g, '_')}`;
+    console.log('Step 3: Generated schema name:', schemaName);
     
     // Create tenant record
+    console.log('Step 4: Creating tenant record in public.tenants...');
     const result = await this.query(
       `INSERT INTO public.tenants (name, domain, schema, is_active, status, created_at, updated_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -288,70 +299,111 @@ export class PostgresService {
     )
 
     if (result.rows.length === 0) {
+      console.error('ERROR: Failed to create tenant record');
       throw new Error('Failed to create tenant')
     }
 
-    const tenantId = result.rows[0].id
+    const tenantId = result.rows[0].id;
+    console.log('✓ Tenant record created:', { id: tenantId, name: tenantName, schema: schemaName });
 
     // Create the tenant schema
-    await this.query(`CREATE SCHEMA IF NOT EXISTS "${schemaName}"`)
-    console.log('Created tenant schema:', schemaName)
+    console.log('Step 5: Creating database schema:', schemaName);
+    try {
+      await this.query(`CREATE SCHEMA IF NOT EXISTS "${schemaName}"`);
+      console.log('✓ Database schema created successfully');
+    } catch (error) {
+      console.error('ERROR: Failed to create database schema:', error.message);
+      throw new Error(`Failed to create database schema: ${error.message}`);
+    }
 
     // Create all tenant tables in the new schema
-    await this.createTenantTables(schemaName)
+    console.log('Step 6: Creating tenant-specific tables...');
+    try {
+      await this.createTenantTables(schemaName);
+      console.log('✓ All tenant tables created successfully');
+    } catch (error) {
+      console.error('ERROR: Failed to create tenant tables:', error.message);
+      throw new Error(`Failed to create tenant tables: ${error.message}`);
+    }
 
     // Set the current schema to the new tenant schema
-    this.setTenantSchema(schemaName)
+    console.log('Step 7: Switching to tenant schema...');
+    this.setTenantSchema(schemaName);
+    console.log('Current schema after switch:', this.getCurrentSchema());
 
     // Insert user profile into the tenant-specific profiles table
-    await this.query(
-      `INSERT INTO "${schemaName}".profiles (
-        id, role, role_id, full_name, email, avatar_url, date_of_birth, city, 
-        auth_method, is_blocked, doctor_stamp_url, doctor_signature_url, 
-        pharmacist_stamp_url, pharmacist_signature_url, cns_card_front, 
-        cns_card_back, cns_number, license_number, pharmacy_name, 
-        pharmacy_logo_url, doctor_id, tenant_id, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)`,
-      [
-        profile.id,
-        profile.role || userRole,
-        profile.role_id,
-        profile.full_name,
-        profile.email,
-        profile.avatar_url,
-        profile.date_of_birth,
-        profile.city,
-        profile.auth_method,
-        profile.is_blocked || false,
-        profile.doctor_stamp_url,
-        profile.doctor_signature_url,
-        profile.pharmacist_stamp_url,
-        profile.pharmacist_signature_url,
-        profile.cns_card_front,
-        profile.cns_card_back,
-        profile.cns_number,
-        profile.license_number,
-        profile.pharmacy_name,
-        profile.pharmacy_logo_url,
-        profile.doctor_id,
-        tenantId, // Set tenant_id in the tenant profile
-        new Date().toISOString(),
-        new Date().toISOString()
-      ]
-    )
+    console.log('Step 8: Creating user profile in tenant schema...');
+    try {
+      await this.query(
+        `INSERT INTO "${schemaName}".profiles (
+          id, role, role_id, full_name, email, avatar_url, date_of_birth, city, 
+          auth_method, is_blocked, doctor_stamp_url, doctor_signature_url, 
+          pharmacist_stamp_url, pharmacist_signature_url, cns_card_front, 
+          cns_card_back, cns_number, license_number, pharmacy_name, 
+          pharmacy_logo_url, doctor_id, tenant_id, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)`,
+        [
+          profile.id,
+          profile.role || userRole,
+          profile.role_id,
+          profile.full_name,
+          profile.email,
+          profile.avatar_url,
+          profile.date_of_birth,
+          profile.city,
+          profile.auth_method,
+          profile.is_blocked || false,
+          profile.doctor_stamp_url,
+          profile.doctor_signature_url,
+          profile.pharmacist_stamp_url,
+          profile.pharmacist_signature_url,
+          profile.cns_card_front,
+          profile.cns_card_back,
+          profile.cns_number,
+          profile.license_number,
+          profile.pharmacy_name,
+          profile.pharmacy_logo_url,
+          profile.doctor_id,
+          tenantId, // Set tenant_id in the tenant profile
+          new Date().toISOString(),
+          new Date().toISOString()
+        ]
+      );
+      console.log('✓ User profile created in tenant schema');
+    } catch (error) {
+      console.error('ERROR: Failed to create user profile in tenant schema:', error.message);
+      throw new Error(`Failed to create user profile in tenant schema: ${error.message}`);
+    }
 
     // Update user profile in the original schema with tenant_id
-    const updateSchema = schema === 'public' ? 'public' : schema
-    await this.query(
-      `UPDATE "${updateSchema}".profiles SET tenant_id = $1, updated_at = $2 WHERE id = $3`,
-      [tenantId, new Date().toISOString(), userId]
-    )
+    console.log('Step 9: Updating original user profile with tenant_id...');
+    const updateSchema = schema === 'public' ? 'public' : schema;
+    try {
+      await this.query(
+        `UPDATE "${updateSchema}".profiles SET tenant_id = $1, updated_at = $2 WHERE id = $3`,
+        [tenantId, new Date().toISOString(), userId]
+      );
+      console.log('✓ Original user profile updated with tenant_id');
+    } catch (error) {
+      console.error('ERROR: Failed to update original user profile:', error.message);
+      throw new Error(`Failed to update original user profile: ${error.message}`);
+    }
 
     // Reset schema back to public after tenant creation
-    this.setTenantSchema('public')
+    console.log('Step 10: Resetting schema to public...');
+    this.setTenantSchema('public');
+    console.log('Final schema after reset:', this.getCurrentSchema());
 
-    console.log('Created tenant:', tenantId, 'for user:', userId)
-    return result.rows[0]
+    console.log('=== TENANT CREATION SUCCESS ===');
+    console.log('Tenant created successfully:', {
+      tenantId,
+      userId,
+      tenantName,
+      schemaName,
+      userRole
+    });
+    
+    return result.rows[0];
   }
 
   private async createTenantTables(schemaName: string) {
