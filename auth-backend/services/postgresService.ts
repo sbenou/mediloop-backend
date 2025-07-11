@@ -212,14 +212,15 @@ export class PostgresService {
     console.log('Found role:', role.name, 'with ID:', role.id);
     
     const result = await this.query(
-      `INSERT INTO "${schema}".profiles (id, email, full_name, role_id, auth_method, password_hash, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO "${schema}".profiles (id, email, full_name, role, role_id, auth_method, password_hash, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
       [
         userId,
         email,
         fullName,
-        role.id,
+        roleName,        // Set role column to role name
+        role.id,         // Set role_id column to role UUID
         'password',
         hashedPassword,
         new Date().toISOString(),
