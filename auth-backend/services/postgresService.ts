@@ -204,42 +204,6 @@ export class PostgresService {
     return result.rows[0]
   }
 
-  async createUserWithPassword(userId: string, email: string, fullName: string, hashedPassword: string, roleName: string) {
-    // Get role ID from role name
-    const role = await this.getRoleByName(roleName)
-    
-    // Create in current schema (should be tenant schema)
-    const schema = this.getCurrentSchema()
-    console.log('Creating user profile in schema:', schema);
-    
-    const result = await this.query(
-      `INSERT INTO "${schema}".profiles (id, email, full_name, role_id, auth_method, password_hash, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       RETURNING *`,
-      [
-        userId,
-        email,
-        fullName,
-        role.id,
-        'password',
-        hashedPassword,
-        new Date().toISOString(),
-        new Date().toISOString()
-      ]
-    )
-
-    if (result.rows.length === 0) {
-      throw new Error('Failed to create user profile')
-    }
-
-    // Add role name for compatibility
-    const profile = result.rows[0]
-    profile.role = roleName
-    profile.role_name = roleName
-
-    return profile
-  }
-
   async createUserWithPasswordInSchema(schema: string, userId: string, email: string, fullName: string, hashedPassword: string, roleName: string) {
     console.log('Creating user profile in explicit schema:', schema);
     

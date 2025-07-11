@@ -33,7 +33,7 @@ export class RegistrationService {
       );
       console.log('✓ Tenant created successfully:', { id: tenant.id, name: tenant.name, schema: tenant.schema });
 
-      // Create user profile directly in tenant schema with explicit schema parameter
+      // Create user profile directly in tenant schema
       console.log('Step 4: Creating user profile in tenant schema:', tenant.schema);
       const profile = await postgresService.createUserWithPasswordInSchema(
         tenant.schema,

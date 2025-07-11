@@ -24,14 +24,6 @@ export class DatabaseService {
     return await postgresService.verifyUserPassword(email, password);
   }
 
-  async createUserWithPassword(userId: string, email: string, fullName: string, hashedPassword: string, roleName: string) {
-    return await postgresService.createUserWithPassword(userId, email, fullName, hashedPassword, roleName);
-  }
-
-  async createUserWithPasswordInSchema(schema: string, userId: string, email: string, fullName: string, hashedPassword: string, roleName: string) {
-    return await postgresService.createUserWithPasswordInSchema(schema, userId, email, fullName, hashedPassword, roleName);
-  }
-
   // Get current schema info for debugging
   getCurrentSchemaInfo() {
     return configService.getSchemaInfo();
