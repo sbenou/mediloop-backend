@@ -1,3 +1,4 @@
+
 import { Client } from "https://deno.land/x/postgres@v0.19.3/mod.ts"
 import { config } from "../config/env.ts"
 
@@ -228,6 +229,13 @@ export class PostgresService {
 
     const tenantId = result.rows[0].id
 
+    // Create the tenant schema
+    await this.query(`CREATE SCHEMA IF NOT EXISTS "${schemaName}"`)
+    console.log('Created tenant schema:', schemaName)
+
+    // Create all tenant tables in the new schema
+    await this.createTenantTables(schemaName)
+
     // Update user profile with tenant_id
     await this.query(
       'UPDATE profiles SET tenant_id = $1, updated_at = $2 WHERE id = $3',
@@ -236,6 +244,406 @@ export class PostgresService {
 
     console.log('Created tenant:', tenantId, 'for user:', userId)
     return result.rows[0]
+  }
+
+  private async createTenantTables(schemaName: string) {
+    console.log('Creating tables for tenant schema:', schemaName)
+
+    // 1. activities
+    await this.query(`
+      CREATE TABLE "${schemaName}".activities (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL,
+        type TEXT NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL,
+        related_id UUID,
+        related_type TEXT,
+        meta JSONB,
+        read BOOLEAN DEFAULT FALSE,
+        timestamp TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        tenant_id UUID,
+        team_id UUID,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `)
+
+    // 2. addresses
+    await this.query(`
+      CREATE TABLE "${schemaName}".addresses (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL,
+        street TEXT NOT NULL,
+        city TEXT NOT NULL,
+        postal_code TEXT NOT NULL,
+        country TEXT NOT NULL,
+        type TEXT NOT NULL,
+        is_default BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `)
+
+    // 3. boosts
+    await this.query(`
+      CREATE TABLE "${schemaName}".boosts (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL,
+        type TEXT NOT NULL,
+        start_date TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `)
+
+    // 4. categories
+    await this.query(`
+      CREATE TABLE "${schemaName}".categories (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name TEXT NOT NULL,
+        type TEXT NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `)
+
+    // 5. doctor_availability
+    await this.query(`
+      CREATE TABLE "${schemaName}".doctor_availability (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        doctor_id UUID NOT NULL,
+        day_of_week INTEGER NOT NULL,
+        start_time TEXT,
+        end_time TEXT,
+        is_available BOOLEAN DEFAULT FALSE,
+        appointment_type TEXT,
+        additional_time_slots JSONB,
+        workplace_id UUID,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `)
+
+    // 6. doctor_metadata
+    await this.query(`
+      CREATE TABLE "${schemaName}".doctor_metadata (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        doctor_id UUID,
+        logo_url TEXT,
+        hours TEXT,
+        address TEXT,
+        city TEXT,
+        postal_code TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `)
+
+    // 7. doctor_patient_connections
+    await this.query(`
+      CREATE TABLE "${schemaName}".doctor_patient_connections (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        doctor_id UUID NOT NULL,
+        patient_id UUID NOT NULL,
+        status TEXT DEFAULT 'pending',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        deleted_at TIMESTAMP WITH TIME ZONE
+      )
+    `)
+
+    // 8. doctor_workplaces
+    await this.query(`
+      CREATE TABLE "${schemaName}".doctor_workplaces (
+        id UUID DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL,
+        workplace_id UUID,
+        is_primary BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `)
+
+    // 9. next_of_kin
+    await this.query(`
+      CREATE TABLE "${schemaName}".next_of_kin (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL,
+        full_name TEXT NOT NULL,
+        relation TEXT NOT NULL,
+        phone_number TEXT NOT NULL,
+        street TEXT NOT NULL,
+        city TEXT NOT NULL,
+        postal_code TEXT NOT NULL,
+        country TEXT NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `)
+
+    // 10. notifications
+    await this.query(`
+      CREATE TABLE "${schemaName}".notifications (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL,
+        type TEXT NOT NULL,
+        title TEXT NOT NULL,
+        message TEXT NOT NULL,
+        link TEXT,
+        meta JSONB,
+        read BOOLEAN DEFAULT FALSE,
+        tenant_id UUID,
+        deleted_at TIMESTAMP WITH TIME ZONE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `)
+
+    // 11. orders
+    await this.query(`
+      CREATE TABLE "${schemaName}".orders (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL,
+        total NUMERIC NOT NULL,
+        status TEXT DEFAULT 'pending',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `)
+
+    // 12. pharmacies
+    await this.query(`
+      CREATE TABLE "${schemaName}".pharmacies (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name TEXT NOT NULL,
+        address TEXT NOT NULL,
+        city TEXT NOT NULL,
+        postal_code TEXT NOT NULL,
+        phone TEXT,
+        hours TEXT,
+        endorsed BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `)
+
+    // 13. pharmacy_metadata
+    await this.query(`
+      CREATE TABLE "${schemaName}".pharmacy_metadata (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        pharmacy_id UUID,
+        logo_url TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `)
+
+    // 14. pharmacy_team_members
+    await this.query(`
+      CREATE TABLE "${schemaName}".pharmacy_team_members (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        pharmacy_id UUID,
+        user_id UUID,
+        role TEXT DEFAULT 'pharmacy_user',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        deleted_at TIMESTAMP WITH TIME ZONE
+      )
+    `)
+
+    // 15. point_transactions
+    await this.query(`
+      CREATE TABLE "${schemaName}".point_transactions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL,
+        amount INTEGER NOT NULL,
+        transaction_type VARCHAR NOT NULL,
+        description TEXT,
+        reference_id UUID,
+        reference_type VARCHAR,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `)
+
+    // 16. prescriptions
+    await this.query(`
+      CREATE TABLE "${schemaName}".prescriptions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        doctor_id UUID NOT NULL,
+        patient_id UUID NOT NULL,
+        medication_name TEXT NOT NULL,
+        dosage TEXT NOT NULL,
+        frequency TEXT NOT NULL,
+        duration TEXT NOT NULL,
+        notes TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `)
+
+    // 17. products
+    await this.query(`
+      CREATE TABLE "${schemaName}".products (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name TEXT NOT NULL,
+        description TEXT,
+        price NUMERIC NOT NULL,
+        type TEXT NOT NULL,
+        requires_prescription BOOLEAN DEFAULT FALSE,
+        image_url TEXT,
+        category_id UUID,
+        subcategory_id UUID,
+        pharmacy_id UUID,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `)
+
+    // 18. profiles (THE MISSING ONE!)
+    await this.query(`
+      CREATE TABLE "${schemaName}".profiles (
+        id UUID PRIMARY KEY,
+        role TEXT NOT NULL,
+        role_id UUID,
+        full_name TEXT,
+        email TEXT,
+        avatar_url TEXT,
+        date_of_birth DATE,
+        city TEXT,
+        auth_method TEXT DEFAULT 'password',
+        is_blocked BOOLEAN DEFAULT FALSE,
+        doctor_stamp_url TEXT,
+        doctor_signature_url TEXT,
+        pharmacist_stamp_url TEXT,
+        pharmacist_signature_url TEXT,
+        cns_card_front TEXT,
+        cns_card_back TEXT,
+        cns_number TEXT,
+        deleted_at TIMESTAMP WITH TIME ZONE,
+        license_number TEXT,
+        pharmacy_name TEXT,
+        pharmacy_logo_url TEXT,
+        doctor_id UUID,
+        tenant_id UUID,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `)
+
+    // 19. referrals
+    await this.query(`
+      CREATE TABLE "${schemaName}".referrals (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        referrer_id UUID NOT NULL,
+        referral_email VARCHAR NOT NULL,
+        referral_code VARCHAR NOT NULL,
+        status VARCHAR DEFAULT 'pending',
+        points_awarded INTEGER DEFAULT 0,
+        referral_points_received INTEGER DEFAULT 0,
+        converted_at TIMESTAMP WITH TIME ZONE,
+        subscription_purchased_at TIMESTAMP WITH TIME ZONE,
+        notes TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `)
+
+    // 20. subcategories
+    await this.query(`
+      CREATE TABLE "${schemaName}".subcategories (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name TEXT NOT NULL,
+        category_id UUID,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `)
+
+    // 21. teleconsultations
+    await this.query(`
+      CREATE TABLE "${schemaName}".teleconsultations (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        doctor_id UUID NOT NULL,
+        patient_id UUID NOT NULL,
+        start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+        end_time TIMESTAMP WITH TIME ZONE NOT NULL,
+        reason TEXT,
+        status TEXT DEFAULT 'pending',
+        room_id TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `)
+
+    // 22. user_notification_tokens
+    await this.query(`
+      CREATE TABLE "${schemaName}".user_notification_tokens (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL,
+        token TEXT NOT NULL,
+        platform TEXT DEFAULT 'web',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `)
+
+    // 23. user_pharmacies
+    await this.query(`
+      CREATE TABLE "${schemaName}".user_pharmacies (
+        user_id UUID NOT NULL,
+        pharmacy_id UUID,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `)
+
+    // 24. user_points
+    await this.query(`
+      CREATE TABLE "${schemaName}".user_points (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL,
+        points INTEGER DEFAULT 0,
+        level VARCHAR DEFAULT 'Bronze',
+        total_points_earned INTEGER DEFAULT 0,
+        total_points_spent INTEGER DEFAULT 0,
+        wallet_balance NUMERIC DEFAULT 0,
+        registered_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `)
+
+    // 25. user_wearables
+    await this.query(`
+      CREATE TABLE "${schemaName}".user_wearables (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL,
+        device_id TEXT NOT NULL,
+        device_name TEXT NOT NULL,
+        device_type TEXT NOT NULL,
+        connection_status TEXT DEFAULT 'connected',
+        battery_level INTEGER,
+        access_token TEXT,
+        refresh_token TEXT,
+        token_expires_at TIMESTAMP WITH TIME ZONE,
+        last_synced TIMESTAMP WITH TIME ZONE,
+        meta JSONB,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `)
+
+    // 26. workplaces
+    await this.query(`
+      CREATE TABLE "${schemaName}".workplaces (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name TEXT NOT NULL,
+        workplace_type TEXT DEFAULT 'cabinet',
+        address TEXT NOT NULL,
+        city TEXT NOT NULL,
+        postal_code TEXT NOT NULL,
+        phone TEXT,
+        hours TEXT,
+        description TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `)
+
+    console.log('Successfully created all 26 tenant tables in schema:', schemaName)
   }
 
   async close() {
