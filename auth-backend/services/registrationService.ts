@@ -23,18 +23,27 @@ export class RegistrationService {
       const hashedPassword = await passwordService.hashPassword(password);
       console.log('Step 2: Generated userId:', userId);
 
-      // Create tenant FIRST
-      console.log('Step 3: Creating tenant...');
-      const tenant = await postgresService.createTenantForUser(
-        userId,
-        role,
-        fullName,
-        workplaceName,
-        pharmacyName
-      );
-      console.log('✓ Tenant created successfully:', { id: tenant.id, name: tenant.name, schema: tenant.schema });
+      // Check if user already has a tenant (by user ID as domain)
+      console.log('Step 3: Checking for existing tenant...');
+      const existingTenant = await this.checkExistingTenant(userId);
+      
+      let tenant;
+      if (existingTenant) {
+        console.log('✓ Found existing tenant:', { id: existingTenant.id, name: existingTenant.name, schema: existingTenant.schema });
+        tenant = existingTenant;
+      } else {
+        console.log('Step 3a: Creating new tenant...');
+        tenant = await postgresService.createTenantForUser(
+          userId,
+          role,
+          fullName,
+          workplaceName,
+          pharmacyName
+        );
+        console.log('✓ Tenant created successfully:', { id: tenant.id, name: tenant.name, schema: tenant.schema });
+      }
 
-      // Create user profile directly in tenant schema using databaseService
+      // Create user profile in tenant schema using databaseService
       console.log('Step 4: Creating user profile in tenant schema:', tenant.schema);
       const profile = await databaseService.createUserWithPasswordInSchema(
         tenant.schema,
@@ -46,10 +55,14 @@ export class RegistrationService {
       );
       console.log('✓ User profile created successfully:', profile.id);
 
-      // Update tenant record with user association
-      console.log('Step 5: Updating tenant record...');
-      await postgresService.updateTenantWithUser(tenant.id, userId);
-      console.log('✓ Tenant updated with user association');
+      // Update tenant record with user association if it's a new tenant
+      if (!existingTenant) {
+        console.log('Step 5: Updating tenant record...');
+        await postgresService.updateTenantWithUser(tenant.id, userId);
+        console.log('✓ Tenant updated with user association');
+      } else {
+        console.log('Step 5: Skipped tenant update (existing tenant)');
+      }
 
       // Final result
       const result = {
@@ -98,6 +111,28 @@ export class RegistrationService {
       return null;
     } catch (error) {
       console.error('Error checking existing user:', error.message);
+      throw error;
+    }
+  }
+
+  private async checkExistingTenant(userId: string) {
+    try {
+      console.log('Checking for existing tenant with user ID as domain:', userId);
+      
+      const result = await postgresService.query(
+        'SELECT * FROM public.tenants WHERE domain = $1 AND is_active = true LIMIT 1',
+        [userId]
+      );
+      
+      if (result.rows.length > 0) {
+        console.log('Found existing tenant:', result.rows[0].id);
+        return result.rows[0];
+      }
+      
+      console.log('✓ No existing tenant found for user');
+      return null;
+    } catch (error) {
+      console.error('Error checking existing tenant:', error.message);
       throw error;
     }
   }
