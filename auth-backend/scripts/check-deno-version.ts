@@ -28,9 +28,10 @@ async function checkDenoVersion() {
     
     // Check PostgreSQL driver compatibility
     console.log("\n🔍 Checking PostgreSQL driver compatibility...");
-    console.log("Current postgres driver: v0.17.0");
-    console.log("Note: If you're having issues with 'channel_binding=require',");
-    console.log("this is likely due to driver limitations, not Deno version.");
+    console.log("Current postgres driver: v0.19.3 (updated from v0.17.0)");
+    console.log("✅ Updated to latest PostgreSQL driver version");
+    console.log("Note: The newer driver should have better compatibility with modern PostgreSQL features");
+    console.log("and may resolve 'channel_binding=require' issues in some environments.");
     
   } catch (error) {
     console.error("❌ Error checking Deno version:", error.message);

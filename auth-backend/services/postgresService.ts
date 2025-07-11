@@ -1,5 +1,4 @@
-
-import { Client } from "https://deno.land/x/postgres@v0.17.0/mod.ts"
+import { Client } from "https://deno.land/x/postgres@v0.19.3/mod.ts"
 import { config } from "../config/env.ts"
 
 // This service handles direct PostgreSQL operations using Neon
