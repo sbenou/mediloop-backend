@@ -188,6 +188,18 @@ export class PostgresService {
   async createTenant(userId: string, userRole: string, userName: string, workplaceName?: string, pharmacyName?: string) {
     console.log('Creating tenant for user:', userId, 'with role:', userRole)
     
+    // Get user's current profile data from public.profiles
+    const userProfile = await this.query(
+      'SELECT * FROM profiles WHERE id = $1',
+      [userId]
+    )
+    
+    if (userProfile.rows.length === 0) {
+      throw new Error('User profile not found')
+    }
+    
+    const profile = userProfile.rows[0]
+    
     // Determine tenant name based on role
     let tenantName: string
     switch (userRole) {
@@ -236,7 +248,44 @@ export class PostgresService {
     // Create all tenant tables in the new schema
     await this.createTenantTables(schemaName)
 
-    // Update user profile with tenant_id
+    // Insert user profile into the tenant-specific profiles table
+    await this.query(
+      `INSERT INTO "${schemaName}".profiles (
+        id, role, role_id, full_name, email, avatar_url, date_of_birth, city, 
+        auth_method, is_blocked, doctor_stamp_url, doctor_signature_url, 
+        pharmacist_stamp_url, pharmacist_signature_url, cns_card_front, 
+        cns_card_back, cns_number, license_number, pharmacy_name, 
+        pharmacy_logo_url, doctor_id, tenant_id, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)`,
+      [
+        profile.id,
+        profile.role || userRole,
+        profile.role_id,
+        profile.full_name,
+        profile.email,
+        profile.avatar_url,
+        profile.date_of_birth,
+        profile.city,
+        profile.auth_method,
+        profile.is_blocked || false,
+        profile.doctor_stamp_url,
+        profile.doctor_signature_url,
+        profile.pharmacist_stamp_url,
+        profile.pharmacist_signature_url,
+        profile.cns_card_front,
+        profile.cns_card_back,
+        profile.cns_number,
+        profile.license_number,
+        profile.pharmacy_name,
+        profile.pharmacy_logo_url,
+        profile.doctor_id,
+        tenantId, // Set tenant_id in the tenant profile
+        new Date().toISOString(),
+        new Date().toISOString()
+      ]
+    )
+
+    // Update user profile in public.profiles with tenant_id
     await this.query(
       'UPDATE profiles SET tenant_id = $1, updated_at = $2 WHERE id = $3',
       [tenantId, new Date().toISOString(), userId]
