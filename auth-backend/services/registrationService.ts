@@ -1,6 +1,7 @@
 
 import { passwordService } from './passwordService.ts';
 import { postgresService } from './postgresService.ts';
+import { databaseService } from './databaseService.ts';
 
 export class RegistrationService {
   async registerUser(email: string, password: string, fullName: string, role: string = 'patient', workplaceName?: string, pharmacyName?: string) {
@@ -33,9 +34,9 @@ export class RegistrationService {
       );
       console.log('✓ Tenant created successfully:', { id: tenant.id, name: tenant.name, schema: tenant.schema });
 
-      // Create user profile directly in tenant schema
+      // Create user profile directly in tenant schema using databaseService
       console.log('Step 4: Creating user profile in tenant schema:', tenant.schema);
-      const profile = await postgresService.createUserWithPasswordInSchema(
+      const profile = await databaseService.createUserWithPasswordInSchema(
         tenant.schema,
         userId,
         email,
