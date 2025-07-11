@@ -5,6 +5,21 @@ import { configService } from "../services/configService.ts"
 
 const healthCheckRouter = new Router()
 
+// Helper function to convert BigInt to number for JSON serialization
+function convertBigIntToNumber(obj: any): any {
+  if (typeof obj === 'bigint') {
+    return Number(obj);
+  }
+  if (obj && typeof obj === 'object') {
+    const converted: any = Array.isArray(obj) ? [] : {};
+    for (const key in obj) {
+      converted[key] = convertBigIntToNumber(obj[key]);
+    }
+    return converted;
+  }
+  return obj;
+}
+
 healthCheckRouter.get('/health', async (ctx) => {
   const healthStatus = {
     status: 'healthy',
@@ -27,7 +42,7 @@ healthCheckRouter.get('/health', async (ctx) => {
     const basicTest = await postgresService.query('SELECT 1 as test');
     healthStatus.checks.database_connection = { 
       status: 'healthy', 
-      result: basicTest.rows[0] 
+      result: convertBigIntToNumber(basicTest.rows[0])
     };
     console.log('✓ Basic database connection OK');
 
@@ -37,11 +52,12 @@ healthCheckRouter.get('/health', async (ctx) => {
     
     try {
       const publicTest = await postgresService.query('SELECT COUNT(*) as count FROM public.tenants');
+      const tenantCount = Number(publicTest.rows[0].count); // Convert BigInt to number
       healthStatus.checks.public_schema = { 
         status: 'healthy', 
-        tenant_count: publicTest.rows[0].count 
+        tenant_count: tenantCount
       };
-      console.log('✓ Public schema access OK, tenants:', publicTest.rows[0].count);
+      console.log('✓ Public schema access OK, tenants:', tenantCount);
     } catch (error) {
       healthStatus.checks.public_schema = { 
         status: 'error', 
@@ -89,12 +105,13 @@ healthCheckRouter.get('/health', async (ctx) => {
             const profilesTest = await postgresService.query(
               `SELECT COUNT(*) as profile_count FROM "${currentSchema}".profiles`
             );
+            const profileCount = Number(profilesTest.rows[0].profile_count); // Convert BigInt to number
             healthStatus.checks.tenant_schema = { 
               status: 'healthy', 
               schema: currentSchema,
-              profile_count: profilesTest.rows[0].profile_count 
+              profile_count: profileCount
             };
-            console.log(`✓ Tenant schema ${currentSchema} OK, profiles:`, profilesTest.rows[0].profile_count);
+            console.log(`✓ Tenant schema ${currentSchema} OK, profiles:`, profileCount);
           }
         }
       } catch (error) {
@@ -135,7 +152,9 @@ healthCheckRouter.get('/health', async (ctx) => {
     console.log('=== HEALTH CHECK COMPLETE ===');
     console.log('Overall status:', healthStatus.status);
     
-    ctx.response.body = healthStatus;
+    // Convert any remaining BigInt values before sending response
+    const responseBody = convertBigIntToNumber(healthStatus);
+    ctx.response.body = responseBody;
     ctx.response.status = healthStatus.status === 'healthy' ? 200 : 503;
 
   } catch (error) {
@@ -145,7 +164,8 @@ healthCheckRouter.get('/health', async (ctx) => {
     healthStatus.status = 'unhealthy';
     healthStatus.errors.push(`Critical error: ${error.message}`);
     
-    ctx.response.body = healthStatus;
+    const responseBody = convertBigIntToNumber(healthStatus);
+    ctx.response.body = responseBody;
     ctx.response.status = 503;
   }
 })
