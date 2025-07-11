@@ -228,14 +228,23 @@ export class PostgresService {
   async createTenant(userId: string, userRole: string, userName: string, workplaceName?: string, pharmacyName?: string) {
     console.log('Creating tenant for user:', userId, 'with role:', userRole)
     
-    // Get user's current profile data from public.profiles
-    const userProfile = await this.query(
-      'SELECT * FROM public.profiles WHERE id = $1',
+    // Get user's current profile data - check both schemas
+    const schema = this.getCurrentSchema()
+    let userProfile = await this.query(
+      `SELECT * FROM "${schema}".profiles WHERE id = $1`,
       [userId]
     )
     
+    // If not found in current schema, try public
+    if (userProfile.rows.length === 0 && schema !== 'public') {
+      userProfile = await this.query(
+        'SELECT * FROM public.profiles WHERE id = $1',
+        [userId]
+      )
+    }
+    
     if (userProfile.rows.length === 0) {
-      throw new Error('User profile not found in public.profiles')
+      throw new Error('User profile not found')
     }
     
     const profile = userProfile.rows[0]
