@@ -8,7 +8,7 @@ export class RegistrationService {
     console.log('Registration request for:', { email, role, fullName, workplaceName, pharmacyName });
 
     try {
-      // Check if user already exists in public.profiles
+      // Check if user already exists in any tenant schema
       console.log('Step 1: Checking for existing user...');
       const existingUser = await this.checkExistingUser(email);
       if (existingUser) {
@@ -22,13 +22,24 @@ export class RegistrationService {
       const hashedPassword = await passwordService.hashPassword(password);
       console.log('Step 2: Generated userId:', userId);
 
-      // Ensure we're using public schema for initial user creation
-      console.log('Step 3: Setting schema to public for user creation...');
-      postgresService.setTenantSchema('public');
-      console.log('Current schema after setting to public:', postgresService.getCurrentSchema());
+      // Create tenant FIRST
+      console.log('Step 3: Creating tenant...');
+      const tenant = await postgresService.createTenantForUser(
+        userId,
+        role,
+        fullName,
+        workplaceName,
+        pharmacyName
+      );
+      console.log('✓ Tenant created successfully:', { id: tenant.id, name: tenant.name, schema: tenant.schema });
 
-      // Create user profile in public.profiles first
-      console.log('Step 4: Creating user profile in public schema...');
+      // Set schema to the new tenant schema for user creation
+      console.log('Step 4: Switching to tenant schema for user creation...');
+      postgresService.setTenantSchema(tenant.schema);
+      console.log('Current schema after switch:', postgresService.getCurrentSchema());
+
+      // Create user profile directly in tenant schema
+      console.log('Step 5: Creating user profile in tenant schema...');
       const profile = await postgresService.createUserWithPassword(
         userId,
         email,
@@ -38,16 +49,15 @@ export class RegistrationService {
       );
       console.log('✓ User profile created successfully:', profile.id);
 
-      // Create tenant and tenant-specific tables
-      console.log('Step 5: Creating tenant...');
-      const tenant = await postgresService.createTenant(
-        userId,
-        role,
-        fullName,
-        workplaceName,
-        pharmacyName
-      );
-      console.log('✓ Tenant created successfully:', { id: tenant.id, name: tenant.name, schema: tenant.schema });
+      // Update tenant record with user association
+      console.log('Step 6: Updating tenant record...');
+      await postgresService.updateTenantWithUser(tenant.id, userId);
+      console.log('✓ Tenant updated with user association');
+
+      // Reset schema back to public
+      console.log('Step 7: Resetting schema to public...');
+      postgresService.setTenantSchema('public');
+      console.log('Current schema after reset:', postgresService.getCurrentSchema());
 
       // Final result
       const result = {
@@ -73,21 +83,37 @@ export class RegistrationService {
   private async checkExistingUser(email: string) {
     try {
       console.log('Checking for existing user with email:', email);
-      // Always check in public schema for existing users
-      postgresService.setTenantSchema('public');
-      const result = await postgresService.getUserProfileByEmail(email);
-      console.log('Found existing user:', result.id);
-      return result;
-    } catch (error) {
-      // If user not found, that's what we want
-      if (error.message.includes('Profile not found')) {
-        console.log('✓ No existing user found (as expected)');
-        return null;
+      // Check in all tenant schemas for existing users
+      const tenantSchemas = await postgresService.getAllTenantSchemas();
+      console.log('Found tenant schemas:', tenantSchemas);
+      
+      for (const schema of tenantSchemas) {
+        try {
+          postgresService.setTenantSchema(schema);
+          const result = await postgresService.getUserProfileByEmail(email);
+          if (result) {
+            console.log('Found existing user in schema:', schema, 'user:', result.id);
+            return result;
+          }
+        } catch (error) {
+          // User not found in this schema, continue checking
+          if (!error.message.includes('Profile not found')) {
+            console.error('Error checking schema:', schema, error.message);
+          }
+        }
       }
+      
+      console.log('✓ No existing user found in any tenant schema');
+      return null;
+    } catch (error) {
       console.error('Error checking existing user:', error.message);
       throw error;
+    } finally {
+      // Always reset to public schema
+      postgresService.setTenantSchema('public');
     }
   }
 }
 
 export const registrationService = new RegistrationService();
+
