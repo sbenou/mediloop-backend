@@ -171,6 +171,26 @@ export class PostgresService {
     return result.rows[0]
   }
 
+  async getUserProfileByEmailInSchema(schema: string, email: string) {
+    console.log('Looking for user in schema:', schema, 'with email:', email);
+    
+    const result = await this.query(
+      `SELECT p.*, r.name as role_name, r.name as role 
+       FROM "${schema}".profiles p 
+       LEFT JOIN public.roles r ON p.role_id = r.id 
+       WHERE p.email = $1 LIMIT 1`,
+      [email]
+    )
+
+    if (result.rows.length === 0) {
+      console.log('No user found in schema:', schema);
+      throw new Error('Profile not found')
+    }
+
+    console.log('Found user in schema:', schema, 'user:', result.rows[0].id);
+    return result.rows[0]
+  }
+
   async getRoleByName(roleName: string) {
     const result = await this.query(
       'SELECT * FROM public.roles WHERE name = $1 LIMIT 1',
@@ -212,6 +232,43 @@ export class PostgresService {
       throw new Error('Failed to create user profile')
     }
 
+    // Add role name for compatibility
+    const profile = result.rows[0]
+    profile.role = roleName
+    profile.role_name = roleName
+
+    return profile
+  }
+
+  async createUserWithPasswordInSchema(schema: string, userId: string, email: string, fullName: string, hashedPassword: string, roleName: string) {
+    console.log('Creating user profile in explicit schema:', schema);
+    
+    // Get role ID from role name
+    const role = await this.getRoleByName(roleName)
+    console.log('Found role:', role.name, 'with ID:', role.id);
+    
+    const result = await this.query(
+      `INSERT INTO "${schema}".profiles (id, email, full_name, role_id, auth_method, password_hash, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING *`,
+      [
+        userId,
+        email,
+        fullName,
+        role.id,
+        'password',
+        hashedPassword,
+        new Date().toISOString(),
+        new Date().toISOString()
+      ]
+    )
+
+    if (result.rows.length === 0) {
+      throw new Error('Failed to create user profile')
+    }
+
+    console.log('✓ User profile created in schema:', schema);
+    
     // Add role name for compatibility
     const profile = result.rows[0]
     profile.role = roleName

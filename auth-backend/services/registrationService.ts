@@ -33,14 +33,10 @@ export class RegistrationService {
       );
       console.log('✓ Tenant created successfully:', { id: tenant.id, name: tenant.name, schema: tenant.schema });
 
-      // Set schema to the new tenant schema for user creation
-      console.log('Step 4: Switching to tenant schema for user creation...');
-      postgresService.setTenantSchema(tenant.schema);
-      console.log('Current schema after switch:', postgresService.getCurrentSchema());
-
-      // Create user profile directly in tenant schema
-      console.log('Step 5: Creating user profile in tenant schema...');
-      const profile = await postgresService.createUserWithPassword(
+      // Create user profile directly in tenant schema with explicit schema parameter
+      console.log('Step 4: Creating user profile in tenant schema:', tenant.schema);
+      const profile = await postgresService.createUserWithPasswordInSchema(
+        tenant.schema,
         userId,
         email,
         fullName,
@@ -50,14 +46,9 @@ export class RegistrationService {
       console.log('✓ User profile created successfully:', profile.id);
 
       // Update tenant record with user association
-      console.log('Step 6: Updating tenant record...');
+      console.log('Step 5: Updating tenant record...');
       await postgresService.updateTenantWithUser(tenant.id, userId);
       console.log('✓ Tenant updated with user association');
-
-      // Reset schema back to public
-      console.log('Step 7: Resetting schema to public...');
-      postgresService.setTenantSchema('public');
-      console.log('Current schema after reset:', postgresService.getCurrentSchema());
 
       // Final result
       const result = {
@@ -89,8 +80,7 @@ export class RegistrationService {
       
       for (const schema of tenantSchemas) {
         try {
-          postgresService.setTenantSchema(schema);
-          const result = await postgresService.getUserProfileByEmail(email);
+          const result = await postgresService.getUserProfileByEmailInSchema(schema, email);
           if (result) {
             console.log('Found existing user in schema:', schema, 'user:', result.id);
             return result;
@@ -108,12 +98,8 @@ export class RegistrationService {
     } catch (error) {
       console.error('Error checking existing user:', error.message);
       throw error;
-    } finally {
-      // Always reset to public schema
-      postgresService.setTenantSchema('public');
     }
   }
 }
 
 export const registrationService = new RegistrationService();
-
