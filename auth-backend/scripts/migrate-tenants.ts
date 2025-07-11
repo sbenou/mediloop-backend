@@ -1,6 +1,4 @@
 
-#!/usr/bin/env -S deno run --allow-net --allow-env --allow-read
-
 import { migrationService } from '../services/migrationService.ts';
 
 async function runMigration() {
