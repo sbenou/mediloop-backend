@@ -1,3 +1,4 @@
+
 import { Client } from "https://deno.land/x/postgres@v0.19.3/mod.ts"
 import { config } from "../config/env.ts"
 import { configService } from './configService.ts'
@@ -5,6 +6,9 @@ import { configService } from './configService.ts'
 // This service handles direct PostgreSQL operations using Neon
 export class PostgresService {
   private client: Client | null = null
+  private connectionRetries = 0
+  private maxRetries = 3
+  private retryDelay = 1000 // 1 second
 
   constructor() {
     this.connect()
@@ -15,15 +19,63 @@ export class PostgresService {
     if (!this.client) {
       console.log('Connecting to Neon PostgreSQL database...');
       this.client = new Client(config.DATABASE_URL)
-      await this.client.connect()
-      console.log('✓ Connected to Neon PostgreSQL database')
+      
+      try {
+        await this.client.connect()
+        console.log('✓ Connected to Neon PostgreSQL database')
+        this.connectionRetries = 0 // Reset retry counter on successful connection
+      } catch (error) {
+        console.error('Failed to connect to database:', error)
+        this.client = null
+        throw error
+      }
     }
   }
 
   private async ensureConnection() {
     if (!this.client) {
       await this.connect()
+      return
     }
+
+    // Test the connection with a simple query
+    try {
+      await this.client.queryObject('SELECT 1')
+    } catch (error) {
+      console.log('Connection test failed, reconnecting...', error.message)
+      this.client = null
+      await this.connect()
+    }
+  }
+
+  private async executeWithRetry<T>(operation: () => Promise<T>): Promise<T> {
+    for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
+      try {
+        await this.ensureConnection()
+        return await operation()
+      } catch (error) {
+        console.error(`Database operation failed (attempt ${attempt + 1}/${this.maxRetries + 1}):`, error.message)
+        
+        if (attempt === this.maxRetries) {
+          throw error
+        }
+        
+        // Reset connection for next retry
+        if (this.client) {
+          try {
+            await this.client.end()
+          } catch (endError) {
+            console.log('Error ending connection:', endError.message)
+          }
+          this.client = null
+        }
+        
+        // Wait before retrying
+        await new Promise(resolve => setTimeout(resolve, this.retryDelay * (attempt + 1)))
+      }
+    }
+    
+    throw new Error('Max retries exceeded')
   }
 
   // Set the current tenant schema to use
@@ -38,8 +90,12 @@ export class PostgresService {
   }
 
   async query(text: string, params?: any[]) {
-    await this.ensureConnection()
-    return await this.client!.queryObject(text, params)
+    return await this.executeWithRetry(async () => {
+      if (!this.client) {
+        throw new Error('Database client not initialized')
+      }
+      return await this.client.queryObject(text, params)
+    })
   }
 
   async getAllTenantSchemas(): Promise<string[]> {
@@ -756,7 +812,11 @@ export class PostgresService {
 
   async close() {
     if (this.client) {
-      await this.client.end()
+      try {
+        await this.client.end()
+      } catch (error) {
+        console.log('Error closing database connection:', error.message)
+      }
       this.client = null
     }
   }
