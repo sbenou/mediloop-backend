@@ -11,9 +11,9 @@ async function debugVault() {
     if (authSecrets) {
       for (const [key, value] of Object.entries(authSecrets)) {
         if (key.includes('DATABASE_URL')) {
-          // Mask password in database URLs for security
-          const maskedValue = typeof value === 'string' ? value.replace(/:[^@]+@/, ':***@') : value;
-          console.log(`  ${key}: ${maskedValue}`);
+          // Show more of the URL for debugging, but still mask password
+          const valueStr = typeof value === 'string' ? value : String(value);
+          console.log(`  ${key} (length: ${valueStr.length}): ${valueStr.replace(/:[^@]+@/, ':***@')}`);
         } else {
           console.log(`  ${key}: ${typeof value === 'string' && value.length > 20 ? value.substring(0, 20) + '...' : value}`);
         }
