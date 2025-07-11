@@ -47,7 +47,7 @@ healthCheckRouter.get('/health/db/detailed', async (ctx) => {
     // Test basic connection
     const basicTest = await postgresService.query('SELECT 1 as test')
     
-    // Test schema-specific query - profiles table
+    // Test tenant schema-specific query - profiles table
     const profilesTest = await postgresService.query(
       `SELECT COUNT(*) as profile_count FROM "${schema}".profiles LIMIT 1`
     )
