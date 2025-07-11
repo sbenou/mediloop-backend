@@ -112,7 +112,7 @@ export class PostgresService {
     const existingResult = await this.query(
       `SELECT p.*, r.name as role_name 
        FROM "${schema}".profiles p 
-       LEFT JOIN "${schema}".roles r ON p.role_id = r.id 
+       LEFT JOIN public.roles r ON p.role_id = r.id 
        WHERE p.email = $1 LIMIT 1`,
       [email]
     )
@@ -128,7 +128,7 @@ export class PostgresService {
     
     // Get patient role ID
     const roleResult = await this.query(
-      `SELECT id FROM "${schema}".roles WHERE name = $1 LIMIT 1`,
+      `SELECT id FROM public.roles WHERE name = $1 LIMIT 1`,
       ['patient']
     )
     
@@ -171,7 +171,7 @@ export class PostgresService {
     const schema = configService.getCurrentSchema()
     
     let result = await this.query(
-      `SELECT p.*, r.name as role_name, r.name as role 
+      `SELECT p.*, r.name as role_name 
        FROM "${schema}".profiles p 
        LEFT JOIN public.roles r ON p.role_id = r.id 
        WHERE p.id = $1`,
@@ -181,7 +181,7 @@ export class PostgresService {
     // If not found in tenant schema and we're not already in public, try public
     if (result.rows.length === 0 && !configService.isUsingDefaultSchema()) {
       result = await this.query(
-        `SELECT p.*, r.name as role_name, r.name as role 
+        `SELECT p.*, r.name as role_name 
          FROM "${schema}".profiles p 
          LEFT JOIN public.roles r ON p.role_id = r.id 
          WHERE p.id = $1`,
@@ -193,7 +193,13 @@ export class PostgresService {
       throw new Error('Profile not found')
     }
 
-    return result.rows[0]
+    const profile = result.rows[0]
+    // Ensure role compatibility
+    if (profile.role_name && !profile.role) {
+      profile.role = profile.role_name
+    }
+
+    return profile
   }
 
   async getUserProfileByEmail(email: string) {
@@ -206,7 +212,7 @@ export class PostgresService {
     for (const schema of tenantSchemas) {
       try {
         const result = await this.query(
-          `SELECT p.*, r.name as role_name, r.name as role 
+          `SELECT p.*, r.name as role_name 
            FROM "${schema}".profiles p 
            LEFT JOIN public.roles r ON p.role_id = r.id 
            WHERE p.email = $1 LIMIT 1`,
@@ -217,7 +223,14 @@ export class PostgresService {
           console.log('Found user in schema:', schema, 'user:', result.rows[0].id);
           // Set the tenant schema for this user's session
           configService.setCurrentSchema(schema);
-          return result.rows[0];
+          
+          const profile = result.rows[0];
+          // Ensure role compatibility - use the role column from profiles table
+          if (!profile.role && profile.role_name) {
+            profile.role = profile.role_name;
+          }
+          
+          return profile;
         }
       } catch (error) {
         // Continue searching in other schemas if this one fails
@@ -233,7 +246,7 @@ export class PostgresService {
     console.log('Looking for user in schema:', schema, 'with email:', email);
     
     const result = await this.query(
-      `SELECT p.*, r.name as role_name, r.name as role 
+      `SELECT p.*, r.name as role_name 
        FROM "${schema}".profiles p 
        LEFT JOIN public.roles r ON p.role_id = r.id 
        WHERE p.email = $1 LIMIT 1`,
@@ -246,7 +259,13 @@ export class PostgresService {
     }
 
     console.log('Found user in schema:', schema, 'user:', result.rows[0].id);
-    return result.rows[0]
+    const profile = result.rows[0];
+    // Ensure role compatibility
+    if (!profile.role && profile.role_name) {
+      profile.role = profile.role_name;
+    }
+    
+    return profile;
   }
 
   async getRoleByName(roleName: string) {
