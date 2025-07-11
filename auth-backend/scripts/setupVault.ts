@@ -21,14 +21,32 @@ async function setupVault() {
     console.log('  DATABASE_URL length:', databaseUrl.length);
     console.log('  DATABASE_URL_DEV length:', databaseUrlDev.length);
     console.log('  DATABASE_URL_PROD length:', databaseUrlProd.length);
+    console.log('  DATABASE_URL:', databaseUrl);
+    console.log('  DATABASE_URL_DEV:', databaseUrlDev);
+    console.log('  DATABASE_URL_PROD:', databaseUrlProd);
     
-    // Auth secrets - including all database URLs with complete connection strings
+    // Store each URL individually to avoid any potential issues with batch storage
+    console.log('📝 Storing DATABASE_URL...');
+    await vaultService.setSecret('auth', {
+      DATABASE_URL: databaseUrl,
+      JWT_SECRET: Deno.env.get('JWT_SECRET') || 'your-super-secret-jwt-key'
+    });
+    
+    console.log('📝 Storing DATABASE_URL_DEV...');
+    await vaultService.setSecret('auth', {
+      DATABASE_URL: databaseUrl,
+      DATABASE_URL_DEV: databaseUrlDev,
+      JWT_SECRET: Deno.env.get('JWT_SECRET') || 'your-super-secret-jwt-key'
+    });
+    
+    console.log('📝 Storing DATABASE_URL_PROD...');
     await vaultService.setSecret('auth', {
       DATABASE_URL: databaseUrl,
       DATABASE_URL_DEV: databaseUrlDev,
       DATABASE_URL_PROD: databaseUrlProd,
       JWT_SECRET: Deno.env.get('JWT_SECRET') || 'your-super-secret-jwt-key'
     });
+    
     console.log('✅ Auth secrets stored in Vault (all database URLs with complete connection strings)');
 
     // OAuth secrets
