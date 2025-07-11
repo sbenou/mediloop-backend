@@ -82,12 +82,30 @@ authRoutes.post('/login', async (ctx) => {
 
     console.log('V2 Login: Password verification successful for:', email)
 
-    // Create JWT token with proper role information
+    // Get the tenant_id from the tenants table using the user's ID as domain
+    const tenantResult = await databaseService.getCurrentSchemaInfo()
+    let tenantId = null
+    
+    if (tenantResult && tenantResult.currentSchema !== 'public') {
+      // Get tenant record by schema name
+      const { postgresService } = await import('../services/postgresService.ts')
+      const tenantQuery = await postgresService.query(
+        'SELECT id FROM public.tenants WHERE schema = $1 LIMIT 1',
+        [tenantResult.currentSchema]
+      )
+      
+      if (tenantQuery.rows.length > 0) {
+        tenantId = tenantQuery.rows[0].id
+        console.log('V2 Login: Found tenant_id:', tenantId, 'for schema:', tenantResult.currentSchema)
+      }
+    }
+
+    // Create JWT token with proper tenant information
     const jwtToken = await jwtService.createToken(
       profile.id,
       profile.email,
       profile.role, // This now comes from the roles table join
-      profile.tenant_id
+      tenantId
     )
 
     // Store session in KV
@@ -111,7 +129,7 @@ authRoutes.post('/login', async (ctx) => {
         email: profile.email,
         role: profile.role,
         full_name: profile.full_name,
-        tenant_id: profile.tenant_id
+        tenant_id: tenantId
       }
     }
   } catch (error) {
