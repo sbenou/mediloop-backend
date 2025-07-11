@@ -1,7 +1,13 @@
 
 import { postgresService } from './postgresService.ts';
+import { configService } from './configService.ts';
 
 export class DatabaseService {
+  constructor() {
+    // Ensure config service is initialized
+    configService.initialize();
+  }
+
   async getUserProfile(userId: string) {
     return await postgresService.getUserProfile(userId);
   }
@@ -20,6 +26,16 @@ export class DatabaseService {
 
   async createUserWithPassword(userId: string, email: string, fullName: string, hashedPassword: string, roleName: string) {
     return await postgresService.createUserWithPassword(userId, email, fullName, hashedPassword, roleName);
+  }
+
+  // Get current schema info for debugging
+  getCurrentSchemaInfo() {
+    return configService.getSchemaInfo();
+  }
+
+  // Set tenant schema (if needed from this service)
+  setTenantSchema(schema: string) {
+    configService.setCurrentSchema(schema);
   }
 }
 

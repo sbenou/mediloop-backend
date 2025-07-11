@@ -1,13 +1,14 @@
 import { Client } from "https://deno.land/x/postgres@v0.19.3/mod.ts"
 import { config } from "../config/env.ts"
+import { configService } from './configService.ts'
 
 // This service handles direct PostgreSQL operations using Neon
 export class PostgresService {
   private client: Client | null = null
-  private currentTenantSchema: string = 'public'
 
   constructor() {
     this.connect()
+    configService.initialize()
   }
 
   private async connect() {
@@ -26,13 +27,13 @@ export class PostgresService {
 
   // Set the current tenant schema to use
   setTenantSchema(schema: string) {
-    this.currentTenantSchema = schema
+    configService.setCurrentSchema(schema)
     console.log('Set tenant schema to:', schema)
   }
 
   // Get the current schema name (defaults to public)
   getCurrentSchema(): string {
-    return this.currentTenantSchema
+    return configService.getCurrentSchema()
   }
 
   async query(text: string, params?: any[]) {
@@ -43,8 +44,8 @@ export class PostgresService {
   async getOrCreateUserProfile(email: string, fullName: string, authMethod: string = 'oauth') {
     console.log('Getting or creating user profile for:', email)
     
-    // Always check in public schema for existing users during initial auth
-    const schema = this.getCurrentSchema()
+    // Always check in current schema for existing users during initial auth
+    const schema = configService.getCurrentSchema()
     const existingResult = await this.query(
       `SELECT p.*, r.name as role_name 
        FROM "${schema}".profiles p 
@@ -58,7 +59,7 @@ export class PostgresService {
       return existingResult.rows[0]
     }
 
-    // Create new user profile with default patient role in public schema
+    // Create new user profile with default patient role in current schema
     console.log('Creating new user profile')
     const newUserId = crypto.randomUUID()
     
@@ -104,7 +105,7 @@ export class PostgresService {
 
   async getUserProfile(userId: string) {
     // Try current tenant schema first, fallback to public
-    const schema = this.getCurrentSchema()
+    const schema = configService.getCurrentSchema()
     
     let result = await this.query(
       `SELECT p.*, r.name as role_name, r.name as role 
@@ -115,7 +116,7 @@ export class PostgresService {
     )
 
     // If not found in tenant schema and we're not already in public, try public
-    if (result.rows.length === 0 && schema !== 'public') {
+    if (result.rows.length === 0 && !configService.isUsingDefaultSchema()) {
       result = await this.query(
         `SELECT p.*, r.name as role_name, r.name as role 
          FROM "public".profiles p 
@@ -134,7 +135,7 @@ export class PostgresService {
 
   async getUserProfileByEmail(email: string) {
     // Try current tenant schema first, fallback to public
-    const schema = this.getCurrentSchema()
+    const schema = configService.getCurrentSchema()
     
     let result = await this.query(
       `SELECT p.*, r.name as role_name, r.name as role 
@@ -145,7 +146,7 @@ export class PostgresService {
     )
 
     // If not found in tenant schema and we're not already in public, try public
-    if (result.rows.length === 0 && schema !== 'public') {
+    if (result.rows.length === 0 && !configService.isUsingDefaultSchema()) {
       result = await this.query(
         `SELECT p.*, r.name as role_name, r.name as role 
          FROM "public".profiles p 

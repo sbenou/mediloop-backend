@@ -1,5 +1,6 @@
 import { Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 import { postgresService } from "../services/postgresService.ts";
+import { configService } from "../services/configService.ts";
 
 const router = new Router();
 
@@ -19,8 +20,10 @@ router.get("/api/health", async (ctx) => {
     console.log('🏗️ Testing database schema structure...');
     
     // Get current schema for dynamic querying
-    const schema = postgresService.getCurrentSchema();
+    const schema = configService.getCurrentSchema();
+    const schemaInfo = configService.getSchemaInfo();
     console.log('📋 Current schema:', schema);
+    console.log('📋 Schema info:', schemaInfo);
     
     // First, check what schemas exist
     console.log('📋 Checking available schemas...');
@@ -137,9 +140,9 @@ router.get("/api/health", async (ctx) => {
       try {
         const profileCountResult = await postgresService.query(`SELECT COUNT(*) as count FROM "${schema}".profiles`);
         publicRecordCounts.profiles = parseInt(profileCountResult.rows[0]?.count || '0');
-        console.log('✅ Public profiles count:', publicRecordCounts.profiles);
+        console.log('✅ Current schema profiles count:', publicRecordCounts.profiles);
       } catch (error) {
-        console.log('⚠️ Could not count public profiles:', error.message);
+        console.log('⚠️ Could not count profiles in current schema:', error.message);
       }
     }
 
@@ -155,6 +158,7 @@ router.get("/api/health", async (ctx) => {
       success: true,
       message: 'Multi-tenant database connectivity test passed',
       architecture: 'Multi-tenant with schema separation',
+      configService: schemaInfo,
       tests: {
         connection: connectionTest.rows.length > 0,
         schemasFound: availableSchemas.length,
