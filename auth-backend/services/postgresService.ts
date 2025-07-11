@@ -44,9 +44,10 @@ export class PostgresService {
     console.log('Getting or creating user profile for:', email)
     
     // Always check in public schema for existing users during initial auth
+    const schema = this.getCurrentSchema()
     const existingResult = await this.query(
       `SELECT p.*, r.name as role_name 
-       FROM public.profiles p 
+       FROM "${schema}".profiles p 
        LEFT JOIN public.roles r ON p.role_id = r.id 
        WHERE p.email = $1 LIMIT 1`,
       [email]
@@ -74,7 +75,7 @@ export class PostgresService {
     const patientRoleId = roleResult.rows[0].id
     
     const insertResult = await this.query(
-      `INSERT INTO public.profiles (id, email, full_name, role_id, auth_method, created_at, updated_at)
+      `INSERT INTO "${schema}".profiles (id, email, full_name, role_id, auth_method, created_at, updated_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
       [
@@ -117,7 +118,7 @@ export class PostgresService {
     if (result.rows.length === 0 && schema !== 'public') {
       result = await this.query(
         `SELECT p.*, r.name as role_name, r.name as role 
-         FROM public.profiles p 
+         FROM "public".profiles p 
          LEFT JOIN public.roles r ON p.role_id = r.id 
          WHERE p.id = $1`,
         [userId]
@@ -147,7 +148,7 @@ export class PostgresService {
     if (result.rows.length === 0 && schema !== 'public') {
       result = await this.query(
         `SELECT p.*, r.name as role_name, r.name as role 
-         FROM public.profiles p 
+         FROM "public".profiles p 
          LEFT JOIN public.roles r ON p.role_id = r.id 
          WHERE p.email = $1 LIMIT 1`,
         [email]
@@ -179,8 +180,9 @@ export class PostgresService {
     const role = await this.getRoleByName(roleName)
     
     // Always create in public schema initially
+    const schema = this.getCurrentSchema()
     const result = await this.query(
-      `INSERT INTO public.profiles (id, email, full_name, role_id, auth_method, password_hash, created_at, updated_at)
+      `INSERT INTO "${schema}".profiles (id, email, full_name, role_id, auth_method, password_hash, created_at, updated_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
       [
@@ -238,7 +240,7 @@ export class PostgresService {
     // If not found in current schema, try public
     if (userProfile.rows.length === 0 && schema !== 'public') {
       userProfile = await this.query(
-        'SELECT * FROM public.profiles WHERE id = $1',
+        'SELECT * FROM "public".profiles WHERE id = $1',
         [userId]
       )
     }
@@ -337,9 +339,10 @@ export class PostgresService {
       ]
     )
 
-    // Update user profile in public.profiles with tenant_id
+    // Update user profile in the original schema with tenant_id
+    const updateSchema = schema === 'public' ? 'public' : schema
     await this.query(
-      'UPDATE public.profiles SET tenant_id = $1, updated_at = $2 WHERE id = $3',
+      `UPDATE "${updateSchema}".profiles SET tenant_id = $1, updated_at = $2 WHERE id = $3`,
       [tenantId, new Date().toISOString(), userId]
     )
 

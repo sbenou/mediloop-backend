@@ -80,7 +80,7 @@ router.get("/api/health", async (ctx) => {
           for (const table of ['profiles', 'orders', 'products']) {
             if (tenantTables.includes(table)) {
               try {
-                const countQuery = await postgresService.query(`SELECT COUNT(*) as count FROM ${schema}.${table}`);
+                const countQuery = await postgresService.query(`SELECT COUNT(*) as count FROM "${schema}".${table}`);
                 tableCounts[table] = parseInt(countQuery.rows[0]?.count || '0');
               } catch (error) {
                 console.log(`⚠️ Could not count ${table} in ${schema}:`, error.message);
