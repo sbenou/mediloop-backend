@@ -197,33 +197,36 @@ export class PostgresService {
   }
 
   async getUserProfileByEmail(email: string) {
-    // Try current tenant schema first, fallback to public
-    const schema = configService.getCurrentSchema()
+    console.log('Looking for user profile by email:', email);
     
-    let result = await this.query(
-      `SELECT p.*, r.name as role_name, r.name as role 
-       FROM "${schema}".profiles p 
-       LEFT JOIN public.roles r ON p.role_id = r.id 
-       WHERE p.email = $1 LIMIT 1`,
-      [email]
-    )
-
-    // If not found in tenant schema and we're not already in public, try public
-    if (result.rows.length === 0 && !configService.isUsingDefaultSchema()) {
-      result = await this.query(
-        `SELECT p.*, r.name as role_name, r.name as role 
-         FROM "${schema}".profiles p 
-         LEFT JOIN public.roles r ON p.role_id = r.id 
-         WHERE p.email = $1 LIMIT 1`,
-        [email]
-      )
+    // Search across all tenant schemas for the user
+    const tenantSchemas = await this.getAllTenantSchemas();
+    console.log('Searching in tenant schemas:', tenantSchemas);
+    
+    for (const schema of tenantSchemas) {
+      try {
+        const result = await this.query(
+          `SELECT p.*, r.name as role_name, r.name as role 
+           FROM "${schema}".profiles p 
+           LEFT JOIN public.roles r ON p.role_id = r.id 
+           WHERE p.email = $1 LIMIT 1`,
+          [email]
+        );
+        
+        if (result.rows.length > 0) {
+          console.log('Found user in schema:', schema, 'user:', result.rows[0].id);
+          // Set the tenant schema for this user's session
+          configService.setCurrentSchema(schema);
+          return result.rows[0];
+        }
+      } catch (error) {
+        // Continue searching in other schemas if this one fails
+        console.log('Error searching in schema:', schema, error.message);
+      }
     }
-
-    if (result.rows.length === 0) {
-      throw new Error('Profile not found')
-    }
-
-    return result.rows[0]
+    
+    console.log('User not found in any tenant schema');
+    throw new Error('Profile not found');
   }
 
   async getUserProfileByEmailInSchema(schema: string, email: string) {
@@ -298,9 +301,14 @@ export class PostgresService {
   }
 
   async verifyUserPassword(email: string, password: string): Promise<any> {
+    console.log('Verifying password for email:', email);
+    
+    // Find the user across all tenant schemas
     const profile = await this.getUserProfileByEmail(email);
+    console.log('Found user profile for password verification:', profile.id);
     
     if (!profile.password_hash) {
+      console.log('No password hash found for user');
       throw new Error('Invalid login credentials')
     }
 
@@ -309,9 +317,11 @@ export class PostgresService {
     const isValidPassword = await passwordService.verifyPassword(password, profile.password_hash);
     
     if (!isValidPassword) {
+      console.log('Password verification failed');
       throw new Error('Invalid login credentials')
     }
 
+    console.log('Password verification successful');
     return profile;
   }
 
