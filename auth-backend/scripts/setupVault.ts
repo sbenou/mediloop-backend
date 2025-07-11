@@ -10,22 +10,26 @@ async function setupVault() {
 
   try {
     // Get the complete database URLs with all parameters
+    // Use environment variables if available, otherwise use the complete default URLs
     const databaseUrl = Deno.env.get('DATABASE_URL') || 'postgresql://neondb_owner:npg_DUFXR9MiPsf1@ep-small-base-a900n0vb-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require';
-    const databaseUrlDev = Deno.env.get('DATABASE_URL_DEV') || databaseUrl;
-    const databaseUrlProd = Deno.env.get('DATABASE_URL_PROD') || '';
+    
+    // Set complete URLs for both dev and prod environments
+    const databaseUrlDev = Deno.env.get('DATABASE_URL_DEV') || 'postgresql://neondb_owner:YOUR_DEV_PASSWORD@ep-lively-thunder-a9vxzytc-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require';
+    const databaseUrlProd = Deno.env.get('DATABASE_URL_PROD') || 'postgresql://neondb_owner:YOUR_PROD_PASSWORD@ep-small-base-a900n0vb-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require';
 
     console.log('🔍 Debug - URLs before storing:');
     console.log('  DATABASE_URL length:', databaseUrl.length);
     console.log('  DATABASE_URL_DEV length:', databaseUrlDev.length);
+    console.log('  DATABASE_URL_PROD length:', databaseUrlProd.length);
     
-    // Auth secrets - including both dev and prod database URLs
+    // Auth secrets - including all database URLs with complete connection strings
     await vaultService.setSecret('auth', {
       DATABASE_URL: databaseUrl,
       DATABASE_URL_DEV: databaseUrlDev,
       DATABASE_URL_PROD: databaseUrlProd,
       JWT_SECRET: Deno.env.get('JWT_SECRET') || 'your-super-secret-jwt-key'
     });
-    console.log('✅ Auth secrets stored in Vault (including dev/prod database URLs)');
+    console.log('✅ Auth secrets stored in Vault (all database URLs with complete connection strings)');
 
     // OAuth secrets
     await vaultService.setSecret('oauth', {
@@ -44,9 +48,14 @@ async function setupVault() {
 
     console.log('🎉 Vault setup completed successfully!');
     console.log('');
-    console.log('💡 To add environment-specific database URLs:');
-    console.log('   deno task vault set auth DATABASE_URL_DEV="your-dev-url"');
-    console.log('   deno task vault set auth DATABASE_URL_PROD="your-prod-url"');
+    console.log('💡 All database URLs now include complete connection strings with:');
+    console.log('   - sslmode=require');
+    console.log('   - channel_binding=require');
+    console.log('');
+    console.log('💡 To update with your actual passwords, edit the URLs in your environment variables and run setup again:');
+    console.log('   export DATABASE_URL_DEV="postgresql://neondb_owner:YOUR_DEV_PASSWORD@ep-lively-thunder-a9vxzytc-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require"');
+    console.log('   export DATABASE_URL_PROD="postgresql://neondb_owner:YOUR_PROD_PASSWORD@ep-small-base-a900n0vb-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require"');
+    console.log('   deno task setup-vault');
   } catch (error) {
     console.error('❌ Failed to setup Vault:', error);
     Deno.exit(1);
