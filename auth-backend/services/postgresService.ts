@@ -1,4 +1,3 @@
-
 import { Client } from "https://deno.land/x/postgres@v0.19.3/mod.ts"
 import { config } from "../config/env.ts"
 
@@ -32,11 +31,11 @@ export class PostgresService {
   async getOrCreateUserProfile(email: string, fullName: string, authMethod: string = 'oauth') {
     console.log('Getting or creating user profile for:', email)
     
-    // First check if user exists
+    // First check if user exists in public.profiles
     const existingResult = await this.query(
       `SELECT p.*, r.name as role_name 
-       FROM profiles p 
-       LEFT JOIN roles r ON p.role_id = r.id 
+       FROM public.profiles p 
+       LEFT JOIN public.roles r ON p.role_id = r.id 
        WHERE p.email = $1 LIMIT 1`,
       [email]
     )
@@ -52,7 +51,7 @@ export class PostgresService {
     
     // Get patient role ID
     const roleResult = await this.query(
-      'SELECT id FROM roles WHERE name = $1 LIMIT 1',
+      'SELECT id FROM public.roles WHERE name = $1 LIMIT 1',
       ['patient']
     )
     
@@ -63,7 +62,7 @@ export class PostgresService {
     const patientRoleId = roleResult.rows[0].id
     
     const insertResult = await this.query(
-      `INSERT INTO profiles (id, email, full_name, role_id, auth_method, created_at, updated_at)
+      `INSERT INTO public.profiles (id, email, full_name, role_id, auth_method, created_at, updated_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
       [
@@ -93,8 +92,8 @@ export class PostgresService {
   async getUserProfile(userId: string) {
     const result = await this.query(
       `SELECT p.*, r.name as role_name, r.name as role 
-       FROM profiles p 
-       LEFT JOIN roles r ON p.role_id = r.id 
+       FROM public.profiles p 
+       LEFT JOIN public.roles r ON p.role_id = r.id 
        WHERE p.id = $1`,
       [userId]
     )
@@ -109,8 +108,8 @@ export class PostgresService {
   async getUserProfileByEmail(email: string) {
     const result = await this.query(
       `SELECT p.*, r.name as role_name, r.name as role 
-       FROM profiles p 
-       LEFT JOIN roles r ON p.role_id = r.id 
+       FROM public.profiles p 
+       LEFT JOIN public.roles r ON p.role_id = r.id 
        WHERE p.email = $1 LIMIT 1`,
       [email]
     )
@@ -124,7 +123,7 @@ export class PostgresService {
 
   async getRoleByName(roleName: string) {
     const result = await this.query(
-      'SELECT * FROM roles WHERE name = $1 LIMIT 1',
+      'SELECT * FROM public.roles WHERE name = $1 LIMIT 1',
       [roleName]
     )
 
@@ -140,7 +139,7 @@ export class PostgresService {
     const role = await this.getRoleByName(roleName)
     
     const result = await this.query(
-      `INSERT INTO profiles (id, email, full_name, role_id, auth_method, password_hash, created_at, updated_at)
+      `INSERT INTO public.profiles (id, email, full_name, role_id, auth_method, password_hash, created_at, updated_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
       [
@@ -190,12 +189,12 @@ export class PostgresService {
     
     // Get user's current profile data from public.profiles
     const userProfile = await this.query(
-      'SELECT * FROM profiles WHERE id = $1',
+      'SELECT * FROM public.profiles WHERE id = $1',
       [userId]
     )
     
     if (userProfile.rows.length === 0) {
-      throw new Error('User profile not found')
+      throw new Error('User profile not found in public.profiles')
     }
     
     const profile = userProfile.rows[0]
@@ -221,7 +220,7 @@ export class PostgresService {
     
     // Create tenant record
     const result = await this.query(
-      `INSERT INTO tenants (name, domain, schema, is_active, status, created_at, updated_at)
+      `INSERT INTO public.tenants (name, domain, schema, is_active, status, created_at, updated_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
       [
@@ -287,7 +286,7 @@ export class PostgresService {
 
     // Update user profile in public.profiles with tenant_id
     await this.query(
-      'UPDATE profiles SET tenant_id = $1, updated_at = $2 WHERE id = $3',
+      'UPDATE public.profiles SET tenant_id = $1, updated_at = $2 WHERE id = $3',
       [tenantId, new Date().toISOString(), userId]
     )
 

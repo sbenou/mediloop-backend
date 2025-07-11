@@ -1,101 +1,69 @@
 
-import { databaseService } from "./databaseService.ts"
-import { passwordService } from "./passwordService.ts"
-import { postgresService } from "./postgresService.ts"
-import { emailService } from "./emailService.ts"
+import { passwordService } from './passwordService.ts';
+import { postgresService } from './postgresService.ts';
 
 export class RegistrationService {
-  validateEmail(email: string): { isValid: boolean; error?: string } {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    
-    if (!email) {
-      return { isValid: false, error: 'Email is required' };
-    }
-
-    if (!emailRegex.test(email)) {
-      return { isValid: false, error: 'Invalid email format' };
-    }
-
-    return { isValid: true };
-  }
-
-  async checkEmailExists(email: string): Promise<boolean> {
-    try {
-      const profile = await databaseService.getUserProfileByEmail(email);
-      return !!profile;
-    } catch (error) {
-      // If error is "not found", email doesn't exist
-      return false;
-    }
-  }
-
   async registerUser(email: string, password: string, fullName: string, role: string = 'patient', workplaceName?: string, pharmacyName?: string) {
-    console.log('Registration attempt for:', email, 'with role:', role);
+    console.log('Starting registration for:', email, 'with role:', role);
 
-    // Validate email
-    const emailValidation = this.validateEmail(email);
-    if (!emailValidation.isValid) {
-      throw new Error(emailValidation.error);
+    try {
+      // Check if user already exists
+      const existingUser = await this.checkExistingUser(email);
+      if (existingUser) {
+        throw new Error('User already exists with this email');
+      }
+
+      // Generate user ID and hash password
+      const userId = crypto.randomUUID();
+      const hashedPassword = await passwordService.hashPassword(password);
+
+      console.log('Creating user with ID:', userId);
+
+      // Create user profile in public.profiles first
+      const profile = await postgresService.createUserWithPassword(
+        userId,
+        email,
+        fullName,
+        hashedPassword,
+        role
+      );
+
+      console.log('User profile created, now creating tenant');
+
+      // Create tenant and tenant-specific tables
+      const tenant = await postgresService.createTenant(
+        userId,
+        role,
+        fullName,
+        workplaceName,
+        pharmacyName
+      );
+
+      console.log('Tenant created successfully:', tenant.id);
+
+      // Return the profile with tenant_id
+      return {
+        ...profile,
+        tenant_id: tenant.id
+      };
+
+    } catch (error) {
+      console.error('Registration error:', error);
+      throw error;
     }
-
-    // Check if email already exists
-    const emailExists = await this.checkEmailExists(email);
-    if (emailExists) {
-      throw new Error('An account with this email already exists');
-    }
-
-    // Validate password strength
-    const passwordValidation = passwordService.validatePasswordStrength(password);
-    if (!passwordValidation.isValid) {
-      throw new Error(passwordValidation.errors.join(', '));
-    }
-
-    // Hash password
-    const hashedPassword = await passwordService.hashPassword(password);
-
-    // Create user profile with hashed password
-    const userId = crypto.randomUUID();
-    const newProfile = await databaseService.createUserWithPassword(
-      userId,
-      email,
-      fullName,
-      hashedPassword,
-      role
-    );
-
-    // Create tenant based on role and context
-    if (role === 'patient') {
-      // For patients, create tenant immediately as they don't need workplace selection
-      console.log('Creating tenant immediately for patient');
-      await postgresService.createTenant(userId, role, fullName);
-    } else if (role === 'doctor' || role === 'pharmacist') {
-      // For doctors and pharmacists, tenant will be created after workplace/pharmacy selection
-      // in the WorkplaceSelection component
-      console.log(`Deferring tenant creation for ${role} until workplace/pharmacy is selected`);
-    } else {
-      // For other roles, create basic tenant
-      console.log(`Creating basic tenant for role: ${role}`);
-      await postgresService.createTenant(userId, role, fullName, workplaceName, pharmacyName);
-    }
-
-    // Send welcome email
-    const loginUrl = `${Deno.env.get('FRONTEND_URL') || 'http://localhost:5173'}/login`;
-    await emailService.sendWelcomeEmail(email, fullName, role, loginUrl);
-
-    console.log('User registered successfully:', userId);
-    return newProfile;
   }
 
-  async sendEmailConfirmation(email: string, confirmationUrl: string) {
-    return await emailService.sendEmailConfirmation(email, confirmationUrl);
-  }
-
-  async sendPasswordReset(email: string, resetUrl: string) {
-    return await emailService.sendPasswordReset(email, resetUrl);
-  }
-
-  async sendLoginCode(email: string, code: string) {
-    return await emailService.sendLoginCode(email, code);
+  private async checkExistingUser(email: string) {
+    try {
+      const result = await postgresService.getUserProfileByEmail(email);
+      return result;
+    } catch (error) {
+      // If user not found, that's what we want
+      if (error.message.includes('Profile not found')) {
+        return null;
+      }
+      throw error;
+    }
   }
 }
 
