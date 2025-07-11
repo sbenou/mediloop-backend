@@ -7,7 +7,7 @@ export class RegistrationService {
     console.log('Starting registration for:', email, 'with role:', role);
 
     try {
-      // Check if user already exists
+      // Check if user already exists in public.profiles
       const existingUser = await this.checkExistingUser(email);
       if (existingUser) {
         throw new Error('User already exists with this email');
