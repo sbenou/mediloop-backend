@@ -1,4 +1,3 @@
-
 import { Client } from "https://deno.land/x/postgres@v0.19.3/mod.ts"
 import { config } from "../config/env.ts"
 import { configService } from './configService.ts'
@@ -113,7 +112,7 @@ export class PostgresService {
     const existingResult = await this.query(
       `SELECT p.*, r.name as role_name 
        FROM "${schema}".profiles p 
-       LEFT JOIN public.roles r ON p.role_id = r.id 
+       LEFT JOIN "${schema}".roles r ON p.role_id = r.id 
        WHERE p.email = $1 LIMIT 1`,
       [email]
     )
@@ -129,7 +128,7 @@ export class PostgresService {
     
     // Get patient role ID
     const roleResult = await this.query(
-      'SELECT id FROM public.roles WHERE name = $1 LIMIT 1',
+      `SELECT id FROM "${schema}".roles WHERE name = $1 LIMIT 1`,
       ['patient']
     )
     
