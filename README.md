@@ -80,7 +80,7 @@ details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
 
 ## Deno Authentication Backend Setup
 
-The `auth-backend` directory contains a standalone Deno-based authentication service with HashiCorp Vault integration.
+The `auth-backend` directory contains a standalone Deno-based authentication service with HashiCorp Vault integration for secure secret management.
 
 ### Prerequisites
 
@@ -166,6 +166,29 @@ deno task vault <command> [args...]
 
 # Direct development server (if you prefer, but start-dev is recommended)
 deno task dev
+
+# Check Deno version and get update instructions
+deno task check-version
+
+# Upgrade Deno to latest version (requires Deno 1.30+)
+deno task upgrade-deno
+```
+
+### Deno Version Management
+
+Check your current Deno version and get update instructions:
+
+```bash
+# Check current version vs latest
+deno task check-version
+
+# Upgrade Deno (if you have Deno 1.30+)
+deno task upgrade-deno
+
+# Or manually update using one of these methods:
+curl -fsSL https://deno.land/install.sh | sh          # Unix/Linux/macOS
+iwr https://deno.land/install.ps1 -useb | iex        # Windows PowerShell
+brew upgrade deno                                     # Homebrew users
 ```
 
 ### Environment Management
@@ -178,6 +201,23 @@ The scripts automatically handle environment variables:
 - `NODE_ENV=development`
 
 You don't need to set these manually - the cross-platform launchers handle everything.
+
+### Database Connection Notes
+
+**Important**: If you encounter connection issues with PostgreSQL, you may need to modify your database URL:
+
+- **Remove `&channel_binding=require`** from database URLs if you get connection errors
+- This parameter is not supported by all PostgreSQL drivers
+- Your connection remains secure with `sslmode=require`
+
+Example:
+```bash
+# If this doesn't work:
+DATABASE_URL="postgresql://user:pass@host:5432/db?sslmode=require&channel_binding=require"
+
+# Try this instead:
+DATABASE_URL="postgresql://user:pass@host:5432/db?sslmode=require"
+```
 
 ### Troubleshooting
 
@@ -194,25 +234,39 @@ You don't need to set these manually - the cross-platform launchers handle every
 - Check container logs: `docker logs vault-dev`
 - Restart setup: `deno task setup-vault`
 
+**Database Connection Issues:**
+- Remove `&channel_binding=require` from database URLs
+- Ensure `sslmode=require` is present for secure connections
+- Check if your PostgreSQL driver supports all connection parameters
+
+**Deno Version Issues:**
+- Run `deno task check-version` to check for updates
+- Update Deno if you're using an older version
+- Some features require newer Deno versions
+
 ### Complete Setup Example
 
 ```bash
 # Complete setup and configuration example:
 cd auth-backend
 
-# 1. Initial setup (starts Vault and configures default secrets)
+# 1. Check Deno version and update if needed
+deno task check-version
+deno task upgrade-deno  # if update is available
+
+# 2. Initial setup (starts Vault and configures default secrets)
 deno task setup-vault
 
-# 2. Add your development database URL (merges with existing)
-deno task vault set auth DATABASE_URL_DEV="postgresql://user:pass@localhost:5432/mydb"
+# 3. Add your development database URL (merges with existing)
+deno task vault set auth DATABASE_URL_DEV="postgresql://user:pass@localhost:5432/mydb?sslmode=require"
 
-# 3. Add your production database URL (doesn't overwrite dev URL)
-deno task vault set auth DATABASE_URL_PROD="postgresql://user:pass@prod-server:5432/mydb"
+# 4. Add your production database URL (doesn't overwrite dev URL)
+deno task vault set auth DATABASE_URL_PROD="postgresql://user:pass@prod-server:5432/mydb?sslmode=require"
 
-# 4. Add OAuth secrets (stored separately, doesn't affect auth secrets)
+# 5. Add OAuth secrets (stored separately, doesn't affect auth secrets)
 deno task vault set oauth GOOGLE_CLIENT_SECRET="your-google-secret"
 
-# 5. Start the development server with correct environment
+# 6. Start the development server with correct environment
 deno task start-dev
 ```
 
