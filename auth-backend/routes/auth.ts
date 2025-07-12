@@ -1,13 +1,27 @@
-
 import { Router } from "https://deno.land/x/oak@v12.6.1/mod.ts"
-import { jwtService } from "../services/jwtService.ts"
+import { enhancedJwtService } from "../services/enhancedJwtService.ts"
 import { databaseService } from "../services/databaseService.ts"
 import { registrationService } from "../services/registrationService.ts"
 import { kvStore } from "../services/kvStore.ts"
+import { sessionService } from "../services/sessionService.ts"
 
 const authRoutes = new Router()
 
-// User registration endpoint (UPDATED - V2 with tenant creation)
+// Get client IP helper
+function getClientIP(ctx: any): string {
+  const forwarded = ctx.request.headers.get('x-forwarded-for')
+  if (forwarded) {
+    return forwarded.split(',')[0].trim()
+  }
+  return ctx.request.ip || 'unknown'
+}
+
+// Get User Agent helper
+function getUserAgent(ctx: any): string {
+  return ctx.request.headers.get('user-agent') || 'unknown'
+}
+
+// User registration endpoint (UPDATED - V3 with enhanced JWT)
 authRoutes.post('/register', async (ctx) => {
   try {
     const body = await ctx.request.body({ type: "json" }).value
@@ -19,35 +33,40 @@ authRoutes.post('/register', async (ctx) => {
       return
     }
 
-    console.log('V2 Registration: Attempting registration for:', email, 'with role:', role)
+    const ipAddress = getClientIP(ctx)
+    const userAgent = getUserAgent(ctx)
+
+    console.log('V3 Registration: Attempting registration for:', email, 'with role:', role)
 
     // Register user using our independent service (now includes tenant creation)
     const profile = await registrationService.registerUser(email, password, fullName, role, workplaceName, pharmacyName)
 
-    // Create JWT token
-    const jwtToken = await jwtService.createToken(
+    // Create JWT token with enhanced service
+    const tokenData = await enhancedJwtService.createToken(
       profile.id,
       profile.email,
       profile.role,
-      profile.tenant_id
+      profile.tenant_id,
+      ipAddress,
+      userAgent
     )
 
-    // Store session in KV
-    const sessionId = crypto.randomUUID()
-    await kvStore.setSession(sessionId, {
+    // Store session in KV for backward compatibility
+    await kvStore.setSession(tokenData.sessionId, {
       userId: profile.id,
       email: profile.email,
       role: profile.role,
       loginTime: new Date().toISOString()
     })
 
-    console.log('V2 Registration: Registration successful for:', email)
+    console.log('V3 Registration: Registration successful for:', email)
 
     ctx.response.body = {
-      access_token: jwtToken,
+      access_token: tokenData.token,
       token_type: 'Bearer',
       expires_in: 86400,
-      session_id: sessionId,
+      session_id: tokenData.sessionId,
+      expires_at: tokenData.expiresAt.toISOString(),
       user: {
         id: profile.id,
         email: profile.email,
@@ -57,13 +76,13 @@ authRoutes.post('/register', async (ctx) => {
       }
     }
   } catch (error) {
-    console.error('V2 Registration error:', error)
+    console.error('V3 Registration error:', error)
     ctx.response.status = 400
     ctx.response.body = { error: error.message || 'Registration failed' }
   }
 })
 
-// Login with email/password (UPDATED - V2 with proper role handling)
+// Login with email/password (UPDATED - V3 with enhanced JWT)
 authRoutes.post('/login', async (ctx) => {
   try {
     const body = await ctx.request.body({ type: "json" }).value
@@ -75,21 +94,24 @@ authRoutes.post('/login', async (ctx) => {
       return
     }
 
-    console.log('V2 Login: Attempting login for:', email)
+    const ipAddress = getClientIP(ctx)
+    const userAgent = getUserAgent(ctx)
+
+    console.log('V3 Login: Attempting login for:', email)
 
     // Verify password using our independent service
     const profile = await databaseService.verifyUserPassword(email, password)
 
-    console.log('V2 Login: Password verification successful for:', email)
+    console.log('V3 Login: Password verification successful for:', email)
 
     // Get the tenant_id - first check the current schema info
     const tenantResult = await databaseService.getCurrentSchemaInfo()
     let tenantId = null
     
-    console.log('V2 Login: Current schema info:', tenantResult)
+    console.log('V3 Login: Current schema info:', tenantResult)
     
     if (tenantResult && tenantResult.current !== 'public') {
-      console.log('V2 Login: Looking up tenant for schema:', tenantResult.current)
+      console.log('V3 Login: Looking up tenant for schema:', tenantResult.current)
       
       // Get tenant record by schema name
       const { postgresService } = await import('../services/postgresService.ts')
@@ -98,16 +120,16 @@ authRoutes.post('/login', async (ctx) => {
         [tenantResult.current]
       )
       
-      console.log('V2 Login: Tenant query result:', tenantQuery.rows)
+      console.log('V3 Login: Tenant query result:', tenantQuery.rows)
       
       if (tenantQuery.rows.length > 0) {
         tenantId = tenantQuery.rows[0].id
-        console.log('V2 Login: Found tenant_id:', tenantId, 'for schema:', tenantResult.current)
+        console.log('V3 Login: Found tenant_id:', tenantId, 'for schema:', tenantResult.current)
       } else {
-        console.log('V2 Login: No tenant found for schema:', tenantResult.current)
+        console.log('V3 Login: No tenant found for schema:', tenantResult.current)
       }
     } else {
-      console.log('V2 Login: Using public schema, will look up by user domain')
+      console.log('V3 Login: Using public schema, will look up by user domain')
       
       // Fallback: Look up tenant by user ID as domain
       const { postgresService } = await import('../services/postgresService.ts')
@@ -116,38 +138,40 @@ authRoutes.post('/login', async (ctx) => {
         [profile.id]
       )
       
-      console.log('V2 Login: Tenant lookup by user domain result:', tenantQuery.rows)
+      console.log('V3 Login: Tenant lookup by user domain result:', tenantQuery.rows)
       
       if (tenantQuery.rows.length > 0) {
         tenantId = tenantQuery.rows[0].id
-        console.log('V2 Login: Found tenant_id by domain:', tenantId, 'for user:', profile.id)
+        console.log('V3 Login: Found tenant_id by domain:', tenantId, 'for user:', profile.id)
       }
     }
 
-    // Create JWT token with proper tenant information
-    const jwtToken = await jwtService.createToken(
+    // Create JWT token with enhanced service
+    const tokenData = await enhancedJwtService.createToken(
       profile.id,
       profile.email,
       profile.role,
-      tenantId
+      tenantId,
+      ipAddress,
+      userAgent
     )
 
-    // Store session in KV
-    const sessionId = crypto.randomUUID()
-    await kvStore.setSession(sessionId, {
+    // Store session in KV for backward compatibility
+    await kvStore.setSession(tokenData.sessionId, {
       userId: profile.id,
       email: profile.email,
       role: profile.role,
       loginTime: new Date().toISOString()
     })
 
-    console.log('V2 Login: Login successful for:', email, 'with tenant_id:', tenantId)
+    console.log('V3 Login: Login successful for:', email, 'with tenant_id:', tenantId)
 
     ctx.response.body = {
-      access_token: jwtToken,
+      access_token: tokenData.token,
       token_type: 'Bearer',
       expires_in: 86400,
-      session_id: sessionId,
+      session_id: tokenData.sessionId,
+      expires_at: tokenData.expiresAt.toISOString(),
       user: {
         id: profile.id,
         email: profile.email,
@@ -157,7 +181,7 @@ authRoutes.post('/login', async (ctx) => {
       }
     }
   } catch (error) {
-    console.error('V2 Login error:', error)
+    console.error('V3 Login error:', error)
     
     // Provide user-friendly error messages
     let errorMessage = 'Login failed'
@@ -172,7 +196,33 @@ authRoutes.post('/login', async (ctx) => {
   }
 })
 
-// Verify JWT token
+// Enhanced logout with token revocation
+authRoutes.post('/logout', async (ctx) => {
+  try {
+    const authHeader = ctx.request.headers.get('Authorization')
+    if (authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.substring(7)
+      const verification = await enhancedJwtService.verifyToken(token)
+      
+      if (verification.valid && verification.payload?.sub) {
+        const userId = verification.payload.sub
+        
+        // Revoke the token
+        await enhancedJwtService.revokeToken(token, userId, 'USER_LOGOUT')
+        
+        console.log('V3 User logged out and token revoked:', userId)
+      }
+    }
+
+    ctx.response.body = { message: 'Logged out successfully' }
+  } catch (error) {
+    console.error('Logout error:', error)
+    ctx.response.status = 500
+    ctx.response.body = { error: 'Logout failed' }
+  }
+})
+
+// Verify JWT token (using enhanced service)
 authRoutes.post('/verify-token', async (ctx) => {
   try {
     const authHeader = ctx.request.headers.get("Authorization")
@@ -184,15 +234,20 @@ authRoutes.post('/verify-token', async (ctx) => {
     }
 
     const token = authHeader.substring(7)
-    const verification = await jwtService.verifyToken(token)
+    const ipAddress = getClientIP(ctx)
+    const verification = await enhancedJwtService.verifyToken(token, ipAddress)
     
     if (!verification.valid) {
       ctx.response.status = 401
-      ctx.response.body = { error: 'Invalid token' }
+      ctx.response.body = { error: verification.error || 'Invalid token' }
       return
     }
 
-    ctx.response.body = { valid: true, payload: verification.payload }
+    ctx.response.body = { 
+      valid: true, 
+      payload: verification.payload,
+      session_id: verification.session_id 
+    }
   } catch (error) {
     console.error('Token verification error:', error)
     ctx.response.status = 500
@@ -200,7 +255,7 @@ authRoutes.post('/verify-token', async (ctx) => {
   }
 })
 
-// Refresh token
+// Refresh token (using enhanced service)
 authRoutes.post('/refresh', async (ctx) => {
   try {
     const body = await ctx.request.body({ type: "json" }).value
@@ -212,61 +267,44 @@ authRoutes.post('/refresh', async (ctx) => {
       return
     }
 
-    const verification = await jwtService.verifyToken(token)
-    if (!verification.valid) {
+    const ipAddress = getClientIP(ctx)
+    const userAgent = getUserAgent(ctx)
+
+    const newTokenData = await enhancedJwtService.refreshToken(token, ipAddress, userAgent)
+    
+    if (!newTokenData) {
       ctx.response.status = 401
-      ctx.response.body = { error: 'Invalid token' }
+      ctx.response.body = { error: 'Invalid or expired token' }
       return
     }
 
     // Get fresh user data
-    const profile = await databaseService.getUserProfile(verification.payload.sub)
+    const verification = await enhancedJwtService.verifyToken(newTokenData.token)
+    if (verification.valid && verification.payload) {
+      const profile = await databaseService.getUserProfile(verification.payload.sub)
 
-    // Create new token
-    const newToken = await jwtService.createToken(
-      profile.id,
-      profile.email,
-      profile.role,
-      profile.tenant_id
-    )
-
-    ctx.response.body = {
-      access_token: newToken,
-      token_type: 'Bearer',
-      expires_in: 86400,
-      user: {
-        id: profile.id,
-        email: profile.email,
-        role: profile.role,
-        full_name: profile.full_name
+      ctx.response.body = {
+        access_token: newTokenData.token,
+        token_type: 'Bearer',
+        expires_in: 86400,
+        session_id: newTokenData.sessionId,
+        expires_at: newTokenData.expiresAt.toISOString(),
+        user: {
+          id: profile.id,
+          email: profile.email,
+          role: profile.role,
+          full_name: profile.full_name,
+          tenant_id: profile.tenant_id
+        }
       }
+    } else {
+      ctx.response.status = 500
+      ctx.response.body = { error: 'Failed to validate refreshed token' }
     }
   } catch (error) {
     console.error('Token refresh error:', error)
     ctx.response.status = 500
     ctx.response.body = { error: 'Refresh failed' }
-  }
-})
-
-// Logout
-authRoutes.post('/logout', async (ctx) => {
-  try {
-    const authHeader = ctx.request.headers.get('Authorization')
-    if (authHeader?.startsWith('Bearer ')) {
-      const token = authHeader.substring(7)
-      const verification = await jwtService.verifyToken(token)
-      
-      if (verification.valid && verification.payload?.sub) {
-        // Could implement token blacklisting here if needed
-        console.log('V2 User logged out:', verification.payload.sub)
-      }
-    }
-
-    ctx.response.body = { message: 'Logged out successfully' }
-  } catch (error) {
-    console.error('Logout error:', error)
-    ctx.response.status = 500
-    ctx.response.body = { error: 'Logout failed' }
   }
 })
 
@@ -282,11 +320,11 @@ authRoutes.get('/profile', async (ctx) => {
     }
 
     const token = authHeader.substring(7)
-    const verification = await jwtService.verifyToken(token)
+    const verification = await enhancedJwtService.verifyToken(token)
     
     if (!verification.valid) {
       ctx.response.status = 401
-      ctx.response.body = { error: 'Invalid token' }
+      ctx.response.body = { error: verification.error || 'Invalid token' }
       return
     }
 

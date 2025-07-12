@@ -1,6 +1,6 @@
 
 import { Context, Next } from "https://deno.land/x/oak@v12.6.1/mod.ts"
-import { jwtService } from "../services/jwtService.ts"
+import { enhancedJwtService } from "../services/enhancedJwtService.ts"
 
 export const authMiddleware = async (ctx: Context, next: Next) => {
   const authHeader = ctx.request.headers.get("Authorization")
@@ -14,12 +14,16 @@ export const authMiddleware = async (ctx: Context, next: Next) => {
   const token = authHeader.substring(7) // Remove "Bearer " prefix
   
   try {
-    // Validate JWT token using the existing JWT service
-    const verification = await jwtService.verifyToken(token)
+    // Get client IP for security logging
+    const forwarded = ctx.request.headers.get('x-forwarded-for')
+    const ipAddress = forwarded ? forwarded.split(',')[0].trim() : (ctx.request.ip || 'unknown')
+
+    // Validate JWT token using the enhanced JWT service
+    const verification = await enhancedJwtService.verifyToken(token, ipAddress)
     
     if (!verification.valid) {
       ctx.response.status = 401
-      ctx.response.body = { message: "Invalid or expired token" }
+      ctx.response.body = { message: verification.error || "Invalid or expired token" }
       return
     }
 
@@ -28,7 +32,8 @@ export const authMiddleware = async (ctx: Context, next: Next) => {
       id: verification.payload.sub,
       email: verification.payload.email,
       role: verification.payload.role,
-      tenant_id: verification.payload.tenant_id
+      tenant_id: verification.payload.tenant_id,
+      session_id: verification.session_id
     }
     ctx.state.token = token
     

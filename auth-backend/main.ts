@@ -7,6 +7,7 @@ import { oauthRoutes } from "./routes/oauth.ts"
 
 import healthCheckRouter from "./routes/healthCheck.ts"
 import { authRoutes } from "./routes/auth.ts"
+import { tokenRoutes } from "./routes/tokenManagement.ts"
 import tenantTestingRouter from "./routes/tenantTesting.ts"
 import migrationRouter from "./routes/migrations.ts"
 
@@ -79,10 +80,12 @@ router.get("/api/me", authMiddleware, (ctx) => {
 // Add routes
 app.use(healthCheckRouter.routes())
 app.use(authRoutes.routes())
+app.use(tokenRoutes.routes())
 app.use(tenantTestingRouter.routes())
 app.use(migrationRouter.routes())
 app.use(healthCheckRouter.allowedMethods())
 app.use(authRoutes.allowedMethods())
+app.use(tokenRoutes.allowedMethods())
 app.use(tenantTestingRouter.allowedMethods())
 app.use(migrationRouter.allowedMethods())
 
