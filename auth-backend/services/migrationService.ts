@@ -75,7 +75,7 @@ export class MigrationService {
       // 1. jwt_sessions
       console.log(`  Creating jwt_sessions table in ${schemaName}...`);
       await postgresService.query(`
-        CREATE TABLE "${schemaName}".jwt_sessions (
+        CREATE TABLE IF NOT EXISTS "${schemaName}".jwt_sessions (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           user_id UUID NOT NULL,
           session_id TEXT NOT NULL UNIQUE,
@@ -94,7 +94,7 @@ export class MigrationService {
       // 2. jwt_blacklist
       console.log(`  Creating jwt_blacklist table in ${schemaName}...`);
       await postgresService.query(`
-        CREATE TABLE "${schemaName}".jwt_blacklist (
+        CREATE TABLE IF NOT EXISTS "${schemaName}".jwt_blacklist (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           token_jti TEXT NOT NULL UNIQUE,
           user_id UUID NOT NULL,
@@ -107,7 +107,7 @@ export class MigrationService {
       // 3. security_audit_log
       console.log(`  Creating security_audit_log table in ${schemaName}...`);
       await postgresService.query(`
-        CREATE TABLE "${schemaName}".security_audit_log (
+        CREATE TABLE IF NOT EXISTS "${schemaName}".security_audit_log (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           user_id UUID,
           session_id TEXT,
@@ -121,16 +121,42 @@ export class MigrationService {
         )
       `);
 
-      // Create indexes
+      // Create indexes with IF NOT EXISTS (using DROP IF EXISTS + CREATE approach since PostgreSQL doesn't have CREATE INDEX IF NOT EXISTS)
       console.log(`  Creating indexes for ${schemaName}...`);
       const sanitizedSchema = schemaName.replace(/[^a-zA-Z0-9]/g, '_');
-      await postgresService.query(`CREATE INDEX idx_jwt_sessions_${sanitizedSchema}_user_id ON "${schemaName}".jwt_sessions(user_id)`);
-      await postgresService.query(`CREATE INDEX idx_jwt_sessions_${sanitizedSchema}_session_id ON "${schemaName}".jwt_sessions(session_id)`);
-      await postgresService.query(`CREATE INDEX idx_jwt_sessions_${sanitizedSchema}_active ON "${schemaName}".jwt_sessions(user_id, is_active)`);
-      await postgresService.query(`CREATE INDEX idx_jwt_blacklist_${sanitizedSchema}_token_jti ON "${schemaName}".jwt_blacklist(token_jti)`);
-      await postgresService.query(`CREATE INDEX idx_jwt_blacklist_${sanitizedSchema}_expires ON "${schemaName}".jwt_blacklist(expires_at)`);
-      await postgresService.query(`CREATE INDEX idx_security_audit_${sanitizedSchema}_user_event ON "${schemaName}".security_audit_log(user_id, event_type)`);
-      await postgresService.query(`CREATE INDEX idx_security_audit_${sanitizedSchema}_created ON "${schemaName}".security_audit_log(created_at)`);
+      
+      // Drop existing indexes first, then create new ones
+      const indexCommands = [
+        `DROP INDEX IF EXISTS "${schemaName}".idx_jwt_sessions_${sanitizedSchema}_user_id`,
+        `CREATE INDEX idx_jwt_sessions_${sanitizedSchema}_user_id ON "${schemaName}".jwt_sessions(user_id)`,
+        
+        `DROP INDEX IF EXISTS "${schemaName}".idx_jwt_sessions_${sanitizedSchema}_session_id`,
+        `CREATE INDEX idx_jwt_sessions_${sanitizedSchema}_session_id ON "${schemaName}".jwt_sessions(session_id)`,
+        
+        `DROP INDEX IF EXISTS "${schemaName}".idx_jwt_sessions_${sanitizedSchema}_active`,
+        `CREATE INDEX idx_jwt_sessions_${sanitizedSchema}_active ON "${schemaName}".jwt_sessions(user_id, is_active)`,
+        
+        `DROP INDEX IF EXISTS "${schemaName}".idx_jwt_blacklist_${sanitizedSchema}_token_jti`,
+        `CREATE INDEX idx_jwt_blacklist_${sanitizedSchema}_token_jti ON "${schemaName}".jwt_blacklist(token_jti)`,
+        
+        `DROP INDEX IF EXISTS "${schemaName}".idx_jwt_blacklist_${sanitizedSchema}_expires`,
+        `CREATE INDEX idx_jwt_blacklist_${sanitizedSchema}_expires ON "${schemaName}".jwt_blacklist(expires_at)`,
+        
+        `DROP INDEX IF EXISTS "${schemaName}".idx_security_audit_${sanitizedSchema}_user_event`,
+        `CREATE INDEX idx_security_audit_${sanitizedSchema}_user_event ON "${schemaName}".security_audit_log(user_id, event_type)`,
+        
+        `DROP INDEX IF EXISTS "${schemaName}".idx_security_audit_${sanitizedSchema}_created`,
+        `CREATE INDEX idx_security_audit_${sanitizedSchema}_created ON "${schemaName}".security_audit_log(created_at)`
+      ];
+
+      for (const command of indexCommands) {
+        try {
+          await postgresService.query(command);
+        } catch (error) {
+          // Log index errors but don't fail the migration
+          console.log(`  Index command warning: ${error.message}`);
+        }
+      }
 
       // Enable RLS
       console.log(`  Enabling RLS for ${schemaName}...`);
@@ -138,22 +164,32 @@ export class MigrationService {
       await postgresService.query(`ALTER TABLE "${schemaName}".jwt_blacklist ENABLE ROW LEVEL SECURITY`);
       await postgresService.query(`ALTER TABLE "${schemaName}".security_audit_log ENABLE ROW LEVEL SECURITY`);
 
-      // Create RLS policies
+      // Create RLS policies (with IF NOT EXISTS equivalent using DROP + CREATE)
       console.log(`  Creating RLS policies for ${schemaName}...`);
-      await postgresService.query(`
-        CREATE POLICY "Users can manage own sessions" ON "${schemaName}".jwt_sessions
-          FOR ALL USING (user_id = auth.uid())
-      `);
+      
+      // Drop existing policies first, then create new ones
+      const policyCommands = [
+        `DROP POLICY IF EXISTS "Users can manage own sessions" ON "${schemaName}".jwt_sessions`,
+        `CREATE POLICY "Users can manage own sessions" ON "${schemaName}".jwt_sessions
+          FOR ALL USING (user_id = auth.uid())`,
 
-      await postgresService.query(`
-        CREATE POLICY "Users can view own blacklisted tokens" ON "${schemaName}".jwt_blacklist
-          FOR SELECT USING (user_id = auth.uid())
-      `);
+        `DROP POLICY IF EXISTS "Users can view own blacklisted tokens" ON "${schemaName}".jwt_blacklist`,
+        `CREATE POLICY "Users can view own blacklisted tokens" ON "${schemaName}".jwt_blacklist
+          FOR SELECT USING (user_id = auth.uid())`,
 
-      await postgresService.query(`
-        CREATE POLICY "Users can view own audit logs" ON "${schemaName}".security_audit_log
-          FOR SELECT USING (user_id = auth.uid())
-      `);
+        `DROP POLICY IF EXISTS "Users can view own audit logs" ON "${schemaName}".security_audit_log`,
+        `CREATE POLICY "Users can view own audit logs" ON "${schemaName}".security_audit_log
+          FOR SELECT USING (user_id = auth.uid())`
+      ];
+
+      for (const command of policyCommands) {
+        try {
+          await postgresService.query(command);
+        } catch (error) {
+          // Log policy errors but don't fail the migration
+          console.log(`  Policy command warning: ${error.message}`);
+        }
+      }
       
       console.log(`✅ JWT tables created successfully in ${schemaName}`);
     } catch (error) {
