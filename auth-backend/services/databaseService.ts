@@ -1,42 +1,146 @@
-
-import { postgresService } from './postgresService.ts';
-import { configService } from './configService.ts';
+import { PostgresService } from "./postgresService.ts"
+import { config } from "../config/env.ts"
+import { Profile } from "../types.ts"
+import * as bcrypt from "https://deno.land/x/bcrypt@0.4.1/mod.ts"
 
 export class DatabaseService {
-  constructor() {
-    // Ensure config service is initialized
-    configService.initialize();
+  private postgresService: PostgresService
+
+  constructor(postgresService: PostgresService) {
+    this.postgresService = postgresService
   }
 
-  async getUserProfile(userId: string) {
-    return await postgresService.getUserProfile(userId);
+  async verifyUserPassword(email: string, passwordPlain: string): Promise<Profile> {
+    const client = await this.postgresService.getClient()
+
+    try {
+      const result = await client.queryObject<Profile>(
+        "SELECT id, email, password_hash, full_name, role, tenant_id FROM profiles WHERE email = $1 LIMIT 1",
+        [email]
+      )
+
+      if (result.rows.length === 0) {
+        throw new Error("Profile not found")
+      }
+
+      const profile = result.rows[0]
+
+      if (!profile.password_hash) {
+        throw new Error("Password hash not found for user")
+      }
+
+      const passwordValid = await bcrypt.compare(passwordPlain, profile.password_hash)
+
+      if (!passwordValid) {
+        throw new Error("Invalid login credentials")
+      }
+
+      return profile
+    } catch (error) {
+      console.error("Error verifying password:", error)
+      throw new Error("Invalid login credentials")
+    } finally {
+      this.postgresService.releaseClient(client)
+    }
   }
 
-  async getUserProfileByEmail(email: string) {
-    return await postgresService.getUserProfileByEmail(email);
+  async getUserProfile(userId: string): Promise<Profile> {
+    const client = await this.postgresService.getClient()
+
+    try {
+      const result = await client.queryObject<Profile>(
+        "SELECT id, email, full_name, role, tenant_id FROM profiles WHERE id = $1 LIMIT 1",
+        [userId]
+      )
+
+      if (result.rows.length === 0) {
+        throw new Error("Profile not found")
+      }
+
+      return result.rows[0]
+    } catch (error) {
+      console.error("Error fetching user profile:", error)
+      throw new Error("Failed to fetch user profile")
+    } finally {
+      this.postgresService.releaseClient(client)
+    }
   }
 
-  async getOrCreateUserProfile(email: string, fullName: string, authMethod: string = 'oauth') {
-    return await postgresService.getOrCreateUserProfile(email, fullName, authMethod);
+  async getUserByEmail(email: string): Promise<Profile> {
+    const client = await this.postgresService.getClient()
+
+    try {
+      const result = await client.queryObject<Profile>(
+        "SELECT id, email, full_name, role, tenant_id FROM profiles WHERE email = $1 LIMIT 1",
+        [email]
+      )
+
+      if (result.rows.length === 0) {
+        throw new Error("Profile not found")
+      }
+
+      return result.rows[0]
+    } catch (error) {
+      console.error("Error fetching user profile:", error)
+      throw new Error("Failed to fetch user profile")
+    } finally {
+      this.postgresService.releaseClient(client)
+    }
   }
 
-  async verifyUserPassword(email: string, password: string) {
-    return await postgresService.verifyUserPassword(email, password);
+  async createUser(email: string, passwordPlain: string, fullName: string, role: string, tenantId?: string): Promise<Profile> {
+    const client = await this.postgresService.getClient()
+
+    try {
+      // Hash the password
+      const saltRounds = 12
+      const hashedPassword = await bcrypt.hash(passwordPlain, saltRounds)
+
+      // Insert the new user
+      const result = await client.queryObject<Profile>(
+        `INSERT INTO profiles (email, password_hash, full_name, role, tenant_id, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+         RETURNING id, email, full_name, role, tenant_id`,
+        [email, hashedPassword, fullName, role, tenantId]
+      )
+
+      if (result.rows.length === 0) {
+        throw new Error("Failed to insert user")
+      }
+
+      console.log('New user created:', email)
+      return result.rows[0]
+    } catch (error) {
+      console.error("Error creating user:", error)
+      throw new Error("Failed to create user")
+    } finally {
+      this.postgresService.releaseClient(client)
+    }
   }
 
-  async createUserWithPasswordInSchema(schema: string, userId: string, email: string, fullName: string, hashedPassword: string, roleName: string) {
-    return await postgresService.createUserWithPasswordInSchema(schema, userId, email, fullName, hashedPassword, roleName);
-  }
-
-  // Get current schema info for debugging
-  getCurrentSchemaInfo() {
-    return configService.getSchemaInfo();
-  }
-
-  // Set tenant schema (if needed from this service)
-  setTenantSchema(schema: string) {
-    configService.setCurrentSchema(schema);
+  async updateUserPassword(email: string, newPassword: string): Promise<void> {
+    const client = await this.postgresService.getClient()
+    
+    try {
+      // Hash the new password
+      const saltRounds = 12
+      const hashedPassword = await bcrypt.hash(newPassword, saltRounds)
+      
+      // Update the password
+      const result = await client.queryObject(
+        'UPDATE profiles SET password_hash = $1, updated_at = NOW() WHERE email = $2',
+        [hashedPassword, email]
+      )
+      
+      if (result.rowCount === 0) {
+        throw new Error('User not found')
+      }
+      
+      console.log('Password updated successfully for user:', email)
+    } finally {
+      this.postgresService.releaseClient(client)
+    }
   }
 }
 
-export const databaseService = new DatabaseService();
+export const databaseService = new DatabaseService(new PostgresService())

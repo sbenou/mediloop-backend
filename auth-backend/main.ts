@@ -1,33 +1,15 @@
-
-import { Application, Router } from "https://deno.land/x/oak@v12.6.1/mod.ts"
-import { oakCors } from "https://deno.land/x/cors@v1.2.2/mod.ts"
-import { loadConfig } from "./config/env.ts"
+import { Application, Router, Context } from "https://deno.land/x/oak@v12.6.1/mod.ts"
+import { authRoutes } from './routes/auth.ts'
+import { tokenManagementRoutes } from './routes/tokenManagement.ts'
+import { config } from "./config/env.ts"
 import { authMiddleware } from "./middleware/authMiddleware.ts"
-import { oauthRoutes } from "./routes/oauth.ts"
-
-import healthCheckRouter from "./routes/healthCheck.ts"
-import { authRoutes } from "./routes/auth.ts"
-import { tokenRoutes } from "./routes/tokenManagement.ts"
-import tenantTestingRouter from "./routes/tenantTesting.ts"
-import migrationRouter from "./routes/migrations.ts"
-
-console.log('🚀 Starting Deno server with HashiCorp Vault integration...');
-
-// Load configuration (including secrets from Vault)
-const config = await loadConfig();
+import { tokenBlacklistMiddleware } from "./middleware/tokenBlacklistMiddleware.ts"
+import { cors } from "https://deno.land/x/oak_cors@1.0.0/mod.ts"
+import emailTemplateRoutes from "./routes/emailTemplates.ts"
+import loginEmailRoutes from "./routes/loginEmails.ts"
+import { passwordResetRoutes } from './routes/passwordReset.ts'
 
 const app = new Application()
-const router = new Router()
-
-const PORT = config.PORT;
-console.log(`Server will start on port: ${PORT} (${config.ENVIRONMENT} mode)`);
-
-// Enable CORS for all routes
-app.use(oakCors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}))
 
 // Logger
 app.use(async (ctx, next) => {
@@ -44,64 +26,57 @@ app.use(async (ctx, next) => {
   ctx.response.headers.set("X-Response-Time", `${ms}ms`)
 })
 
-// Error handler
-app.use(async (ctx, next) => {
+// Enable CORS for All Origins
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}))
+
+// Error handling
+app.use(async (ctx: Context, next: () => Promise<void>) => {
   try {
     await next()
   } catch (err) {
+    console.error('Global error handler:', err)
     ctx.response.status = err.status || 500
-    ctx.response.body = { message: err.message }
-    ctx.response.type = "json"
-    console.error("Error:", err)
+    ctx.response.body = { error: err.message || 'Internal Server Error' }
+    ctx.response.type = 'json'
   }
 })
 
-// Test route
-router.get("/", (ctx) => {
-  ctx.response.body = "Hello world! Vault integration active."
-})
+// Middleware to check for blacklisted tokens
+app.use(tokenBlacklistMiddleware)
 
-// Protected route (example)
-router.get("/protected", authMiddleware, (ctx) => {
-  ctx.response.body = {
-    message: "Protected route accessed!",
-    user: ctx.state.user
-  }
-})
+// Authentication middleware (apply to specific routes)
+app.use(authMiddleware)
 
-// Protected user profile route
-router.get("/api/me", authMiddleware, (ctx) => {
-  ctx.response.body = {
-    user: ctx.state.user,
-    timestamp: new Date().toISOString()
-  }
-})
-
-// Add routes
-app.use(healthCheckRouter.routes())
+// Routes
 app.use(authRoutes.routes())
-app.use(tokenRoutes.routes())
-app.use(tenantTestingRouter.routes())
-app.use(migrationRouter.routes())
-app.use(healthCheckRouter.allowedMethods())
 app.use(authRoutes.allowedMethods())
-app.use(tokenRoutes.allowedMethods())
-app.use(tenantTestingRouter.allowedMethods())
-app.use(migrationRouter.allowedMethods())
 
-// OAuth routes
-app.use(oauthRoutes.routes())
-app.use(oauthRoutes.allowedMethods())
+app.use(tokenManagementRoutes.routes())
+app.use(tokenManagementRoutes.allowedMethods())
+
+app.use(passwordResetRoutes.routes())
+app.use(passwordResetRoutes.allowedMethods())
+
+app.use(emailTemplateRoutes.routes())
+app.use(emailTemplateRoutes.allowedMethods())
+
+app.use(loginEmailRoutes.routes())
+app.use(loginEmailRoutes.allowedMethods())
+
+// Health check route
+const router = new Router()
+router.get('/health', (ctx) => {
+  ctx.response.body = { status: 'ok', version: '3.0' }
+})
 
 app.use(router.routes())
 app.use(router.allowedMethods())
 
-console.log(`🔐 Vault integration ready`)
-console.log(`🚀 Server running on http://localhost:${PORT}`)
-
-try {
-  await app.listen({ port: PORT })
-} catch (error) {
-  console.error('❌ Failed to start server:', error);
-  Deno.exit(1);
-}
+// Start server
+const port = parseInt(config.PORT || Deno.env.get('PORT') || '8000')
+console.log(`Server running on port ${port}`)
+await app.listen({ port })
