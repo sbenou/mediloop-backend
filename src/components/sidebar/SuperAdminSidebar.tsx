@@ -187,6 +187,18 @@ export function SuperAdminSidebar() {
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
+                
+                <SidebarMenuItem>
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={location.pathname === "/superadmin/tenants"}
+                  >
+                    <Link to="/superadmin/tenants">
+                      <Building2 className="h-4 w-4" />
+                      <span>Tenant Management</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

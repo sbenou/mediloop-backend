@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 
 export interface Tenant {
@@ -9,10 +8,27 @@ export interface Tenant {
   isActive: boolean;
   status: 'active' | 'inactive' | 'pending';
   createdAt: string;
+  customDomain?: string;
+  domainVerified?: boolean;
+}
+
+export interface DomainVerification {
+  id: string;
+  tenantId: string;
+  domain: string;
+  verificationToken: string;
+  verificationMethod: string;
+  status: 'pending' | 'verified' | 'failed' | 'expired';
+  attempts: number;
+  lastAttemptAt?: string;
+  verifiedAt?: string;
+  expiresAt: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /**
- * Get tenant domain from hostname or user ID
+ * Get tenant domain from hostname or user ID with custom domain support
  */
 export const getTenantFromHostname = (hostname: string): string | null => {
   // For preview environments in Lovable
@@ -37,6 +53,9 @@ export const getTenantFromHostname = (hostname: string): string | null => {
     return tenantParam;
   }
   
+  // Check for custom domains first (exact match)
+  // This will be resolved by fetchTenantByCustomDomain
+  
   // Production subdomain pattern: tenant.mediloop.com
   const parts = hostname.split('.');
   
@@ -45,16 +64,67 @@ export const getTenantFromHostname = (hostname: string): string | null => {
     return parts[0];
   }
   
-  return null;
+  // If no subdomain pattern, might be a custom domain
+  // Return the full hostname for custom domain lookup
+  return hostname;
 };
 
 /**
- * Fetch tenant info from database by domain
+ * Fetch tenant info by custom domain
+ */
+export const fetchTenantByCustomDomain = async (customDomain: string): Promise<Tenant | null> => {
+  try {
+    console.log('Fetching tenant by custom domain:', customDomain);
+    
+    const { data, error } = await supabase
+      .from('tenants')
+      .select('*')
+      .eq('custom_domain', customDomain)
+      .eq('is_active', true)
+      .eq('domain_verified', true)
+      .single();
+    
+    if (error) {
+      console.error('Error fetching tenant by custom domain:', error);
+      return null;
+    }
+    
+    if (!data) {
+      console.warn('No tenant found with custom domain:', customDomain);
+      return null;
+    }
+    
+    return {
+      id: data.id,
+      name: data.name,
+      domain: data.domain,
+      schema: data.schema,
+      isActive: data.is_active,
+      status: data.status,
+      createdAt: data.created_at,
+      customDomain: data.custom_domain,
+      domainVerified: data.domain_verified
+    };
+  } catch (error) {
+    console.error('Exception when fetching tenant by custom domain:', error);
+    return null;
+  }
+};
+
+/**
+ * Fetch tenant info from database by domain (subdomain or custom domain)
  */
 export const fetchTenantInfo = async (tenantDomain: string): Promise<Tenant | null> => {
   try {
     console.log('Fetching tenant info for domain:', tenantDomain);
     
+    // First, try to find by custom domain
+    const customDomainTenant = await fetchTenantByCustomDomain(tenantDomain);
+    if (customDomainTenant) {
+      return customDomainTenant;
+    }
+    
+    // Then try to find by subdomain
     const { data, error } = await supabase
       .from('tenants')
       .select('*')
@@ -79,7 +149,9 @@ export const fetchTenantInfo = async (tenantDomain: string): Promise<Tenant | nu
       schema: data.schema,
       isActive: data.is_active,
       status: data.status,
-      createdAt: data.created_at
+      createdAt: data.created_at,
+      customDomain: data.custom_domain,
+      domainVerified: data.domain_verified
     };
   } catch (error) {
     console.error('Exception when fetching tenant:', error);
@@ -239,5 +311,107 @@ export const getCurrentTenantId = async (): Promise<string | null> => {
   } catch (error) {
     console.error('Error getting current tenant ID:', error);
     return null;
+  }
+};
+
+/**
+ * Domain verification functions
+ */
+export const initiateDomainVerification = async (tenantId: string, domain: string) => {
+  try {
+    console.log('Initiating domain verification for:', { tenantId, domain });
+    
+    const { data, error } = await supabase.rpc('initiate_domain_verification', {
+      p_tenant_id: tenantId,
+      p_domain: domain
+    });
+    
+    if (error) {
+      console.error('Error initiating domain verification:', error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Exception when initiating domain verification:', error);
+    return null;
+  }
+};
+
+export const verifyDomainOwnership = async (verificationId: string) => {
+  try {
+    console.log('Verifying domain ownership for:', verificationId);
+    
+    const { data, error } = await supabase.rpc('verify_domain_ownership', {
+      p_verification_id: verificationId
+    });
+    
+    if (error) {
+      console.error('Error verifying domain ownership:', error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Exception when verifying domain ownership:', error);
+    return null;
+  }
+};
+
+export const removeCustomDomain = async (tenantId: string) => {
+  try {
+    console.log('Removing custom domain for tenant:', tenantId);
+    
+    const { data, error } = await supabase.rpc('remove_custom_domain', {
+      p_tenant_id: tenantId
+    });
+    
+    if (error) {
+      console.error('Error removing custom domain:', error);
+      return false;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Exception when removing custom domain:', error);
+    return false;
+  }
+};
+
+export const fetchDomainVerifications = async (tenantId?: string): Promise<DomainVerification[]> => {
+  try {
+    let query = supabase
+      .from('domain_verifications')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
+    
+    const { data, error } = await query;
+    
+    if (error) {
+      console.error('Error fetching domain verifications:', error);
+      return [];
+    }
+    
+    return data.map(item => ({
+      id: item.id,
+      tenantId: item.tenant_id,
+      domain: item.domain,
+      verificationToken: item.verification_token,
+      verificationMethod: item.verification_method,
+      status: item.status,
+      attempts: item.attempts,
+      lastAttemptAt: item.last_attempt_at,
+      verifiedAt: item.verified_at,
+      expiresAt: item.expires_at,
+      createdAt: item.created_at,
+      updatedAt: item.updated_at
+    }));
+  } catch (error) {
+    console.error('Exception when fetching domain verifications:', error);
+    return [];
   }
 };

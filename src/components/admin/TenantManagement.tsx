@@ -24,8 +24,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
 import { Tenant } from '@/utils/tenancy';
+import { ChevronDown, ExternalLink, Settings } from 'lucide-react';
+import CustomDomainManager from './CustomDomainManager';
 
 interface TenantFormData {
   name: string;
@@ -38,6 +45,7 @@ export function TenantManagement() {
   const [formData, setFormData] = useState<TenantFormData>({ name: '', domain: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [open, setOpen] = useState(false);
+  const [expandedTenant, setExpandedTenant] = useState<string | null>(null);
   const { hasPermission, userRole } = useAuth();
   const { toast } = useToast();
 
@@ -59,7 +67,9 @@ export function TenantManagement() {
           schema: tenant.schema,
           isActive: tenant.is_active,
           status: tenant.status,
-          createdAt: tenant.created_at
+          createdAt: tenant.created_at,
+          customDomain: tenant.custom_domain,
+          domainVerified: tenant.domain_verified
         }))
       );
     } catch (error) {
@@ -139,6 +149,10 @@ export function TenantManagement() {
         variant: 'destructive',
       });
     }
+  };
+
+  const handleDomainUpdated = () => {
+    fetchTenants();
   };
 
   // Only superadmins can manage tenants
@@ -228,6 +242,7 @@ export function TenantManagement() {
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Domain</TableHead>
+              <TableHead>Custom Domain</TableHead>
               <TableHead>Schema</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Created</TableHead>
@@ -237,51 +252,105 @@ export function TenantManagement() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center">
+                <TableCell colSpan={7} className="text-center">
                   Loading tenants...
                 </TableCell>
               </TableRow>
             ) : tenants.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center">
+                <TableCell colSpan={7} className="text-center">
                   No tenants found. Create your first tenant to get started.
                 </TableCell>
               </TableRow>
             ) : (
               tenants.map((tenant) => (
-                <TableRow key={tenant.id}>
-                  <TableCell>{tenant.name}</TableCell>
-                  <TableCell>
-                    <a
-                      href={`http://${tenant.domain}.mediloop.com`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-500 hover:underline"
-                    >
-                      {tenant.domain}.mediloop.com
-                    </a>
-                  </TableCell>
-                  <TableCell>{tenant.schema}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={tenant.isActive ? 'default' : 'secondary'}
-                    >
-                      {tenant.isActive ? 'Active' : 'Inactive'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {new Date(tenant.createdAt).toLocaleString()}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant={tenant.isActive ? 'outline' : 'default'}
-                      size="sm"
-                      onClick={() => handleToggleStatus(tenant)}
-                    >
-                      {tenant.isActive ? 'Deactivate' : 'Activate'}
-                    </Button>
-                  </TableCell>
-                </TableRow>
+                <>
+                  <TableRow key={tenant.id}>
+                    <TableCell>{tenant.name}</TableCell>
+                    <TableCell>
+                      <a
+                        href={`http://${tenant.domain}.mediloop.com`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:underline flex items-center gap-1"
+                      >
+                        {tenant.domain}.mediloop.com
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </TableCell>
+                    <TableCell>
+                      {tenant.customDomain ? (
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={`https://${tenant.customDomain}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:underline flex items-center gap-1"
+                          >
+                            {tenant.customDomain}
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                          <Badge variant={tenant.domainVerified ? 'default' : 'secondary'}>
+                            {tenant.domainVerified ? 'Verified' : 'Pending'}
+                          </Badge>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">None</span>
+                      )}
+                    </TableCell>
+                    <TableCell>{tenant.schema}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={tenant.isActive ? 'default' : 'secondary'}
+                      >
+                        {tenant.isActive ? 'Active' : 'Inactive'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {new Date(tenant.createdAt).toLocaleString()}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant={tenant.isActive ? 'outline' : 'default'}
+                          size="sm"
+                          onClick={() => handleToggleStatus(tenant)}
+                        >
+                          {tenant.isActive ? 'Deactivate' : 'Activate'}
+                        </Button>
+                        <Collapsible
+                          open={expandedTenant === tenant.id}
+                          onOpenChange={(open) => setExpandedTenant(open ? tenant.id : null)}
+                        >
+                          <CollapsibleTrigger asChild>
+                            <Button variant="outline" size="sm">
+                              <Settings className="h-4 w-4 mr-1" />
+                              Manage
+                              <ChevronDown className="h-4 w-4 ml-1" />
+                            </Button>
+                          </CollapsibleTrigger>
+                        </Collapsible>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                  <Collapsible
+                    open={expandedTenant === tenant.id}
+                    onOpenChange={(open) => setExpandedTenant(open ? tenant.id : null)}
+                  >
+                    <CollapsibleContent asChild>
+                      <TableRow>
+                        <TableCell colSpan={7} className="p-0">
+                          <div className="p-4 bg-muted/50">
+                            <CustomDomainManager 
+                              tenant={tenant} 
+                              onDomainUpdated={handleDomainUpdated}
+                            />
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </>
               ))
             )}
           </TableBody>

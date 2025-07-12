@@ -29,6 +29,9 @@ import BecomePartner from './pages/BecomePartner';
 // import MagicLink from './pages/MagicLink';
 import DatabaseTest from "@/pages/DatabaseTest";
 import DenoBackendManagement from "@/pages/DenoBackendManagement";
+import AdminSettings from "@/pages/AdminSettings";
+import SuperAdminDashboard from "@/pages/superadmin/SuperAdminDashboard";
+import TenantManagement from "@/pages/superadmin/TenantManagement";
 
 const AppRoutes = () => {
   return (
@@ -65,6 +68,13 @@ const AppRoutes = () => {
       
       {/* Deno Backend Management */}
       <Route path="/deno-backend" element={<DenoBackendManagement />} />
+      
+      {/* Admin Routes */}
+      <Route path="/admin-settings" element={<AdminSettings />} />
+      
+      {/* Super Admin Routes */}
+      <Route path="/superadmin/dashboard" element={<SuperAdminDashboard />} />
+      <Route path="/superadmin/tenants" element={<TenantManagement />} />
     </Routes>
   );
 };
