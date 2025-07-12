@@ -29,14 +29,10 @@ class DatabaseClient {
   }
 }
 
-export const sql = new DatabaseClient();
+export const db = new DatabaseClient();
 
-// For now, we'll create a mock implementation to prevent errors
-// This should be replaced with proper API calls
-export const mockSql = (strings: TemplateStringsArray, ...values: any[]) => {
+// Template literal function for SQL queries (mock implementation)
+export const sql = (strings: TemplateStringsArray, ...values: any[]) => {
   console.warn('Mock SQL query - implement proper API endpoints:', strings.join('?'), values);
   return Promise.resolve([]);
 };
-
-// Temporarily export mockSql as sql until API endpoints are ready
-export { mockSql as sql };
