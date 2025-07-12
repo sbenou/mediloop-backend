@@ -41,6 +41,12 @@ interface CustomDomainManagerProps {
   onDomainUpdated: () => void;
 }
 
+interface DomainVerificationResult {
+  success: boolean;
+  domain?: string;
+  message?: string;
+}
+
 export function CustomDomainManager({ tenant, onDomainUpdated }: CustomDomainManagerProps) {
   const [customDomain, setCustomDomain] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -101,7 +107,7 @@ export function CustomDomainManager({ tenant, onDomainUpdated }: CustomDomainMan
     try {
       setIsVerifying(true);
       
-      const result = await verifyDomainOwnership(verificationId);
+      const result = await verifyDomainOwnership(verificationId) as DomainVerificationResult;
       
       if (result?.success) {
         toast({

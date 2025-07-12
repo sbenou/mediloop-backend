@@ -39,6 +39,19 @@ interface TenantFormData {
   domain: string;
 }
 
+// Type for raw tenant data from Supabase
+interface RawTenantData {
+  id: string;
+  name: string;
+  domain: string;
+  schema: string;
+  is_active: boolean;
+  status: 'active' | 'inactive' | 'pending';
+  created_at: string;
+  custom_domain?: string;
+  domain_verified?: boolean;
+}
+
 export function TenantManagement() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,7 +73,7 @@ export function TenantManagement() {
       if (error) throw error;
 
       setTenants(
-        data.map((tenant) => ({
+        data.map((tenant: RawTenantData) => ({
           id: tenant.id,
           name: tenant.name,
           domain: tenant.domain,
@@ -68,8 +81,8 @@ export function TenantManagement() {
           isActive: tenant.is_active,
           status: tenant.status,
           createdAt: tenant.created_at,
-          customDomain: tenant.custom_domain,
-          domainVerified: tenant.domain_verified
+          customDomain: tenant.custom_domain || null,
+          domainVerified: tenant.domain_verified || false
         }))
       );
     } catch (error) {
