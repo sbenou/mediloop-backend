@@ -3,7 +3,7 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Tenant, getTenantFromHostname, fetchTenantInfo, fetchUserTenant } from '@/utils/tenancy';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from '@/components/ui/use-toast';
-import { supabase } from '@/lib/supabase';
+import { sql } from '@/lib/database';
 
 interface TenantContextType {
   currentTenant: Tenant | null;
@@ -54,7 +54,7 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
           console.log('Setting current tenant from domain:', tenant);
           setCurrentTenant(tenant);
           
-          // If user is authenticated, set tenant in JWT claims
+          // If user is authenticated, set tenant in profile
           if (isAuthenticated && user?.id) {
             await setTenantInSession(tenant.id, tenant.schema);
           }
@@ -83,7 +83,6 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
       
     } catch (err) {
       console.error('Error initializing tenant:', err);
-      // Don't set error state, just log the error and continue
       console.warn('Continuing without tenant context');
     } finally {
       setIsLoading(false);
@@ -95,15 +94,15 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
     initTenant();
   }, [isAuthenticated, user?.id]);
   
-  // Helper function to set both tenant id and schema in JWT claims
+  // Helper function to set tenant in user profile
   const setTenantInSession = async (tenantId: string, tenantSchema: string): Promise<boolean> => {
     try {
-      // For now, just update the profile with tenant_id since set_claim doesn't exist
       if (user?.id) {
-        await supabase
-          .from('profiles')
-          .update({ tenant_id: tenantId })
-          .eq('id', user.id);
+        await sql`
+          UPDATE profiles 
+          SET tenant_id = ${tenantId}::uuid 
+          WHERE id = ${user.id}::uuid
+        `;
       }
       
       return true;
@@ -128,7 +127,7 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
       // Set new tenant
       setCurrentTenant(tenant);
       
-      // If user is authenticated, update JWT claims
+      // If user is authenticated, update profile
       if (isAuthenticated && user?.id) {
         await setTenantInSession(tenant.id, tenant.schema);
       }

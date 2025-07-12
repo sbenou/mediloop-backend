@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { supabase } from '@/lib/supabase';
+import { sql } from '@/lib/database';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -39,7 +38,7 @@ interface TenantFormData {
   domain: string;
 }
 
-// Type for raw tenant data from Supabase
+// Type for raw tenant data from database
 interface RawTenantData {
   id: string;
   name: string;
@@ -65,12 +64,10 @@ export function TenantManagement() {
   const fetchTenants = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('tenants')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
+      const data = await sql`
+        SELECT * FROM tenants 
+        ORDER BY created_at DESC
+      `;
 
       setTenants(
         data.map((tenant: RawTenantData) => ({
@@ -106,13 +103,17 @@ export function TenantManagement() {
     try {
       setIsSubmitting(true);
       
-      // Call the server function to create the tenant schema
-      const { data, error } = await supabase.rpc('create_tenant_schema', {
-        tenant_name: formData.name,
-        tenant_domain: formData.domain
-      });
+      // Call the stored function to create the tenant schema
+      const result = await sql`
+        SELECT create_tenant_schema(
+          ${formData.name},
+          ${formData.domain}
+        ) as tenant_id
+      `;
 
-      if (error) throw error;
+      if (!result || result.length === 0) {
+        throw new Error('Failed to create tenant');
+      }
 
       toast({
         title: 'Success',
@@ -137,12 +138,11 @@ export function TenantManagement() {
   const handleToggleStatus = async (tenant: Tenant) => {
     try {
       const newStatus = !tenant.isActive;
-      const { error } = await supabase
-        .from('tenants')
-        .update({ is_active: newStatus })
-        .eq('id', tenant.id);
-
-      if (error) throw error;
+      await sql`
+        UPDATE tenants 
+        SET is_active = ${newStatus}
+        WHERE id = ${tenant.id}::uuid
+      `;
 
       setTenants(
         tenants.map((t) =>

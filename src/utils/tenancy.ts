@@ -1,5 +1,4 @@
-
-import { supabase } from '@/lib/supabase';
+import { sql } from '@/lib/database';
 
 export interface Tenant {
   id: string;
@@ -77,24 +76,20 @@ export const fetchTenantByCustomDomain = async (customDomain: string): Promise<T
   try {
     console.log('Fetching tenant by custom domain:', customDomain);
     
-    const { data, error } = await supabase
-      .from('tenants')
-      .select('*')
-      .eq('custom_domain', customDomain)
-      .eq('is_active', true)
-      .eq('domain_verified', true)
-      .single();
+    const result = await sql`
+      SELECT * FROM tenants 
+      WHERE custom_domain = ${customDomain} 
+      AND is_active = true 
+      AND domain_verified = true
+      LIMIT 1
+    `;
     
-    if (error) {
-      console.error('Error fetching tenant by custom domain:', error);
-      return null;
-    }
-    
-    if (!data) {
+    if (!result || result.length === 0) {
       console.warn('No tenant found with custom domain:', customDomain);
       return null;
     }
     
+    const data = result[0];
     return {
       id: data.id,
       name: data.name,
@@ -103,8 +98,8 @@ export const fetchTenantByCustomDomain = async (customDomain: string): Promise<T
       isActive: data.is_active,
       status: data.status,
       createdAt: data.created_at,
-      customDomain: (data as any).custom_domain || null,
-      domainVerified: (data as any).domain_verified || false
+      customDomain: data.custom_domain || null,
+      domainVerified: data.domain_verified || false
     };
   } catch (error) {
     console.error('Exception when fetching tenant by custom domain:', error);
@@ -126,23 +121,19 @@ export const fetchTenantInfo = async (tenantDomain: string): Promise<Tenant | nu
     }
     
     // Then try to find by subdomain
-    const { data, error } = await supabase
-      .from('tenants')
-      .select('*')
-      .eq('domain', tenantDomain)
-      .eq('is_active', true)
-      .single();
+    const result = await sql`
+      SELECT * FROM tenants 
+      WHERE domain = ${tenantDomain} 
+      AND is_active = true
+      LIMIT 1
+    `;
     
-    if (error) {
-      console.error('Error fetching tenant info:', error);
-      return null;
-    }
-    
-    if (!data) {
+    if (!result || result.length === 0) {
       console.warn('No tenant found with domain:', tenantDomain);
       return null;
     }
     
+    const data = result[0];
     return {
       id: data.id,
       name: data.name,
@@ -151,8 +142,8 @@ export const fetchTenantInfo = async (tenantDomain: string): Promise<Tenant | nu
       isActive: data.is_active,
       status: data.status,
       createdAt: data.created_at,
-      customDomain: (data as any).custom_domain || null,
-      domainVerified: (data as any).domain_verified || false
+      customDomain: data.custom_domain || null,
+      domainVerified: data.domain_verified || false
     };
   } catch (error) {
     console.error('Exception when fetching tenant:', error);
@@ -167,23 +158,19 @@ export const fetchUserTenant = async (userId: string): Promise<Tenant | null> =>
   try {
     console.log('Fetching tenant info for user:', userId);
     
-    const { data, error } = await supabase
-      .from('tenants')
-      .select('*')
-      .eq('domain', userId)
-      .eq('is_active', true)
-      .single();
+    const result = await sql`
+      SELECT * FROM tenants 
+      WHERE domain = ${userId} 
+      AND is_active = true
+      LIMIT 1
+    `;
     
-    if (error) {
-      console.error('Error fetching user tenant info:', error);
-      return null;
-    }
-    
-    if (!data) {
+    if (!result || result.length === 0) {
       console.warn('No tenant found for user:', userId);
       return null;
     }
     
+    const data = result[0];
     return {
       id: data.id,
       name: data.name,
@@ -212,21 +199,23 @@ export const createUserTenant = async (
   try {
     console.log('Creating tenant for user:', { userId, userRole, userName, workplaceName, pharmacyName });
     
-    const { data, error } = await supabase.rpc('create_user_tenant', {
-      p_user_id: userId,
-      p_user_role: userRole,
-      p_user_name: userName,
-      p_workplace_name: workplaceName || null,
-      p_pharmacy_name: pharmacyName || null
-    });
+    const result = await sql`
+      SELECT create_user_tenant(
+        ${userId}::uuid,
+        ${userRole},
+        ${userName},
+        ${workplaceName || null},
+        ${pharmacyName || null}
+      ) as tenant_id
+    `;
     
-    if (error) {
-      console.error('Error creating user tenant:', error);
+    if (!result || result.length === 0) {
+      console.error('Error creating user tenant: No result returned');
       return null;
     }
     
-    console.log('Tenant created successfully:', data);
-    return data;
+    console.log('Tenant created successfully:', result[0].tenant_id);
+    return result[0].tenant_id;
   } catch (error) {
     console.error('Exception when creating user tenant:', error);
     return null;
@@ -244,19 +233,21 @@ export const updateUserTenantName = async (
   try {
     console.log('Updating tenant name for user:', { userId, workplaceName, pharmacyName });
     
-    const { data, error } = await supabase.rpc('update_user_tenant_name', {
-      p_user_id: userId,
-      p_workplace_name: workplaceName || null,
-      p_pharmacy_name: pharmacyName || null
-    });
+    const result = await sql`
+      SELECT update_user_tenant_name(
+        ${userId}::uuid,
+        ${workplaceName || null},
+        ${pharmacyName || null}
+      ) as success
+    `;
     
-    if (error) {
-      console.error('Error updating tenant name:', error);
+    if (!result || result.length === 0) {
+      console.error('Error updating tenant name: No result returned');
       return false;
     }
     
-    console.log('Tenant name updated successfully:', data);
-    return true;
+    console.log('Tenant name updated successfully:', result[0].success);
+    return result[0].success;
   } catch (error) {
     console.error('Exception when updating tenant name:', error);
     return false;
@@ -269,33 +260,22 @@ export const updateUserTenantName = async (
 export const associateUserWithTenant = async (userId: string, tenantId: string, role: string = 'user'): Promise<boolean> => {
   try {
     // Update the user's profile with the tenant ID
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .update({ tenant_id: tenantId })
-      .eq('id', userId);
+    const profileResult = await sql`
+      UPDATE profiles 
+      SET tenant_id = ${tenantId}::uuid 
+      WHERE id = ${userId}::uuid
+    `;
     
-    if (profileError) {
-      console.error('Error updating profile with tenant ID:', profileError);
-      return false;
-    }
-    
-    // Also add the user to tenant_users in the tenant schema (if tenant-specific schema is used)
-    const { data: tenant } = await supabase
-      .from('tenants')
-      .select('schema')
-      .eq('id', tenantId)
-      .single();
-    
-    if (tenant?.schema) {
-      // Add user to tenant_users table in tenant schema
-      await supabase.rpc('add_user_to_tenant', { 
-        p_user_id: userId, 
-        p_tenant_id: tenantId,
-        p_role: role
-      });
-    }
+    // Also add the user to tenant_users using the stored function
+    const tenantResult = await sql`
+      SELECT add_user_to_tenant(
+        ${userId}::uuid, 
+        ${tenantId}::uuid,
+        ${role}
+      ) as success
+    `;
 
-    return true;
+    return tenantResult[0]?.success || false;
   } catch (error) {
     console.error('Exception when associating user with tenant:', error);
     return false;
@@ -303,12 +283,13 @@ export const associateUserWithTenant = async (userId: string, tenantId: string, 
 };
 
 /**
- * Get current tenant ID from Supabase session
+ * Get current tenant ID from user session (this would need to be adapted based on your auth system)
  */
 export const getCurrentTenantId = async (): Promise<string | null> => {
   try {
-    const { data } = await supabase.auth.getSession();
-    return data?.session?.user.app_metadata?.tenant_id || null;
+    // This would need to be adapted to your auth system
+    // For now, return null as this depends on your session management
+    return null;
   } catch (error) {
     console.error('Error getting current tenant ID:', error);
     return null;
