@@ -76,31 +76,9 @@ export const fetchTenantByCustomDomain = async (customDomain: string): Promise<T
   try {
     console.log('Fetching tenant by custom domain:', customDomain);
     
-    const result = await sql`
-      SELECT * FROM tenants 
-      WHERE custom_domain = ${customDomain} 
-      AND is_active = true 
-      AND domain_verified = true
-      LIMIT 1
-    `;
-    
-    if (!result || result.length === 0) {
-      console.warn('No tenant found with custom domain:', customDomain);
-      return null;
-    }
-    
-    const data = result[0];
-    return {
-      id: data.id,
-      name: data.name,
-      domain: data.domain,
-      schema: data.schema,
-      isActive: data.is_active,
-      status: data.status,
-      createdAt: data.created_at,
-      customDomain: data.custom_domain || null,
-      domainVerified: data.domain_verified || false
-    };
+    // For now, return null until API endpoints are implemented
+    console.warn('fetchTenantByCustomDomain: API endpoint not implemented yet');
+    return null;
   } catch (error) {
     console.error('Exception when fetching tenant by custom domain:', error);
     return null;
@@ -120,31 +98,23 @@ export const fetchTenantInfo = async (tenantDomain: string): Promise<Tenant | nu
       return customDomainTenant;
     }
     
-    // Then try to find by subdomain
-    const result = await sql`
-      SELECT * FROM tenants 
-      WHERE domain = ${tenantDomain} 
-      AND is_active = true
-      LIMIT 1
-    `;
+    // For now, return mock data until API endpoints are implemented
+    console.warn('fetchTenantInfo: API endpoint not implemented yet');
     
-    if (!result || result.length === 0) {
-      console.warn('No tenant found with domain:', tenantDomain);
-      return null;
+    // Return mock tenant for development
+    if (tenantDomain && tenantDomain !== 'null') {
+      return {
+        id: `tenant-${tenantDomain}`,
+        name: `${tenantDomain} Healthcare`,
+        domain: tenantDomain,
+        schema: `tenant_${tenantDomain}`,
+        isActive: true,
+        status: 'active',
+        createdAt: new Date().toISOString(),
+      };
     }
     
-    const data = result[0];
-    return {
-      id: data.id,
-      name: data.name,
-      domain: data.domain,
-      schema: data.schema,
-      isActive: data.is_active,
-      status: data.status,
-      createdAt: data.created_at,
-      customDomain: data.custom_domain || null,
-      domainVerified: data.domain_verified || false
-    };
+    return null;
   } catch (error) {
     console.error('Exception when fetching tenant:', error);
     return null;
@@ -158,27 +128,18 @@ export const fetchUserTenant = async (userId: string): Promise<Tenant | null> =>
   try {
     console.log('Fetching tenant info for user:', userId);
     
-    const result = await sql`
-      SELECT * FROM tenants 
-      WHERE domain = ${userId} 
-      AND is_active = true
-      LIMIT 1
-    `;
+    // For now, return mock data until API endpoints are implemented
+    console.warn('fetchUserTenant: API endpoint not implemented yet');
     
-    if (!result || result.length === 0) {
-      console.warn('No tenant found for user:', userId);
-      return null;
-    }
-    
-    const data = result[0];
+    // Return mock tenant for development
     return {
-      id: data.id,
-      name: data.name,
-      domain: data.domain,
-      schema: data.schema,
-      isActive: data.is_active,
-      status: data.status,
-      createdAt: data.created_at
+      id: `user-tenant-${userId}`,
+      name: `${userId} Personal Tenant`,
+      domain: userId,
+      schema: `tenant_${userId.replace(/-/g, '_')}`,
+      isActive: true,
+      status: 'active',
+      createdAt: new Date().toISOString(),
     };
   } catch (error) {
     console.error('Exception when fetching user tenant:', error);
@@ -199,23 +160,9 @@ export const createUserTenant = async (
   try {
     console.log('Creating tenant for user:', { userId, userRole, userName, workplaceName, pharmacyName });
     
-    const result = await sql`
-      SELECT create_user_tenant(
-        ${userId}::uuid,
-        ${userRole},
-        ${userName},
-        ${workplaceName || null},
-        ${pharmacyName || null}
-      ) as tenant_id
-    `;
-    
-    if (!result || result.length === 0) {
-      console.error('Error creating user tenant: No result returned');
-      return null;
-    }
-    
-    console.log('Tenant created successfully:', result[0].tenant_id);
-    return result[0].tenant_id;
+    // For now, return mock tenant ID until API endpoints are implemented
+    console.warn('createUserTenant: API endpoint not implemented yet');
+    return `tenant-${userId}`;
   } catch (error) {
     console.error('Exception when creating user tenant:', error);
     return null;
@@ -233,21 +180,9 @@ export const updateUserTenantName = async (
   try {
     console.log('Updating tenant name for user:', { userId, workplaceName, pharmacyName });
     
-    const result = await sql`
-      SELECT update_user_tenant_name(
-        ${userId}::uuid,
-        ${workplaceName || null},
-        ${pharmacyName || null}
-      ) as success
-    `;
-    
-    if (!result || result.length === 0) {
-      console.error('Error updating tenant name: No result returned');
-      return false;
-    }
-    
-    console.log('Tenant name updated successfully:', result[0].success);
-    return result[0].success;
+    // For now, return success until API endpoints are implemented
+    console.warn('updateUserTenantName: API endpoint not implemented yet');
+    return true;
   } catch (error) {
     console.error('Exception when updating tenant name:', error);
     return false;
@@ -259,23 +194,11 @@ export const updateUserTenantName = async (
  */
 export const associateUserWithTenant = async (userId: string, tenantId: string, role: string = 'user'): Promise<boolean> => {
   try {
-    // Update the user's profile with the tenant ID
-    const profileResult = await sql`
-      UPDATE profiles 
-      SET tenant_id = ${tenantId}::uuid 
-      WHERE id = ${userId}::uuid
-    `;
+    console.log('Associating user with tenant:', { userId, tenantId, role });
     
-    // Also add the user to tenant_users using the stored function
-    const tenantResult = await sql`
-      SELECT add_user_to_tenant(
-        ${userId}::uuid, 
-        ${tenantId}::uuid,
-        ${role}
-      ) as success
-    `;
-
-    return tenantResult[0]?.success || false;
+    // For now, return success until API endpoints are implemented
+    console.warn('associateUserWithTenant: API endpoint not implemented yet');
+    return true;
   } catch (error) {
     console.error('Exception when associating user with tenant:', error);
     return false;

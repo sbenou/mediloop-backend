@@ -3,7 +3,6 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Tenant, getTenantFromHostname, fetchTenantInfo, fetchUserTenant } from '@/utils/tenancy';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from '@/components/ui/use-toast';
-import { sql } from '@/lib/database';
 
 interface TenantContextType {
   currentTenant: Tenant | null;
@@ -98,11 +97,9 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
   const setTenantInSession = async (tenantId: string, tenantSchema: string): Promise<boolean> => {
     try {
       if (user?.id) {
-        await sql`
-          UPDATE profiles 
-          SET tenant_id = ${tenantId}::uuid 
-          WHERE id = ${user.id}::uuid
-        `;
+        // For now, just log until API endpoints are implemented
+        console.log('Setting tenant in session:', { tenantId, tenantSchema, userId: user.id });
+        console.warn('setTenantInSession: API endpoint not implemented yet');
       }
       
       return true;
