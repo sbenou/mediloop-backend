@@ -1,5 +1,5 @@
 
-import { neon } from '@neondb/serverless';
+import { neon } from '@neondatabase/serverless';
 
 // Get the database URL from environment or fallback
 const getDatabaseUrl = () => {
