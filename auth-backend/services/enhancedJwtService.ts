@@ -1,4 +1,3 @@
-
 import * as jose from "https://deno.land/x/jose@v4.15.5/index.ts"
 import { config } from "../config/env.ts"
 import { sessionService } from "./sessionService.ts"
@@ -77,6 +76,23 @@ export class EnhancedJWTService {
     
     // Create session record
     await sessionService.createSession(userId, tokenHash, expiresAt, ipAddress, userAgent)
+
+    // Schedule automatic token rotation
+    try {
+      const { tokenRotationService } = await import('./tokenRotationService.ts')
+      await tokenRotationService.scheduleTokenRotation({
+        userId,
+        tokenHash,
+        sessionId,
+        expiresAt: expiresAt.toISOString(),
+        rotationScheduledAt: new Date().toISOString(),
+        ipAddress,
+        userAgent
+      })
+    } catch (error) {
+      console.error('Error scheduling token rotation:', error)
+      // Don't fail token creation if rotation scheduling fails
+    }
 
     return { token, sessionId, expiresAt }
   }

@@ -1,6 +1,8 @@
+
 import { Application, Router, Context } from "https://deno.land/x/oak@v12.6.1/mod.ts"
 import { authRoutes } from './routes/auth.ts'
 import { tokenManagementRoutes } from './routes/tokenManagement.ts'
+import { tokenRotationRoutes } from './routes/tokenRotation.ts'
 import { config } from "./config/env.ts"
 import { authMiddleware } from "./middleware/authMiddleware.ts"
 import { tokenBlacklistMiddleware } from "./middleware/tokenBlacklistMiddleware.ts"
@@ -8,6 +10,7 @@ import { cors } from "https://deno.land/x/oak_cors@1.0.0/mod.ts"
 import emailTemplateRoutes from "./routes/emailTemplates.ts"
 import loginEmailRoutes from "./routes/loginEmails.ts"
 import { passwordResetRoutes } from './routes/passwordReset.ts'
+import { tokenRotationService } from './services/tokenRotationService.ts'
 
 const app = new Application()
 
@@ -58,6 +61,9 @@ app.use(authRoutes.allowedMethods())
 app.use(tokenManagementRoutes.routes())
 app.use(tokenManagementRoutes.allowedMethods())
 
+app.use(tokenRotationRoutes.routes())
+app.use(tokenRotationRoutes.allowedMethods())
+
 app.use(passwordResetRoutes.routes())
 app.use(passwordResetRoutes.allowedMethods())
 
@@ -76,7 +82,15 @@ router.get('/health', (ctx) => {
 app.use(router.routes())
 app.use(router.allowedMethods())
 
+// Start automatic token rotation cron job
+console.log('[TokenRotation] Starting automatic token rotation service')
+Deno.cron("Token Rotation", "*/5 * * * *", async () => {
+  console.log('[TokenRotation] Running scheduled token rotation check')
+  await tokenRotationService.processScheduledRotations()
+})
+
 // Start server
 const port = parseInt(config.PORT || Deno.env.get('PORT') || '8000')
 console.log(`Server running on port ${port}`)
+console.log(`Automatic token rotation enabled (runs every 5 minutes)`)
 await app.listen({ port })
