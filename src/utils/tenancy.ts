@@ -220,25 +220,32 @@ export const getCurrentTenantId = async (): Promise<string | null> => {
 };
 
 /**
- * Domain verification functions - Mock implementations since the backend functions don't exist yet
+ * Initiate domain verification
  */
 export const initiateDomainVerification = async (tenantId: string, domain: string) => {
   try {
     console.log('Initiating domain verification for:', { tenantId, domain });
     
-    // Mock implementation - return a verification token
-    const mockResult = {
-      verification_id: `ver_${Date.now()}`,
-      txt_record: `mediloop-verification=${Math.random().toString(36).substring(2, 15)}`,
-      domain: domain,
-      tenant_id: tenantId
-    };
-    
-    console.log('Mock domain verification initiated:', mockResult);
-    return mockResult;
+    const response = await fetch('http://localhost:8000/api/domain/initiate-verification', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // TODO: Add authorization header when auth is implemented
+      },
+      body: JSON.stringify({ tenantId, domain })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to initiate domain verification');
+    }
+
+    const result = await response.json();
+    console.log('Domain verification initiated:', result);
+    return result;
   } catch (error) {
     console.error('Exception when initiating domain verification:', error);
-    return null;
+    throw error;
   }
 };
 
@@ -246,18 +253,26 @@ export const verifyDomainOwnership = async (verificationId: string) => {
   try {
     console.log('Verifying domain ownership for:', verificationId);
     
-    // Mock implementation - simulate verification
-    const mockResult = {
-      success: Math.random() > 0.3, // 70% success rate for demo
-      domain: 'example.com',
-      message: Math.random() > 0.3 ? 'Domain verified successfully' : 'DNS record not found. Please check your configuration.'
-    };
-    
-    console.log('Mock domain verification result:', mockResult);
-    return mockResult;
+    const response = await fetch('http://localhost:8000/api/domain/verify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // TODO: Add authorization header when auth is implemented
+      },
+      body: JSON.stringify({ verificationId })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to verify domain ownership');
+    }
+
+    const result = await response.json();
+    console.log('Domain verification result:', result);
+    return result;
   } catch (error) {
     console.error('Exception when verifying domain ownership:', error);
-    return { success: false, message: 'Verification failed' };
+    return { success: false, message: error.message || 'Verification failed' };
   }
 };
 
@@ -265,11 +280,23 @@ export const removeCustomDomain = async (tenantId: string) => {
   try {
     console.log('Removing custom domain for tenant:', tenantId);
     
-    // Mock implementation - simulate removal
-    const success = Math.random() > 0.1; // 90% success rate for demo
-    
-    console.log('Mock domain removal result:', success);
-    return success;
+    const response = await fetch('http://localhost:8000/api/domain/remove', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        // TODO: Add authorization header when auth is implemented
+      },
+      body: JSON.stringify({ tenantId })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to remove custom domain');
+    }
+
+    const result = await response.json();
+    console.log('Domain removal result:', result);
+    return result.success;
   } catch (error) {
     console.error('Exception when removing custom domain:', error);
     return false;
@@ -280,11 +307,26 @@ export const fetchDomainVerifications = async (tenantId?: string): Promise<Domai
   try {
     console.log('Fetching domain verifications for tenant:', tenantId);
     
-    // Mock implementation - return empty array since the table doesn't exist
-    const mockVerifications: DomainVerification[] = [];
-    
-    console.log('Mock domain verifications:', mockVerifications);
-    return mockVerifications;
+    if (!tenantId) {
+      return [];
+    }
+
+    const response = await fetch(`http://localhost:8000/api/domain/verifications/${tenantId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        // TODO: Add authorization header when auth is implemented
+      }
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch domain verifications');
+    }
+
+    const verifications = await response.json();
+    console.log('Domain verifications:', verifications);
+    return verifications;
   } catch (error) {
     console.error('Exception when fetching domain verifications:', error);
     return [];

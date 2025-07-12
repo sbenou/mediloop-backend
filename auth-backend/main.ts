@@ -3,6 +3,7 @@ import { Application, Router, Context } from "https://deno.land/x/oak@v12.6.1/mo
 import { authRoutes } from './routes/auth.ts'
 import { tokenManagementRoutes } from './routes/tokenManagement.ts'
 import { tokenRotationRoutes } from './routes/tokenRotation.ts'
+import { domainVerificationRoutes } from './routes/domainVerification.ts'
 import { config } from "./config/env.ts"
 import { authMiddleware } from "./middleware/authMiddleware.ts"
 import { tokenBlacklistMiddleware } from "./middleware/tokenBlacklistMiddleware.ts"
@@ -66,6 +67,9 @@ app.use(tokenRotationRoutes.allowedMethods())
 
 app.use(passwordResetRoutes.routes())
 app.use(passwordResetRoutes.allowedMethods())
+
+app.use(domainVerificationRoutes.routes())
+app.use(domainVerificationRoutes.allowedMethods())
 
 app.use(emailTemplateRoutes.routes())
 app.use(emailTemplateRoutes.allowedMethods())
