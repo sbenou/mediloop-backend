@@ -7,7 +7,7 @@ import { domainVerificationRoutes } from './routes/domainVerification.ts'
 import { config } from "./config/env.ts"
 import { authMiddleware } from "./middleware/authMiddleware.ts"
 import { tokenBlacklistMiddleware } from "./middleware/tokenBlacklistMiddleware.ts"
-import { cors } from "https://deno.land/x/oak_cors@1.0.0/mod.ts"
+import { oakCors } from "https://deno.land/x/cors@v1.2.2/mod.ts";
 import emailTemplateRoutes from "./routes/emailTemplates.ts"
 import loginEmailRoutes from "./routes/loginEmails.ts"
 import { passwordResetRoutes } from './routes/passwordReset.ts'
@@ -31,11 +31,11 @@ app.use(async (ctx, next) => {
 })
 
 // Enable CORS for All Origins
-app.use(cors({
+app.use(oakCors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-}))
+}));
 
 // Error handling
 app.use(async (ctx: Context, next: () => Promise<void>) => {
