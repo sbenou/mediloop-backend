@@ -1,7 +1,7 @@
 
 import { Application, Router, Context } from "https://deno.land/x/oak@v12.6.1/mod.ts"
 import { authRoutes } from './routes/auth.ts'
-import { tokenManagementRoutes } from './routes/tokenManagement.ts'
+import { tokenRoutes } from './routes/tokenManagement.ts';
 import { tokenRotationRoutes } from './routes/tokenRotation.ts'
 import { domainVerificationRoutes } from './routes/domainVerification.ts'
 import { config } from "./config/env.ts"
@@ -59,8 +59,8 @@ app.use(authMiddleware)
 app.use(authRoutes.routes())
 app.use(authRoutes.allowedMethods())
 
-app.use(tokenManagementRoutes.routes())
-app.use(tokenManagementRoutes.allowedMethods())
+app.use(tokenRoutes.routes());
+app.use(tokenRoutes.allowedMethods());
 
 app.use(tokenRotationRoutes.routes())
 app.use(tokenRotationRoutes.allowedMethods())
