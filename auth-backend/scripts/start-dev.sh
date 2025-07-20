@@ -13,4 +13,4 @@ export VAULT_TOKEN=myroot
 
 # Start the Deno server with all required permissions
 echo "🔧 Starting server with Vault integration..."
-VAULT_URL=$VAULT_URL VAULT_TOKEN=$VAULT_TOKEN NODE_ENV=$NODE_ENV deno run --allow-net --allow-env --allow-read --unstable-kv main.ts
+VAULT_URL=$VAULT_URL VAULT_TOKEN=$VAULT_TOKEN NODE_ENV=$NODE_ENV deno run --allow-net --allow-env --allow-read --unstable-kv --unstable-cron main.ts

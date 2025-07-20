@@ -15,4 +15,4 @@ echo 🔧 Starting server with Vault integration...
 set VAULT_URL=%VAULT_URL%
 set VAULT_TOKEN=%VAULT_TOKEN%
 set NODE_ENV=%NODE_ENV%
-deno run --allow-net --allow-env --allow-read --unstable-kv main.ts
+deno run --allow-net --allow-env --allow-read --unstable-kv --unstable-cron main.ts
