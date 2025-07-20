@@ -261,6 +261,21 @@ export class PostgresService {
       throw new Error(`Profile not found: ${error.message}`)
     }
   }
+
+  async updateTenantWithUser(tenantId: string, userId: string): Promise<void> {
+    await this.query(`
+      UPDATE public.tenants 
+      SET updated_at = NOW()
+      WHERE id = $1
+    `, [tenantId])
+    
+    // Optionally also update the profile to ensure tenant_id is set
+    await this.query(`
+      UPDATE public.profiles 
+      SET tenant_id = $1, updated_at = NOW()
+      WHERE id = $2
+    `, [tenantId, userId])
+  }
 }
 
 // Export the singleton instance for backward compatibility
