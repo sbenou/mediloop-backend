@@ -229,6 +229,38 @@ export class PostgresService {
     `, [schemaName])
     return result.rows.map(row => row.table_name)
   }
+
+  // ========== MISSING METHODS FOR REGISTRATION SERVICE ==========
+  
+  async getAllTenantSchemas(): Promise<string[]> {
+    const result = await this.query(`
+      SELECT schema
+      FROM public.tenants
+      WHERE is_active = true
+      ORDER BY schema
+    `)
+    return result.rows.map(row => row.schema)
+  }
+
+  async getUserProfileByEmailInSchema(schema: string, email: string): Promise<any> {
+    try {
+      const result = await this.executeInSchema(schema, async () => {
+        return await this.query(`
+          SELECT * FROM profiles 
+          WHERE email = $1 
+          LIMIT 1
+        `, [email])
+      })
+      
+      if (result.rows && result.rows.length > 0) {
+        return result.rows[0]
+      }
+      
+      throw new Error('Profile not found')
+    } catch (error) {
+      throw new Error(`Profile not found: ${error.message}`)
+    }
+  }
 }
 
 // Export the singleton instance for backward compatibility
