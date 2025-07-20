@@ -1,27 +1,86 @@
 import { PostgresService } from "./postgresService.ts";
 import { config } from "../config/env.ts";
 import { Profile } from "../types.ts";
-import { scrypt, randomBytes, timingSafeEqual } from "node:crypto";
-import { promisify } from "node:util";
 
 export class DatabaseService {
   private postgresService: PostgresService;
-  private scryptAsync = promisify(scrypt);
 
   constructor(postgresService: PostgresService) {
     this.postgresService = postgresService;
   }
 
   private async hashPassword(password: string): Promise<string> {
-    const salt = randomBytes(16).toString('hex');
-    const derivedKey = await this.scryptAsync(password, salt, 64) as Buffer;
-    return salt + ':' + derivedKey.toString('hex');
+    // Generate random salt
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
+    
+    // Derive key using PBKDF2
+    const encoder = new TextEncoder();
+    const passwordData = encoder.encode(password);
+    const importedKey = await crypto.subtle.importKey(
+      "raw",
+      passwordData,
+      { name: "PBKDF2" },
+      false,
+      ["deriveBits"]
+    );
+    
+    const derivedKey = await crypto.subtle.deriveBits(
+      {
+        name: "PBKDF2",
+        salt: salt,
+        iterations: 100000,
+        hash: "SHA-256"
+      },
+      importedKey,
+      512 // 64 bytes * 8 bits
+    );
+    
+    const keyHex = Array.from(new Uint8Array(derivedKey)).map(b => b.toString(16).padStart(2, '0')).join('');
+    return saltHex + ':' + keyHex;
   }
 
   private async verifyPassword(password: string, hash: string): Promise<boolean> {
-    const [salt, key] = hash.split(':');
-    const derivedKey = await this.scryptAsync(password, salt, 64) as Buffer;
-    return timingSafeEqual(Buffer.from(key, 'hex'), derivedKey);
+    const [saltHex, keyHex] = hash.split(':');
+    
+    // Convert salt from hex
+    const salt = new Uint8Array(saltHex.match(/.{2}/g)!.map(byte => parseInt(byte, 16)));
+    
+    // Derive key using same parameters
+    const encoder = new TextEncoder();
+    const passwordData = encoder.encode(password);
+    const importedKey = await crypto.subtle.importKey(
+      "raw",
+      passwordData,
+      { name: "PBKDF2" },
+      false,
+      ["deriveBits"]
+    );
+    
+    const derivedKey = await crypto.subtle.deriveBits(
+      {
+        name: "PBKDF2",
+        salt: salt,
+        iterations: 100000,
+        hash: "SHA-256"
+      },
+      importedKey,
+      512 // 64 bytes * 8 bits
+    );
+    
+    const derivedKeyHex = Array.from(new Uint8Array(derivedKey)).map(b => b.toString(16).padStart(2, '0')).join('');
+    
+    // Constant-time comparison
+    if (keyHex.length !== derivedKeyHex.length) {
+      return false;
+    }
+    
+    let result = 0;
+    for (let i = 0; i < keyHex.length; i++) {
+      result |= keyHex.charCodeAt(i) ^ derivedKeyHex.charCodeAt(i);
+    }
+    
+    return result === 0;
   }
 
   async verifyUserPassword(email: string, passwordPlain: string): Promise<Profile> {
