@@ -1,13 +1,27 @@
-import { PostgresService } from "./postgresService.ts"
-import { config } from "../config/env.ts"
-import { Profile } from "../types.ts"
-import * as bcrypt from "https://deno.land/x/bcrypt@0.4.1/mod.ts"
+import { PostgresService } from "./postgresService.ts";
+import { config } from "../config/env.ts";
+import { Profile } from "../types.ts";
+import { scrypt, randomBytes, timingSafeEqual } from "node:crypto";
+import { promisify } from "node:util";
 
 export class DatabaseService {
-  private postgresService: PostgresService
+  private postgresService: PostgresService;
+  private scryptAsync = promisify(scrypt);
 
   constructor(postgresService: PostgresService) {
-    this.postgresService = postgresService
+    this.postgresService = postgresService;
+  }
+
+  private async hashPassword(password: string): Promise<string> {
+    const salt = randomBytes(16).toString('hex');
+    const derivedKey = await this.scryptAsync(password, salt, 64) as Buffer;
+    return salt + ':' + derivedKey.toString('hex');
+  }
+
+  private async verifyPassword(password: string, hash: string): Promise<boolean> {
+    const [salt, key] = hash.split(':');
+    const derivedKey = await this.scryptAsync(password, salt, 64) as Buffer;
+    return timingSafeEqual(Buffer.from(key, 'hex'), derivedKey);
   }
 
   async verifyUserPassword(email: string, passwordPlain: string): Promise<Profile> {
@@ -29,7 +43,7 @@ export class DatabaseService {
         throw new Error("Password hash not found for user")
       }
 
-      const passwordValid = await bcrypt.compare(passwordPlain, profile.password_hash)
+      const passwordValid = await this.verifyPassword(passwordPlain, profile.password_hash)
 
       if (!passwordValid) {
         throw new Error("Invalid login credentials")
@@ -93,8 +107,7 @@ export class DatabaseService {
 
     try {
       // Hash the password
-      const saltRounds = 12
-      const hashedPassword = await bcrypt.hash(passwordPlain, saltRounds)
+      const hashedPassword = await this.hashPassword(passwordPlain)
 
       // Insert the new user
       const result = await client.queryObject<Profile>(
@@ -123,8 +136,7 @@ export class DatabaseService {
     
     try {
       // Hash the new password
-      const saltRounds = 12
-      const hashedPassword = await bcrypt.hash(newPassword, saltRounds)
+      const hashedPassword = await this.hashPassword(newPassword)
       
       // Update the password
       const result = await client.queryObject(
