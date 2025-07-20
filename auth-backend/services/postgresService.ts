@@ -818,6 +818,32 @@ export class PostgresService {
       )
     `)
 
+    // 26. qualifications (Professional Credentials)
+    await this.query(`
+      CREATE TABLE "${schemaName}".qualifications (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL,
+        qualification_type TEXT NOT NULL CHECK (qualification_type IN ('medical_degree', 'pharmacy_degree', 'specialty_certification', 'license', 'other')),
+        title TEXT NOT NULL,
+        institution TEXT NOT NULL,
+        country TEXT NOT NULL DEFAULT 'LU',
+        issue_date DATE NOT NULL,
+        expiry_date DATE,
+        qualification_number TEXT,
+        document_url TEXT,
+        verification_status TEXT NOT NULL DEFAULT 'pending' CHECK (verification_status IN ('pending', 'verified', 'rejected', 'expired')),
+        verification_method TEXT CHECK (verification_method IN ('manual', 'luxtrust', 'franceconnect', 'automatic')),
+        verified_by UUID,
+        verified_at TIMESTAMP WITH TIME ZONE,
+        verification_notes TEXT,
+        is_primary BOOLEAN DEFAULT FALSE,
+        is_active BOOLEAN DEFAULT TRUE,
+        metadata JSONB,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `)
+
     // 27. workplaces
     await this.query(`
       CREATE TABLE "${schemaName}".workplaces (
