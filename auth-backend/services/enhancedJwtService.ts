@@ -1,7 +1,7 @@
 import * as jose from "https://deno.land/x/jose@v4.15.5/index.ts"
 import { config } from "../config/env.ts"
 import { sessionService } from "./sessionService.ts"
-import { createHash } from "https://deno.land/std@0.208.0/crypto/mod.ts"
+import { createHash } from "https://deno.land/std@0.224.0/crypto/mod.ts"
 
 export interface TokenPayload {
   sub: string
