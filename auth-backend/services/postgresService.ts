@@ -822,7 +822,7 @@ export class PostgresService {
     await this.query(`
       CREATE TABLE "${schemaName}".qualifications (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        user_id UUID NOT NULL,
+        user_id UUID NOT NULL REFERENCES "${schemaName}".profiles(id) ON DELETE CASCADE,
         qualification_type TEXT NOT NULL CHECK (qualification_type IN ('medical_degree', 'pharmacy_degree', 'specialty_certification', 'license', 'other')),
         title TEXT NOT NULL,
         institution TEXT NOT NULL,
@@ -842,6 +842,60 @@ export class PostgresService {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       )
+    `)
+
+    // Enable RLS on qualifications table
+    await this.query(`ALTER TABLE "${schemaName}".qualifications ENABLE ROW LEVEL SECURITY`)
+
+    // RLS Policies for qualifications
+    await this.query(`
+      CREATE POLICY "Users can view their own qualifications" 
+      ON "${schemaName}".qualifications 
+      FOR SELECT 
+      USING (user_id = current_setting('app.current_user_id')::UUID)
+    `)
+
+    await this.query(`
+      CREATE POLICY "Users can insert their own qualifications" 
+      ON "${schemaName}".qualifications 
+      FOR INSERT 
+      WITH CHECK (user_id = current_setting('app.current_user_id')::UUID)
+    `)
+
+    await this.query(`
+      CREATE POLICY "Users can update their own qualifications" 
+      ON "${schemaName}".qualifications 
+      FOR UPDATE 
+      USING (user_id = current_setting('app.current_user_id')::UUID)
+    `)
+
+    await this.query(`
+      CREATE POLICY "Users can delete their own qualifications" 
+      ON "${schemaName}".qualifications 
+      FOR DELETE 
+      USING (user_id = current_setting('app.current_user_id')::UUID)
+    `)
+
+    await this.query(`
+      CREATE POLICY "Superadmins can view all qualifications" 
+      ON "${schemaName}".qualifications 
+      FOR SELECT 
+      USING (EXISTS (
+        SELECT 1 FROM "${schemaName}".profiles 
+        WHERE id = current_setting('app.current_user_id')::UUID 
+        AND role = 'superadmin'
+      ))
+    `)
+
+    await this.query(`
+      CREATE POLICY "Superadmins can update all qualifications" 
+      ON "${schemaName}".qualifications 
+      FOR UPDATE 
+      USING (EXISTS (
+        SELECT 1 FROM "${schemaName}".profiles 
+        WHERE id = current_setting('app.current_user_id')::UUID 
+        AND role = 'superadmin'
+      ))
     `)
 
     // 27. workplaces
