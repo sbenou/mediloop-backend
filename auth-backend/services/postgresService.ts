@@ -16,8 +16,6 @@ export class PostgresService {
   private queryHelper: QueryHelper
 
   constructor() {
-    configService.initialize()
-    
     // Initialize modular services
     this.client = new PostgresClient()
     this.schemaManager = new SchemaManager(this.client)

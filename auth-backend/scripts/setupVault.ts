@@ -1,6 +1,40 @@
 
 import { loadEnvironment } from '../config/envLoader.ts';
 import { vaultService } from '../services/vaultService.ts';
+async function enableKVSecretsEngine() {
+  const vaultUrl = Deno.env.get('VAULT_URL') || 'http://localhost:8200';
+  const vaultToken = Deno.env.get('VAULT_TOKEN') || '';
+  
+  try {
+    const response = await fetch(`${vaultUrl}/v1/sys/mounts/secret`, {
+      method: 'POST',
+      headers: {
+        'X-Vault-Token': vaultToken,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        type: 'kv',
+        options: {
+          version: '2'
+        }
+      }),
+    });
+
+    // If it returns 400, the engine might already be enabled
+    if (response.status === 400) {
+      console.log('🔍 KV secrets engine already enabled or path exists');
+      return;
+    }
+
+    if (!response.ok) {
+      throw new Error(`Failed to enable KV engine: ${response.status} ${response.statusText}`);
+    }
+
+    console.log('✅ KV secrets engine enabled successfully');
+  } catch (error) {
+    console.log('⚠️  KV engine setup warning (might already exist):', error.message);
+  }
+}
 
 async function setupVault() {
   console.log('🔧 Setting up HashiCorp Vault with secrets...');
@@ -9,6 +43,15 @@ async function setupVault() {
   await loadEnvironment();
 
   try {
+    // First, enable the KV secrets engine if it's not already enabled
+    console.log('🔧 Enabling KV secrets engine...');
+    await enableKVSecretsEngine();
+    
+    // Wait a moment for the engine to be fully enabled
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    console.log('✅ KV secrets engine enabled successfully');
+
     // Get the complete database URLs with all parameters
     // Use environment variables if available, otherwise use the complete default URLs
     const databaseUrl = Deno.env.get('DATABASE_URL') || 'postgresql://neondb_owner:npg_DUFXR9MiPsf1@ep-small-base-a900n0vb-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require';
