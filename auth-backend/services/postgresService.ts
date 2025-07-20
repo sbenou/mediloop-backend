@@ -129,9 +129,6 @@ export class PostgresService {
     console.log('releaseClient called (no-op in new architecture)')
   }
 
-  getClient(): Client | null {
-    return this.client.getClient()
-  }
 
   async close() {
     await this.client.disconnect()
