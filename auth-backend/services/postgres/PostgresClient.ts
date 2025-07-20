@@ -29,8 +29,8 @@ export class PostgresClient {
           await this.client.connect()
           console.log('✓ Connected to Neon PostgreSQL database')
         }, {
-          maxRetries: 3,
-          baseDelay: 1000,
+          maxTry: 3,
+          delay: 1000,
           retryCondition: RetryService.conditions.network
         })
       } catch (error) {
@@ -76,8 +76,8 @@ export class PostgresClient {
       console.log('✅ Query executed successfully, rows returned:', result.rows?.length || 0)
       return result
     }, {
-      maxRetries: 2,
-      baseDelay: 500,
+      maxTry: 2,
+      delay: 500,
       retryCondition: RetryService.conditions.database
     })
   }
@@ -93,8 +93,8 @@ export class PostgresClient {
       const result = await this.client.queryArray(sql, params)
       return result
     }, {
-      maxRetries: 2,
-      baseDelay: 500,
+      maxTry: 2,
+      delay: 500,
       retryCondition: RetryService.conditions.database
     })
   }

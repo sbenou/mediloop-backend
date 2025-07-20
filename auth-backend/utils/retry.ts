@@ -1,10 +1,7 @@
-// Reusable retry utility for critical operations
-export interface RetryOptions {
-  maxRetries?: number
-  baseDelay?: number
-  maxDelay?: number
-  exponentialBackoff?: boolean
-  jitter?: boolean
+import { retry, RetryOptions as DenoRetryOptions } from "https://deno.land/x/retry@v2.0.0/mod.ts"
+
+// Extended retry options compatible with our existing API
+export interface RetryOptions extends DenoRetryOptions {
   retryCondition?: (error: any) => boolean
 }
 
@@ -21,52 +18,30 @@ export class RetryService {
     options: RetryOptions = {}
   ): Promise<T> {
     const {
-      maxRetries = 3,
-      baseDelay = 1000,
-      maxDelay = 30000,
-      exponentialBackoff = true,
-      jitter = true,
-      retryCondition = () => true
+      retryCondition = () => true,
+      ...retryOpts
     } = options
 
-    let lastError: any
-    let attempts = 0
-
-    while (attempts <= maxRetries) {
+    // Use the battle-tested retry library with our retry condition
+    return await retry(async () => {
       try {
-        const result = await operation()
-        return result
+        return await operation()
       } catch (error) {
-        lastError = error
-        attempts++
-
-        // Don't retry if we've exceeded max attempts
-        if (attempts > maxRetries) {
-          break
-        }
-
-        // Don't retry if condition is not met
+        // Check if we should retry based on the condition
         if (!retryCondition(error)) {
-          break
+          // Don't retry - throw to stop retry loop
+          throw new Error(`STOP_RETRY: ${error.message}`)
         }
-
-        // Calculate delay
-        let delay = baseDelay
-        if (exponentialBackoff) {
-          delay = Math.min(baseDelay * Math.pow(2, attempts - 1), maxDelay)
-        }
-
-        // Add jitter to prevent thundering herd
-        if (jitter) {
-          delay = delay + Math.random() * delay * 0.1
-        }
-
-        console.log(`Operation failed (attempt ${attempts}/${maxRetries + 1}), retrying in ${Math.round(delay)}ms...`, error.message)
-        await this.sleep(delay)
+        // Re-throw to continue retry loop
+        throw error
       }
-    }
-
-    throw lastError
+    }, {
+      maxTry: (retryOpts.maxTry || 3) + 1, // +1 because deno retry counts initial attempt
+      delay: retryOpts.delay || 1000,
+      maxDelay: retryOpts.maxDelay || 30000,
+      jitter: retryOpts.jitter || true,
+      ...retryOpts
+    })
   }
 
   static async executeWithResult<T>(
@@ -78,22 +53,18 @@ export class RetryService {
       return {
         success: true,
         result,
-        attempts: 1 // This would need to be tracked properly
+        attempts: 1 // Deno retry doesn't expose attempt count easily
       }
     } catch (error) {
       return {
         success: false,
         error,
-        attempts: (options.maxRetries || 3) + 1
+        attempts: (options.maxTry || 3) + 1
       }
     }
   }
 
-  private static sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms))
-  }
-
-  // Predefined retry conditions
+  // Predefined retry conditions (kept for backward compatibility)
   static readonly conditions = {
     network: (error: any) => {
       const networkErrors = [
