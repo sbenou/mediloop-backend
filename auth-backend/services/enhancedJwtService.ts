@@ -1,7 +1,7 @@
+
 import * as jose from "https://deno.land/x/jose@v4.15.5/index.ts";
 import { config } from "../config/env.ts";
 import { sessionService } from "./sessionService.ts";
-import { createHash } from "node:crypto";
 
 export interface TokenPayload {
   sub: string
@@ -34,10 +34,12 @@ export class EnhancedJWTService {
     this.secret = new TextEncoder().encode(secretString)
   }
 
-  private hashToken(token: string): string {
-    const hash = createHash("sha256")
-    hash.update(token)
-    return hash.toString("hex")
+  private async hashToken(token: string): Promise<string> {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(token);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
   async createToken(
@@ -72,7 +74,7 @@ export class EnhancedJWTService {
       .sign(this.secret)
 
     // Hash the token for storage
-    const tokenHash = this.hashToken(token)
+    const tokenHash = await this.hashToken(token)
     
     // Create session record
     await sessionService.createSession(userId, tokenHash, expiresAt, ipAddress, userAgent)
@@ -105,7 +107,7 @@ export class EnhancedJWTService {
         audience: 'luxmed-app'
       })
 
-      const tokenHash = this.hashToken(token)
+      const tokenHash = await this.hashToken(token)
 
       // Check if token is blacklisted
       const isBlacklisted = await sessionService.isTokenBlacklisted(tokenHash)
@@ -149,7 +151,7 @@ export class EnhancedJWTService {
     const { sub, email, role, tenant_id } = validation.payload
 
     // Blacklist the old token
-    const oldTokenHash = this.hashToken(oldToken)
+    const oldTokenHash = await this.hashToken(oldToken)
     await sessionService.blacklistToken(oldTokenHash, sub, 'TOKEN_REFRESHED')
 
     // Deactivate old session
@@ -170,7 +172,7 @@ export class EnhancedJWTService {
 
   async revokeToken(token: string, userId?: string, reason: string = 'USER_REVOKED'): Promise<boolean> {
     try {
-      const tokenHash = this.hashToken(token)
+      const tokenHash = await this.hashToken(token)
       
       // If no userId provided, try to get it from token
       if (!userId) {
