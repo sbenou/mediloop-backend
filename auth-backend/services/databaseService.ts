@@ -141,6 +141,30 @@ export class DatabaseService {
       this.postgresService.releaseClient(client)
     }
   }
+
+  async createUserWithPasswordInSchema(
+    schema: string, 
+    userId: string, 
+    email: string, 
+    fullName: string, 
+    hashedPassword: string, 
+    role: string
+  ): Promise<Profile> {
+    return await this.postgresService.executeInSchema(schema, async () => {
+      const result = await this.postgresService.query(`
+        INSERT INTO profiles (id, email, password_hash, full_name, role, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+        RETURNING id, email, full_name, role
+      `, [userId, email, hashedPassword, fullName, role])
+
+      if (result.rows.length === 0) {
+        throw new Error("Failed to insert user in tenant schema")
+      }
+
+      console.log('User profile created in schema:', schema, 'for user:', email)
+      return result.rows[0]
+    })
+  }
 }
 
 export const databaseService = new DatabaseService(new PostgresService())
