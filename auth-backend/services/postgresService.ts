@@ -115,6 +115,20 @@ export class PostgresService {
     await this.client.ensureConnection()
   }
 
+  // ========== MISSING CRITICAL METHODS ==========
+  
+  async getClient(): Promise<Client | null> {
+    await this.client.ensureConnection()
+    return this.client.getClient()
+  }
+
+  releaseClient(client: Client | null) {
+    // In the new architecture, we don't release individual clients
+    // since we maintain a single connection pool
+    // This is kept for backward compatibility but does nothing
+    console.log('releaseClient called (no-op in new architecture)')
+  }
+
   getClient(): Client | null {
     return this.client.getClient()
   }
