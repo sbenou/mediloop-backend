@@ -15,14 +15,14 @@ export const getAuthToggleConfig = (): AuthToggleConfig => {
     return DEFAULT_CONFIG;
   }
 
-  // Check localStorage for runtime toggle
-  const runtimeToggle = localStorage.getItem('auth-system-toggle');
-  if (runtimeToggle !== null) {
-    return {
-      ...DEFAULT_CONFIG,
-      useNewAuthService: runtimeToggle === 'new',
-    };
-  }
+  // Temporarily force legacy system - commented out localStorage check
+  // const runtimeToggle = localStorage.getItem('auth-system-toggle');
+  // if (runtimeToggle !== null) {
+  //   return {
+  //     ...DEFAULT_CONFIG,
+  //     useNewAuthService: runtimeToggle === 'new',
+  //   };
+  // }
 
   return DEFAULT_CONFIG;
 };
