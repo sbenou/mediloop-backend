@@ -66,7 +66,6 @@ const AppRoutes = () => {
       {/* <Route path="/loyalty" element={<Loyalty />} /> */}
       {/* <Route path="/password-reset" element={<PasswordReset />} /> */}
       {/* <Route path="/magic-link" element={<MagicLink />} /> */}
-      <Route path="*" element={<NotFound />} />
       
       {/* Test route for database connectivity */}
       <Route path="/database-test" element={<DatabaseTest />} />
@@ -90,6 +89,9 @@ const AppRoutes = () => {
       {/* Super Admin Routes */}
       <Route path="/superadmin/dashboard" element={<SuperAdminDashboard />} />
       <Route path="/superadmin/tenants" element={<TenantManagement />} />
+      
+      {/* 404 Route - Must be last */}
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 };
