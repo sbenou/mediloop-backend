@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/providers/AuthProvider';
 import { CartProvider } from '@/contexts/CartContext';
+import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { ThemeProvider } from './components/theme-provider';
 import { TenantProvider } from './contexts/TenantContext';
 import { FirebaseNotificationProvider } from './providers/FirebaseNotificationProvider';
@@ -32,16 +33,18 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
           <AuthProvider>
-            <CartProvider>
-              <TenantProvider>
-                <FirebaseNotificationProvider>
-                  <BrowserRouter>
-                    <AppRoutes />
-                    <Toaster />
-                  </BrowserRouter>
-                </FirebaseNotificationProvider>
-              </TenantProvider>
-            </CartProvider>
+            <CurrencyProvider>
+              <CartProvider>
+                <TenantProvider>
+                  <FirebaseNotificationProvider>
+                    <BrowserRouter>
+                      <AppRoutes />
+                      <Toaster />
+                    </BrowserRouter>
+                  </FirebaseNotificationProvider>
+                </TenantProvider>
+              </CartProvider>
+            </CurrencyProvider>
           </AuthProvider>
         </ThemeProvider>
       </QueryClientProvider>
