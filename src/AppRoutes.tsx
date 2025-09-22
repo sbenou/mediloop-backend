@@ -33,6 +33,10 @@ import SuperAdminDashboard from "@/pages/superadmin/SuperAdminDashboard";
 import TenantManagement from "@/pages/superadmin/TenantManagement";
 import ProtectedDoctorDashboard from "@/router/roles/ProtectedDoctorDashboard";
 import ProtectedDoctorProfilePage from "@/router/roles/ProtectedDoctorProfilePage";
+import Notifications from "@/pages/Notifications";
+import ProtectedReferral from "@/router/roles/ProtectedReferral";
+import ProtectedBillingDetails from "@/router/roles/ProtectedBillingDetails";
+import ProtectedUpgradePage from "@/router/roles/ProtectedUpgradePage";
 
 const AppRoutes = () => {
   return (
@@ -76,6 +80,12 @@ const AppRoutes = () => {
       {/* Doctor Routes */}
       <Route path="/doctor/dashboard" element={<ProtectedDoctorDashboard />} />
       <Route path="/doctor/profile" element={<ProtectedDoctorProfilePage />} />
+      
+      {/* Additional Routes */}
+      <Route path="/notifications" element={<Notifications />} />
+      <Route path="/referral" element={<ProtectedReferral />} />
+      <Route path="/billing-details" element={<ProtectedBillingDetails />} />
+      <Route path="/upgrade" element={<ProtectedUpgradePage />} />
       
       {/* Super Admin Routes */}
       <Route path="/superadmin/dashboard" element={<SuperAdminDashboard />} />

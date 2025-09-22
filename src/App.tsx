@@ -7,6 +7,7 @@ import { RecoilRoot } from 'recoil';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/providers/AuthProvider';
+import { CartProvider } from '@/providers/CartProvider';
 import { ThemeProvider } from './components/theme-provider';
 import { TenantProvider } from './contexts/TenantContext';
 import { FirebaseNotificationProvider } from './providers/FirebaseNotificationProvider';
@@ -31,14 +32,16 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
           <AuthProvider>
-            <TenantProvider>
-              <FirebaseNotificationProvider>
-                <BrowserRouter>
-                  <AppRoutes />
-                  <Toaster />
-                </BrowserRouter>
-              </FirebaseNotificationProvider>
-            </TenantProvider>
+            <CartProvider>
+              <TenantProvider>
+                <FirebaseNotificationProvider>
+                  <BrowserRouter>
+                    <AppRoutes />
+                    <Toaster />
+                  </BrowserRouter>
+                </FirebaseNotificationProvider>
+              </TenantProvider>
+            </CartProvider>
           </AuthProvider>
         </ThemeProvider>
       </QueryClientProvider>
