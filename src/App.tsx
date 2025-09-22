@@ -7,7 +7,7 @@ import { RecoilRoot } from 'recoil';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/providers/AuthProvider';
-import { CartProvider } from '@/providers/CartProvider';
+import { CartProvider } from '@/contexts/CartContext';
 import { ThemeProvider } from './components/theme-provider';
 import { TenantProvider } from './contexts/TenantContext';
 import { FirebaseNotificationProvider } from './providers/FirebaseNotificationProvider';
