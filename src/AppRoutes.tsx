@@ -31,6 +31,8 @@ import DenoBackendManagement from "@/pages/DenoBackendManagement";
 import AdminSettings from "@/pages/AdminSettings";
 import SuperAdminDashboard from "@/pages/superadmin/SuperAdminDashboard";
 import TenantManagement from "@/pages/superadmin/TenantManagement";
+import ProtectedDoctorDashboard from "@/router/roles/ProtectedDoctorDashboard";
+import ProtectedDoctorProfilePage from "@/router/roles/ProtectedDoctorProfilePage";
 
 const AppRoutes = () => {
   return (
@@ -70,6 +72,10 @@ const AppRoutes = () => {
       
       {/* Admin Routes */}
       <Route path="/admin-settings" element={<AdminSettings />} />
+      
+      {/* Doctor Routes */}
+      <Route path="/doctor/dashboard" element={<ProtectedDoctorDashboard />} />
+      <Route path="/doctor/profile" element={<ProtectedDoctorProfilePage />} />
       
       {/* Super Admin Routes */}
       <Route path="/superadmin/dashboard" element={<SuperAdminDashboard />} />
