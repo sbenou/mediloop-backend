@@ -157,29 +157,8 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-      {/* Top Row - Premium Ad + Healthcare Stats */}
-      <Card className="relative overflow-hidden bg-gradient-to-r from-blue-500 to-blue-600 p-6 shadow-sm border-0 text-white md:col-span-1 lg:col-span-2">
-        <div className="flex justify-between items-start h-full">
-          <div className="flex-1 pr-4 max-w-xs">
-            <h3 className="text-2xl font-semibold mb-2">{premiumContent.title}</h3>
-            <p className="text-blue-100 mb-4 text-sm">{premiumContent.description}</p>
-            <Button 
-              className="bg-white text-blue-600 hover:bg-blue-50"
-              onClick={() => onNavigate('upgrade')}
-            >
-              {premiumContent.buttonText}
-            </Button>
-          </div>
-          <img 
-            src={premiumContent.image}
-            alt="Healthcare illustration"
-            className="w-48 h-48 object-contain"
-          />
-        </div>
-      </Card>
-      
       {/* Healthcare Stats Card */}
-      <Card className="relative overflow-hidden bg-white p-6 shadow-sm border-0 md:col-span-1 lg:col-span-2">
+      <Card className="relative overflow-hidden bg-white p-6 shadow-sm border-0 md:col-span-2 lg:col-span-4">
         <h3 className="text-lg font-medium mb-6">Healthcare Overview</h3>
         <div className="grid grid-cols-3 gap-4">
           {Object.entries(healthcareStats).map(([key, stat]) => (

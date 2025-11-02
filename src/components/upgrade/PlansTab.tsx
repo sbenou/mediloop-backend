@@ -4,13 +4,48 @@ import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Minus, Plus, ShoppingCart } from "lucide-react";
 import { PlanCartItem } from '@/types/cart';
+import { Card } from "@/components/ui/card";
+import { useAuth } from "@/hooks/auth/useAuth";
+import { useNavigate } from "react-router-dom";
 
 export function PlansTab() {
   const { addToCart } = useCart();
+  const { profile } = useAuth();
+  const navigate = useNavigate();
   const [quantities, setQuantities] = React.useState<{ [key: string]: number }>({
     pro: 1,
     enterprise: 1
   });
+  
+  const userRole = profile?.role || 'patient';
+  
+  const getPremiumContent = (role: string) => {
+    switch(role) {
+      case 'doctor':
+        return {
+          title: "Upgrade to Doctor Pro",
+          description: "Access advanced telemedicine features and patient analytics",
+          image: "/lovable-uploads/ab37fc95-08f9-46e5-b625-5ed4085e65d0.png",
+          buttonText: "Enhance Your Practice"
+        };
+      case 'pharmacist':
+        return {
+          title: "Upgrade to Pharmacy Plus",
+          description: "Streamline operations with advanced inventory and prescription management",
+          image: "/lovable-uploads/2e347c1d-4330-466b-b798-7c68a262f812.png",
+          buttonText: "Boost Your Pharmacy"
+        };
+      default: // patient
+        return {
+          title: "Upgrade to Health Plus",
+          description: "Get priority access to doctors and exclusive health services",
+          image: "/lovable-uploads/27b7ec08-9cac-46b6-9641-e95a33834436.png",
+          buttonText: "Upgrade Now"
+        };
+    }
+  };
+  
+  const premiumContent = getPremiumContent(userRole);
   
   const handleQuantityChange = (plan: string, change: number) => {
     setQuantities(prev => ({
@@ -40,6 +75,33 @@ export function PlansTab() {
 
   return (
     <div className="space-y-8">
+      {/* Premium Upgrade Banner */}
+      <Card className="relative overflow-hidden bg-gradient-to-r from-blue-500 to-blue-600 p-8 shadow-lg border-0 text-white">
+        <div className="flex justify-between items-center h-full">
+          <div className="flex-1 pr-6 max-w-lg">
+            <h2 className="text-3xl font-bold mb-3">{premiumContent.title}</h2>
+            <p className="text-blue-100 mb-6 text-lg leading-relaxed">{premiumContent.description}</p>
+            <Button 
+              size="lg"
+              className="bg-white text-blue-600 hover:bg-blue-50 shadow-md"
+              onClick={() => {
+                toast({
+                  title: "Select a plan below",
+                  description: "Choose the plan that best fits your needs"
+                });
+              }}
+            >
+              {premiumContent.buttonText}
+            </Button>
+          </div>
+          <img 
+            src={premiumContent.image}
+            alt="Healthcare illustration"
+            className="w-64 h-64 object-contain hidden lg:block"
+          />
+        </div>
+      </Card>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Free Plan */}
         <div className="border rounded-lg p-6 bg-white shadow-sm flex flex-col">
