@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { StatisticsCharts } from "@/components/dashboard/StatisticsCharts";
 import { usePharmacyDashboardStats } from "@/hooks/admin/useDashboardStats";
@@ -9,6 +9,10 @@ import PrescriptionsView from "./PrescriptionsView";
 import OrdersView from "./OrdersView";
 import ProfileView from "./ProfileView";
 import SettingsView from "./SettingsView";
+import { useLoyaltyStatus } from "@/hooks/loyalty/useLoyaltyStatus";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Medal } from "lucide-react";
 
 // Import refactored components
 import SectionHeader from "./pharmacy/SectionHeader";
@@ -31,9 +35,13 @@ interface Patient {
 const PharmacyView: React.FC<PharmacyViewProps> = ({ userRole, section = "dashboard" }) => {
   const { profile } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { data: stats, isLoading, error } = usePharmacyDashboardStats();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [isLoadingPatients, setIsLoadingPatients] = useState(true);
+  
+  // Fetch loyalty status
+  const loyalty = useLoyaltyStatus();
   
   // Get tab parameter for sections that need it
   const profileTab = searchParams.get("profileTab") || "personal";
@@ -147,6 +155,43 @@ const PharmacyView: React.FC<PharmacyViewProps> = ({ userRole, section = "dashbo
         onViewAllPatients={() => navigateToPharmacyPage('patients')}
         limit={5}
       />
+      
+      {/* Loyalty Program Section */}
+      <Card className="relative overflow-hidden bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Medal className="h-5 w-5 text-primary" />
+            Pharmacy Loyalty Benefits
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">Marketing Credits</p>
+              <p className="text-2xl font-bold text-primary">€{loyalty.marketingCredits || 0}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">Free Deliveries</p>
+              <p className="text-2xl font-bold">{loyalty.freeDeliveries || 0}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">Wallet Balance</p>
+              <p className="text-2xl font-bold text-green-600">€{loyalty.walletBalance.toFixed(2)}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">Member Level</p>
+              <p className="text-2xl font-bold capitalize">{loyalty.currentLevel}</p>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => navigate('/account')}
+          >
+            View Full Loyalty Details
+          </Button>
+        </CardContent>
+      </Card>
       
       <StatisticsCharts />
     </div>

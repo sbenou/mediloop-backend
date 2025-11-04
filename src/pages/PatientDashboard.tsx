@@ -24,8 +24,10 @@ import PharmacySelection from "@/components/settings/PharmacySelection";
 import DoctorSearch from "@/components/DoctorSearch";
 import DoctorManagement from "@/components/settings/DoctorManagement";
 import PatientLayout from "@/components/layout/PatientLayout";
-import { Activity as ActivityIcon, FileText, Calendar, Package, AlertCircle } from "lucide-react";
+import { Activity as ActivityIcon, FileText, Calendar, Package, AlertCircle, Medal } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LoyaltyHeader } from "@/components/loyalty/LoyaltyHeader";
+import { useLoyaltyStatus } from "@/hooks/loyalty/useLoyaltyStatus";
 
 const PatientDashboard = () => {
   const { profile } = useAuth();
@@ -40,6 +42,9 @@ const PatientDashboard = () => {
   
   // Fetch stats data for the patient dashboard
   const { data: statsData, isLoading: isStatsLoading } = usePatientDashboardStats();
+  
+  // Fetch loyalty status
+  const loyalty = useLoyaltyStatus();
 
   useEffect(() => {
     console.log("PatientDashboard page loaded with view:", view, "and ordersTab:", ordersTab);
@@ -385,6 +390,43 @@ const PatientDashboard = () => {
               })}
             </div>
           )}
+        </Card>
+        
+        {/* Loyalty Program Section */}
+        <Card className="relative overflow-hidden bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Medal className="h-5 w-5 text-primary" />
+              Your Loyalty Program
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">Total Points</p>
+                <p className="text-2xl font-bold text-primary">{loyalty.totalPoints}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">Available Points</p>
+                <p className="text-2xl font-bold">{loyalty.availablePoints}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">Wallet Balance</p>
+                <p className="text-2xl font-bold text-green-600">€{loyalty.walletBalance.toFixed(2)}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">Member Level</p>
+                <p className="text-2xl font-bold capitalize">{loyalty.currentLevel}</p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => navigate('/account')}
+            >
+              View Full Loyalty Details
+            </Button>
+          </CardContent>
         </Card>
         
         <HealthStateIndicator userRole="patient" />

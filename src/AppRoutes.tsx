@@ -37,6 +37,7 @@ import Notifications from "@/pages/Notifications";
 import ProtectedReferral from "@/router/roles/ProtectedReferral";
 import ProtectedBillingDetails from "@/router/roles/ProtectedBillingDetails";
 import ProtectedUpgradePage from "@/router/roles/ProtectedUpgradePage";
+import Account from "@/pages/Account";
 
 const AppRoutes = () => {
   return (
@@ -83,6 +84,7 @@ const AppRoutes = () => {
       {/* Additional Routes */}
       <Route path="/notifications" element={<Notifications />} />
       <Route path="/referral" element={<ProtectedReferral />} />
+      <Route path="/account" element={<Account />} />
       <Route path="/billing-details" element={<ProtectedBillingDetails />} />
       <Route path="/upgrade" element={<ProtectedUpgradePage />} />
       
