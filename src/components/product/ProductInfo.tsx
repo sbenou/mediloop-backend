@@ -7,11 +7,11 @@ interface Product {
   description?: string;
 }
 
-interface ProductDetailsProps {
+interface ProductInfoProps {
   product: Product;
 }
 
-export const ProductDetails = ({ product }: ProductDetailsProps) => {
+export const ProductInfo = ({ product }: ProductInfoProps) => {
   return (
     <div className="pt-4 border-t w-full">
       <h2 className="text-lg font-semibold mb-4">Details</h2>

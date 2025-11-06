@@ -9,7 +9,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import { ProductImageGallery } from '@/components/product/ProductImageGallery';
 import { ProductNavigation } from '@/components/product/ProductNavigation';
 import { ProductQuantitySelector } from '@/components/product/ProductQuantitySelector';
-import { ProductDetails } from '@/components/product/ProductDetails';
+import { ProductInfo } from '@/components/product/ProductInfo';
 import { ProductActions } from '@/components/product/ProductActions';
 import { useProductDetail } from '@/hooks/useProductDetail';
 
@@ -151,7 +151,7 @@ const ProductDetail = () => {
             disabled={product.requires_prescription}
           />
 
-          <ProductDetails product={product} />
+          <ProductInfo product={product} />
         </div>
       </div>
     </div>
