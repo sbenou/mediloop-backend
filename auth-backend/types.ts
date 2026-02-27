@@ -1,10 +1,30 @@
+// User table in public schema (authentication & authorization)
+export interface User {
+  id: string;
+  full_name: string;
+  email: string;
+  password: string; // Hashed password
+  salt: string; // Password salt
+  role: string;
+  status: string;
+  last_login?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Profile table in tenant schemas (extended profile data)
 export interface Profile {
   id: string;
-  email: string;
-  password_hash?: string;
+  user_id: string; // References auth.users.id
   full_name: string;
-  role: string;
-  tenant_id?: string;
+  email: string;
+  phone?: string;
+  avatar_url?: string;
+  bio?: string;
+  location?: string;
+  website?: string;
+  company?: string;
+  job_title?: string;
   created_at?: string;
   updated_at?: string;
 }

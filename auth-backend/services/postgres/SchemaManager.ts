@@ -1,35 +1,35 @@
-import { PostgresClient } from "./PostgresClient.ts"
+import { PostgresClient } from "./PostgresClient.ts";
 
 export class SchemaManager {
   constructor(private client: PostgresClient) {}
 
   async createTenantSchema(schemaName: string): Promise<void> {
-    console.log('Creating schema and tables for:', schemaName)
+    console.log("Creating schema and tables for:", schemaName);
 
     // Create the schema
-    await this.client.query(`CREATE SCHEMA IF NOT EXISTS "${schemaName}"`)
-    console.log('✅ Schema created:', schemaName)
+    await this.client.query(`CREATE SCHEMA IF NOT EXISTS "${schemaName}"`);
+    console.log("✅ Schema created:", schemaName);
 
     // Create all tenant tables
-    await this.createTenantTables(schemaName)
-    console.log('✅ All tables created for schema:', schemaName)
+    await this.createTenantTables(schemaName);
+    console.log("✅ All tables created for schema:", schemaName);
   }
 
   async dropTenantSchema(schemaName: string): Promise<void> {
-    await this.client.query(`DROP SCHEMA IF EXISTS "${schemaName}" CASCADE`)
-    console.log('✅ Schema dropped:', schemaName)
+    await this.client.query(`DROP SCHEMA IF EXISTS "${schemaName}" CASCADE`);
+    console.log("✅ Schema dropped:", schemaName);
   }
 
   async schemaExists(schemaName: string): Promise<boolean> {
     const result = await this.client.query(
-      'SELECT schema_name FROM information_schema.schemata WHERE schema_name = $1',
-      [schemaName]
-    )
-    return result.rows && result.rows.length > 0
+      "SELECT schema_name FROM information_schema.schemata WHERE schema_name = $1",
+      [schemaName],
+    );
+    return result.rows && result.rows.length > 0;
   }
 
   private async createTenantTables(schemaName: string) {
-    console.log('Creating tables for tenant schema:', schemaName)
+    console.log("Creating tables for tenant schema:", schemaName);
 
     // 1. activities
     await this.client.query(`
@@ -49,7 +49,7 @@ export class SchemaManager {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       )
-    `)
+    `);
 
     // 2. addresses
     await this.client.query(`
@@ -65,7 +65,7 @@ export class SchemaManager {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       )
-    `)
+    `);
 
     // 3. boosts
     await this.client.query(`
@@ -78,7 +78,7 @@ export class SchemaManager {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       )
-    `)
+    `);
 
     await this.client.query(`
       CREATE TABLE "${schemaName}".invites (
@@ -92,7 +92,7 @@ export class SchemaManager {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       )
-    `)
+    `);
 
     await this.client.query(`
       CREATE TABLE "${schemaName}".members (
@@ -103,7 +103,7 @@ export class SchemaManager {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       )
-    `)
+    `);
 
     await this.client.query(`
       CREATE TABLE "${schemaName}".messages (
@@ -114,7 +114,7 @@ export class SchemaManager {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       )
-    `)
+    `);
 
     await this.client.query(`
       CREATE TABLE "${schemaName}".notifications (
@@ -131,7 +131,7 @@ export class SchemaManager {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       )
-    `)
+    `);
 
     await this.client.query(`
       CREATE TABLE "${schemaName}".profiles (
@@ -149,7 +149,7 @@ export class SchemaManager {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       )
-    `)
+    `);
 
     await this.client.query(`
       CREATE TABLE "${schemaName}".projects (
@@ -164,17 +164,7 @@ export class SchemaManager {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       )
-    `)
-
-    await this.client.query(`
-      CREATE TABLE "${schemaName}".roles (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        name TEXT NOT NULL,
-        permissions JSONB,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
-      )
-    `)
+    `);
 
     await this.client.query(`
       CREATE TABLE "${schemaName}".tasks (
@@ -190,7 +180,7 @@ export class SchemaManager {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       )
-    `)
+    `);
 
     await this.client.query(`
       CREATE TABLE "${schemaName}".teams (
@@ -202,7 +192,7 @@ export class SchemaManager {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       )
-    `)
+    `);
 
     await this.client.query(`
       CREATE TABLE "${schemaName}".transactions (
@@ -215,33 +205,7 @@ export class SchemaManager {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       )
-    `)
-
-    await this.client.query(`
-      CREATE TABLE "${schemaName}".users (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        full_name TEXT NOT NULL,
-        email TEXT NOT NULL,
-        password TEXT NOT NULL,
-        salt TEXT NOT NULL,
-        role TEXT NOT NULL,
-        status TEXT NOT NULL,
-        last_login TIMESTAMP WITH TIME ZONE,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
-      )
-    `)
-
-    await this.client.query(`
-      CREATE TABLE "${schemaName}".sessions (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        user_id UUID NOT NULL,
-        token TEXT NOT NULL,
-        expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
-      )
-    `)
+    `);
 
     await this.client.query(`
       CREATE TABLE "${schemaName}".files (
@@ -254,7 +218,7 @@ export class SchemaManager {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       )
-    `)
+    `);
 
     await this.client.query(`
       CREATE TABLE "${schemaName}".comments (
@@ -265,7 +229,7 @@ export class SchemaManager {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       )
-    `)
+    `);
 
     await this.client.query(`
       CREATE TABLE "${schemaName}".settings (
@@ -276,7 +240,7 @@ export class SchemaManager {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       )
-    `)
+    `);
 
     await this.client.query(`
       CREATE TABLE "${schemaName}".notifications_settings (
@@ -288,7 +252,7 @@ export class SchemaManager {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       )
-    `)
+    `);
 
     await this.client.query(`
       CREATE TABLE "${schemaName}".integrations (
@@ -299,7 +263,7 @@ export class SchemaManager {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       )
-    `)
+    `);
 
     await this.client.query(`
       CREATE TABLE "${schemaName}".permissions (
@@ -310,7 +274,7 @@ export class SchemaManager {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       )
-    `)
+    `);
 
     await this.client.query(`
       CREATE TABLE "${schemaName}".products (
@@ -322,7 +286,7 @@ export class SchemaManager {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       )
-    `)
+    `);
 
     await this.client.query(`
       CREATE TABLE "${schemaName}".orders (
@@ -335,7 +299,7 @@ export class SchemaManager {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       )
-    `)
+    `);
 
     await this.client.query(`
       CREATE TABLE "${schemaName}".coupons (
@@ -346,7 +310,7 @@ export class SchemaManager {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       )
-    `)
+    `);
 
     await this.client.query(`
       CREATE TABLE "${schemaName}".payments (
@@ -359,7 +323,7 @@ export class SchemaManager {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       )
-    `)
+    `);
 
     await this.client.query(`
       CREATE TABLE "${schemaName}".carts (
@@ -370,7 +334,7 @@ export class SchemaManager {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       )
-    `)
+    `);
 
     await this.client.query(`
       CREATE TABLE "${schemaName}".wishlists (
@@ -380,7 +344,7 @@ export class SchemaManager {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       )
-    `)
+    `);
 
     await this.client.query(`
       CREATE TABLE "${schemaName}".reviews (
@@ -392,7 +356,7 @@ export class SchemaManager {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       )
-    `)
+    `);
 
     // 26. qualifications (Professional Credentials)
     await this.client.query(`
@@ -418,61 +382,61 @@ export class SchemaManager {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       )
-    `)
+    `);
 
     // Enable RLS and create policies for qualifications
-    await this.client.query(`ALTER TABLE "${schemaName}".qualifications ENABLE ROW LEVEL SECURITY`)
-    
+    await this.client.query(
+      `ALTER TABLE "${schemaName}".qualifications ENABLE ROW LEVEL SECURITY`,
+    );
+
     await this.client.query(`
       CREATE POLICY "Users can view their own qualifications" 
       ON "${schemaName}".qualifications 
       FOR SELECT 
       USING (user_id = current_setting('app.current_user_id')::UUID)
-    `)
+    `);
 
     await this.client.query(`
       CREATE POLICY "Users can insert their own qualifications" 
       ON "${schemaName}".qualifications 
       FOR INSERT 
       WITH CHECK (user_id = current_setting('app.current_user_id')::UUID)
-    `)
+    `);
 
     await this.client.query(`
       CREATE POLICY "Users can update their own qualifications" 
       ON "${schemaName}".qualifications 
       FOR UPDATE 
       USING (user_id = current_setting('app.current_user_id')::UUID)
-    `)
+    `);
 
     await this.client.query(`
       CREATE POLICY "Users can delete their own qualifications" 
       ON "${schemaName}".qualifications 
       FOR DELETE 
       USING (user_id = current_setting('app.current_user_id')::UUID)
-    `)
+    `);
 
     await this.client.query(`
-      CREATE POLICY "Superadmins can view all qualifications" 
-      ON "${schemaName}".qualifications 
-      FOR SELECT 
-      USING (EXISTS (
-        SELECT 1 FROM "${schemaName}".profiles 
-        WHERE id = current_setting('app.current_user_id')::UUID 
-        AND role = 'superadmin'
-      ))
-    `)
+    CREATE POLICY "Superadmins can view all qualifications" 
+    ON "${schemaName}".qualifications 
+    FOR SELECT 
+    USING (EXISTS (
+      SELECT 1 FROM auth.users 
+      WHERE id = current_setting('app.current_user_id')::UUID 
+      AND role = 'superadmin'
+    ))
+  `);
 
     await this.client.query(`
-      CREATE POLICY "Superadmins can update all qualifications" 
-      ON "${schemaName}".qualifications 
-      FOR UPDATE 
-      USING (EXISTS (
-        SELECT 1 FROM "${schemaName}".profiles 
-        WHERE id = current_setting('app.current_user_id')::UUID 
-        AND role = 'superadmin'
-      ))
-    `)
-
-    console.log('✅ All tables created successfully')
+    CREATE POLICY "Superadmins can update all qualifications" 
+    ON "${schemaName}".qualifications 
+    FOR UPDATE 
+    USING (EXISTS (
+      SELECT 1 FROM auth.users 
+      WHERE id = current_setting('app.current_user_id')::UUID 
+      AND role = 'superadmin'
+    ))
+  `);
   }
 }

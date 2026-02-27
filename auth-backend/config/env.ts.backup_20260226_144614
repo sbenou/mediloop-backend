@@ -1,3 +1,23 @@
+# PowerShell Script to Update config/env.ts with RESEND_API_KEY Support
+# Run this from: ~/github/Project/mediloop-backend/auth-backend
+
+Write-Host "🔧 Updating config/env.ts to load RESEND_API_KEY from Vault..." -ForegroundColor Cyan
+
+# Check if we're in the right directory
+if (-not (Test-Path "config/env.ts")) {
+    Write-Host "❌ Error: config/env.ts not found. Please run this from auth-backend directory." -ForegroundColor Red
+    Write-Host "   cd ~/github/Project/mediloop-backend/auth-backend" -ForegroundColor Yellow
+    exit 1
+}
+
+# Backup the current file
+$timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+$backupFile = "config/env.ts.backup_$timestamp"
+Write-Host "📦 Creating backup: $backupFile" -ForegroundColor Yellow
+Copy-Item "config/env.ts" $backupFile
+
+# Create the fixed version
+$fixedContent = @'
 import { loadEnvironment } from './envLoader.ts';
 import { appConfig } from './appConfig.ts'
 import { vaultService } from '../services/vaultService.ts'
@@ -213,3 +233,24 @@ try {
   console.error('Failed to load configuration:', error);
   throw error;
 }
+'@
+
+# Write the fixed content
+Write-Host "✍️  Writing updated config/env.ts..." -ForegroundColor Yellow
+$fixedContent | Out-File -FilePath "config/env.ts" -Encoding UTF8 -NoNewline
+
+Write-Host "✅ File updated successfully!" -ForegroundColor Green
+Write-Host ""
+Write-Host "📝 Changes made:" -ForegroundColor Cyan
+Write-Host "   1. Added RESEND_API_KEY to config object (loads from Vault)" -ForegroundColor White
+Write-Host "   2. Added RESEND_API_KEY to ConfigType definition" -ForegroundColor White
+Write-Host "   3. Added RESEND_API_KEY to fallback error handler" -ForegroundColor White
+Write-Host ""
+Write-Host "🔄 Now restart your server:" -ForegroundColor Yellow
+Write-Host "   deno task start-dev" -ForegroundColor White
+Write-Host ""
+Write-Host "✅ You should see:" -ForegroundColor Green
+Write-Host "   'Email service initialized with Resend API'" -ForegroundColor White
+Write-Host "   (Instead of 'Email would be sent in production')" -ForegroundColor White
+Write-Host ""
+Write-Host "📦 Backup saved to: $backupFile" -ForegroundColor Cyan

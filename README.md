@@ -273,6 +273,7 @@ deno task start-dev
 ### Vault Web UI
 
 Once Vault is running, you can access the web UI at:
+
 - **URL**: http://localhost:8200
 - **Token**: `myroot`
 
