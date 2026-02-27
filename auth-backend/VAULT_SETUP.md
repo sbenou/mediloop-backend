@@ -105,7 +105,7 @@ The setup uses these default values:
 
 ## Verify Setup
 
-You can verify the setup by:
+You can verify docker compose -f docker-compose.vault.yml up -dthe setup by:
 
 1. **Vault UI**: Visit http://localhost:8200 and login with token `myroot`
 2. **Check secrets**: Navigate to `secret/` engine and verify paths:

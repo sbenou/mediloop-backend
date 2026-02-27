@@ -27,3 +27,6 @@ dist-ssr
 *.env
 .env.*
 auth-backend/.env
+
+*.ps1
+auth-backend/powerscripts/*
