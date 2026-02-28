@@ -19,6 +19,8 @@ const invitationRoutes = new Router();
  * POST /api/invitations/create
  * Create a new invitation
  *
+ * @deprecated Use /api/invitations/send instead (includes user existence check)
+ *
  * Body: {
  *   email: string,
  *   tenantId: string,
@@ -99,6 +101,110 @@ invitationRoutes.post("/api/invitations/create", async (ctx) => {
     console.error("Create invitation error:", error);
     ctx.response.status = 400;
     ctx.response.body = { error: error.message };
+  }
+});
+
+/**
+ * POST /api/invitations/send
+ * Send invitation with user existence check
+ *
+ * Body: {
+ *   email: string,
+ *   tenantId: string,
+ *   role: string,
+ *   message?: string
+ * }
+ */
+invitationRoutes.post("/api/invitations/send", async (ctx) => {
+  try {
+    // 1. Authenticate user
+    const authHeader = ctx.request.headers.get("Authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      ctx.response.status = 401;
+      ctx.response.body = { error: "Authorization header required" };
+      return;
+    }
+
+    const token = authHeader.substring(7);
+    const verification = await enhancedJwtService.verifyToken(token);
+
+    if (!verification.valid) {
+      ctx.response.status = 401;
+      ctx.response.body = { error: verification.error || "Invalid token" };
+      return;
+    }
+
+    // 2. Get request body
+    const body = await ctx.request.body({ type: "json" }).value;
+    const { email, tenantId, role, message } = body;
+
+    // 3. Validate required fields
+    if (!email || !tenantId || !role) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        error: "Missing required fields: email, tenantId, role",
+      };
+      return;
+    }
+
+    // 4. Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      ctx.response.status = 400;
+      ctx.response.body = { error: "Invalid email format" };
+      return;
+    }
+
+    console.log("Sending invitation:", { email, tenantId, role });
+
+    // 5. Check if user exists in Mediloop
+    const userExists = await invitationService.checkUserExists(email);
+    console.log(`User ${email} exists in Mediloop:`, userExists);
+
+    // 6. Create invitation
+    const invitation = await invitationService.createInvitation({
+      email,
+      invitedByUserId: verification.payload.sub,
+      tenantId,
+      role,
+      message,
+    });
+
+    // 🆕 Handle case where user is already a member
+    if (invitation === null) {
+      ctx.response.status = 409; // Conflict
+      ctx.response.body = {
+        success: false,
+        userExists: true,
+        isAlreadyMember: true,
+        message: "User is already a member of this organization",
+      };
+      return;
+    }
+
+    console.log("Invitation created successfully:", invitation.id);
+
+    // 7. Return success with user existence flag
+    ctx.response.status = 201;
+    ctx.response.body = {
+      success: true,
+      userExists,
+      invitation: {
+        id: invitation.id,
+        email: invitation.email,
+        role: invitation.role,
+        expiresAt: invitation.expires_at,
+      },
+      message: userExists
+        ? "Invitation sent to existing Mediloop user"
+        : "Invitation email sent to new user",
+    };
+  } catch (error) {
+    console.error("Send invitation error:", error);
+    ctx.response.status = 500; // Changed from 400 to 500 for unexpected errors
+    ctx.response.body = {
+      error: "An unexpected error occurred while processing the invitation",
+    };
   }
 });
 

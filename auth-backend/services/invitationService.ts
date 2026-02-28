@@ -55,7 +55,9 @@ export class InvitationService {
   /**
    * Create a new invitation
    */
-  async createInvitation(params: CreateInvitationParams): Promise<Invitation> {
+  async createInvitation(
+    params: CreateInvitationParams,
+  ): Promise<Invitation | null> {
     console.log("=== CREATE INVITATION START ===");
     console.log("Invitation params:", {
       email: params.email,
@@ -106,7 +108,8 @@ export class InvitationService {
       );
 
       if (existingMemberResult.rows.length > 0) {
-        throw new Error("User is already a member of this organization");
+        console.log("⚠️ User is already a member of this organization");
+        return null; // Return null to indicate already a member
       }
 
       console.log("✓ User is not already a member");
@@ -421,17 +424,6 @@ export class InvitationService {
   }
 
   /**
-   * Generate secure invitation token
-   */
-  private generateInvitationToken(): string {
-    const array = new Uint8Array(32);
-    crypto.getRandomValues(array);
-    return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join(
-      "",
-    );
-  }
-
-  /**
    * Auto-accept pending invitations during registration
    * Called when a new user registers with an email that has pending invitations
    */
@@ -551,6 +543,34 @@ export class InvitationService {
     } finally {
       this.postgres.releaseClient(client);
     }
+  }
+
+  // 4. UTILITY/HELPER methods
+  /**
+   * Check if user exists in Mediloop by email
+   */
+  async checkUserExists(email: string): Promise<boolean> {
+    try {
+      const result = await this.postgres.query(
+        "SELECT id FROM auth.users WHERE email = $1",
+        [email],
+      );
+      return result.rows.length > 0;
+    } catch (error) {
+      console.error("Error checking user existence:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Generate secure invitation token
+   */
+  private generateInvitationToken(): string {
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join(
+      "",
+    );
   }
 }
 
