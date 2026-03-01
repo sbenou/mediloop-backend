@@ -1,8 +1,13 @@
-import { Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
+import { Router } from "oak";
 import { enhancedJwtService } from "../services/enhancedJwtService.ts";
 import { databaseService } from "../services/databaseService.ts";
 import { registrationService } from "../services/registrationService.ts";
 import { kvStore } from "../services/kvStore.ts";
+import {
+  loginRateLimiter,
+  registrationRateLimiter,
+  tokenRefreshRateLimiter,
+} from "../middleware/rateLimitMiddleware.ts";
 
 const authRoutes = new Router();
 
@@ -18,7 +23,7 @@ function getUserAgent(ctx: any): string {
   return ctx.request.headers.get("user-agent") || "unknown";
 }
 
-authRoutes.post("/api/auth/register", async (ctx) => {
+authRoutes.post("/api/auth/register", registrationRateLimiter, async (ctx) => {
   try {
     const body = await ctx.request.body({ type: "json" }).value;
     const {
@@ -97,7 +102,7 @@ authRoutes.post("/api/auth/register", async (ctx) => {
 });
 
 // ✅ FIX: Simplified login - removed 60+ lines of brittle code
-authRoutes.post("/api/auth/login", async (ctx) => {
+authRoutes.post("/api/auth/login", loginRateLimiter, async (ctx) => {
   try {
     const body = await ctx.request.body({ type: "json" }).value;
     const { email, password } = body;
@@ -224,7 +229,7 @@ authRoutes.post("/api/auth/verify-token", async (ctx) => {
   }
 });
 
-authRoutes.post("/api/auth/refresh", async (ctx) => {
+authRoutes.post("/api/auth/refresh", tokenRefreshRateLimiter, async (ctx) => {
   try {
     const body = await ctx.request.body({ type: "json" }).value;
     const { token } = body;

@@ -1,20 +1,19 @@
-
 import React from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import PharmacyStaff from "@/components/pharmacy/PharmacyStaff";
+import OrganizationStaff from "@/components/pharmacy/OrganizationStaff";
 
 interface ProfessionalStaffContentProps {
   entityId: string;
-  entityType: 'doctor' | 'pharmacy';
+  entityType: "doctor" | "pharmacy";
 }
 
-const ProfessionalStaffContent: React.FC<ProfessionalStaffContentProps> = ({ 
-  entityId, 
-  entityType 
+const ProfessionalStaffContent: React.FC<ProfessionalStaffContentProps> = ({
+  entityId,
+  entityType,
 }) => {
   return (
     <ScrollArea className="h-[calc(100vh-300px)] pr-4">
-      <PharmacyStaff pharmacyId={entityId} entityType={entityType} />
+      <OrganizationStaff pharmacyId={entityId} entityType={entityType} />
     </ScrollArea>
   );
 };

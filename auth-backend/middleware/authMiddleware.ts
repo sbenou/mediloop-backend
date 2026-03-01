@@ -1,4 +1,4 @@
-import { Context, Next } from "https://deno.land/x/oak@v12.6.1/mod.ts";
+import { Context, Next } from "oak";
 import { enhancedJwtService } from "../services/enhancedJwtService.ts";
 
 // Public routes that don't require authentication
