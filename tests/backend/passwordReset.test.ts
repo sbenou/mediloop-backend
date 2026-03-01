@@ -23,11 +23,11 @@ async function makeRequest(endpoint: string, body: any) {
 Deno.test("Password Reset - OTP flow (request OTP)", async () => {
   console.log("\n🧪 Testing OTP request...");
 
-  const phone = "+15551234567";
+  const email = "test@example.com";
 
   const { response, data } = await makeRequest(
     "/api/auth/request-password-reset-otp",
-    { phone },
+    { email },
   );
 
   console.log(`  Status: ${response.status}`);
