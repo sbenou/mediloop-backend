@@ -1,8 +1,4 @@
-import {
-  Application,
-  Router,
-  Context,
-} from "https://deno.land/x/oak@v12.6.1/mod.ts";
+import { Application, Router, Context } from "oak";
 import { authRoutes } from "./routes/auth.ts";
 import { tokenRoutes } from "./routes/tokenManagement.ts";
 import { tokenRotationRoutes } from "./routes/tokenRotation.ts";
@@ -58,6 +54,9 @@ app.use(async (ctx: Context, next: () => Promise<void>) => {
 // Middleware to check for blacklisted tokens
 app.use(tokenBlacklistMiddleware);
 
+app.use(passwordResetRoutes.routes());
+app.use(passwordResetRoutes.allowedMethods());
+
 // Authentication middleware (apply to specific routes)
 app.use(authMiddleware);
 
@@ -70,9 +69,6 @@ app.use(tokenRoutes.allowedMethods());
 
 app.use(tokenRotationRoutes.routes());
 app.use(tokenRotationRoutes.allowedMethods());
-
-app.use(passwordResetRoutes.routes());
-app.use(passwordResetRoutes.allowedMethods());
 
 app.use(domainVerificationRoutes.routes());
 app.use(domainVerificationRoutes.allowedMethods());
