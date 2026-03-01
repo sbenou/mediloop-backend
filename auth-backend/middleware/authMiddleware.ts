@@ -12,9 +12,12 @@ const PUBLIC_ROUTES = [
   "/auth/login",
   "/auth/verify-token",
   "/auth/refresh",
-  "/password-reset/request",
-  "/password-reset/verify",
-  "/password-reset/reset",
+  // ✅ Add actual password reset routes:
+  "/request-password-reset-otp",
+  "/reset-password-with-otp",
+  "/request-password-reset-link",
+  "/reset-password-with-token",
+  "/verify-reset-token",
   "/invitations/validate",
   "/invitations/accept",
 ];
