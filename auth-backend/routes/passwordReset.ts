@@ -7,6 +7,7 @@ import {
   passwordResetRateLimiter,
   otpRateLimiter,
   otpVerifyRateLimiter,
+  tokenVerifyRateLimiter,
 } from "../middleware/rateLimitMiddleware.ts";
 
 const passwordResetRoutes = new Router();
@@ -264,82 +265,86 @@ passwordResetRoutes.post(
 );
 
 // Reset password with token (from email link)
-passwordResetRoutes.post("/reset-password-with-token", async (ctx) => {
-  try {
-    const body = await ctx.request.body({ type: "json" }).value;
-    const { token, newPassword } = body;
-
-    if (!token || !newPassword) {
-      ctx.response.status = 400;
-      ctx.response.body = { error: "Token and new password are required" };
-      return;
-    }
-
-    console.log("Password reset with token attempted");
-
-    // Get stored token data
-    const tokenKey = `password_reset_token:${token}`;
-    const tokenData = await kvStore.get(tokenKey);
-
-    if (!tokenData) {
-      ctx.response.status = 400;
-      ctx.response.body = { error: "Invalid or expired reset token" };
-      return;
-    }
-
-    // Check if token was already used
-    if (tokenData.used) {
-      ctx.response.status = 400;
-      ctx.response.body = { error: "Reset token has already been used" };
-      return;
-    }
-
-    // Check expiration
-    if (new Date() > new Date(tokenData.expiresAt)) {
-      await kvStore.delete(tokenKey);
-      ctx.response.status = 400;
-      ctx.response.body = { error: "Reset token has expired" };
-      return;
-    }
-
-    // Update password
+passwordResetRoutes.post(
+  "/reset-password-with-token",
+  tokenVerifyRateLimiter,
+  async (ctx) => {
     try {
-      await databaseService.updateUserPassword(tokenData.email, newPassword);
+      const body = await ctx.request.body({ type: "json" }).value;
+      const { token, newPassword } = body;
 
-      // Mark token as used
-      await kvStore.set(
-        tokenKey,
-        {
-          ...tokenData,
-          used: true,
-          usedAt: new Date().toISOString(),
-        },
-        60 * 60,
-      );
+      if (!token || !newPassword) {
+        ctx.response.status = 400;
+        ctx.response.body = { error: "Token and new password are required" };
+        return;
+      }
 
-      console.log("Password reset successful for:", tokenData.email);
+      console.log("Password reset with token attempted");
 
-      // Revoke all existing tokens for security
-      await enhancedJwtService.revokeAllUserTokens(
-        tokenData.userId,
-        "PASSWORD_RESET",
-      );
+      // Get stored token data
+      const tokenKey = `password_reset_token:${token}`;
+      const tokenData = await kvStore.get(tokenKey);
 
-      ctx.response.body = {
-        success: true,
-        message: "Password reset successful",
-      };
+      if (!tokenData) {
+        ctx.response.status = 400;
+        ctx.response.body = { error: "Invalid or expired reset token" };
+        return;
+      }
+
+      // Check if token was already used
+      if (tokenData.used) {
+        ctx.response.status = 400;
+        ctx.response.body = { error: "Reset token has already been used" };
+        return;
+      }
+
+      // Check expiration
+      if (new Date() > new Date(tokenData.expiresAt)) {
+        await kvStore.delete(tokenKey);
+        ctx.response.status = 400;
+        ctx.response.body = { error: "Reset token has expired" };
+        return;
+      }
+
+      // Update password
+      try {
+        await databaseService.updateUserPassword(tokenData.email, newPassword);
+
+        // Mark token as used
+        await kvStore.set(
+          tokenKey,
+          {
+            ...tokenData,
+            used: true,
+            usedAt: new Date().toISOString(),
+          },
+          60 * 60,
+        );
+
+        console.log("Password reset successful for:", tokenData.email);
+
+        // Revoke all existing tokens for security
+        await enhancedJwtService.revokeAllUserTokens(
+          tokenData.userId,
+          "PASSWORD_RESET",
+        );
+
+        ctx.response.body = {
+          success: true,
+          message: "Password reset successful",
+        };
+      } catch (error) {
+        console.error("Failed to update password:", error);
+        ctx.response.status = 500;
+        ctx.response.body = { error: "Failed to update password" };
+      }
     } catch (error) {
-      console.error("Failed to update password:", error);
+      console.error("Password reset with token error:", error);
       ctx.response.status = 500;
-      ctx.response.body = { error: "Failed to update password" };
+      ctx.response.body = { error: "Internal server error" };
     }
-  } catch (error) {
-    console.error("Password reset with token error:", error);
-    ctx.response.status = 500;
-    ctx.response.body = { error: "Internal server error" };
-  }
-});
+  },
+);
 
 // Verify reset token (for frontend validation)
 passwordResetRoutes.get("/verify-reset-token/:token", async (ctx) => {
