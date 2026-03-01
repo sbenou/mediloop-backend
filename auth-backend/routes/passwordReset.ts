@@ -134,10 +134,7 @@ passwordResetRoutes.post(
 
       // Get stored OTP
       const otpKey = ["password_reset_otp", email];
-      const storedData = await kvStore.get<OTPData>([
-        "password_reset_otp",
-        email,
-      ]);
+      const storedData = await kvStore.get<OTPData>(otpKey);
 
       if (!storedData) {
         ctx.response.status = 400;
