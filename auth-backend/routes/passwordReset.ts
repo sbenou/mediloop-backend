@@ -12,6 +12,22 @@ import {
 
 const passwordResetRoutes = new Router();
 
+// Type definitions for password reset data
+interface OTPData {
+  otp: string;
+  email: string;
+  expiresAt: string;
+  attempts: number;
+}
+
+interface TokenData {
+  email: string;
+  userId: string;
+  expiresAt: string;
+  used: boolean;
+  usedAt?: string;
+}
+
 // Generate 6-digit OTP
 function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -62,7 +78,7 @@ passwordResetRoutes.post(
       const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
       // Store OTP in KV store
-      const otpKey = `password_reset_otp:${email}`;
+      const otpKey = ["password_reset_otp", email];
       await kvStore.set(
         otpKey,
         {
@@ -71,7 +87,7 @@ passwordResetRoutes.post(
           expiresAt: expiresAt.toISOString(),
           attempts: 0,
         },
-        15 * 60,
+        { expireIn: 15 * 60 * 1000 },
       ); // 15 minutes TTL
 
       // Send OTP email
@@ -117,8 +133,11 @@ passwordResetRoutes.post(
       console.log("Password reset with OTP attempted for:", email);
 
       // Get stored OTP
-      const otpKey = `password_reset_otp:${email}`;
-      const storedData = await kvStore.get(otpKey);
+      const otpKey = ["password_reset_otp", email];
+      const storedData = await kvStore.get<OTPData>([
+        "password_reset_otp",
+        email,
+      ]);
 
       if (!storedData) {
         ctx.response.status = 400;
@@ -128,7 +147,7 @@ passwordResetRoutes.post(
 
       // Check attempts
       if (storedData.attempts >= 3) {
-        await kvStore.delete(otpKey);
+        await kvStore.delete(["password_reset_otp", email]);
         ctx.response.status = 400;
         ctx.response.body = {
           error: "Too many attempts. Please request a new code.",
@@ -145,7 +164,7 @@ passwordResetRoutes.post(
             ...storedData,
             attempts: storedData.attempts + 1,
           },
-          15 * 60,
+          { expireIn: 15 * 60 * 1000 },
         );
 
         ctx.response.status = 400;
@@ -226,7 +245,7 @@ passwordResetRoutes.post(
       const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
       // Store reset token
-      const tokenKey = `password_reset_token:${resetToken}`;
+      const tokenKey = ["password_reset_token", resetToken];
       await kvStore.set(
         tokenKey,
         {
@@ -235,7 +254,7 @@ passwordResetRoutes.post(
           expiresAt: expiresAt.toISOString(),
           used: false,
         },
-        60 * 60,
+        { expireIn: 60 * 60 * 1000 },
       ); // 1 hour TTL
 
       // Create reset URL
@@ -282,8 +301,8 @@ passwordResetRoutes.post(
       console.log("Password reset with token attempted");
 
       // Get stored token data
-      const tokenKey = `password_reset_token:${token}`;
-      const tokenData = await kvStore.get(tokenKey);
+      const tokenKey = ["password_reset_token", token];
+      const tokenData = await kvStore.get<TokenData>(tokenKey);
 
       if (!tokenData) {
         ctx.response.status = 400;
