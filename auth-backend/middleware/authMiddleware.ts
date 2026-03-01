@@ -12,7 +12,6 @@ const PUBLIC_ROUTES = [
   "/auth/login",
   "/auth/verify-token",
   "/auth/refresh",
-  // ✅ Add actual password reset routes:
   "/request-password-reset-otp",
   "/reset-password-with-otp",
   "/request-password-reset-link",
