@@ -101,6 +101,25 @@ export class DatabaseService {
     }
   }
 
+  async getUserByPhone(phone: string): Promise<User> {
+    const client = await this.postgresService.getClient();
+
+    try {
+      const result = await client.queryObject<User>(
+        "SELECT * FROM auth.users WHERE phone = $1 LIMIT 1",
+        [phone],
+      );
+
+      if (result.rows.length === 0) {
+        throw new Error("User not found");
+      }
+
+      return result.rows[0];
+    } finally {
+      this.postgresService.releaseClient(client);
+    }
+  }
+
   async createUser(
     email: string,
     passwordPlain: string,

@@ -15,7 +15,9 @@ const passwordResetRoutes = new Router();
 // Type definitions for password reset data
 interface OTPData {
   otp: string;
-  email: string;
+  identifier: string; // Can be email or phone
+  identifierType: "email" | "phone";
+  email?: string; // Store email if we look it up from phone
   expiresAt: string;
   attempts: number;
 }
@@ -42,33 +44,95 @@ function getClientIP(ctx: any): string {
   return ctx.request.ip || "unknown";
 }
 
-// Request password reset with OTP
+// Helper to get user by email or phone
+async function getUserByIdentifier(
+  email?: string,
+  phone?: string,
+): Promise<{ user: any; email: string; identifierType: "email" | "phone" }> {
+  if (email) {
+    const user = await databaseService.getUserByEmail(email);
+    return { user, email, identifierType: "email" };
+  }
+
+  if (phone) {
+    // TODO: Implement getUserByPhone in databaseService
+    // For now, we'll throw an error to remind you to implement this
+    throw new Error(
+      "Phone lookup not yet implemented - please add getUserByPhone() to databaseService",
+    );
+
+    // Future implementation:
+    // const user = await databaseService.getUserByPhone(phone);
+    // return { user, email: user.email, identifierType: "phone" };
+  }
+
+  throw new Error("No identifier provided");
+}
+
+// Helper to send OTP via appropriate channel
+async function sendOTP(
+  identifierType: "email" | "phone",
+  identifier: string,
+  otp: string,
+): Promise<void> {
+  if (identifierType === "email") {
+    await updatedEmailService.sendLoginCode(identifier, otp);
+    console.log("Password reset OTP sent via email to:", identifier);
+  } else if (identifierType === "phone") {
+    // TODO: Implement SMS service
+    console.warn(
+      "⚠️  SMS service not implemented - OTP would be sent to:",
+      identifier,
+    );
+    console.warn("⚠️  OTP code:", otp, "(for testing purposes)");
+
+    // Future implementation:
+    // await smsService.sendOTP(identifier, otp);
+    // console.log("Password reset OTP sent via SMS to:", identifier);
+
+    // For now, throw an error so you know to implement this
+    throw new Error(
+      "SMS service not yet implemented - please add SMS functionality",
+    );
+  }
+}
+
+// Request password reset with OTP (supports both email and phone)
 passwordResetRoutes.post(
   "/api/auth/request-password-reset-otp",
   otpRateLimiter,
   async (ctx) => {
     try {
       const body = await ctx.request.body({ type: "json" }).value;
-      const { email } = body;
+      const { email, phone } = body;
 
-      if (!email) {
+      // Validate that at least one identifier is provided
+      if (!email && !phone) {
         ctx.response.status = 400;
-        ctx.response.body = { error: "Email is required" };
+        ctx.response.body = { error: "Email or phone number is required" };
         return;
       }
 
-      console.log("Password reset OTP requested for:", email);
+      const identifier = email || phone;
+      const identifierType: "email" | "phone" = email ? "email" : "phone";
+
+      console.log(
+        `Password reset OTP requested via ${identifierType}:`,
+        identifier,
+      );
 
       // Check if user exists
+      let userEmail: string;
       try {
-        await databaseService.getUserByEmail(email);
+        const result = await getUserByIdentifier(email, phone);
+        userEmail = result.email;
       } catch (error) {
-        console.log("User not found for password reset:", email);
-        // Return success anyway for security (don't reveal if email exists)
+        console.log("User not found for password reset:", identifier);
+        // Return success anyway for security (don't reveal if user exists)
         ctx.response.body = {
           success: true,
           message:
-            "If an account exists with this email, you will receive a password reset code.",
+            "If an account exists with this information, you will receive a password reset code.",
         };
         return;
       }
@@ -77,23 +141,24 @@ passwordResetRoutes.post(
       const otp = generateOTP();
       const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
-      // Store OTP in KV store
-      const otpKey = ["password_reset_otp", email];
+      // Store OTP in KV store using the identifier (email or phone)
+      const otpKey = ["password_reset_otp", identifier];
       await kvStore.set(
         otpKey,
         {
           otp,
-          email,
+          identifier,
+          identifierType,
+          email: userEmail, // Store email for password update later
           expiresAt: expiresAt.toISOString(),
           attempts: 0,
-        },
+        } as OTPData,
         { expireIn: 15 * 60 * 1000 },
       ); // 15 minutes TTL
 
-      // Send OTP email
+      // Send OTP via appropriate channel
       try {
-        await updatedEmailService.sendLoginCode(email, otp);
-        console.log("Password reset OTP sent to:", email);
+        await sendOTP(identifierType, identifier, otp);
       } catch (error) {
         console.error("Failed to send password reset OTP:", error);
         ctx.response.status = 500;
@@ -103,7 +168,7 @@ passwordResetRoutes.post(
 
       ctx.response.body = {
         success: true,
-        message: "Password reset code sent to your email",
+        message: `Password reset code sent to your ${identifierType}`,
       };
     } catch (error) {
       console.error("Password reset OTP request error:", error);
@@ -113,27 +178,29 @@ passwordResetRoutes.post(
   },
 );
 
-// Verify OTP and reset password
+// Verify OTP and reset password (supports both email and phone)
 passwordResetRoutes.post(
   "/api/auth/reset-password-with-otp",
   otpVerifyRateLimiter,
   async (ctx) => {
     try {
       const body = await ctx.request.body({ type: "json" }).value;
-      const { email, otp, newPassword } = body;
+      const { email, phone, otp, newPassword } = body;
 
-      if (!email || !otp || !newPassword) {
+      // Validate inputs
+      if ((!email && !phone) || !otp || !newPassword) {
         ctx.response.status = 400;
         ctx.response.body = {
-          error: "Email, OTP, and new password are required",
+          error: "Email or phone, OTP, and new password are required",
         };
         return;
       }
 
-      console.log("Password reset with OTP attempted for:", email);
+      const identifier = email || phone;
+      console.log("Password reset with OTP attempted for:", identifier);
 
       // Get stored OTP
-      const otpKey = ["password_reset_otp", email];
+      const otpKey = ["password_reset_otp", identifier];
       const storedData = await kvStore.get<OTPData>(otpKey);
 
       if (!storedData) {
@@ -144,7 +211,7 @@ passwordResetRoutes.post(
 
       // Check attempts
       if (storedData.attempts >= 3) {
-        await kvStore.delete(["password_reset_otp", email]);
+        await kvStore.delete(["password_reset_otp", identifier]);
         ctx.response.status = 400;
         ctx.response.body = {
           error: "Too many attempts. Please request a new code.",
@@ -154,9 +221,9 @@ passwordResetRoutes.post(
 
       // Verify OTP
       if (storedData.otp !== otp) {
-        // Increment attempts - FIX: Use array keys
+        // Increment attempts
         await kvStore.set(
-          ["password_reset_otp", email],
+          ["password_reset_otp", identifier],
           {
             ...storedData,
             attempts: storedData.attempts + 1,
@@ -171,21 +238,28 @@ passwordResetRoutes.post(
 
       // Check expiration
       if (new Date() > new Date(storedData.expiresAt)) {
-        await kvStore.delete(["password_reset_otp", email]);
+        await kvStore.delete(["password_reset_otp", identifier]);
         ctx.response.status = 400;
         ctx.response.body = { error: "OTP has expired" };
         return;
       }
 
-      // Update password
-      try {
-        await databaseService.updateUserPassword(email, newPassword);
-        await kvStore.delete(["password_reset_otp", email]); // Clean up OTP
+      // Update password using the stored email
+      const userEmail = storedData.email || email;
+      if (!userEmail) {
+        ctx.response.status = 500;
+        ctx.response.body = { error: "Unable to determine user email" };
+        return;
+      }
 
-        console.log("Password reset successful for:", email);
+      try {
+        await databaseService.updateUserPassword(userEmail, newPassword);
+        await kvStore.delete(["password_reset_otp", identifier]); // Clean up OTP
+
+        console.log("Password reset successful for:", userEmail);
 
         // Revoke all existing tokens for security
-        const user = await databaseService.getUserByEmail(email);
+        const user = await databaseService.getUserByEmail(userEmail);
         await enhancedJwtService.revokeAllUserTokens(user.id, "PASSWORD_RESET");
 
         ctx.response.body = {
@@ -205,7 +279,7 @@ passwordResetRoutes.post(
   },
 );
 
-// Request password reset with email link
+// Request password reset with email link (email only)
 passwordResetRoutes.post(
   "/api/auth/request-password-reset-link",
   passwordResetRateLimiter,
@@ -250,7 +324,7 @@ passwordResetRoutes.post(
           userId: user.id,
           expiresAt: expiresAt.toISOString(),
           used: false,
-        },
+        } as TokenData,
         { expireIn: 60 * 60 * 1000 },
       ); // 1 hour TTL
 
@@ -326,7 +400,7 @@ passwordResetRoutes.post(
       try {
         await databaseService.updateUserPassword(tokenData.email, newPassword);
 
-        // Mark token as used - FIX: Use array keys
+        // Mark token as used
         await kvStore.set(
           ["password_reset_token", token],
           {
@@ -373,8 +447,11 @@ passwordResetRoutes.get("/api/auth/verify-reset-token/:token", async (ctx) => {
       return;
     }
 
-    // Get stored token data - FIX: Use array keys
-    const tokenData = await kvStore.get(["password_reset_token", token]);
+    // Get stored token data
+    const tokenData = await kvStore.get<TokenData>([
+      "password_reset_token",
+      token,
+    ]);
 
     if (!tokenData) {
       ctx.response.status = 400;
