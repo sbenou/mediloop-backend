@@ -233,6 +233,13 @@ export const otpVerifyRateLimiter = createRateLimiter({
     "Too many OTP verification attempts. Please request a new OTP or try again in 15 minutes.",
 });
 
+export const tokenVerifyRateLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  maxRequests: 20, // More generous since UUIDs are hard to brute-force
+  keyPrefix: "ratelimit:token_verify",
+  message: "Too many password reset attempts. Please try again in 15 minutes.",
+});
+
 /**
  * Registration Rate Limiter
  * 3 registrations per hour (prevents spam accounts)
