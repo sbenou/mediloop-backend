@@ -28,7 +28,7 @@ function getClientIP(ctx: any): string {
 
 // Request password reset with OTP
 passwordResetRoutes.post(
-  "/request-password-reset-otp",
+  "/api/auth/request-password-reset-otp",
   otpRateLimiter,
   async (ctx) => {
     try {
@@ -99,7 +99,7 @@ passwordResetRoutes.post(
 
 // Verify OTP and reset password
 passwordResetRoutes.post(
-  "/reset-password-with-otp",
+  "/api/auth/reset-password-with-otp",
   otpVerifyRateLimiter,
   async (ctx) => {
     try {
@@ -191,7 +191,7 @@ passwordResetRoutes.post(
 
 // Request password reset with email link
 passwordResetRoutes.post(
-  "/request-password-reset-link",
+  "/api/auth/request-password-reset-link",
   passwordResetRateLimiter,
   async (ctx) => {
     try {
@@ -266,7 +266,7 @@ passwordResetRoutes.post(
 
 // Reset password with token (from email link)
 passwordResetRoutes.post(
-  "/reset-password-with-token",
+  "/api/auth/reset-password-with-token",
   tokenVerifyRateLimiter,
   async (ctx) => {
     try {
@@ -347,7 +347,7 @@ passwordResetRoutes.post(
 );
 
 // Verify reset token (for frontend validation)
-passwordResetRoutes.get("/verify-reset-token/:token", async (ctx) => {
+passwordResetRoutes.get("/api/auth/verify-reset-token/:token", async (ctx) => {
   try {
     const token = ctx.params.token;
 
