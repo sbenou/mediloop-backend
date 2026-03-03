@@ -1,5 +1,4 @@
-
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = "http://localhost:8000";
 
 interface LoginResponse {
   access_token: string;
@@ -32,65 +31,70 @@ class AuthClient {
 
   constructor() {
     // Load token from localStorage on initialization
-    this.token = localStorage.getItem('auth_token');
+    this.token = localStorage.getItem("auth_token");
   }
 
   async login(email: string, password: string): Promise<LoginResponse> {
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: 'POST',
+    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ email, password }),
     });
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Login failed');
+      throw new Error(error.error || "Login failed");
     }
 
     const data: LoginResponse = await response.json();
     this.token = data.access_token;
-    localStorage.setItem('auth_token', this.token);
+    localStorage.setItem("auth_token", this.token);
     return data;
   }
 
-  async register(email: string, password: string, fullName: string, role: string = 'patient'): Promise<RegisterResponse> {
-    const response = await fetch(`${API_BASE_URL}/auth/register`, {
-      method: 'POST',
+  async register(
+    email: string,
+    password: string,
+    fullName: string,
+    role: string = "patient",
+  ): Promise<RegisterResponse> {
+    const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ email, password, fullName, role }),
     });
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Registration failed');
+      throw new Error(error.error || "Registration failed");
     }
 
     const data: RegisterResponse = await response.json();
     this.token = data.access_token;
-    localStorage.setItem('auth_token', this.token);
+    localStorage.setItem("auth_token", this.token);
     return data;
   }
 
   async testProtectedRoute(): Promise<any> {
     if (!this.token) {
-      throw new Error('No authentication token available');
+      throw new Error("No authentication token available");
     }
 
-    const response = await fetch(`${API_BASE_URL}/protected`, {
-      method: 'GET',
+    const response = await fetch(`${API_BASE_URL}/api/protected`, {
+      method: "GET",
       headers: {
-        'Authorization': `Bearer ${this.token}`,
-        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.token}`,
+        "Content-Type": "application/json",
       },
     });
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || 'Protected route access failed');
+      throw new Error(error.message || "Protected route access failed");
     }
 
     return await response.json();
@@ -98,20 +102,20 @@ class AuthClient {
 
   async getProfile(): Promise<any> {
     if (!this.token) {
-      throw new Error('No authentication token available');
+      throw new Error("No authentication token available");
     }
 
     const response = await fetch(`${API_BASE_URL}/api/me`, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Authorization': `Bearer ${this.token}`,
-        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.token}`,
+        "Content-Type": "application/json",
       },
     });
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || 'Profile fetch failed');
+      throw new Error(error.message || "Profile fetch failed");
     }
 
     return await response.json();
@@ -119,16 +123,16 @@ class AuthClient {
 
   // OAuth methods
   initiateGoogleAuth(): void {
-    window.location.href = `${API_BASE_URL}/oauth/google`;
+    window.location.href = `${API_BASE_URL}/api/oauth/google`;
   }
 
   initiateFranceConnectAuth(): void {
-    window.location.href = `${API_BASE_URL}/oauth/franceconnect`;
+    window.location.href = `${API_BASE_URL}/api/oauth/franceconnect`;
   }
 
   handleOAuthCallback(token: string): void {
     this.token = token;
-    localStorage.setItem('auth_token', token);
+    localStorage.setItem("auth_token", token);
   }
 
   async verifyToken(): Promise<TokenVerification> {
@@ -137,11 +141,11 @@ class AuthClient {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/verify-token`, {
-        method: 'POST',
+      const response = await fetch(`${API_BASE_URL}/api/verify-token`, {
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${this.token}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.token}`,
+          "Content-Type": "application/json",
         },
       });
 
@@ -152,7 +156,7 @@ class AuthClient {
       const data = await response.json();
       return {
         valid: true,
-        payload: data.payload
+        payload: data.payload,
       };
     } catch (error) {
       return { valid: false };
@@ -161,7 +165,7 @@ class AuthClient {
 
   logout(): void {
     this.token = null;
-    localStorage.removeItem('auth_token');
+    localStorage.removeItem("auth_token");
   }
 
   getToken(): string | null {
