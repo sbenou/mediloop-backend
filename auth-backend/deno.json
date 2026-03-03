@@ -9,12 +9,15 @@
     "debug-vault": "VAULT_URL=http://localhost:8200 VAULT_TOKEN=myroot deno run --allow-net --allow-env scripts/debug-vault.ts",
     "check-version": "deno run --allow-net scripts/check-deno-version.ts",
     "upgrade-deno": "deno upgrade",
-    "migrate-tenants": "deno run --allow-net --allow-env --allow-read scripts/migrate-tenants.ts"
+    "migrate-tenants": "deno run --allow-net --allow-env --allow-read scripts/migrate-tenants.ts",
+    "cache-backend": "deno cache tests/backend/*.ts",
+    "test-backend": "deno test --allow-net --allow-env --allow-read tests/backend/"
   },
   "imports": {
     "@std/dotenv": "https://deno.land/std@0.208.0/dotenv/mod.ts",
     "oak": "https://deno.land/x/oak@v12.6.1/mod.ts",
-    "std/": "https://deno.land/std@0.224.0/"
+    "std/": "https://deno.land/std@0.224.0/",
+    "std/assert": "https://deno.land/std@0.224.0/assert/mod.ts"
   },
   "compilerOptions": {
     "lib": ["deno.window"],

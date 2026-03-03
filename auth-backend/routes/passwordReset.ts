@@ -2,6 +2,7 @@ import { Router } from "oak";
 import { enhancedJwtService } from "../services/enhancedJwtService.ts";
 import { databaseService } from "../services/databaseService.ts";
 import { updatedEmailService } from "../services/updatedEmailService.ts";
+import { smsService } from "../services/smsService.ts";
 import { kvStore } from "../services/kvStore.ts";
 import {
   passwordResetRateLimiter,
@@ -17,7 +18,7 @@ interface OTPData {
   otp: string;
   identifier: string; // Can be email or phone
   identifierType: "email" | "phone";
-  email?: string; // Store email if we look it up from phone
+  email: string; // Always store email for password update
   expiresAt: string;
   attempts: number;
 }
@@ -55,15 +56,9 @@ async function getUserByIdentifier(
   }
 
   if (phone) {
-    // TODO: Implement getUserByPhone in databaseService
-    // For now, we'll throw an error to remind you to implement this
-    throw new Error(
-      "Phone lookup not yet implemented - please add getUserByPhone() to databaseService",
-    );
-
-    // Future implementation:
-    // const user = await databaseService.getUserByPhone(phone);
-    // return { user, email: user.email, identifierType: "phone" };
+    const user = await databaseService.getUserByPhone(phone);
+    // User found by phone, get their email for password reset
+    return { user, email: user.email, identifierType: "phone" };
   }
 
   throw new Error("No identifier provided");
@@ -79,21 +74,9 @@ async function sendOTP(
     await updatedEmailService.sendLoginCode(identifier, otp);
     console.log("Password reset OTP sent via email to:", identifier);
   } else if (identifierType === "phone") {
-    // TODO: Implement SMS service
-    console.warn(
-      "⚠️  SMS service not implemented - OTP would be sent to:",
-      identifier,
-    );
-    console.warn("⚠️  OTP code:", otp, "(for testing purposes)");
-
-    // Future implementation:
-    // await smsService.sendOTP(identifier, otp);
-    // console.log("Password reset OTP sent via SMS to:", identifier);
-
-    // For now, throw an error so you know to implement this
-    throw new Error(
-      "SMS service not yet implemented - please add SMS functionality",
-    );
+    // ✅ NOW USING REAL SMS SERVICE
+    await smsService.sendOTP(identifier, otp);
+    console.log("Password reset OTP sent via SMS to:", identifier);
   }
 }
 
@@ -245,12 +228,7 @@ passwordResetRoutes.post(
       }
 
       // Update password using the stored email
-      const userEmail = storedData.email || email;
-      if (!userEmail) {
-        ctx.response.status = 500;
-        ctx.response.body = { error: "Unable to determine user email" };
-        return;
-      }
+      const userEmail = storedData.email;
 
       try {
         await databaseService.updateUserPassword(userEmail, newPassword);

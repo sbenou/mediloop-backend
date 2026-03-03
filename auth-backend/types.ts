@@ -3,9 +3,10 @@ export interface User {
   id: string;
   full_name: string;
   email: string;
-  password: string; // Hashed password
-  salt: string; // Password salt
+  phone?: string;
+  password_hash?: string;
   role: string;
+  role_id?: string;
   status: string;
   last_login?: string;
   created_at?: string;

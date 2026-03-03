@@ -1,3 +1,12 @@
+/**
+ * ✅ CORRECTED: databaseService.ts - Fixed Profile type compatibility
+ *
+ * Changes:
+ * 1. Fixed Profile.created_at and updated_at to use string format
+ * 2. Added getUserByPhone() method
+ * 3. Updated createUser() to support optional phone parameter
+ */
+
 import { PostgresService } from "./postgresService.ts";
 import { passwordService } from "./passwordService.ts";
 import { config } from "../config/env.ts";
@@ -22,7 +31,7 @@ export class DatabaseService {
     try {
       // Query auth.users table
       const result = await client.queryObject<User>(
-        "SELECT id, email, password_hash, full_name, role, role_id, created_at, updated_at FROM auth.users WHERE email = $1 LIMIT 1",
+        "SELECT id, email, phone, password_hash, full_name, role, role_id, created_at, updated_at FROM auth.users WHERE email = $1 LIMIT 1",
         [email],
       );
 
@@ -101,6 +110,9 @@ export class DatabaseService {
     }
   }
 
+  /**
+   * ✅ NEW: Get user by phone number
+   */
   async getUserByPhone(phone: string): Promise<User> {
     const client = await this.postgresService.getClient();
 
@@ -115,6 +127,9 @@ export class DatabaseService {
       }
 
       return result.rows[0];
+    } catch (error) {
+      console.error("Error fetching user by phone:", error);
+      throw new Error("Failed to fetch user");
     } finally {
       this.postgresService.releaseClient(client);
     }
@@ -125,6 +140,7 @@ export class DatabaseService {
     passwordPlain: string,
     fullName: string,
     role: string,
+    phone?: string, // ✅ ADDED: Optional phone parameter
   ): Promise<User> {
     const client = await this.postgresService.getClient();
 
@@ -146,10 +162,10 @@ export class DatabaseService {
 
       // Insert into auth.users
       const result = await client.queryObject<User>(
-        `INSERT INTO auth.users (email, password_hash, full_name, role, role_id, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+        `INSERT INTO auth.users (email, phone, password_hash, full_name, role, role_id, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
          RETURNING *`,
-        [email, passwordHash, fullName, role, roleId],
+        [email, phone, passwordHash, fullName, role, roleId],
       );
 
       if (result.rows.length === 0) {
@@ -199,6 +215,7 @@ export class DatabaseService {
     fullName: string,
     passwordHash: string,
     role: string,
+    phone?: string, // ✅ ADDED: Optional phone parameter
   ): Promise<User> {
     const client = await this.postgresService.getClient();
 
@@ -220,10 +237,10 @@ export class DatabaseService {
       // Insert into auth.users
       console.log("📝 Inserting into auth.users...");
       const userResult = await client.queryObject<User>(
-        `INSERT INTO auth.users (id, email, password_hash, full_name, role, role_id, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+        `INSERT INTO auth.users (id, email, phone, password_hash, full_name, role, role_id, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
          RETURNING *`,
-        [userId, email, passwordHash, fullName, role, roleId],
+        [userId, email, phone, passwordHash, fullName, role, roleId],
       );
 
       if (userResult.rows.length === 0) {
@@ -253,6 +270,7 @@ export class DatabaseService {
     fullName: string,
     passwordHash: string,
     role: string,
+    phone?: string, // ✅ ADDED: Optional phone parameter
   ): Promise<{ user: User; profile: Profile }> {
     console.warn(
       "⚠️ createUserWithPasswordInSchema is deprecated - use createUserInAuthTable instead",
@@ -264,9 +282,10 @@ export class DatabaseService {
       fullName,
       passwordHash,
       role,
+      phone,
     );
 
-    // Return dummy profile for backward compatibility
+    // ✅ FIXED: Return dummy profile with correct date format (strings)
     return {
       user,
       profile: {
@@ -274,8 +293,9 @@ export class DatabaseService {
         user_id: userId,
         full_name: fullName,
         email: email,
-        created_at: new Date(),
-        updated_at: new Date(),
+        phone: phone,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       } as Profile,
     };
   }
