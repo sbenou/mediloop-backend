@@ -27,6 +27,46 @@ export interface RateLimitError extends Error {
 }
 
 /**
+ * Store auth tokens in both legacy and V2 formats for compatibility
+ */
+function storeAuthTokens(data: AuthResponse["data"]): void {
+  if (!data || !data.accessToken || !data.user) {
+    console.warn("[authClientV2] Cannot store tokens - missing data");
+    return;
+  }
+
+  // ✅ Store in LEGACY format (for backward compatibility)
+  localStorage.setItem("auth_token", data.accessToken);
+
+  // ✅ Store in V2 format (for new auth system)
+  const v2Session = {
+    accessToken: data.accessToken,
+    refreshToken: data.refreshToken || data.accessToken, // Use refreshToken if available
+    userId: data.user.id,
+    timestamp: Date.now(),
+  };
+  localStorage.setItem("mediloop_session_sync", JSON.stringify(v2Session));
+
+  // ✅ Store user data separately for V2 system
+  localStorage.setItem("mediloop_v2_user", JSON.stringify(data.user));
+
+  console.log("✅ [authClientV2] Tokens stored in both legacy and V2 format", {
+    userId: data.user.id,
+    email: data.user.email,
+  });
+}
+
+/**
+ * Clear all auth tokens from storage
+ */
+function clearAuthTokens(): void {
+  localStorage.removeItem("auth_token");
+  localStorage.removeItem("mediloop_session_sync");
+  localStorage.removeItem("mediloop_v2_user");
+  console.log("✅ [authClientV2] All auth tokens cleared");
+}
+
+/**
  * Enhanced fetch wrapper with rate limit handling
  */
 async function apiFetch<T>(
@@ -137,10 +177,17 @@ export const authClientV2 = {
    * Login
    */
   async login(email: string, password: string): Promise<AuthResponse> {
-    return apiFetch<AuthResponse>("/api/auth/login", {
+    const response = await apiFetch<AuthResponse>("/api/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
+
+    // ✅ Store tokens after successful login
+    if (response.success && response.data) {
+      storeAuthTokens(response.data);
+    }
+
+    return response;
   },
 
   /**
@@ -152,19 +199,33 @@ export const authClientV2 = {
     fullName: string;
     phone?: string;
   }): Promise<AuthResponse> {
-    return apiFetch<AuthResponse>("/api/auth/register", {
+    const response = await apiFetch<AuthResponse>("/api/auth/register", {
       method: "POST",
       body: JSON.stringify(data),
     });
+
+    // ✅ Store tokens after successful registration
+    if (response.success && response.data) {
+      storeAuthTokens(response.data);
+    }
+
+    return response;
   },
 
   /**
    * Logout (revoke refresh token)
    */
   async logout(refreshToken: string): Promise<AuthResponse> {
-    return apiFetch<AuthResponse>("/api/auth/logout", {
+    const response = await apiFetch<AuthResponse>("/api/auth/logout", {
       method: "POST",
       body: JSON.stringify({ refreshToken }),
     });
+
+    // ✅ Clear tokens after successful logout
+    if (response.success) {
+      clearAuthTokens();
+    }
+
+    return response;
   },
 };
