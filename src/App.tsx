@@ -6,7 +6,7 @@ import AppRoutes from './AppRoutes';
 import { RecoilRoot } from 'recoil';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from "@/components/ui/toaster";
-import { AuthProvider } from '@/providers/AuthProvider';
+import { AuthProviderWithRecoil } from '@/contexts/AuthContext'; // ✅ Changed from legacy to hybrid
 import { CartProvider } from '@/contexts/CartContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { ThemeProvider } from './components/theme-provider';
@@ -25,30 +25,28 @@ function App() {
   });
 
   useEffect(() => {
-    console.log('App rendering TenantProvider and AppRoutes');
+    console.log('App rendering with Hybrid AuthProvider (V2 + Legacy support)');
   }, []);
 
   return (
-    <RecoilRoot>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-          <AuthProvider>
-            <CurrencyProvider>
-              <CartProvider>
-                <TenantProvider>
-                  <FirebaseNotificationProvider>
-                    <BrowserRouter>
-                      <AppRoutes />
-                      <Toaster />
-                    </BrowserRouter>
-                  </FirebaseNotificationProvider>
-                </TenantProvider>
-              </CartProvider>
-            </CurrencyProvider>
-          </AuthProvider>
-        </ThemeProvider>
-      </QueryClientProvider>
-    </RecoilRoot>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+        <AuthProviderWithRecoil>
+          <CurrencyProvider>
+            <CartProvider>
+              <TenantProvider>
+                <FirebaseNotificationProvider>
+                  <BrowserRouter>
+                    <AppRoutes />
+                    <Toaster />
+                  </BrowserRouter>
+                </FirebaseNotificationProvider>
+              </TenantProvider>
+            </CartProvider>
+          </CurrencyProvider>
+        </AuthProviderWithRecoil>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
 
