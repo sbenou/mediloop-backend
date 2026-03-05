@@ -368,16 +368,13 @@ authRoutes.post("/api/auth/resend-verification", async (ctx) => {
     // Send verification email
     const verificationUrl = `${Deno.env.get("FRONTEND_URL")}/verify-email?token=${tokenResult.token}`;
 
-    await emailService.sendEmail({
-      to: user.email,
-      subject: "Verify your Mediloop account",
-      template: "email-verification",
-      data: {
-        firstName: user.full_name?.split(" ")[0] || "there",
-        verificationUrl,
-        expirationHours: 24,
-      },
-    });
+    const sent = await emailService.sendEmailConfirmation(
+      email,
+      verificationUrl,
+    );
+    if (!sent) {
+      console.warn("⚠️ Email sending failed - likely Resend API restrictions");
+    }
 
     console.log("✅ Verification email resent to:", email);
 
