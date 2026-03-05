@@ -68,16 +68,13 @@ export class RegistrationService {
           // Send verification email
           const verificationUrl = `${Deno.env.get("FRONTEND_URL")}/verify-email?token=${tokenResult.token}`;
 
-          await emailService.sendEmail({
-            to: existingUser.email,
-            subject: "Verify your Mediloop account",
-            template: "email-verification",
-            data: {
-              firstName: existingUser.full_name || "there",
-              verificationUrl,
-              expirationHours: 24,
-            },
-          });
+          const sent = await emailService.sendEmailConfirmation(
+            email,
+            verificationUrl,
+          );
+          if (!sent) {
+            throw new Error("Failed to send verification email");
+          }
 
           console.log("✅ Verification email resent");
 
@@ -233,16 +230,13 @@ export class RegistrationService {
       const verificationUrl = `${Deno.env.get("FRONTEND_URL")}/verify-email?token=${tokenResult.token}`;
 
       try {
-        await emailService.sendEmail({
-          to: email,
-          subject: "Verify your Mediloop account",
-          template: "email-verification",
-          data: {
-            firstName: fullName.split(" ")[0] || "there",
-            verificationUrl,
-            expirationHours: 24,
-          },
-        });
+        const sent = await emailService.sendEmailConfirmation(
+          email,
+          verificationUrl,
+        );
+        if (!sent) {
+          throw new Error("Failed to send verification email");
+        }
         console.log("✓ Verification email sent successfully");
       } catch (emailError) {
         console.error("❌ Failed to send verification email:", emailError);
