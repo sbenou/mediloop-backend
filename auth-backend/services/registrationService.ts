@@ -1,7 +1,19 @@
+/**
+ * ✅ EMAIL VERIFICATION SUPPORT AND REGISTRATION LOGIC:
+ * - Tenant creation
+ * - User creation
+ * - user_tenants relationship
+ * - Auto-accept pending invitations
+ * - Email verification token generation
+ * - Email sending
+ * - Returns success message instead of tokens (user must verify email before login)
+ */
+
 import { passwordService } from "./passwordService.ts";
 import { postgresService } from "./postgresService.ts";
 import { databaseService } from "./databaseService.ts";
 import { invitationService } from "./invitationService.ts";
+import { emailService } from "./emailService.ts"; // ✅ NEW: You'll need to ensure this exists
 
 export class RegistrationService {
   async registerUser(
@@ -12,7 +24,7 @@ export class RegistrationService {
     workplaceName?: string,
     pharmacyName?: string,
   ) {
-    console.log("=== REGISTRATION START ===");
+    console.log("=== REGISTRATION START (WITH EMAIL VERIFICATION) ===");
     console.log("Registration request for:", {
       email,
       role,
@@ -24,10 +36,68 @@ export class RegistrationService {
     try {
       console.log("Step 1: Checking for existing user...");
       const existingUser = await this.checkExistingUser(email);
+
       if (existingUser) {
-        console.log("ERROR: User already exists:", existingUser.id);
+        console.log("User already exists:", existingUser.id);
+
+        // ✅ NEW: Check if user exists but email not verified
+        if (!existingUser.email_verified) {
+          console.log(
+            "⚠️ User exists but email not verified. Resending verification email...",
+          );
+
+          // Get tenant_id for existing user
+          const tenantId = await this.getTenantIdForUser(existingUser.id);
+
+          if (!tenantId) {
+            throw new Error("Could not find tenant for existing user");
+          }
+
+          // Create new verification token
+          const tokenResult =
+            await databaseService.createEmailVerificationToken(
+              existingUser.id,
+              tenantId,
+              existingUser.email,
+            );
+
+          if (!tokenResult.success) {
+            throw new Error("Failed to create verification token");
+          }
+
+          // Send verification email
+          const verificationUrl = `${Deno.env.get("FRONTEND_URL")}/verify-email?token=${tokenResult.token}`;
+
+          await emailService.sendEmail({
+            to: existingUser.email,
+            subject: "Verify your Mediloop account",
+            template: "email-verification",
+            data: {
+              firstName: existingUser.full_name || "there",
+              verificationUrl,
+              expirationHours: 24,
+            },
+          });
+
+          console.log("✅ Verification email resent");
+
+          return {
+            success: true,
+            message:
+              "Account already exists. Verification email resent. Please check your inbox.",
+            userId: existingUser.id,
+            requiresVerification: true,
+          };
+        }
+
+        // User exists and is verified
+        console.log(
+          "ERROR: User already exists and is verified:",
+          existingUser.id,
+        );
         throw new Error("User already exists with this email");
       }
+
       console.log("✓ No existing user found");
 
       const userId = crypto.randomUUID();
@@ -89,8 +159,10 @@ export class RegistrationService {
         });
       }
 
-      // Create user in auth.users
-      console.log("Step 5: Creating user in auth.users...");
+      // ✅ MODIFIED: Create user in auth.users with email_verified = false
+      console.log(
+        "Step 5: Creating user in auth.users (email_verified=false)...",
+      );
       const user = await databaseService.createUserInAuthTable(
         userId,
         email,
@@ -122,7 +194,7 @@ export class RegistrationService {
         role,
       });
 
-      // ✅ NEW: Auto-accept any pending invitations for this email
+      // Auto-accept any pending invitations for this email
       console.log("Step 8: Checking for pending invitations...");
       const acceptedCount =
         await invitationService.autoAcceptPendingInvitations(email, userId);
@@ -133,22 +205,75 @@ export class RegistrationService {
         console.log("✓ No pending invitations to accept");
       }
 
-      // Return user data
+      // ============================================================================
+      // ✅ NEW: EMAIL VERIFICATION FLOW
+      // ============================================================================
+
+      console.log("Step 9: Creating email verification token...");
+      const tokenResult = await databaseService.createEmailVerificationToken(
+        userId,
+        tenant.id,
+        email,
+      );
+
+      if (!tokenResult.success) {
+        console.error(
+          "❌ Failed to create verification token:",
+          tokenResult.error,
+        );
+        // Rollback user creation if verification token fails
+        await this.rollbackUserCreation(userId, tenant.id);
+        throw new Error("Failed to create verification token");
+      }
+
+      console.log("✓ Verification token created:", tokenResult.token);
+
+      // Send verification email
+      console.log("Step 10: Sending verification email...");
+      const verificationUrl = `${Deno.env.get("FRONTEND_URL")}/verify-email?token=${tokenResult.token}`;
+
+      try {
+        await emailService.sendEmail({
+          to: email,
+          subject: "Verify your Mediloop account",
+          template: "email-verification",
+          data: {
+            firstName: fullName.split(" ")[0] || "there",
+            verificationUrl,
+            expirationHours: 24,
+          },
+        });
+        console.log("✓ Verification email sent successfully");
+      } catch (emailError) {
+        console.error("❌ Failed to send verification email:", emailError);
+        // Don't rollback - user can request a new verification email
+        // Just log the error and continue
+        console.warn(
+          "⚠️ User created but verification email failed. User can resend verification email.",
+        );
+      }
+
+      // ============================================================================
+      // ✅ MODIFIED: Return success message WITHOUT tokens
+      // User must verify email before they can login
+      // ============================================================================
+
       const result = {
-        id: user.id,
+        success: true,
+        message:
+          "Registration successful! Please check your email to verify your account.",
+        userId: user.id,
         email: user.email,
-        role: user.role,
-        full_name: user.full_name,
-        tenant_id: tenant.id,
+        requiresVerification: true,
         invitations_accepted: acceptedCount,
+        // ❌ NO TOKENS - User must verify email first
       };
 
-      console.log("=== REGISTRATION SUCCESS ===");
+      console.log("=== REGISTRATION SUCCESS (EMAIL VERIFICATION REQUIRED) ===");
       console.log("Final result:", {
-        userId: result.id,
-        tenantId: result.tenant_id,
+        userId: result.userId,
         email: result.email,
-        role: result.role,
+        requiresVerification: result.requiresVerification,
         invitationsAccepted: result.invitations_accepted,
       });
 
@@ -161,6 +286,57 @@ export class RegistrationService {
         name: error.name,
       });
       throw error;
+    }
+  }
+
+  /**
+   * ✅ NEW: Helper method to rollback user creation if email verification fails
+   */
+  private async rollbackUserCreation(
+    userId: string,
+    tenantId: string,
+  ): Promise<void> {
+    console.log("🔄 Rolling back user creation...");
+
+    try {
+      // Delete from user_tenants
+      await postgresService.query(
+        `DELETE FROM public.user_tenants WHERE user_id = $1`,
+        [userId],
+      );
+
+      // Delete from auth.users
+      await postgresService.query(`DELETE FROM auth.users WHERE id = $1`, [
+        userId,
+      ]);
+
+      // Note: We don't delete the tenant as it might be needed for future registration attempts
+
+      console.log("✓ User creation rolled back");
+    } catch (rollbackError) {
+      console.error("❌ Error during rollback:", rollbackError);
+      // Log but don't throw - we've already failed
+    }
+  }
+
+  /**
+   * ✅ NEW: Helper method to get tenant_id for a user
+   */
+  private async getTenantIdForUser(userId: string): Promise<string | null> {
+    try {
+      const result = await postgresService.query(
+        `SELECT tenant_id FROM public.user_tenants WHERE user_id = $1 AND is_primary = true LIMIT 1`,
+        [userId],
+      );
+
+      if (result.rows.length > 0) {
+        return result.rows[0].tenant_id;
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Error getting tenant_id for user:", error);
+      return null;
     }
   }
 

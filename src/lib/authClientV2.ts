@@ -5,6 +5,24 @@
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
+// ✅ Backend response format (matches actual Deno backend)
+export interface BackendAuthResponse {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  session_id: string;
+  expires_at: string;
+  user: {
+    id: string;
+    email: string;
+    full_name: string;
+    role: string;
+    tenant_id: string;
+  };
+  error?: string;
+}
+
+// ✅ Frontend normalized format (for compatibility)
 export interface AuthResponse {
   success: boolean;
   message: string;
@@ -27,11 +45,32 @@ export interface RateLimitError extends Error {
 }
 
 /**
+ * Normalize backend response to frontend format
+ */
+function normalizeBackendResponse(
+  backendResponse: BackendAuthResponse,
+): AuthResponse {
+  return {
+    success: true,
+    message: "Success",
+    data: {
+      accessToken: backendResponse.access_token,
+      refreshToken: backendResponse.access_token, // Backend doesn't have separate refresh token yet
+      user: {
+        id: backendResponse.user.id,
+        email: backendResponse.user.email,
+        fullName: backendResponse.user.full_name,
+      },
+    },
+  };
+}
+
+/**
  * Store auth tokens in both legacy and V2 formats for compatibility
  */
 function storeAuthTokens(data: AuthResponse["data"]): void {
   if (!data || !data.accessToken || !data.user) {
-    console.warn("[authClientV2] Cannot store tokens - missing data");
+    console.warn("[authClientV2] Cannot store tokens - missing data", data);
     return;
   }
 
@@ -67,7 +106,7 @@ function clearAuthTokens(): void {
 }
 
 /**
- * Enhanced fetch wrapper with rate limit handling
+ * Enhanced fetch wrapper with rate limit handling and response normalization
  */
 async function apiFetch<T>(
   endpoint: string,
@@ -177,10 +216,16 @@ export const authClientV2 = {
    * Login
    */
   async login(email: string, password: string): Promise<AuthResponse> {
-    const response = await apiFetch<AuthResponse>("/api/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    });
+    const backendResponse = await apiFetch<BackendAuthResponse>(
+      "/api/auth/login",
+      {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      },
+    );
+
+    // ✅ Normalize backend response
+    const response = normalizeBackendResponse(backendResponse);
 
     // ✅ Store tokens after successful login
     if (response.success && response.data) {
@@ -199,10 +244,16 @@ export const authClientV2 = {
     fullName: string;
     phone?: string;
   }): Promise<AuthResponse> {
-    const response = await apiFetch<AuthResponse>("/api/auth/register", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
+    const backendResponse = await apiFetch<BackendAuthResponse>(
+      "/api/auth/register",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+    );
+
+    // ✅ Normalize backend response
+    const response = normalizeBackendResponse(backendResponse);
 
     // ✅ Store tokens after successful registration
     if (response.success && response.data) {

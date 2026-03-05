@@ -1,8 +1,19 @@
+/**
+ * ✅ All auth endpoints with Email Verification
+ *
+ * 1. Registration returns success message (no tokens)
+ * 2. Login checks email_verified status
+ * 3. Consistent /api/auth/* route paths
+ * 4. Profile includes email_verified field
+ * 5. Both GET and POST verify-email endpoints
+ */
+
 import { Router } from "oak";
 import { enhancedJwtService } from "../services/enhancedJwtService.ts";
 import { databaseService } from "../services/databaseService.ts";
 import { registrationService } from "../services/registrationService.ts";
 import { kvStore } from "../services/kvStore.ts";
+import { emailService } from "../services/emailService.ts";
 import {
   loginRateLimiter,
   registrationRateLimiter,
@@ -22,6 +33,10 @@ function getClientIP(ctx: any): string {
 function getUserAgent(ctx: any): string {
   return ctx.request.headers.get("user-agent") || "unknown";
 }
+
+// ============================================================================
+// REGISTRATION - ✅ FIXED: Returns success message, NOT tokens
+// ============================================================================
 
 authRoutes.post("/api/auth/register", registrationRateLimiter, async (ctx) => {
   try {
@@ -43,9 +58,6 @@ authRoutes.post("/api/auth/register", registrationRateLimiter, async (ctx) => {
       return;
     }
 
-    const ipAddress = getClientIP(ctx);
-    const userAgent = getUserAgent(ctx);
-
     console.log(
       "V3 Registration: Attempting registration for:",
       email,
@@ -53,7 +65,8 @@ authRoutes.post("/api/auth/register", registrationRateLimiter, async (ctx) => {
       role,
     );
 
-    const profile = await registrationService.registerUser(
+    // ✅ FIXED: registrationService now returns success info, not user profile
+    const result = await registrationService.registerUser(
       email,
       password,
       fullName,
@@ -62,37 +75,21 @@ authRoutes.post("/api/auth/register", registrationRateLimiter, async (ctx) => {
       pharmacyName,
     );
 
-    // ✅ FIX: tenant_id is now automatically determined
-    const tokenData = await enhancedJwtService.createToken(
-      profile.id,
-      profile.email,
-      profile.role,
-      ipAddress,
-      userAgent,
-    );
+    console.log("V3 Registration: Registration initiated for:", email);
 
-    await kvStore.setSession(tokenData.sessionId, {
-      userId: profile.id,
-      email: profile.email,
-      role: profile.role,
-      loginTime: new Date().toISOString(),
-    });
-
-    console.log("V3 Registration: Registration successful for:", email);
-
+    // ✅ FIXED: Return success message WITHOUT tokens
+    // User must verify email before they can login
     ctx.response.body = {
-      access_token: tokenData.token,
-      token_type: "Bearer",
-      expires_in: 86400,
-      session_id: tokenData.sessionId,
-      expires_at: tokenData.expiresAt.toISOString(),
+      success: result.success,
+      message:
+        result.message ||
+        "Registration successful! Please check your email to verify your account.",
       user: {
-        id: profile.id,
-        email: profile.email,
-        role: profile.role,
-        full_name: profile.full_name,
-        tenant_id: tokenData.tenantId,
+        id: result.userId,
+        email: result.email,
       },
+      requiresVerification: result.requiresVerification,
+      invitations_accepted: result.invitations_accepted || 0,
     };
   } catch (error) {
     console.error("V3 Registration error:", error);
@@ -101,7 +98,348 @@ authRoutes.post("/api/auth/register", registrationRateLimiter, async (ctx) => {
   }
 });
 
-// ✅ FIX: Simplified login - removed 60+ lines of brittle code
+// ============================================================================
+// EMAIL VERIFICATION ENDPOINTS
+// ============================================================================
+
+/**
+ * ✅ GET /api/auth/verify-email?token=xxx
+ * Verify email address using token from email link (query parameter)
+ * This is for when users click the link directly in their email
+ */
+authRoutes.get("/api/auth/verify-email", async (ctx) => {
+  try {
+    // Get token from query parameter
+    const token = ctx.request.url.searchParams.get("token");
+
+    if (!token) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        error: "Verification token is required",
+      };
+      return;
+    }
+
+    console.log("📧 Email verification (GET): Verifying token...");
+
+    // ✅ Use databaseService wrapper method
+    const result = await databaseService.verifyEmailToken(token);
+
+    if (!result.success) {
+      console.error("❌ Email verification failed:", result.error);
+      ctx.response.status = 400;
+      ctx.response.body = {
+        error: result.error || "Invalid verification token",
+      };
+      return;
+    }
+
+    console.log("✅ Email verified for user:", result.userId);
+
+    // Get user details
+    const user = await databaseService.getUserByEmail(result.email!);
+
+    // Generate auth tokens for auto-login after verification
+    const ipAddress = getClientIP(ctx);
+    const userAgent = getUserAgent(ctx);
+
+    const tokenData = await enhancedJwtService.createToken(
+      user.id,
+      user.email,
+      user.role,
+      ipAddress,
+      userAgent,
+    );
+
+    await kvStore.setSession(tokenData.sessionId, {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      loginTime: new Date().toISOString(),
+    });
+
+    console.log(
+      "✅ Email verification successful - auto-login for:",
+      user.email,
+    );
+
+    // Return success with tokens (for auto-login)
+    ctx.response.status = 200;
+    ctx.response.body = {
+      message: "Email verified successfully",
+      user: {
+        id: user.id,
+        email: user.email,
+        full_name: user.full_name,
+        role: user.role,
+        email_verified: true,
+      },
+      tokens: {
+        access_token: tokenData.token,
+        refresh_token: tokenData.token, // Note: You might want separate refresh token
+        expires_in: 3600,
+      },
+      // Also include in root for consistency
+      access_token: tokenData.token,
+      token_type: "Bearer",
+      expires_in: 86400,
+      session_id: tokenData.sessionId,
+      expires_at: tokenData.expiresAt.toISOString(),
+      tenant_id: tokenData.tenantId,
+    };
+  } catch (error) {
+    console.error("Error in verify-email (GET) route:", error);
+    ctx.response.status = 500;
+    ctx.response.body = {
+      error: "Internal server error",
+    };
+  }
+});
+
+/**
+ * ✅ POST /api/auth/verify-email
+ * Alternative endpoint for verifying email with token in body
+ * This is for when frontend sends the token as JSON
+ */
+authRoutes.post("/api/auth/verify-email", async (ctx) => {
+  try {
+    const body = await ctx.request.body({ type: "json" }).value;
+    const { token } = body;
+
+    if (!token) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        error: "Verification token is required",
+      };
+      return;
+    }
+
+    console.log("📧 Email verification (POST): Verifying token...");
+
+    // ✅ Use databaseService wrapper method
+    const result = await databaseService.verifyEmailToken(token);
+
+    if (!result.success) {
+      console.error("❌ Email verification failed:", result.error);
+      ctx.response.status = 400;
+      ctx.response.body = {
+        error: result.error || "Invalid verification token",
+      };
+      return;
+    }
+
+    console.log("✅ Email verified for user:", result.userId);
+
+    // Get user details
+    const user = await databaseService.getUserByEmail(result.email!);
+
+    // Generate auth tokens for auto-login after verification
+    const ipAddress = getClientIP(ctx);
+    const userAgent = getUserAgent(ctx);
+
+    const tokenData = await enhancedJwtService.createToken(
+      user.id,
+      user.email,
+      user.role,
+      ipAddress,
+      userAgent,
+    );
+
+    await kvStore.setSession(tokenData.sessionId, {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      loginTime: new Date().toISOString(),
+    });
+
+    console.log(
+      "✅ Email verification successful - auto-login for:",
+      user.email,
+    );
+
+    // Return success with tokens (for auto-login)
+    ctx.response.status = 200;
+    ctx.response.body = {
+      message: "Email verified successfully",
+      user: {
+        id: user.id,
+        email: user.email,
+        full_name: user.full_name,
+        role: user.role,
+        email_verified: true,
+      },
+      tokens: {
+        access_token: tokenData.token,
+        refresh_token: tokenData.token, // Note: You might want separate refresh token
+        expires_in: 3600,
+      },
+      // Also include in root for consistency
+      access_token: tokenData.token,
+      token_type: "Bearer",
+      expires_in: 86400,
+      session_id: tokenData.sessionId,
+      expires_at: tokenData.expiresAt.toISOString(),
+      tenant_id: tokenData.tenantId,
+    };
+  } catch (error) {
+    console.error("Error in verify-email (POST) route:", error);
+    ctx.response.status = 500;
+    ctx.response.body = {
+      error: "Internal server error",
+    };
+  }
+});
+
+/**
+ * ✅ POST /api/auth/resend-verification
+ * Resend verification email to user
+ * Body: { email: string }
+ */
+authRoutes.post("/api/auth/resend-verification", async (ctx) => {
+  try {
+    const body = await ctx.request.body({ type: "json" }).value;
+    const { email } = body;
+
+    if (!email) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        error: "Email is required",
+      };
+      return;
+    }
+
+    console.log("📧 Resend verification: Request for email:", email);
+
+    // Find user by email
+    let user;
+    try {
+      user = await databaseService.getUserByEmail(email);
+    } catch (error) {
+      // Don't reveal if user exists or not (security)
+      console.log("⚠️ User not found for resend verification");
+      ctx.response.status = 200;
+      ctx.response.body = {
+        message:
+          "If an account exists with this email, a verification link has been sent",
+      };
+      return;
+    }
+
+    // Check if already verified
+    if (user.email_verified) {
+      console.log("⚠️ User already verified:", email);
+      ctx.response.status = 400;
+      ctx.response.body = {
+        error: "Email is already verified",
+      };
+      return;
+    }
+
+    // Get tenant_id for user - query user_tenants
+    const tenantResult = await databaseService.postgresService.query(
+      `SELECT tenant_id FROM public.user_tenants WHERE user_id = $1 AND is_primary = true LIMIT 1`,
+      [user.id],
+    );
+
+    const tenantId =
+      tenantResult.rows.length > 0
+        ? tenantResult.rows[0].tenant_id
+        : crypto.randomUUID(); // Fallback if no tenant found
+
+    // Create new verification token using databaseService wrapper
+    const tokenResult = await databaseService.resendEmailVerification(
+      user.id,
+      tenantId,
+      user.email,
+    );
+
+    if (!tokenResult.success) {
+      console.error(
+        "❌ Failed to create verification token:",
+        tokenResult.error,
+      );
+      ctx.response.status = 500;
+      ctx.response.body = {
+        error: tokenResult.error || "Failed to create verification token",
+      };
+      return;
+    }
+
+    // Send verification email
+    const verificationUrl = `${Deno.env.get("FRONTEND_URL")}/verify-email?token=${tokenResult.token}`;
+
+    await emailService.sendEmail({
+      to: user.email,
+      subject: "Verify your Mediloop account",
+      template: "email-verification",
+      data: {
+        firstName: user.full_name?.split(" ")[0] || "there",
+        verificationUrl,
+        expirationHours: 24,
+      },
+    });
+
+    console.log("✅ Verification email resent to:", email);
+
+    ctx.response.status = 200;
+    ctx.response.body = {
+      message: "Verification email sent successfully",
+    };
+  } catch (error) {
+    console.error("Error in resend-verification route:", error);
+    ctx.response.status = 500;
+    ctx.response.body = {
+      error: "Internal server error",
+    };
+  }
+});
+
+/**
+ * ✅ GET /api/auth/verification-status?email=xxx
+ * Check verification status for an email
+ */
+authRoutes.get("/api/auth/verification-status", async (ctx) => {
+  try {
+    const email = ctx.request.url.searchParams.get("email");
+
+    if (!email) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        error: "Email is required",
+      };
+      return;
+    }
+
+    // Find user by email
+    let user;
+    try {
+      user = await databaseService.getUserByEmail(email);
+    } catch (error) {
+      ctx.response.status = 404;
+      ctx.response.body = {
+        error: "User not found",
+      };
+      return;
+    }
+
+    ctx.response.status = 200;
+    ctx.response.body = {
+      email_verified: user.email_verified,
+      user_id: user.id,
+    };
+  } catch (error) {
+    console.error("Error in verification-status route:", error);
+    ctx.response.status = 500;
+    ctx.response.body = {
+      error: "Internal server error",
+    };
+  }
+});
+
+// ============================================================================
+// LOGIN - ✅ FIXED: Now checks email verification status
+// ============================================================================
+
 authRoutes.post("/api/auth/login", loginRateLimiter, async (ctx) => {
   try {
     const body = await ctx.request.body({ type: "json" }).value;
@@ -120,6 +458,19 @@ authRoutes.post("/api/auth/login", loginRateLimiter, async (ctx) => {
 
     const profile = await databaseService.verifyUserPassword(email, password);
     console.log("V3 Login: Password verification successful for:", email);
+
+    // ✅ NEW: Check if email is verified before allowing login
+    if (!profile.email_verified) {
+      console.log("V3 Login: Email not verified for:", email);
+      ctx.response.status = 403;
+      ctx.response.body = {
+        error: "Please verify your email address before logging in",
+        requiresVerification: true,
+        userId: profile.id,
+        email: profile.email,
+      };
+      return;
+    }
 
     // ✅ tenant_id is automatically looked up from user_tenants table
     const tokenData = await enhancedJwtService.createToken(
@@ -156,6 +507,7 @@ authRoutes.post("/api/auth/login", loginRateLimiter, async (ctx) => {
         role: profile.role,
         full_name: profile.full_name,
         tenant_id: tokenData.tenantId,
+        email_verified: true, // ✅ Include verification status
       },
     };
   } catch (error) {
@@ -174,6 +526,10 @@ authRoutes.post("/api/auth/login", loginRateLimiter, async (ctx) => {
     ctx.response.body = { error: errorMessage };
   }
 });
+
+// ============================================================================
+// OTHER EXISTING ENDPOINTS (UNCHANGED)
+// ============================================================================
 
 authRoutes.post("/api/auth/logout", async (ctx) => {
   try {
@@ -318,6 +674,7 @@ authRoutes.get("/api/auth/profile", async (ctx) => {
         email: user.email,
         full_name: user.full_name,
         role: user.role,
+        email_verified: user.email_verified, // ✅ Include verification status
         created_at: user.created_at,
         updated_at: user.updated_at,
       },

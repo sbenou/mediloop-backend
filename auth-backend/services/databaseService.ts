@@ -1,16 +1,16 @@
 /**
- * ✅ CORRECTED: databaseService.ts - Fixed Profile type compatibility
+ * ✅ INTEGRATED: databaseService.ts - WITH EMAIL VERIFICATION SUPPORT
  *
- * Changes:
- * 1. Fixed Profile.created_at and updated_at to use string format
- * 2. Added getUserByPhone() method
- * 3. Updated createUser() to support optional phone parameter
+ * This version preserves ALL existing logic and adds email verification methods
  */
 
 import { PostgresService } from "./postgresService.ts";
 import { passwordService } from "./passwordService.ts";
 import { config } from "../config/env.ts";
 import { User, Profile } from "../types.ts";
+
+// Import email verification service (you'll need to add this file)
+import { EmailVerificationService } from "./emailVerificationService.ts";
 
 export class DatabaseService {
   private postgresService: PostgresService;
@@ -31,7 +31,7 @@ export class DatabaseService {
     try {
       // Query auth.users table
       const result = await client.queryObject<User>(
-        "SELECT id, email, phone, password_hash, full_name, role, role_id, created_at, updated_at FROM auth.users WHERE email = $1 LIMIT 1",
+        "SELECT id, email, phone, password_hash, full_name, role, role_id, email_verified, created_at, updated_at FROM auth.users WHERE email = $1 LIMIT 1",
         [email],
       );
 
@@ -140,7 +140,7 @@ export class DatabaseService {
     passwordPlain: string,
     fullName: string,
     role: string,
-    phone?: string, // ✅ ADDED: Optional phone parameter
+    phone?: string,
   ): Promise<User> {
     const client = await this.postgresService.getClient();
 
@@ -160,10 +160,10 @@ export class DatabaseService {
 
       const roleId = roleResult.rows[0].id;
 
-      // Insert into auth.users
+      // ✅ NEW: Insert with email_verified = false (will be verified after email verification)
       const result = await client.queryObject<User>(
-        `INSERT INTO auth.users (email, phone, password_hash, full_name, role, role_id, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+        `INSERT INTO auth.users (email, phone, password_hash, full_name, role, role_id, email_verified, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, false, NOW(), NOW())
          RETURNING *`,
         [email, phone, passwordHash, fullName, role, roleId],
       );
@@ -215,7 +215,7 @@ export class DatabaseService {
     fullName: string,
     passwordHash: string,
     role: string,
-    phone?: string, // ✅ ADDED: Optional phone parameter
+    phone?: string,
   ): Promise<User> {
     const client = await this.postgresService.getClient();
 
@@ -234,11 +234,11 @@ export class DatabaseService {
       const roleId = roleResult.rows[0].id;
       console.log("✅ Found role_id:", roleId, "for role:", role);
 
-      // Insert into auth.users
+      // ✅ NEW: Insert with email_verified = false
       console.log("📝 Inserting into auth.users...");
       const userResult = await client.queryObject<User>(
-        `INSERT INTO auth.users (id, email, phone, password_hash, full_name, role, role_id, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+        `INSERT INTO auth.users (id, email, phone, password_hash, full_name, role, role_id, email_verified, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, false, NOW(), NOW())
          RETURNING *`,
         [userId, email, phone, passwordHash, fullName, role, roleId],
       );
@@ -270,7 +270,7 @@ export class DatabaseService {
     fullName: string,
     passwordHash: string,
     role: string,
-    phone?: string, // ✅ ADDED: Optional phone parameter
+    phone?: string,
   ): Promise<{ user: User; profile: Profile }> {
     console.warn(
       "⚠️ createUserWithPasswordInSchema is deprecated - use createUserInAuthTable instead",
@@ -298,6 +298,110 @@ export class DatabaseService {
         updated_at: new Date().toISOString(),
       } as Profile,
     };
+  }
+
+  // ============================================================================
+  // ✅ NEW: EMAIL VERIFICATION METHODS (added for email verification support)
+  // ============================================================================
+
+  /**
+   * Create email verification token
+   */
+  async createEmailVerificationToken(
+    userId: string,
+    tenantId: string,
+    email: string,
+  ): Promise<{ success: boolean; token?: string; error?: string }> {
+    const client = await this.postgresService.getClient();
+    try {
+      return await EmailVerificationService.createVerificationToken(
+        client,
+        userId,
+        tenantId,
+        email,
+      );
+    } finally {
+      this.postgresService.releaseClient(client);
+    }
+  }
+
+  /**
+   * Verify email verification token
+   */
+  async verifyEmailToken(
+    token: string,
+  ): Promise<{
+    success: boolean;
+    userId?: string;
+    email?: string;
+    error?: string;
+  }> {
+    const client = await this.postgresService.getClient();
+    try {
+      return await EmailVerificationService.verifyToken(client, token);
+    } finally {
+      this.postgresService.releaseClient(client);
+    }
+  }
+
+  /**
+   * Check if user's email is verified
+   */
+  async isEmailVerified(userId: string): Promise<boolean> {
+    const client = await this.postgresService.getClient();
+    try {
+      return await EmailVerificationService.isEmailVerified(client, userId);
+    } finally {
+      this.postgresService.releaseClient(client);
+    }
+  }
+
+  /**
+   * Get pending verification for user
+   */
+  async getPendingEmailVerification(userId: string): Promise<any> {
+    const client = await this.postgresService.getClient();
+    try {
+      return await EmailVerificationService.getPendingVerification(
+        client,
+        userId,
+      );
+    } finally {
+      this.postgresService.releaseClient(client);
+    }
+  }
+
+  /**
+   * Resend email verification
+   */
+  async resendEmailVerification(
+    userId: string,
+    tenantId: string,
+    email: string,
+  ): Promise<{ success: boolean; token?: string; error?: string }> {
+    const client = await this.postgresService.getClient();
+    try {
+      return await EmailVerificationService.resendVerification(
+        client,
+        userId,
+        tenantId,
+        email,
+      );
+    } finally {
+      this.postgresService.releaseClient(client);
+    }
+  }
+
+  /**
+   * Cleanup expired verification tokens (should be run via cron)
+   */
+  async cleanupExpiredVerificationTokens(): Promise<number> {
+    const client = await this.postgresService.getClient();
+    try {
+      return await EmailVerificationService.cleanupExpiredTokens(client);
+    } finally {
+      this.postgresService.releaseClient(client);
+    }
   }
 }
 

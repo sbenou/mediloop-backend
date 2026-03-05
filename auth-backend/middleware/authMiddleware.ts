@@ -4,6 +4,9 @@ import { enhancedJwtService } from "../services/enhancedJwtService.ts";
 // Public routes that don't require authentication
 const PUBLIC_ROUTES = [
   "/register",
+  "/api/auth/verify-email",
+  "/api/auth/resend-verification",
+  "/api/auth/verification-status",
   "/login",
   "/health",
   "/verify-token",

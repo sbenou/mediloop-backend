@@ -2,6 +2,7 @@ const API_BASE_URL = "http://localhost:8000";
 
 interface LoginResponse {
   access_token: string;
+  refresh_token?: string;
   token_type: string;
   expires_in: number;
   session_id: string;
@@ -34,6 +35,30 @@ class AuthClient {
     this.token = localStorage.getItem("auth_token");
   }
 
+  /**
+   * Store tokens in BOTH legacy and V2 formats for compatibility
+   */
+  private storeTokens(data: LoginResponse | RegisterResponse): void {
+    this.token = data.access_token;
+
+    // ✅ Store in LEGACY format (for backward compatibility)
+    localStorage.setItem("auth_token", this.token);
+
+    // ✅ Store in V2 format (for new auth system)
+    const v2Session = {
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token || data.access_token, // Use refresh_token if available
+      userId: data.user.id,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem("mediloop_session_sync", JSON.stringify(v2Session));
+
+    // ✅ Also store user data separately for V2 system
+    localStorage.setItem("mediloop_v2_user", JSON.stringify(data.user));
+
+    console.log("✅ Tokens stored in both legacy and V2 format");
+  }
+
   async login(email: string, password: string): Promise<LoginResponse> {
     const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
       method: "POST",
@@ -49,8 +74,7 @@ class AuthClient {
     }
 
     const data: LoginResponse = await response.json();
-    this.token = data.access_token;
-    localStorage.setItem("auth_token", this.token);
+    this.storeTokens(data); // ✅ Use new storage method
     return data;
   }
 
@@ -74,8 +98,7 @@ class AuthClient {
     }
 
     const data: RegisterResponse = await response.json();
-    this.token = data.access_token;
-    localStorage.setItem("auth_token", this.token);
+    this.storeTokens(data); // ✅ Use new storage method
     return data;
   }
 
@@ -133,6 +156,7 @@ class AuthClient {
   handleOAuthCallback(token: string): void {
     this.token = token;
     localStorage.setItem("auth_token", token);
+    // Note: OAuth callback should ideally provide full user data to use storeTokens()
   }
 
   async verifyToken(): Promise<TokenVerification> {
@@ -165,7 +189,13 @@ class AuthClient {
 
   logout(): void {
     this.token = null;
+
+    // ✅ Clear BOTH legacy and V2 storage
     localStorage.removeItem("auth_token");
+    localStorage.removeItem("mediloop_session_sync");
+    localStorage.removeItem("mediloop_v2_user");
+
+    console.log("✅ Logged out - cleared all auth data");
   }
 
   getToken(): string | null {
