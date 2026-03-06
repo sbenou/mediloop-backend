@@ -121,6 +121,13 @@ class EnvironmentConfig {
     const environment = appConfig.app.environment;
     let databaseUrl = "";
 
+    const testDatabaseUrl = Deno.env.get("TEST_DATABASE_URL");
+    if (testDatabaseUrl) {
+      console.log("🧪 Using TEST database URL from environment variable");
+      console.log("   Database:", testDatabaseUrl.replace(/:[^@]+@/, ":***@"));
+      return this.validateDatabaseUrl(testDatabaseUrl);
+    }
+
     // Try to get environment-specific database URL from Vault
     if (environment === "production") {
       const prodUrl = this.getSecret("DATABASE_URL_PROD");
