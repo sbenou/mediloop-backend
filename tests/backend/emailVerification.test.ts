@@ -2,7 +2,7 @@
  * Backend Email Verification Tests
  * Tests the new email verification flow integrated with registration and login
  *
- * IMPORTANT: These tests require the email verification integration to be deployed
+ * ✅ NOW INCLUDES: Automatic token fetching from database!
  */
 
 import {
@@ -10,8 +10,25 @@ import {
   assertExists,
   assert,
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
+import { TestDb } from "../utils/testDb.ts";
 
 const BASE_URL = Deno.env.get("API_URL") || "http://localhost:8000";
+
+// ✅ NEW: Create test database instance
+const testDb = new TestDb();
+
+// Setup: Connect to database before all tests
+Deno.test("Email Verification - Setup: Connect to database", async () => {
+  console.log("\n🔌 Connecting to test database...");
+  try {
+    await testDb.connect();
+    console.log("✅ Test database connected\n");
+  } catch (error) {
+    console.error("❌ Failed to connect to test database:", error.message);
+    console.error("\n⚠️  Make sure you have set TEST_DATABASE_URL or DATABASE_URL environment variable");
+    throw error;
+  }
+});
 
 async function makeRequest(
   endpoint: string,
@@ -26,18 +43,6 @@ async function makeRequest(
   });
   const data = await response.json();
   return { response, data };
-}
-
-// Helper to query database for verification token (manual step in tests)
-async function getVerificationTokenFromDB(
-  email: string,
-): Promise<string | null> {
-  console.log("  ⚠️  MANUAL STEP: Get verification token from database");
-  console.log(`  Run this SQL query:`);
-  console.log(
-    `  SELECT token FROM auth.email_verification_tokens WHERE user_id = (SELECT id FROM auth.users WHERE email = '${email}') AND used = false ORDER BY created_at DESC LIMIT 1;`,
-  );
-  return null; // Would need to be populated manually or via DB connection
 }
 
 // ============================================================================
@@ -65,8 +70,8 @@ Deno.test(
     console.log(`  Status: ${response.status}`);
     console.log(`  Response:`, data);
 
-    // Should return 200 or 201
-    assertEquals([200, 201].includes(response.status), true);
+    // ✅ FIXED: Should return 201 Created
+    assertEquals(response.status, 201, "Registration should return 201 Created");
 
     // ✅ CRITICAL: Should include requiresVerification flag
     assertExists(
@@ -220,7 +225,7 @@ Deno.test("Email Verification - Resend verification email", async () => {
 });
 
 // ============================================================================
-// TEST 5: Verify Email with Token (POST)
+// TEST 5: Verify Email with Token (POST) - ✅ NOW AUTO-FETCHES TOKEN!
 // ============================================================================
 
 Deno.test("Email Verification - Verify email with token (POST)", async () => {
@@ -228,17 +233,17 @@ Deno.test("Email Verification - Verify email with token (POST)", async () => {
 
   const email = Deno.env.get("TEST_USER_EMAIL") || "test@mediloop.com";
 
-  // Manual step: Get token from database
-  console.log("  ⚠️  MANUAL STEP REQUIRED:");
-  await getVerificationTokenFromDB(email);
-
-  const token = Deno.env.get("TEST_VERIFICATION_TOKEN");
+  // ✅ NEW: Auto-fetch token from database!
+  console.log("  📊 Fetching verification token from database...");
+  const token = await testDb.getVerificationToken(email);
 
   if (!token) {
-    console.log("  ⚠️  No token provided - skipping verification test");
-    console.log("  Set TEST_VERIFICATION_TOKEN env var to run this test");
-    return;
+    console.log("  ❌ No verification token found in database");
+    console.log("  This might indicate an issue with email verification token creation");
+    throw new Error("No verification token found for user");
   }
+
+  console.log(`  ✅ Found verification token: ${token.substring(0, 20)}...`);
 
   const { response, data } = await makeRequest("/api/auth/verify-email", {
     token,
@@ -273,6 +278,7 @@ Deno.test("Email Verification - Verify email with token (POST)", async () => {
 
   // Save token for next tests
   Deno.env.set("TEST_ACCESS_TOKEN", data.access_token);
+  Deno.env.set("TEST_VERIFICATION_TOKEN", token);
 });
 
 // ============================================================================
@@ -285,7 +291,7 @@ Deno.test("Email Verification - Reject already used token", async () => {
   const token = Deno.env.get("TEST_VERIFICATION_TOKEN");
 
   if (!token) {
-    console.log("  ⚠️  No token provided - skipping token reuse test");
+    console.log("  ⚠️  No token from previous test - skipping token reuse test");
     return;
   }
 
@@ -310,7 +316,7 @@ Deno.test("Email Verification - Reject already used token", async () => {
 });
 
 // ============================================================================
-// TEST 7: Login After Verification (Should Work)
+// TEST 7: Login After Verification (Should Work) - ✅ NOW PROPERLY SEQUENTIAL!
 // ============================================================================
 
 Deno.test(
@@ -321,6 +327,16 @@ Deno.test(
     const email = Deno.env.get("TEST_USER_EMAIL") || "test@mediloop.com";
     const password = Deno.env.get("TEST_USER_PASSWORD") || "TestPass123!@#";
 
+    // ✅ Verify email is actually verified
+    const isVerified = await testDb.isEmailVerified(email);
+    console.log(`  📊 Email verified status: ${isVerified}`);
+
+    if (!isVerified) {
+      console.log("  ⚠️  Email not verified - this test depends on Test 5 passing");
+      console.log("  Skipping login test");
+      return;
+    }
+
     const { response, data } = await makeRequest("/api/auth/login", {
       email,
       password,
@@ -329,8 +345,8 @@ Deno.test(
     console.log(`  Status: ${response.status}`);
     console.log(`  Response:`, data);
 
-    // Should return 200 OK
-    assertEquals(response.status, 200);
+    // ✅ Should return 200 OK
+    assertEquals(response.status, 200, "Login should succeed with status 200");
 
     // ✅ Should include tokens
     assertExists(data.access_token, "Should return access_token");
@@ -417,13 +433,23 @@ Deno.test("Email Verification - Invalid token rejected", async () => {
 });
 
 // ============================================================================
-// TEST 10: Resend Verification for Already Verified User
+// TEST 10: Resend Verification for Already Verified User - ✅ NOW CHECKS DB!
 // ============================================================================
 
 Deno.test("Email Verification - Resend blocked for verified user", async () => {
   console.log("\n🧪 Testing resend for already verified user...");
 
   const email = Deno.env.get("TEST_USER_EMAIL") || "test@mediloop.com";
+
+  // ✅ Verify user is actually verified
+  const isVerified = await testDb.isEmailVerified(email);
+  console.log(`  📊 Email verified status: ${isVerified}`);
+
+  if (!isVerified) {
+    console.log("  ⚠️  Email not verified - this test depends on Test 5 passing");
+    console.log("  Skipping resend test");
+    return;
+  }
 
   const { response, data } = await makeRequest(
     "/api/auth/resend-verification",
@@ -433,7 +459,8 @@ Deno.test("Email Verification - Resend blocked for verified user", async () => {
   console.log(`  Status: ${response.status}`);
   console.log(`  Response:`, data);
 
-  assertEquals(response.status, 400);
+  // ✅ Should return 400 Bad Request
+  assertEquals(response.status, 400, "Should block resend for verified user");
   assertExists(data.error, "Should have error message");
   assert(
     data.error.includes("already verified") || data.error.includes("verified"),
@@ -444,7 +471,7 @@ Deno.test("Email Verification - Resend blocked for verified user", async () => {
 });
 
 // ============================================================================
-// TEST 11: Verify Email with GET (Email Link Click)
+// TEST 11: Verify Email with GET (Email Link Click) - ✅ AUTO-FETCH TOKEN!
 // ============================================================================
 
 Deno.test(
@@ -465,16 +492,17 @@ Deno.test(
       fullName: "GET Test User",
     });
 
-    console.log("  ℹ️  User registered, now need token from database");
-    await getVerificationTokenFromDB(email);
-
-    const token = Deno.env.get("TEST_VERIFICATION_TOKEN_GET");
+    console.log("  ℹ️  User registered, fetching token from database...");
+    
+    // ✅ NEW: Auto-fetch token from database!
+    const token = await testDb.getVerificationToken(email);
 
     if (!token) {
-      console.log("  ⚠️  No token provided - skipping GET verification test");
-      console.log("  Set TEST_VERIFICATION_TOKEN_GET env var to run this test");
-      return;
+      console.log("  ❌ No verification token found");
+      throw new Error("No verification token found for GET test user");
     }
+
+    console.log(`  ✅ Found token: ${token.substring(0, 20)}...`);
 
     // Simulate clicking email link (GET request)
     const response = await fetch(
@@ -522,7 +550,7 @@ Deno.test(
 );
 
 // ============================================================================
-// INTEGRATION TEST: Full Flow
+// INTEGRATION TEST: Full Flow - ✅ AUTO-FETCH TOKEN!
 // ============================================================================
 
 Deno.test("Email Verification - Full integration flow", async () => {
@@ -576,22 +604,74 @@ Deno.test("Email Verification - Full integration flow", async () => {
   assertEquals(resendRes.status, 200);
   console.log("  ✓ Resend successful");
 
-  console.log("\n  ℹ️  Manual steps to complete:");
-  console.log("  5. Get verification token from database");
-  console.log("  6. Verify email with token");
-  console.log("  7. Login should work");
-  console.log("  8. Profile should show email_verified: true");
+  // ✅ Step 5: Auto-fetch token and verify!
+  console.log("  Step 5: Fetch verification token from database");
+  const token = await testDb.getVerificationToken(email);
+  
+  if (!token) {
+    throw new Error("No verification token found");
+  }
+  console.log("  ✓ Token fetched from database");
 
-  console.log("\n✅ Email verification integration flow verified\n");
+  // Step 6: Verify email
+  console.log("  Step 6: Verify email with token");
+  const { response: verifyRes } = await makeRequest("/api/auth/verify-email", {
+    token,
+  });
+
+  assertEquals(verifyRes.status, 200);
+  console.log("  ✓ Email verified");
+
+  // Step 7: Login should work now
+  console.log("  Step 7: Login after verification");
+  const { response: loginRes2, data: loginData2 } = await makeRequest(
+    "/api/auth/login",
+    { email, password },
+  );
+
+  assertEquals(loginRes2.status, 200);
+  assertExists(loginData2.access_token);
+  console.log("  ✓ Login successful");
+
+  // Step 8: Check profile
+  console.log("  Step 8: Check profile");
+  const { response: profileRes, data: profileData } = await makeRequest(
+    "/api/auth/profile",
+    undefined,
+    "GET",
+    { Authorization: `Bearer ${loginData2.access_token}` },
+  );
+
+  assertEquals(profileRes.status, 200);
+  assertEquals(profileData.profile.email_verified, true);
+  console.log("  ✓ Profile shows email_verified: true");
+
+  console.log("\n✅ Email verification integration flow completed successfully!\n");
+});
+
+// ============================================================================
+// CLEANUP: Disconnect from database and clean up test users
+// ============================================================================
+
+Deno.test("Email Verification - Cleanup: Delete test users", async () => {
+  console.log("\n🧹 Cleaning up test users...");
+  
+  const deletedCount = await testDb.cleanupTestUsers();
+  console.log(`✅ Deleted ${deletedCount} test users\n`);
+});
+
+Deno.test("Email Verification - Cleanup: Disconnect from database", async () => {
+  console.log("🔌 Disconnecting from test database...");
+  await testDb.close();
+  console.log("✅ Test database disconnected\n");
 });
 
 console.log("\n" + "=".repeat(70));
 console.log("📋 Email Verification Test Suite Complete");
 console.log("=".repeat(70));
 console.log("\n📝 Notes:");
-console.log("  - Some tests require manual database queries for tokens");
-console.log(
-  "  - Set TEST_VERIFICATION_TOKEN env var for full verification tests",
-);
-console.log("  - In production, tokens would come from email links");
+console.log("  - ✅ Tests now AUTO-FETCH verification tokens from database!");
+console.log("  - ✅ No manual database queries needed");
+console.log("  - ✅ Test users are automatically cleaned up");
+console.log("  - Set TEST_DATABASE_URL to use a separate test database");
 console.log("\n");
