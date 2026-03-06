@@ -77,6 +77,9 @@ authRoutes.post("/api/auth/register", registrationRateLimiter, async (ctx) => {
 
     console.log("V3 Registration: Registration initiated for:", email);
 
+    // ✅ FIXED: Return 201 Created status code
+    ctx.response.status = 201;
+    
     // ✅ FIXED: Return success message WITHOUT tokens
     // User must verify email before they can login
     ctx.response.body = {
