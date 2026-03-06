@@ -18,15 +18,19 @@ const BASE_URL = Deno.env.get("API_URL") || "http://localhost:8000";
 const testDb = new TestDb();
 
 // Setup: Connect to database before all tests
-Deno.test("Email Verification - Setup: Connect to database", async () => {
-  console.log("\n🔌 Connecting to test database...");
-  try {
-    await testDb.connect();
-    console.log("✅ Test database connected\n");
-  } catch (error) {
-    const err = error as Error;
-    console.error("❌ Failed to connect to test database:", err.message);
-  }
+Deno.test({
+  name: "Email Verification - Setup: Connect to database",
+  sanitizeResources: false, // ← ADD THIS
+  async fn() {
+    console.log("\n🔌 Connecting to test database...");
+    try {
+      await testDb.connect();
+      console.log("✅ Test database connected\n");
+    } catch (error) {
+      const err = error as Error;
+      console.error("❌ Failed to connect to test database:", err.message);
+    }
+  },
 });
 
 async function makeRequest(
@@ -673,14 +677,15 @@ Deno.test("Email Verification - Cleanup: Delete test users", async () => {
   console.log(`✅ Deleted ${deletedCount} test users\n`);
 });
 
-Deno.test(
-  "Email Verification - Cleanup: Disconnect from database",
-  async () => {
+Deno.test({
+  name: "Email Verification - Cleanup: Disconnect from database",
+  sanitizeResources: false, // ← ADD THIS
+  async fn() {
     console.log("🔌 Disconnecting from test database...");
     await testDb.close();
     console.log("✅ Test database disconnected\n");
   },
-);
+});
 
 console.log("\n" + "=".repeat(70));
 console.log("📋 Email Verification Test Suite Complete");
