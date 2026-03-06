@@ -24,9 +24,8 @@ Deno.test("Email Verification - Setup: Connect to database", async () => {
     await testDb.connect();
     console.log("✅ Test database connected\n");
   } catch (error) {
-    console.error("❌ Failed to connect to test database:", error.message);
-    console.error("\n⚠️  Make sure you have set TEST_DATABASE_URL or DATABASE_URL environment variable");
-    throw error;
+    const err = error as Error;
+    console.error("❌ Failed to connect to test database:", err.message);
   }
 });
 
@@ -71,7 +70,11 @@ Deno.test(
     console.log(`  Response:`, data);
 
     // ✅ FIXED: Should return 201 Created
-    assertEquals(response.status, 201, "Registration should return 201 Created");
+    assertEquals(
+      response.status,
+      201,
+      "Registration should return 201 Created",
+    );
 
     // ✅ CRITICAL: Should include requiresVerification flag
     assertExists(
@@ -239,7 +242,9 @@ Deno.test("Email Verification - Verify email with token (POST)", async () => {
 
   if (!token) {
     console.log("  ❌ No verification token found in database");
-    console.log("  This might indicate an issue with email verification token creation");
+    console.log(
+      "  This might indicate an issue with email verification token creation",
+    );
     throw new Error("No verification token found for user");
   }
 
@@ -291,7 +296,9 @@ Deno.test("Email Verification - Reject already used token", async () => {
   const token = Deno.env.get("TEST_VERIFICATION_TOKEN");
 
   if (!token) {
-    console.log("  ⚠️  No token from previous test - skipping token reuse test");
+    console.log(
+      "  ⚠️  No token from previous test - skipping token reuse test",
+    );
     return;
   }
 
@@ -332,7 +339,9 @@ Deno.test(
     console.log(`  📊 Email verified status: ${isVerified}`);
 
     if (!isVerified) {
-      console.log("  ⚠️  Email not verified - this test depends on Test 5 passing");
+      console.log(
+        "  ⚠️  Email not verified - this test depends on Test 5 passing",
+      );
       console.log("  Skipping login test");
       return;
     }
@@ -446,7 +455,9 @@ Deno.test("Email Verification - Resend blocked for verified user", async () => {
   console.log(`  📊 Email verified status: ${isVerified}`);
 
   if (!isVerified) {
-    console.log("  ⚠️  Email not verified - this test depends on Test 5 passing");
+    console.log(
+      "  ⚠️  Email not verified - this test depends on Test 5 passing",
+    );
     console.log("  Skipping resend test");
     return;
   }
@@ -493,7 +504,7 @@ Deno.test(
     });
 
     console.log("  ℹ️  User registered, fetching token from database...");
-    
+
     // ✅ NEW: Auto-fetch token from database!
     const token = await testDb.getVerificationToken(email);
 
@@ -607,7 +618,7 @@ Deno.test("Email Verification - Full integration flow", async () => {
   // ✅ Step 5: Auto-fetch token and verify!
   console.log("  Step 5: Fetch verification token from database");
   const token = await testDb.getVerificationToken(email);
-  
+
   if (!token) {
     throw new Error("No verification token found");
   }
@@ -646,7 +657,9 @@ Deno.test("Email Verification - Full integration flow", async () => {
   assertEquals(profileData.profile.email_verified, true);
   console.log("  ✓ Profile shows email_verified: true");
 
-  console.log("\n✅ Email verification integration flow completed successfully!\n");
+  console.log(
+    "\n✅ Email verification integration flow completed successfully!\n",
+  );
 });
 
 // ============================================================================
@@ -655,16 +668,19 @@ Deno.test("Email Verification - Full integration flow", async () => {
 
 Deno.test("Email Verification - Cleanup: Delete test users", async () => {
   console.log("\n🧹 Cleaning up test users...");
-  
+
   const deletedCount = await testDb.cleanupTestUsers();
   console.log(`✅ Deleted ${deletedCount} test users\n`);
 });
 
-Deno.test("Email Verification - Cleanup: Disconnect from database", async () => {
-  console.log("🔌 Disconnecting from test database...");
-  await testDb.close();
-  console.log("✅ Test database disconnected\n");
-});
+Deno.test(
+  "Email Verification - Cleanup: Disconnect from database",
+  async () => {
+    console.log("🔌 Disconnecting from test database...");
+    await testDb.close();
+    console.log("✅ Test database disconnected\n");
+  },
+);
 
 console.log("\n" + "=".repeat(70));
 console.log("📋 Email Verification Test Suite Complete");

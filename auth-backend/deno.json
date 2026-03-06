@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "dev": "deno run --allow-net --allow-env --allow-read --unstable-kv --watch main.ts",
+    "dev": "deno run --allow-net --allow-env --allow-read --unstable-kv --unstable-cron --watch main.ts",
     "prod": "deno run --allow-net --allow-env --allow-read --unstable-kv --cached-only main.ts",
     "test": "deno test --allow-net --allow-env --allow-read ../tests/backend/",
     "setup-vault": "deno run --allow-net --allow-env --allow-read --allow-run scripts/setup-vault-launcher.ts",

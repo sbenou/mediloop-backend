@@ -1,7 +1,7 @@
 /**
  * Test Database Utilities
  * Reusable database connection and query helpers for Deno tests
- * 
+ *
  * Usage:
  *   import { TestDb } from "./utils/testDb.ts";
  *   const testDb = new TestDb();
@@ -19,7 +19,7 @@ export interface VerificationToken {
   tenant_id: string;
   created_at: Date;
   expires_at: Date;
-  used: boolean;
+  verified: boolean;
 }
 
 export interface TestUser {
@@ -45,11 +45,12 @@ export class TestDb {
       return; // Already connected
     }
 
-    const databaseUrl = Deno.env.get("TEST_DATABASE_URL") || Deno.env.get("DATABASE_URL");
-    
+    const databaseUrl =
+      Deno.env.get("TEST_DATABASE_URL") || Deno.env.get("DATABASE_URL");
+
     if (!databaseUrl) {
       throw new Error(
-        "Database connection string not found. Set TEST_DATABASE_URL or DATABASE_URL environment variable."
+        "Database connection string not found. Set TEST_DATABASE_URL or DATABASE_URL environment variable.",
       );
     }
 
@@ -112,12 +113,12 @@ export class TestDb {
 
     const result = await this.client!.queryObject<{ token: string }>(
       `SELECT token 
-       FROM auth.email_verification_tokens 
+       FROM auth.email_verifications 
        WHERE user_id = (SELECT id FROM auth.users WHERE email = $1) 
-       AND used = false 
+       AND verified = false 
        ORDER BY created_at DESC 
        LIMIT 1`,
-      [email]
+      [email],
     );
 
     if (result.rows.length === 0) {
@@ -135,10 +136,10 @@ export class TestDb {
 
     const result = await this.client!.queryObject<VerificationToken>(
       `SELECT * 
-       FROM auth.email_verification_tokens 
+       FROM auth.email_verifications 
        WHERE user_id = (SELECT id FROM auth.users WHERE email = $1) 
        ORDER BY created_at DESC`,
-      [email]
+      [email],
     );
 
     return result.rows;
@@ -152,7 +153,7 @@ export class TestDb {
 
     const result = await this.client!.queryObject<{ email_verified: boolean }>(
       `SELECT email_verified FROM auth.users WHERE email = $1`,
-      [email]
+      [email],
     );
 
     if (result.rows.length === 0) {
@@ -172,7 +173,7 @@ export class TestDb {
       `SELECT id, email, full_name, role, email_verified, created_at, updated_at 
        FROM auth.users 
        WHERE email = $1`,
-      [email]
+      [email],
     );
 
     if (result.rows.length === 0) {
@@ -196,11 +197,11 @@ export class TestDb {
       `SELECT token 
        FROM auth.password_reset_tokens 
        WHERE user_id = (SELECT id FROM auth.users WHERE email = $1) 
-       AND used = false 
+       AND verified = false 
        AND expires_at > NOW() 
        ORDER BY created_at DESC 
        LIMIT 1`,
-      [email]
+      [email],
     );
 
     if (result.rows.length === 0) {
@@ -228,7 +229,7 @@ export class TestDb {
        AND expires_at > NOW() 
        ORDER BY created_at DESC 
        LIMIT 1`,
-      [email]
+      [email],
     );
 
     if (result.rows.length === 0) {
@@ -252,7 +253,7 @@ export class TestDb {
     // Get user ID first
     const userResult = await this.client!.queryObject<{ id: string }>(
       `SELECT id FROM auth.users WHERE email = $1`,
-      [email]
+      [email],
     );
 
     if (userResult.rows.length === 0) {
@@ -264,29 +265,28 @@ export class TestDb {
 
     // Delete in order to respect foreign key constraints
     await this.client!.queryArray(
-      `DELETE FROM auth.email_verification_tokens WHERE user_id = $1`,
-      [userId]
+      `DELETE FROM auth.email_verifications WHERE user_id = $1`,
+      [userId],
     );
 
     await this.client!.queryArray(
       `DELETE FROM auth.password_reset_tokens WHERE user_id = $1`,
-      [userId]
+      [userId],
     );
 
     await this.client!.queryArray(
       `DELETE FROM auth.sessions WHERE user_id = $1`,
-      [userId]
+      [userId],
     );
 
     await this.client!.queryArray(
       `DELETE FROM public.user_tenants WHERE user_id = $1`,
-      [userId]
+      [userId],
     );
 
-    await this.client!.queryArray(
-      `DELETE FROM auth.users WHERE id = $1`,
-      [userId]
-    );
+    await this.client!.queryArray(`DELETE FROM auth.users WHERE id = $1`, [
+      userId,
+    ]);
 
     console.log(`✅ Deleted test user: ${email}`);
   }
@@ -301,7 +301,7 @@ export class TestDb {
       `SELECT email FROM auth.users 
        WHERE email LIKE 'test-%' 
        OR email LIKE 'integration-%' 
-       OR email LIKE 'get-test-%'`
+       OR email LIKE 'get-test-%'`,
     );
 
     for (const row of result.rows) {
