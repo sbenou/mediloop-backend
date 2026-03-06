@@ -183,25 +183,26 @@ Deno.test("Login - Wrong password rejected", async () => {
 Deno.test("Login - Non-existent email rejected", async () => {
   console.log("\n🧪 Testing login with non-existent email...");
 
-  const { response, data } = await makeRequest("/api/auth/login", {
-    email: "nonexistent@mediloop.com",
-    password: "SomePassword123!@#",
+  const response = await fetch(`${BASE_URL}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: "nonexistent-" + Date.now() + "@mediloop.com",
+      password: "SomePassword123!",
+    }),
   });
 
-  console.log(`  Status: ${response.status}`);
-  console.log(`  Response:`, data);
+  const data = await response.json();
+  console.log("  Status:", response.status);
+  console.log("  Response:", data);
 
-  // Should return 401 Unauthorized
   assertEquals(response.status, 401);
-
-  // Should have error message
-  assertExists(data.error, "Should have error message");
-  assert(
-    data.error.includes("No account") || data.error.includes("not found"),
-    "Error should mention account not found",
+  // Security: Same error message as wrong password to prevent user enumeration
+  assertEquals(
+    data.error,
+    "Invalid email or password. Please check your credentials.",
   );
-
-  console.log("✅ Non-existent email correctly rejected\n");
+  console.log("✅ Non-existent email correctly rejected with generic message");
 });
 
 // ============================================================================
