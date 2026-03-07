@@ -10,15 +10,7 @@ import {
   assertExists,
   assert,
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { load } from "https://deno.land/std@0.224.0/dotenv/mod.ts";
 import { TestDb } from "../utils/testDb.ts";
-
-// ✅ Load .env.test file before running tests
-const env = await load({ envPath: ".env.test", export: true });
-console.log("🔧 Loaded .env.test file");
-if (env.TEST_DATABASE_URL) {
-  console.log(`📊 TEST_DATABASE_URL: ${env.TEST_DATABASE_URL.substring(0, 50)}...`);
-}
 
 const BASE_URL = Deno.env.get("API_URL") || "http://localhost:8000";
 
@@ -240,7 +232,7 @@ Deno.test("Email Verification - Resend verification email", async () => {
 });
 
 // ============================================================================
-// TEST 5: Verify Email with Token (POST) - ��� NOW AUTO-FETCHES TOKEN!
+// TEST 5: Verify Email with Token (POST) - ✅ NOW AUTO-FETCHES TOKEN!
 // ============================================================================
 
 Deno.test("Email Verification - Verify email with token (POST)", async () => {
