@@ -113,7 +113,7 @@ export class TestDb {
 
     const result = await this.client!.queryObject<{ token: string }>(
       `SELECT token 
-       FROM auth.email_verification_tokens 
+       FROM auth.email_verifications 
        WHERE user_id = (SELECT id FROM auth.users WHERE email = $1) 
        AND used = false 
        ORDER BY created_at DESC 
@@ -136,7 +136,7 @@ export class TestDb {
 
     const result = await this.client!.queryObject<VerificationToken>(
       `SELECT * 
-       FROM auth.email_verification_tokens 
+       FROM auth.email_verifications 
        WHERE user_id = (SELECT id FROM auth.users WHERE email = $1) 
        ORDER BY created_at DESC`,
       [email],
@@ -265,7 +265,7 @@ export class TestDb {
 
     // Delete in order to respect foreign key constraints
     await this.client!.queryArray(
-      `DELETE FROM auth.email_verification_tokens WHERE user_id = $1`,
+      `DELETE FROM auth.email_verifications WHERE user_id = $1`,
       [userId],
     );
 
