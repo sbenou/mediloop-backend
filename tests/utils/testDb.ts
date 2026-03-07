@@ -19,7 +19,7 @@ export interface VerificationToken {
   tenant_id: string;
   created_at: Date;
   expires_at: Date;
-  verified: boolean;
+  used: boolean;
 }
 
 export interface TestUser {
@@ -113,9 +113,9 @@ export class TestDb {
 
     const result = await this.client!.queryObject<{ token: string }>(
       `SELECT token 
-       FROM auth.email_verifications 
+       FROM auth.email_verification_tokens 
        WHERE user_id = (SELECT id FROM auth.users WHERE email = $1) 
-       AND verified = false 
+       AND used = false 
        ORDER BY created_at DESC 
        LIMIT 1`,
       [email],
@@ -136,7 +136,7 @@ export class TestDb {
 
     const result = await this.client!.queryObject<VerificationToken>(
       `SELECT * 
-       FROM auth.email_verifications 
+       FROM auth.email_verification_tokens 
        WHERE user_id = (SELECT id FROM auth.users WHERE email = $1) 
        ORDER BY created_at DESC`,
       [email],
@@ -197,7 +197,7 @@ export class TestDb {
       `SELECT token 
        FROM auth.password_reset_tokens 
        WHERE user_id = (SELECT id FROM auth.users WHERE email = $1) 
-       AND verified = false 
+       AND used = false 
        AND expires_at > NOW() 
        ORDER BY created_at DESC 
        LIMIT 1`,
@@ -265,7 +265,7 @@ export class TestDb {
 
     // Delete in order to respect foreign key constraints
     await this.client!.queryArray(
-      `DELETE FROM auth.email_verifications WHERE user_id = $1`,
+      `DELETE FROM auth.email_verification_tokens WHERE user_id = $1`,
       [userId],
     );
 
