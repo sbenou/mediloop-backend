@@ -22,7 +22,7 @@ export class TestServer {
     // Set test port
     Deno.env.set("TEST_PORT", this.port.toString());
 
-    // Start server process
+    // Start server process with visible output
     const command = new Deno.Command("deno", {
       args: [
         "run",
@@ -30,10 +30,12 @@ export class TestServer {
         "--allow-env",
         "--allow-read",
         "--allow-run",
+        "--unstable-kv", // ← ADD THIS LINE
         "auth-backend/test-server.ts",
       ],
-      stdout: "piped",
-      stderr: "piped",
+      cwd: Deno.cwd(), // ← ADD THIS LINE to ensure correct working directory
+      stdout: "inherit",
+      stderr: "inherit",
     });
 
     this.process = command.spawn();
