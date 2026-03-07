@@ -19,7 +19,7 @@ export interface VerificationToken {
   tenant_id: string;
   created_at: Date;
   expires_at: Date;
-  used: boolean;
+  verified: boolean;
 }
 
 export interface TestUser {
@@ -115,7 +115,7 @@ export class TestDb {
       `SELECT token 
        FROM auth.email_verifications 
        WHERE user_id = (SELECT id FROM auth.users WHERE email = $1) 
-       AND used = false 
+       AND verified = false 
        ORDER BY created_at DESC 
        LIMIT 1`,
       [email],
@@ -197,7 +197,7 @@ export class TestDb {
       `SELECT token 
        FROM auth.password_reset_tokens 
        WHERE user_id = (SELECT id FROM auth.users WHERE email = $1) 
-       AND used = false 
+       AND verified = false 
        AND expires_at > NOW() 
        ORDER BY created_at DESC 
        LIMIT 1`,
