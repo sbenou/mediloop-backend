@@ -11,6 +11,14 @@
  */
 
 import { Client } from "https://deno.land/x/postgres@v0.19.3/mod.ts";
+import { load } from "https://deno.land/std@0.224.0/dotenv/mod.ts";
+
+// ✅ Load .env.test file for all tests
+const env = await load({ envPath: ".env.test", export: true, allowEmptyValues: true });
+if (env.TEST_DATABASE_URL) {
+  console.log("🔧 Loaded .env.test file");
+  console.log(`📊 TEST_DATABASE_URL: ${env.TEST_DATABASE_URL.substring(0, 50)}...`);
+}
 
 export interface VerificationToken {
   token: string;
