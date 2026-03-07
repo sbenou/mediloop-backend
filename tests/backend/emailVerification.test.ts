@@ -68,9 +68,10 @@ async function makeRequest(
 // TEST 1: Registration (Should NOT Return Tokens)
 // ============================================================================
 
-Deno.test(
-  "Email Verification - Registration does NOT return tokens",
-  async () => {
+Deno.test({
+  name: "Email Verification - Registration does NOT return tokens",
+  sanitizeResources: false, // ✅ ADD THIS - test runs with active subprocess
+  async fn() {
     console.log(
       "\n🧪 Testing registration (should NOT return access_token)...",
     );
@@ -134,7 +135,7 @@ Deno.test(
     Deno.env.set("TEST_USER_EMAIL", email);
     Deno.env.set("TEST_USER_PASSWORD", password);
   },
-);
+});
 
 // ============================================================================
 // TEST 2: Login Before Verification (Should Be Blocked)

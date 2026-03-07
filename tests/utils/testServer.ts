@@ -5,6 +5,7 @@
 
 export class TestServer {
   private process: Deno.ChildProcess | null = null;
+  private processStatus: Promise<Deno.CommandStatus> | null = null;
   private port: number;
   private baseUrl: string;
 
@@ -22,7 +23,7 @@ export class TestServer {
     // Set test port
     Deno.env.set("TEST_PORT", this.port.toString());
 
-    // Start server process with visible output
+    // Start server process - use "null" to discard output and prevent buffer overflow
     const command = new Deno.Command("deno", {
       args: [
         "run",
@@ -30,15 +31,16 @@ export class TestServer {
         "--allow-env",
         "--allow-read",
         "--allow-run",
-        "--unstable-kv", // ← ADD THIS LINE
+        "--unstable-kv",
         "auth-backend/test-server.ts",
       ],
-      cwd: Deno.cwd(), // ← ADD THIS LINE to ensure correct working directory
-      stdout: "inherit",
-      stderr: "inherit",
+      cwd: Deno.cwd(),
+      stdout: "null", // ✅ Use "null" to discard output (prevents buffer overflow)
+      stderr: "null", // ✅ Use "null" to discard errors (prevents buffer overflow)
     });
 
     this.process = command.spawn();
+    this.processStatus = this.process.status; // ✅ Capture status promise immediately
 
     // Wait for server to be ready
     await this.waitForServer();
@@ -49,11 +51,26 @@ export class TestServer {
    * Stop the test server
    */
   async stop(): Promise<void> {
-    if (this.process) {
+    if (this.process && this.processStatus) {
       console.log("\n🛑 Stopping test server...");
-      this.process.kill("SIGTERM");
-      await this.process.status;
+
+      try {
+        // ✅ Check if process is still alive before killing
+        this.process.kill("SIGTERM");
+      } catch (error) {
+        // Process already terminated - that's okay
+        console.log("  ℹ️  Process already terminated");
+      }
+
+      try {
+        // ✅ Always await the status promise to clean up resources
+        await this.processStatus;
+      } catch {
+        // Ignore errors from already-terminated process
+      }
+
       this.process = null;
+      this.processStatus = null;
       console.log("✅ Test server stopped\n");
     }
   }
