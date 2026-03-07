@@ -6,6 +6,7 @@
  * 3. Consistent /api/auth/* route paths
  * 4. Profile includes email_verified field
  * 5. Both GET and POST verify-email endpoints
+ * 6. Input validation for email and password
  */
 
 import { Router } from "oak";
@@ -19,6 +20,11 @@ import {
   registrationRateLimiter,
   tokenRefreshRateLimiter,
 } from "../middleware/rateLimitMiddleware.ts";
+import {
+  validateEmail,
+  validatePassword,
+  validateFullName,
+} from "../utils/validation.ts";
 
 const authRoutes = new Router();
 
@@ -50,10 +56,41 @@ authRoutes.post("/api/auth/register", registrationRateLimiter, async (ctx) => {
       pharmacyName,
     } = body;
 
+    // Basic required field validation
     if (!email || !password || !fullName) {
       ctx.response.status = 400;
       ctx.response.body = {
         error: "Email, password, and full name are required",
+      };
+      return;
+    }
+
+    // ✅ NEW: Validate email format
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.valid) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        error: emailValidation.error,
+      };
+      return;
+    }
+
+    // ✅ NEW: Validate password strength
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        error: passwordValidation.error,
+      };
+      return;
+    }
+
+    // ✅ NEW: Validate full name
+    const fullNameValidation = validateFullName(fullName);
+    if (!fullNameValidation.valid) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        error: fullNameValidation.error,
       };
       return;
     }
@@ -96,8 +133,22 @@ authRoutes.post("/api/auth/register", registrationRateLimiter, async (ctx) => {
     };
   } catch (error) {
     console.error("V3 Registration error:", error);
-    ctx.response.status = 400;
-    ctx.response.body = { error: error.message || "Registration failed" };
+    
+    // ✅ IMPROVED: Better error messages for duplicate emails
+    let errorMessage = error.message || "Registration failed";
+    let statusCode = 400;
+    
+    if (error.message?.includes("User already exists")) {
+      errorMessage = "An account with this email already exists. Please log in or use a different email.";
+      statusCode = 409; // Conflict
+    } else if (error.message?.includes("Failed to send verification email")) {
+      // This might happen on duplicate email registration attempt
+      errorMessage = "Unable to send verification email. The email address may already be registered.";
+      statusCode = 400;
+    }
+    
+    ctx.response.status = statusCode;
+    ctx.response.body = { error: errorMessage };
   }
 });
 
