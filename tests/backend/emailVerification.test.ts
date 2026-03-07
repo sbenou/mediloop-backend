@@ -11,16 +11,32 @@ import {
   assert,
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { TestDb } from "../utils/testDb.ts";
+import { TestServer } from "../utils/testServer.ts";
 
-const BASE_URL = Deno.env.get("API_URL") || "http://localhost:8000";
+// ✅ Create test server instance
+const testServer = new TestServer(8001);
+const BASE_URL = testServer.getBaseUrl();
+
+// const BASE_URL = Deno.env.get("API_URL") || "http://localhost:8000";
 
 // ✅ NEW: Create test database instance
 const testDb = new TestDb();
 
+// Setup: Start test server and connect to database
+Deno.test({
+  name: "Email Verification - Setup: Start test server",
+  sanitizeResources: false,
+  async fn() {
+    console.log("\n🚀 Setting up test environment...");
+    await testServer.start();
+    console.log("✅ Test server started\n");
+  },
+});
+
 // Setup: Connect to database before all tests
 Deno.test({
   name: "Email Verification - Setup: Connect to database",
-  sanitizeResources: false, // ← ADD THIS
+  sanitizeResources: false,
   async fn() {
     console.log("\n🔌 Connecting to test database...");
     try {
@@ -684,6 +700,16 @@ Deno.test({
     console.log("🔌 Disconnecting from test database...");
     await testDb.close();
     console.log("✅ Test database disconnected\n");
+  },
+});
+
+Deno.test({
+  name: "Email Verification - Cleanup: Stop test server",
+  sanitizeResources: false,
+  async fn() {
+    console.log("🛑 Stopping test server...");
+    await testServer.stop();
+    console.log("✅ Test server stopped\n");
   },
 });
 
