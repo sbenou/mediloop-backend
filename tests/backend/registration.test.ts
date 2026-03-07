@@ -146,7 +146,7 @@ Deno.test("Registration - Duplicate email rejected", async () => {
   console.log(`  Response:`, data2);
 
   // Should fail
-  assertEquals(response.status, 400);
+  assertEquals(res2.status, 400);
   assertExists(data2.error, "Should have error message");
   assert(
     data2.error.includes("exists") || data2.error.includes("already"),
