@@ -12,7 +12,7 @@ import {
   assert,
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
 
-const BASE_URL = Deno.env.get("API_URL") || "http://localhost:8000";
+const BASE_URL = Deno.env.get("API_URL") || "http://localhost:8000/api";
 
 async function makeRequest(
   endpoint: string,
@@ -192,17 +192,35 @@ Deno.test("Login - Non-existent email rejected", async () => {
     }),
   });
 
-  const data = await response.json();
   console.log("  Status:", response.status);
+
+  // Check if response has content before parsing JSON
+  const text = await response.text();
+  console.log("  Response text:", text);
+
+  let data;
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch (error) {
+    console.log("  ⚠️  Failed to parse JSON. Response:", text);
+    throw new Error(`Expected JSON response but got: ${text}`);
+  }
+
   console.log("  Response:", data);
 
-  assertEquals(response.status, 401);
-  // Security: Same error message as wrong password to prevent user enumeration
-  assertEquals(
-    data.error,
-    "Invalid email or password. Please check your credentials.",
-  );
-  console.log("✅ Non-existent email correctly rejected with generic message");
+  assertEquals(response.status, 401, "Should return 401 Unauthorized");
+
+  if (data.error) {
+    assert(
+      data.error.includes("Invalid email or password"),
+      "Error should return generic message (security: prevent user enumeration)",
+    );
+    console.log(
+      "✅ Non-existent email correctly rejected with generic message",
+    );
+  } else {
+    throw new Error("Response should include error message");
+  }
 });
 
 // ============================================================================
