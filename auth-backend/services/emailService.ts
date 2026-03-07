@@ -2,6 +2,7 @@ import { config } from "../config/env.ts";
 
 export class EmailService {
   private resendApiKey: string;
+  private fromEmail: string;
 
   constructor() {
     this.resendApiKey =
@@ -11,6 +12,11 @@ export class EmailService {
         "RESEND_API_KEY not configured - email sending will not work",
       );
     }
+
+    this.fromEmail =
+      config.RESEND_FROM_EMAIL ||
+      Deno.env.get("RESEND_FROM_EMAIL") ||
+      "Mediloop <noreply@notifications.mediloop.lu>";
   }
 
   private async loadTemplate(templateName: string): Promise<string> {
@@ -53,7 +59,7 @@ export class EmailService {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: "Mediloop <onboarding@resend.dev>",
+          from: this.fromEmail,
           to: [email],
           subject: "Confirm Your Email Address",
           html,
@@ -88,7 +94,7 @@ export class EmailService {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: "Mediloop <onboarding@resend.dev>",
+          from: this.fromEmail,
           to: [email],
           subject: "Reset Your Password",
           html,
@@ -123,7 +129,7 @@ export class EmailService {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: "Mediloop <onboarding@resend.dev>",
+          from: this.fromEmail,
           to: [email],
           subject: "Your Login Code",
           html,
@@ -165,7 +171,7 @@ export class EmailService {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: "Mediloop <onboarding@resend.dev>",
+          from: this.fromEmail,
           to: [email],
           subject: "Welcome to Mediloop!",
           html,
@@ -295,7 +301,7 @@ export class EmailService {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: "Mediloop <onboarding@resend.dev>",
+          from: this.fromEmail,
           to: [params.email],
           subject: `You've been invited to join ${params.tenantName}`,
           html,
