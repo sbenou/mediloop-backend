@@ -6,8 +6,12 @@
 -- Create auth schema
 CREATE SCHEMA IF NOT EXISTS auth;
 
--- Create roles table
-CREATE TABLE IF NOT EXISTS auth.roles (
+-- ============================================================================
+-- PUBLIC SCHEMA - Roles and Multi-tenant tables
+-- ============================================================================
+
+-- Create roles table (in public schema)
+CREATE TABLE IF NOT EXISTS public.roles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(50) UNIQUE NOT NULL,
   description TEXT,
@@ -15,13 +19,17 @@ CREATE TABLE IF NOT EXISTS auth.roles (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- ============================================================================
+-- AUTH SCHEMA - User authentication tables
+-- ============================================================================
+
 -- Create users table
 CREATE TABLE IF NOT EXISTS auth.users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email VARCHAR(255) UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
   full_name VARCHAR(255) NOT NULL,
-  role_id UUID REFERENCES auth.roles(id),
+  role_id UUID REFERENCES public.roles(id),
   role VARCHAR(50),
   email_verified BOOLEAN DEFAULT FALSE,
   phone_number VARCHAR(20),
@@ -127,7 +135,7 @@ CREATE INDEX IF NOT EXISTS idx_user_tenants_is_primary ON public.user_tenants(us
 -- ============================================================================
 
 -- Insert default roles (if not exists)
-INSERT INTO auth.roles (id, name, description) VALUES
+INSERT INTO public.roles (id, name, description) VALUES
   ('b138db82-5a93-42e1-b015-f125e3067f35', 'doctor', 'Healthcare professional - doctor'),
   ('6fe5150a-3d29-4e9c-ae83-ec4b53df0a5e', 'nurse', 'Healthcare professional - nurse'),
   ('a4c71baa-9f3a-4aa4-b9e9-1c5e8e7d4f2a', 'pharmacist', 'Pharmacy professional'),
