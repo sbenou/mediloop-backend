@@ -3,7 +3,7 @@
  * Tests if Resend can actually send emails with your verified domain
  *
  * Run with:
- * VAULT_URL="http://localhost:8200" VAULT_TOKEN="myroot" deno test --allow-net --allow-env --allow-read tests/backend/emailSend.test.ts
+ * deno test --allow-net --allow-env --allow-read tests/backend/emailSend.test.ts
  */
 
 import {
@@ -11,21 +11,39 @@ import {
   assertExists,
   assert,
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
+import { load as loadEnv } from "https://deno.land/std@0.224.0/dotenv/mod.ts";
 
-// Import config from the backend to use Vault secrets
-import { loadConfig } from "../../auth-backend/config/env.ts";
+// Load .env.test file for test environment variables
+const envPath = ".env.test";
+try {
+  const env = await loadEnv({ envPath });
+  console.log("🔧 Loaded .env.test file");
 
-// Load config from Vault
-const config = await loadConfig();
+  // Set environment variables
+  for (const [key, value] of Object.entries(env)) {
+    Deno.env.set(key, value);
+  }
 
-const RESEND_API_KEY = config.RESEND_API_KEY;
-const RESEND_FROM_EMAIL = config.RESEND_FROM_EMAIL;
+  // Log the database URL (truncated for security)
+  const dbUrl = env.TEST_DATABASE_URL || "";
+  const truncatedUrl = dbUrl ? dbUrl.substring(0, 50) + "..." : "Not set";
+  console.log(`📊 TEST_DATABASE_URL: ${truncatedUrl}\n`);
+} catch (error) {
+  console.warn(
+    "⚠️  Could not load .env.test file:",
+    error instanceof Error ? error.message : String(error),
+  );
+}
+
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const RESEND_FROM_EMAIL =
+  Deno.env.get("RESEND_FROM_EMAIL") || "noreply@notifications.mediloop.lu";
 
 console.log("\n" + "=".repeat(70));
-console.log("🔍 Environment Variable Discovery (from Vault)");
+console.log("🔍 Environment Variable Discovery (from .env.test)");
 console.log("=".repeat(70));
 console.log(
-  `RESEND_API_KEY: ${RESEND_API_KEY ? "✅ Found in Vault" : "❌ Not found"}`,
+  `RESEND_API_KEY: ${RESEND_API_KEY ? "✅ Found in .env.test" : "❌ Not found"}`,
 );
 console.log(`RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL}`);
 console.log("=".repeat(70) + "\n");
