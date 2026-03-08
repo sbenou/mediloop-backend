@@ -25,7 +25,8 @@ const testDb = new TestDb();
 // Setup: Start test server and connect to database
 Deno.test({
   name: "Email Verification - Setup: Start test server",
-  sanitizeResources: false,
+  sanitizeResources: false, // ✅ Keep this
+  sanitizeOps: false, // ✅ ADD THIS - disable async op sanitization
   async fn() {
     console.log("\n🚀 Setting up test environment...");
     await testServer.start();
@@ -706,7 +707,8 @@ Deno.test({
 
 Deno.test({
   name: "Email Verification - Cleanup: Stop test server",
-  sanitizeResources: false,
+  sanitizeResources: false, // ✅ Keep this
+  sanitizeOps: false, // ✅ ADD THIS - disable async op sanitization
   async fn() {
     console.log("🛑 Stopping test server...");
     await testServer.stop();
