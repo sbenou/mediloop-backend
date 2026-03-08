@@ -5,7 +5,6 @@
 
 export class TestServer {
   private process: Deno.ChildProcess | null = null;
-  private processStatus: Promise<Deno.CommandStatus> | null = null;
   private port: number;
   private baseUrl: string;
 
@@ -40,7 +39,8 @@ export class TestServer {
     });
 
     this.process = command.spawn();
-    this.processStatus = this.process.status; // ✅ Capture status promise immediately
+    // ✅ DON'T capture processStatus here - it creates a resource leak warning
+    // We'll handle the status promise only in stop() where it's actually used
 
     // Wait for server to be ready
     await this.waitForServer();
@@ -51,26 +51,22 @@ export class TestServer {
    * Stop the test server
    */
   async stop(): Promise<void> {
-    if (this.process && this.processStatus) {
+    if (this.process) {
       console.log("\n🛑 Stopping test server...");
 
       try {
-        // ✅ Check if process is still alive before killing
+        // Kill the process
         this.process.kill("SIGTERM");
-      } catch (error) {
-        // Process already terminated - that's okay
-        console.log("  ℹ️  Process already terminated");
-      }
 
-      try {
-        // ✅ Always await the status promise to clean up resources
-        await this.processStatus;
-      } catch {
-        // Ignore errors from already-terminated process
+        // ✅ Capture and await the status promise HERE (in the same test where it completes)
+        // This prevents resource leak warnings about promises started in one test and completed in another
+        await this.process.status;
+      } catch (error) {
+        // Process already terminated or other error - that's okay
+        console.log("  ℹ️  Process cleanup completed");
       }
 
       this.process = null;
-      this.processStatus = null;
       console.log("✅ Test server stopped\n");
     }
   }
