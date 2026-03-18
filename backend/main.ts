@@ -1,17 +1,21 @@
 import { Application, Router, Context } from "oak";
-import { authRoutes } from "./routes/auth.ts";
-import { tokenRoutes } from "./routes/tokenManagement.ts";
-import { tokenRotationRoutes } from "./routes/tokenRotation.ts";
-import { domainVerificationRoutes } from "./routes/domainVerification.ts";
+import { authRoutes } from "./modules/auth/routes/auth.ts";
+import { tokenRoutes } from "./modules/auth/routes/tokenManagement.ts";
+import { tokenRotationRoutes } from "./modules/auth/routes/tokenRotation.ts";
+import { domainVerificationRoutes } from "./modules/auth/routes/domainVerification.ts";
 import { config } from "./config/env.ts";
 import { authMiddleware } from "./middleware/authMiddleware.ts";
 import { tokenBlacklistMiddleware } from "./middleware/tokenBlacklistMiddleware.ts";
 import { oakCors } from "https://deno.land/x/cors@v1.2.2/mod.ts";
-import emailTemplateRoutes from "./routes/emailTemplates.ts";
-import { invitationRoutes } from "./routes/invitation.ts";
-import loginEmailRoutes from "./routes/loginEmails.ts";
-import { passwordResetRoutes } from "./routes/passwordReset.ts";
-import { tokenRotationService } from "./services/tokenRotationService.ts";
+import emailTemplateRoutes from "./shared/routes/emailTemplates.ts";
+import { invitationRoutes } from "./modules/auth/routes/invitation.ts";
+import loginEmailRoutes from "./shared/routes/loginEmails.ts";
+import { passwordResetRoutes } from "./modules/auth/routes/passwordReset.ts";
+import { tokenRotationService } from "./modules/auth/services/tokenRotationService.ts";
+import webhookRouter from "./modules/payments/routes/webhooks.ts";
+import subscriptionRouter from "./modules/payments/routes/subscriptions.ts";
+import notificationRouter from "./modules/notifications/routes/notifications.ts";
+import { createWebSocketHandler } from "./modules/notifications/websocket/notificationHandler.ts";
 
 const app = new Application();
 
@@ -91,6 +95,32 @@ router.get("/health", (ctx) => {
 app.use(router.routes());
 app.use(router.allowedMethods());
 
+app.use(webhookRouter.routes());
+app.use(webhookRouter.allowedMethods());
+app.use(subscriptionRouter.routes());
+app.use(subscriptionRouter.allowedMethods());
+app.use(notificationRouter.routes());
+app.use(notificationRouter.allowedMethods());
+
+// ✅ WebSocket endpoint using handler
+const wsHandler = createWebSocketHandler();
+
+app.use(async (ctx, next) => {
+  if (ctx.request.url.pathname === "/ws/notifications") {
+    await wsHandler(ctx);
+  } else {
+    await next();
+  }
+});
+
+const port = Number(config.PORT || Deno.env.get("PORT") || "8000");
+
+console.log(`🚀 Mediloop Backend running on http://localhost:${port}`);
+console.log(
+  `🔔 WebSocket server ready on ws://localhost:${port}/ws/notifications`,
+);
+console.log(`⏰ Automatic token rotation enabled (runs every 5 minutes)`);
+
 // Start automatic token rotation cron job
 console.log("[TokenRotation] Starting automatic token rotation service");
 Deno.cron("Token Rotation", "*/5 * * * *", async () => {
@@ -98,8 +128,5 @@ Deno.cron("Token Rotation", "*/5 * * * *", async () => {
   await tokenRotationService.processScheduledRotations();
 });
 
-// Start server
-const port = parseInt(config.PORT || Deno.env.get("PORT") || "8000");
-console.log(`Server running on port ${port}`);
-console.log(`Automatic token rotation enabled (runs every 5 minutes)`);
+// ✅ Start server (single listen call)
 await app.listen({ port });

@@ -1,0 +1,89 @@
+version: "3.8"
+
+services:
+  # Redis for BullMQ job queue
+  redis:
+    image: redis:7-alpine
+    container_name: mediloop_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: >
+      redis-server
+      --appendonly yes
+      --appendfsync everysec
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - mediloop-net
+
+  # Deno Backend (API Server)
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: mediloop_backend
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - FIREBASE_SERVICE_ACCOUNT=${FIREBASE_SERVICE_ACCOUNT}
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - mediloop-net
+    volumes:
+      - .:/app
+    command: deno run --allow-all --unstable --watch main.ts
+
+  # Node.js Workers (Background Job Processing)
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: mediloop_worker
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - FIREBASE_SERVICE_ACCOUNT=${FIREBASE_SERVICE_ACCOUNT}
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - mediloop-net
+    volumes:
+      - ./workers:/app
+    command: npm run dev
+
+  # Bull Board (Monitoring Dashboard)
+  bull-board:
+    image: deadly0/bull-board:latest
+    container_name: mediloop_bull_board
+    ports:
+      - "3001:3000"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+    networks:
+      - mediloop-net
+
+networks:
+  mediloop-net:
+    driver: bridge
+
+volumes:
+  redis-data:

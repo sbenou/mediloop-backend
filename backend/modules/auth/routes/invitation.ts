@@ -1,7 +1,7 @@
 import { Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 import { invitationService } from "../services/invitationService.ts";
 import { enhancedJwtService } from "../services/enhancedJwtService.ts";
-import { postgresService } from "../services/postgresService.ts";
+import { postgresService } from "../../../shared/services/postgresService.ts";
 import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
 /**

@@ -11,10 +11,10 @@
 
 import { Router } from "oak";
 import { enhancedJwtService } from "../services/enhancedJwtService.ts";
-import { databaseService } from "../services/databaseService.ts";
+import { databaseService } from "../../../shared/services/databaseService.ts";
 import { registrationService } from "../services/registrationService.ts";
-import { kvStore } from "../services/kvStore.ts";
-import { emailService } from "../services/emailService.ts";
+import { kvStore } from "../../../shared/services/kvStore.ts";
+import { emailService } from "../../../shared/services/emailService.ts";
 import {
   loginRateLimiter,
   registrationRateLimiter,
@@ -24,7 +24,7 @@ import {
   validateEmail,
   validatePassword,
   validateFullName,
-} from "../utils/validation.ts";
+} from "../../../shared/utils/validation.ts";
 
 const authRoutes = new Router();
 
@@ -116,7 +116,7 @@ authRoutes.post("/api/auth/register", registrationRateLimiter, async (ctx) => {
 
     // ✅ FIXED: Return 201 Created status code
     ctx.response.status = 201;
-    
+
     // ✅ FIXED: Return success message WITHOUT tokens
     // User must verify email before they can login
     ctx.response.body = {
@@ -133,20 +133,22 @@ authRoutes.post("/api/auth/register", registrationRateLimiter, async (ctx) => {
     };
   } catch (error) {
     console.error("V3 Registration error:", error);
-    
+
     // ✅ IMPROVED: Better error messages for duplicate emails
     let errorMessage = error.message || "Registration failed";
     let statusCode = 400;
-    
+
     if (error.message?.includes("User already exists")) {
-      errorMessage = "An account with this email already exists. Please log in or use a different email.";
+      errorMessage =
+        "An account with this email already exists. Please log in or use a different email.";
       statusCode = 409; // Conflict
     } else if (error.message?.includes("Failed to send verification email")) {
       // This might happen on duplicate email registration attempt
-      errorMessage = "Unable to send verification email. The email address may already be registered.";
+      errorMessage =
+        "Unable to send verification email. The email address may already be registered.";
       statusCode = 400;
     }
-    
+
     ctx.response.status = statusCode;
     ctx.response.body = { error: errorMessage };
   }
