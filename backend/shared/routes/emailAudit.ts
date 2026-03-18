@@ -1,5 +1,5 @@
 import { Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
-import { emailAuditService } from "..//services/emailAuditService.ts";
+import { emailAuditService } from "../services/emailAuditService.ts";
 
 const router = new Router();
 
