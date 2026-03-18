@@ -1,5 +1,5 @@
 import { Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
-import { EmailTemplateService } from "..//services/emailTemplateService.ts";
+import { emailAuditService } from "..//services/emailAuditService.ts";
 
 const router = new Router();
 
@@ -22,7 +22,7 @@ router.get("/api/email-audit-logs", async (ctx) => {
         : 50,
     };
 
-    const logs = await EmailTemplateService.getEmailAuditLogs(filters);
+    const logs = await emailAuditService.getEmailAuditLogs(filters);
 
     ctx.response.status = 200;
     ctx.response.body = {
@@ -51,7 +51,7 @@ router.get("/api/email-audit-stats", async (ctx) => {
       ? new Date(url.searchParams.get("toDate")!)
       : new Date();
 
-    const allLogs = await EmailTemplateService.getEmailAuditLogs({
+    const allLogs = await emailAuditService.getEmailAuditLogs({
       fromDate,
       toDate,
     });
