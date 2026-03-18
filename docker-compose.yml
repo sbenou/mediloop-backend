@@ -1,0 +1,133 @@
+# Docker Compose Configuration
+# Mediloop - Phase 1 + Phase 2 (Stripe + Notifications)
+# Updated: March 17, 2026 - Fixed paths and ports
+
+version: "3.8"
+
+services:
+  # Redis - Job queue for BullMQ
+  redis:
+    image: redis:7-alpine
+    container_name: mediloop_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-dev_password}
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - mediloop_network
+
+  # Deno Backend - API server
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mediloop_backend
+    ports:
+      - "8000:8000" # ← FIXED: Changed from 3000 to 8000
+    environment:
+      # Database
+      - DATABASE_URL_DEV=${DATABASE_URL_DEV}
+      - DATABASE_URL_PROD=${DATABASE_URL_PROD}
+
+      # Redis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-dev_password}
+
+      # Stripe (Phase 1)
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - STRIPE_PHARMACY_PRICE_ID=${STRIPE_PHARMACY_PRICE_ID}
+
+      # Firebase (Phase 2)
+      - FIREBASE_SERVICE_ACCOUNT=${FIREBASE_SERVICE_ACCOUNT}
+      # OR individual values:
+      # - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
+      # - FIREBASE_PRIVATE_KEY=${FIREBASE_PRIVATE_KEY}
+      # - FIREBASE_CLIENT_EMAIL=${FIREBASE_CLIENT_EMAIL}
+
+      # Frontend URL (adjust based on your frontend framework)
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:5173}
+
+      # Internal
+      - INTERNAL_API_SECRET=${INTERNAL_API_SECRET:-dev_secret}
+      - PORT=8000 # ← FIXED: Changed from 3000 to 8000
+      - NODE_ENV=${NODE_ENV:-development}
+
+      # HashiCorp Vault (optional)
+      - VAULT_ADDR=${VAULT_ADDR}
+      - VAULT_TOKEN=${VAULT_TOKEN}
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app # ← FIXED: Changed from ../auth-backend
+    networks:
+      - mediloop_network
+    restart: unless-stopped
+
+  # Node.js Workers - Background job processing
+  worker:
+    build:
+      context: ./workers # ← FIXED: Changed from ../auth-backend/workers
+      dockerfile: Dockerfile
+    container_name: mediloop_worker
+    environment:
+      # Database
+      - DATABASE_URL_DEV=${DATABASE_URL_DEV}
+      - DATABASE_URL_PROD=${DATABASE_URL_PROD}
+
+      # Redis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-dev_password}
+
+      # Stripe (Phase 1)
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+
+      # Firebase (Phase 2)
+      - FIREBASE_SERVICE_ACCOUNT=${FIREBASE_SERVICE_ACCOUNT}
+      # OR individual values:
+      # - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
+      # - FIREBASE_PRIVATE_KEY=${FIREBASE_PRIVATE_KEY}
+      # - FIREBASE_CLIENT_EMAIL=${FIREBASE_CLIENT_EMAIL}
+
+      # Backend URL for WebSocket delivery
+      - BACKEND_URL=http://backend:8000 # ← FIXED: Changed from 3000 to 8000
+      - INTERNAL_API_SECRET=${INTERNAL_API_SECRET:-dev_secret}
+
+      # Environment
+      - NODE_ENV=${NODE_ENV:-development}
+    depends_on:
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    volumes:
+      - ./workers:/app # ← FIXED: Changed from ../auth-backend/workers
+    networks:
+      - mediloop_network
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+    driver: local
+
+networks:
+  mediloop_network:
+    driver: bridge
+
+# Production notes:
+# 1. Use Docker Swarm or Kubernetes for orchestration
+# 2. Scale workers horizontally: docker-compose up --scale worker=3
+# 3. Use external Redis (OVH Cloud) instead of container
+# 4. Store secrets in HashiCorp Vault or Docker Secrets
+# 5. Add logging (Loki, ELK stack)
+# 6. Add monitoring (Prometheus, Grafana)
+# 7. Use HTTPS reverse proxy (nginx, Traefik)
