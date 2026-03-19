@@ -22,13 +22,13 @@ import {
   FeatureCategory,
   ServiceCategory,
   PlanStatus,
-} from "../shared/types/index.ts";
+} from "../shared/types/rateLimiting.ts";
 
 // Load environment
 await load({ export: true });
 
-// Initialize postgresService (it's a singleton)
-await postgresService.initialize();
+// postgresService is a singleton and auto-connects on first query
+// No need to call initialize()
 
 const featureService = new FeatureService();
 const professionalService = new ProfessionalService();

@@ -4,7 +4,7 @@
  * This service provides plan-based rate limiting by querying subscription
  * limits from the database and tracking usage.
  *
- * FIXED: Uses postgresService instead of Pool
+ * FIXED V3: Uses postgresService + proper getOrganizationLimits() method
  */
 
 import { postgresService } from "./postgresService.ts";
@@ -12,7 +12,7 @@ import type {
   RateLimitCheckResult,
   RateLimitUsage,
   RateLimitUsageFilters,
-} from "../types/index.ts";
+} from "../types/rateLimit.ts";
 import { SubscriptionService } from "../../modules/payments/services/subscriptionService.ts";
 
 export class RateLimitService {
@@ -33,12 +33,25 @@ export class RateLimitService {
     ipAddress?: string,
   ): Promise<RateLimitCheckResult> {
     // 1. Get organization's rate limit configuration
-    const limits =
-      await this.subscriptionService.getOrganizationLimits(organizationId);
+    let limits;
+    try {
+      limits =
+        await this.subscriptionService.getOrganizationLimits(organizationId);
+    } catch (_error) {
+      // No active subscription, use default restrictive limits
+      return {
+        allowed: false,
+        limit: 0,
+        remaining: 0,
+        reset_at: new Date(Date.now() + 3600000), // 1 hour from now
+        window_seconds: 3600,
+        retry_after_seconds: 3600,
+      };
+    }
 
     const rateLimitConfig = limits.rate_limits[endpointKey];
 
-    // If endpoint not configured or disabled, allow
+    // If endpoint not configured or disabled, allow with default
     if (!rateLimitConfig || !rateLimitConfig.enabled) {
       return {
         allowed: true,

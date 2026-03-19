@@ -4,7 +4,7 @@
  * Handles subscription lifecycle, feature overrides, and plan transitions.
  * This is the service that ties organizations to their plans.
  *
- * FIXED: Uses postgresService instead of Pool
+ * FIXED V2: Uses postgresService + Added getOrganizationLimits() method
  */
 
 import { postgresService } from "../../../shared/services/postgresService.ts";
@@ -19,6 +19,10 @@ import type {
   SubscriptionFeatureOverride,
   Feature,
 } from "../../../shared/types/index.ts";
+import type {
+  OrganizationLimits,
+  RateLimitConfig,
+} from "../../../shared/types/rateLimit.ts";
 import { PlanService } from "./planService.ts";
 
 export class SubscriptionError extends Error {
@@ -36,6 +40,88 @@ export class SubscriptionService {
 
   constructor() {
     this.planService = new PlanService();
+  }
+
+  /**
+   * Get organization limits for rate limiting and feature access
+   *
+   * This method returns a complete OrganizationLimits object that includes:
+   * - Rate limit configurations for all endpoints
+   * - Storage limits
+   * - Capacity limits (patients, users)
+   * - API access flags
+   */
+  async getOrganizationLimits(
+    organizationId: string,
+  ): Promise<OrganizationLimits> {
+    const subscription =
+      await this.getActiveSubscriptionByOrganization(organizationId);
+
+    if (!subscription) {
+      throw new SubscriptionError(
+        `No active subscription found for organization: ${organizationId}`,
+        "NO_SUBSCRIPTION",
+      );
+    }
+
+    // Build rate limits object from plan features
+    const rateLimits: { [endpointKey: string]: RateLimitConfig } = {};
+    const planFeatures = subscription.plan.features || [];
+
+    // Extract rate limit features
+    for (const feature of planFeatures) {
+      if (feature.key.startsWith("rate_limit_")) {
+        try {
+          const config = JSON.parse(feature.value);
+          const endpointKey = feature.key.replace("rate_limit_", "");
+          rateLimits[endpointKey] = {
+            endpoint: endpointKey,
+            max_requests: config.max_requests,
+            window_seconds: config.window_seconds,
+            enabled: config.enabled,
+          };
+        } catch (error) {
+          console.error(
+            `Failed to parse rate limit feature ${feature.key}:`,
+            error,
+          );
+        }
+      }
+    }
+
+    // Extract other limits
+    const getFeatureValue = (key: string, defaultValue: any) => {
+      const feature = planFeatures.find((f) => f.key === key);
+      if (!feature) return defaultValue;
+
+      // Parse based on value_type
+      if (feature.value_type === "integer") {
+        return parseInt(feature.value, 10);
+      } else if (feature.value_type === "boolean") {
+        return feature.value === "true";
+      } else if (feature.value_type === "json") {
+        try {
+          return JSON.parse(feature.value);
+        } catch {
+          return defaultValue;
+        }
+      }
+      return feature.value;
+    };
+
+    return {
+      organization_id: organizationId,
+      subscription_id: subscription.id,
+      plan_key: subscription.plan.key,
+      plan_name: subscription.plan.name,
+      status: subscription.status,
+      rate_limits: rateLimits,
+      storage_limit_gb: getFeatureValue("storage_limit_gb", 10),
+      max_patients: getFeatureValue("max_patients", 100),
+      max_users: getFeatureValue("max_users", 5),
+      api_access_enabled: getFeatureValue("api_access_enabled", false),
+      trial_ends_at: subscription.trial_ends_at,
+    };
   }
 
   /**
