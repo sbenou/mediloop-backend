@@ -3,31 +3,32 @@
  *
  * TDD tests for Feature CRUD operations
  *
- * File: auth-backend/tests/services/featureService.test.ts
+ * File: tests/backend/services/featureService.test.ts
  *
- * Run: deno test --allow-env --allow-net auth-backend/tests/services/featureService.test.ts
+ * Run: deno test --allow-env --allow-net --allow-read tests/backend/services/featureService.test.ts
  */
 
-import { assertEquals, assertExists, assertRejects } from "@std/assert";
-import { Pool } from "postgres";
-import { FeatureService } from "../../services/featureService.ts";
-import { FeatureCategory } from "../../types/rateLimiting.ts";
+import {
+  assertEquals,
+  assertExists,
+  assertRejects,
+} from "https://deno.land/std@0.224.0/assert/mod.ts";
+import { TestDb } from "../../utils/testDb.ts";
+import { FeatureService } from "../../../backend/modules/payments/services/featureService.ts";
+import {
+  FeatureCategory,
+  type Feature,
+} from "../../../backend/shared/types/feature.ts";
 
-// Test database connection
-const getTestPool = (): Pool => {
-  const databaseUrl =
-    Deno.env.get("TEST_DATABASE_URL") || Deno.env.get("DATABASE_URL");
+// Initialize test database connection
+const testDb = new TestDb();
 
-  if (!databaseUrl) {
-    throw new Error("TEST_DATABASE_URL or DATABASE_URL must be set");
-  }
-
-  return new Pool(databaseUrl, 3, true);
-};
+Deno.test("Setup: Connect to test database", async () => {
+  await testDb.connect();
+});
 
 Deno.test("FeatureService - CRUD Operations", async (t) => {
-  const pool = getTestPool();
-  const featureService = new FeatureService(pool);
+  const featureService = new FeatureService();
   let createdFeatureId: string;
 
   await t.step("should create a new feature", async () => {
@@ -86,7 +87,9 @@ Deno.test("FeatureService - CRUD Operations", async (t) => {
     assertExists(features);
     assertEquals(Array.isArray(features), true);
     assertEquals(
-      features.every((f) => f.category === FeatureCategory.RATE_LIMITING),
+      features.every(
+        (f: Feature) => f.category === FeatureCategory.RATE_LIMITING,
+      ),
       true,
     );
   });
@@ -129,7 +132,8 @@ Deno.test("FeatureService - CRUD Operations", async (t) => {
     assertEquals(grouped.length > 0, true);
 
     const rateLimitGroup = grouped.find(
-      (g) => g.category === FeatureCategory.RATE_LIMITING,
+      (g: { category: FeatureCategory; features: Feature[]; count: number }) =>
+        g.category === FeatureCategory.RATE_LIMITING,
     );
     assertExists(rateLimitGroup);
     assertEquals(rateLimitGroup!.count > 0, true);
@@ -142,13 +146,10 @@ Deno.test("FeatureService - CRUD Operations", async (t) => {
     const feature = await featureService.getFeatureById(createdFeatureId);
     assertEquals(feature, null);
   });
-
-  await pool.end();
 });
 
 Deno.test("FeatureService - Value Types", async (t) => {
-  const pool = getTestPool();
-  const featureService = new FeatureService(pool);
+  const featureService = new FeatureService();
   const createdIds: string[] = [];
 
   await t.step("should create integer feature", async () => {
@@ -213,13 +214,10 @@ Deno.test("FeatureService - Value Types", async (t) => {
       await featureService.deleteFeature(id);
     }
   });
-
-  await pool.end();
 });
 
 Deno.test("FeatureService - Error Handling", async (t) => {
-  const pool = getTestPool();
-  const featureService = new FeatureService(pool);
+  const featureService = new FeatureService();
 
   await t.step("should return null for non-existent feature", async () => {
     const feature = await featureService.getFeatureById(
@@ -256,6 +254,8 @@ Deno.test("FeatureService - Error Handling", async (t) => {
     // Cleanup
     await featureService.deleteFeature(feature.id);
   });
+});
 
-  await pool.end();
+Deno.test("Cleanup: Disconnect from test database", async () => {
+  await testDb.close();
 });
