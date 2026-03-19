@@ -21,9 +21,11 @@
     "bcrypt": "https://deno.land/x/bcrypt@v0.4.1/mod.ts",
     "djwt": "https://deno.land/x/djwt@v3.0.1/mod.ts",
     "redis": "https://deno.land/x/redis@v0.32.1/mod.ts",
+    "std": "npm:std@^0.1.40",
     "stripe": "https://esm.sh/stripe@14.21.0",
     "std/": "https://deno.land/std@0.224.0/",
-    "std/assert": "https://deno.land/std@0.224.0/assert/mod.ts"
+    "std/assert": "https://deno.land/std@0.224.0/assert/mod.ts",
+    "@std/assert": "https://deno.land/std@0.224.0/assert/mod.ts"
   },
   "compilerOptions": {
     "lib": ["deno.window", "deno.unstable"],

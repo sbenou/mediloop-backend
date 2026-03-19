@@ -26,11 +26,23 @@ export class PostgresService {
   // ========== BACKWARD COMPATIBILITY METHODS ==========
   // These methods maintain the exact same API as before
 
-  async query(sql: string, params?: any[]): Promise<any> {
+  async query(
+    sql: string,
+    params?: unknown[],
+  ): Promise<{
+    rows: Record<string, unknown>[];
+    rowCount?: number;
+  }> {
     return await this.client.query(sql, params);
   }
 
-  async queryArray(sql: string, params?: any[]): Promise<any> {
+  async queryArray(
+    sql: string,
+    params?: unknown[],
+  ): Promise<{
+    rows: unknown[][];
+    rowCount?: number;
+  }> {
     return await this.client.queryArray(sql, params);
   }
 
@@ -63,15 +75,17 @@ export class PostgresService {
     );
   }
 
-  async getTenantByUserId(userId: string): Promise<any> {
+  async getTenantByUserId(userId: string): Promise<Record<string, unknown>> {
     return await this.tenantManager.getTenantByUserId(userId);
   }
 
-  async getTenantBySchema(schemaName: string): Promise<any> {
+  async getTenantBySchema(
+    schemaName: string,
+  ): Promise<Record<string, unknown>> {
     return await this.tenantManager.getTenantBySchema(schemaName);
   }
 
-  async listAllTenants(): Promise<any[]> {
+  async listAllTenants(): Promise<Record<string, unknown>[]> {
     return await this.tenantManager.listAllTenants();
   }
 
@@ -91,38 +105,42 @@ export class PostgresService {
   // ========== QUERY HELPERS (delegated) ==========
   async executeInSchema(
     schemaName: string,
-    operation: () => Promise<any>,
-  ): Promise<any> {
+    operation: () => Promise<unknown>,
+  ): Promise<unknown> {
     return await this.queryHelper.executeInSchema(schemaName, operation);
   }
 
   async insertWithReturn(
     table: string,
-    data: Record<string, any>,
+    data: Record<string, unknown>,
     schema?: string,
-  ): Promise<any> {
+  ): Promise<Record<string, unknown>> {
     return await this.queryHelper.insertWithReturn(table, data, schema);
   }
 
   async updateById(
     table: string,
     id: string,
-    data: Record<string, any>,
+    data: Record<string, unknown>,
     schema?: string,
-  ): Promise<any> {
+  ): Promise<Record<string, unknown>> {
     return await this.queryHelper.updateById(table, id, data, schema);
   }
 
-  async findById(table: string, id: string, schema?: string): Promise<any> {
+  async findById(
+    table: string,
+    id: string,
+    schema?: string,
+  ): Promise<Record<string, unknown>> {
     return await this.queryHelper.findById(table, id, schema);
   }
 
   async findByField(
     table: string,
     field: string,
-    value: any,
+    value: unknown,
     schema?: string,
-  ): Promise<any[]> {
+  ): Promise<Record<string, unknown>[]> {
     return await this.queryHelper.findByField(table, field, value, schema);
   }
 
@@ -137,7 +155,7 @@ export class PostgresService {
   async exists(
     table: string,
     field: string,
-    value: any,
+    value: unknown,
     schema?: string,
   ): Promise<boolean> {
     return await this.queryHelper.exists(table, field, value, schema);
@@ -146,7 +164,7 @@ export class PostgresService {
   async count(
     table: string,
     whereClause?: string,
-    params?: any[],
+    params?: unknown[],
     schema?: string,
   ): Promise<number> {
     return await this.queryHelper.count(table, whereClause, params, schema);
@@ -191,7 +209,7 @@ export class PostgresService {
     fullName: string,
     role: string = "patient",
     status: string = "active",
-  ): Promise<any> {
+  ): Promise<Record<string, unknown>> {
     const result = await this.query(
       `
       INSERT INTO auth.users (id, email, password, salt, full_name, role, status, created_at, updated_at)
@@ -204,7 +222,9 @@ export class PostgresService {
     return result.rows[0];
   }
 
-  async findUserByEmail(email: string): Promise<any> {
+  async findUserByEmail(
+    email: string,
+  ): Promise<Record<string, unknown> | null> {
     const result = await this.query(
       "SELECT * FROM auth.users WHERE email = $1",
       [email],
@@ -212,14 +232,17 @@ export class PostgresService {
     return result.rows[0] || null;
   }
 
-  async findUserById(userId: string): Promise<any> {
+  async findUserById(userId: string): Promise<Record<string, unknown> | null> {
     const result = await this.query("SELECT * FROM auth.users WHERE id = $1", [
       userId,
     ]);
     return result.rows[0] || null;
   }
 
-  async updateUser(userId: string, updates: Record<string, any>): Promise<any> {
+  async updateUser(
+    userId: string,
+    updates: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
     const columns = Object.keys(updates);
     const values = Object.values(updates);
     const setClause = columns
@@ -244,7 +267,7 @@ export class PostgresService {
       "UPDATE auth.users SET status = 'deleted', updated_at = now() WHERE id = $1",
       [userId],
     );
-    return result.rowCount > 0;
+    return (result.rowCount || 0) > 0;
   }
 
   // ========== AUTHENTICATION ==========
@@ -252,7 +275,7 @@ export class PostgresService {
     email: string,
     password: string,
     salt: string,
-  ): Promise<any> {
+  ): Promise<Record<string, unknown> | null> {
     const result = await this.query(
       `
       SELECT * FROM auth.users 
@@ -277,7 +300,7 @@ export class PostgresService {
 
   async getDatabaseVersion(): Promise<string> {
     const result = await this.query("SELECT version()");
-    return result.rows[0].version;
+    return result.rows[0].version as string;
   }
 
   async getSchemaList(): Promise<string[]> {
@@ -287,7 +310,9 @@ export class PostgresService {
       WHERE schema_name NOT IN ('information_schema', 'pg_catalog', 'pg_toast')
       ORDER BY schema_name
     `);
-    return result.rows.map((row) => row.schema_name);
+    return result.rows.map(
+      (row: Record<string, unknown>) => row.schema_name as string,
+    );
   }
 
   async getTableList(schemaName: string = "public"): Promise<string[]> {
@@ -300,7 +325,9 @@ export class PostgresService {
     `,
       [schemaName],
     );
-    return result.rows.map((row) => row.table_name);
+    return result.rows.map(
+      (row: Record<string, unknown>) => row.table_name as string,
+    );
   }
 
   // ========== MISSING METHODS FOR REGISTRATION SERVICE ==========
@@ -312,15 +339,17 @@ export class PostgresService {
       WHERE is_active = true
       ORDER BY schema
     `);
-    return result.rows.map((row) => row.schema);
+    return result.rows.map(
+      (row: Record<string, unknown>) => row.schema as string,
+    );
   }
 
   async getUserProfileByEmailInSchema(
     schema: string,
     email: string,
-  ): Promise<any> {
+  ): Promise<Record<string, unknown>> {
     try {
-      const result = await this.executeInSchema(schema, async () => {
+      const result = (await this.executeInSchema(schema, async () => {
         return await this.query(
           `
           SELECT * FROM profiles 
@@ -329,7 +358,7 @@ export class PostgresService {
         `,
           [email],
         );
-      });
+      })) as { rows: Record<string, unknown>[] };
 
       if (result.rows && result.rows.length > 0) {
         return result.rows[0];
@@ -337,7 +366,8 @@ export class PostgresService {
 
       throw new Error("Profile not found");
     } catch (error) {
-      throw new Error(`Profile not found: ${error.message}`);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Profile not found: ${message}`);
     }
   }
 
