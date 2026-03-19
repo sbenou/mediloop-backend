@@ -4,17 +4,17 @@
  */
 
 import { Application, Router, Context } from "oak";
-import { authRoutes } from "./routes/auth.ts";
-import { tokenRoutes } from "./routes/tokenManagement.ts";
-import { tokenRotationRoutes } from "./routes/tokenRotation.ts";
-import { domainVerificationRoutes } from "./routes/domainVerification.ts";
-import { authMiddleware } from "./middleware/authMiddleware.ts";
-import { tokenBlacklistMiddleware } from "./middleware/tokenBlacklistMiddleware.ts";
+import { authRoutes } from "./modules/auth/routes/auth.ts";
+import { tokenRoutes } from "./modules/auth/routes/tokenManagement.ts";
+import { tokenRotationRoutes } from "./modules/auth/routes/tokenRotation.ts";
+import { domainVerificationRoutes } from "./modules/auth/routes/domainVerification.ts";
+import { authMiddleware } from "./modules/auth/middleware/authMiddleware.ts";
+import { tokenBlacklistMiddleware } from "./shared/middleware/tokenBlacklistMiddleware.ts";
 import { oakCors } from "https://deno.land/x/cors@v1.2.2/mod.ts";
-import emailTemplateRoutes from "./routes/emailTemplates.ts";
-import { invitationRoutes } from "./routes/invitation.ts";
-import loginEmailRoutes from "./routes/loginEmails.ts";
-import { passwordResetRoutes } from "./routes/passwordReset.ts";
+import emailTemplateRoutes from "./shared/routes/emailTemplates.ts";
+import { invitationRoutes } from "./modules/auth/routes/invitation.ts";
+import loginEmailRoutes from "./shared/routes/loginEmails.ts";
+import { passwordResetRoutes } from "./modules/auth/routes/passwordReset.ts";
 import { load } from "https://deno.land/std@0.224.0/dotenv/mod.ts";
 
 // ✅ Load test environment variables
