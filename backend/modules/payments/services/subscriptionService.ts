@@ -4,7 +4,7 @@
  * Handles subscription lifecycle, feature overrides, and plan transitions.
  * This is the service that ties organizations to their plans.
  *
- * FIXED V4: Uses postgresService + proper type assertions
+ * FIXED V7: Uses jsonb_build_object for dynamic nested structure - no manual field mapping!
  */
 
 import { postgresService } from "../../../shared/services/postgresService.ts";
@@ -17,6 +17,7 @@ import type {
   SubscriptionStatus,
   SubscriptionFilters,
   SubscriptionFeatureOverride,
+  Feature,
 } from "../../../shared/types/index.ts";
 import type {
   OrganizationLimits,
@@ -186,7 +187,7 @@ export class SubscriptionService {
       ],
     );
 
-    const subscription = result.rows[0] as Subscription;
+    const subscription = result.rows[0] as unknown as Subscription;
     if (!subscription) {
       throw new SubscriptionError(
         "Failed to create subscription",
@@ -218,7 +219,7 @@ export class SubscriptionService {
       [id],
     );
 
-    return (result.rows[0] as Subscription) || null;
+    return (result.rows[0] as unknown as Subscription) || null;
   }
 
   /**
@@ -236,7 +237,7 @@ export class SubscriptionService {
       [organizationId],
     );
 
-    const subscription = result.rows[0] as Subscription;
+    const subscription = result.rows[0] as unknown as Subscription;
     if (!subscription) return null;
 
     return this.enrichSubscriptionWithPlan(subscription);
@@ -274,7 +275,7 @@ export class SubscriptionService {
     query += ` ORDER BY created_at DESC`;
 
     const result = await postgresService.query(query, params);
-    return result.rows as Subscription[];
+    return result.rows as unknown as Subscription[];
   }
 
   /**
@@ -342,7 +343,7 @@ export class SubscriptionService {
       );
 
       await client.queryObject("COMMIT");
-      return (result.rows[0] as Subscription) || null;
+      return (result.rows[0] as unknown as Subscription) || null;
     } catch (error) {
       await client.queryObject("ROLLBACK");
       throw error;
@@ -379,7 +380,7 @@ export class SubscriptionService {
       );
     }
 
-    const featureId = (featureResult.rows[0] as { id: string }).id;
+    const featureId = (featureResult.rows[0] as unknown as { id: string }).id;
 
     const expiresAt = data.expires_in_days
       ? new Date(Date.now() + data.expires_in_days * 24 * 60 * 60 * 1000)
@@ -405,7 +406,7 @@ export class SubscriptionService {
       ],
     );
 
-    return result.rows[0] as SubscriptionFeatureOverride;
+    return result.rows[0] as unknown as SubscriptionFeatureOverride;
   }
 
   /**
@@ -487,9 +488,29 @@ export class SubscriptionService {
       subscription.plan_id,
     );
 
-    // Get active feature overrides
+    // Get active feature overrides with their feature details
+    // Using jsonb_build_object to create nested structure directly in SQL
     const overridesResult = await postgresService.query(
-      `SELECT sfo.*, f.*
+      `SELECT 
+        sfo.id,
+        sfo.subscription_id,
+        sfo.feature_id,
+        sfo.override_value,
+        sfo.reason,
+        sfo.expires_at,
+        sfo.created_at,
+        jsonb_build_object(
+          'id', f.id,
+          'name', f.name,
+          'key', f.key,
+          'category', f.category,
+          'description', f.description,
+          'default_value', f.default_value,
+          'value_type', f.value_type,
+          'metadata', f.metadata,
+          'created_at', f.created_at,
+          'updated_at', f.updated_at
+        ) as feature
        FROM subscription_feature_overrides sfo
        JOIN features f ON sfo.feature_id = f.id
        WHERE sfo.subscription_id = $1
@@ -497,10 +518,15 @@ export class SubscriptionService {
       [subscription.id],
     );
 
+    // Cast the result - PostgreSQL returns the nested structure already
+    const feature_overrides = overridesResult.rows as unknown as Array<
+      SubscriptionFeatureOverride & { feature: Feature }
+    >;
+
     return {
       ...subscription,
       plan,
-      feature_overrides: overridesResult.rows as SubscriptionFeatureOverride[],
+      feature_overrides,
     };
   }
 }

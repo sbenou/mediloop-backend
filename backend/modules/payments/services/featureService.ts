@@ -1,179 +1,220 @@
-import { PostgresClient } from "../../../shared/services/postgres/PostgresClient.ts";
+/**
+ * Feature Service - Manages technical features (rate limits, storage, capacity)
+ *
+ * FIXED V2: Uses postgresService with proper type assertions via unknown
+ */
 
-export class QueryHelper {
-  constructor(private client: PostgresClient) {}
+import { postgresService } from "../../../shared/services/postgresService.ts";
+import type {
+  Feature,
+  CreateFeatureDTO,
+  UpdateFeatureDTO,
+  FeatureCategory,
+} from "../../../shared/types/index.ts";
 
-  async executeInSchema(
-    schemaName: string,
-    operation: () => Promise<unknown>,
-  ): Promise<unknown> {
-    // Set search path to the specific tenant schema
-    await this.client.query(`SET search_path TO "${schemaName}", public`);
+export class FeatureService {
+  // No constructor - uses singleton
 
-    try {
-      const result = await operation();
-      return result;
-    } finally {
-      // Reset search path to default
-      await this.client.query("SET search_path TO public");
+  /**
+   * Create a new feature
+   */
+  async createFeature(data: CreateFeatureDTO): Promise<Feature> {
+    const result = await postgresService.query(
+      `INSERT INTO features (
+        name, key, category, description, default_value, value_type, metadata
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *`,
+      [
+        data.name,
+        data.key,
+        data.category,
+        data.description || null,
+        data.default_value,
+        data.value_type,
+        data.metadata || null,
+      ],
+    );
+
+    if (result.rows.length === 0) {
+      throw new Error("Failed to create feature");
     }
+
+    return result.rows[0] as unknown as Feature;
   }
 
-  async insertWithReturn(
-    table: string,
-    data: Record<string, unknown>,
-    schema?: string,
-  ): Promise<Record<string, unknown>> {
-    const tableName = schema ? `"${schema}".${table}` : table;
-    const columns = Object.keys(data);
-    const values = Object.values(data);
-    const placeholders = values.map((_, index) => `$${index + 1}`).join(", ");
+  /**
+   * Get feature by ID
+   */
+  async getFeatureById(id: string): Promise<Feature | null> {
+    const result = await postgresService.query(
+      `SELECT * FROM features WHERE id = $1`,
+      [id],
+    );
 
-    const sql = `
-      INSERT INTO ${tableName} (${columns.join(", ")})
-      VALUES (${placeholders})
-      RETURNING *
-    `;
-
-    const result = await this.client.query(sql, values);
-    return result.rows[0] as Record<string, unknown>;
+    return (result.rows[0] as unknown as Feature) || null;
   }
 
-  async updateById(
-    table: string,
+  /**
+   * Get feature by key
+   */
+  async getFeatureByKey(key: string): Promise<Feature | null> {
+    const result = await postgresService.query(
+      `SELECT * FROM features WHERE key = $1`,
+      [key],
+    );
+
+    return (result.rows[0] as unknown as Feature) || null;
+  }
+
+  /**
+   * Get all features, optionally filtered by category
+   */
+  async getFeatures(category?: FeatureCategory): Promise<Feature[]> {
+    let query = `SELECT * FROM features`;
+    const params: unknown[] = [];
+
+    if (category) {
+      query += ` WHERE category = $1`;
+      params.push(category);
+    }
+
+    query += ` ORDER BY category, name`;
+
+    const result = await postgresService.query(query, params);
+    return result.rows as unknown as Feature[];
+  }
+
+  /**
+   * Update feature
+   */
+  async updateFeature(
     id: string,
-    data: Record<string, unknown>,
-    schema?: string,
-  ): Promise<Record<string, unknown>> {
-    const tableName = schema ? `"${schema}".${table}` : table;
-    const columns = Object.keys(data);
-    const values = Object.values(data);
+    data: UpdateFeatureDTO,
+  ): Promise<Feature | null> {
+    const updates: string[] = [];
+    const values: unknown[] = [];
+    let paramCount = 1;
 
-    const setClause = columns
-      .map((col, index) => `${col} = $${index + 2}`)
-      .join(", ");
+    if (data.name !== undefined) {
+      updates.push(`name = $${paramCount++}`);
+      values.push(data.name);
+    }
 
-    const sql = `
-      UPDATE ${tableName}
-      SET ${setClause}, updated_at = now()
-      WHERE id = $1
-      RETURNING *
-    `;
+    if (data.description !== undefined) {
+      updates.push(`description = $${paramCount++}`);
+      values.push(data.description);
+    }
 
-    const result = await this.client.query(sql, [id, ...values]);
-    return result.rows[0] as Record<string, unknown>;
+    if (data.default_value !== undefined) {
+      updates.push(`default_value = $${paramCount++}`);
+      values.push(data.default_value);
+    }
+
+    if (data.metadata !== undefined) {
+      updates.push(`metadata = $${paramCount++}`);
+      values.push(data.metadata);
+    }
+
+    if (updates.length === 0) {
+      return this.getFeatureById(id);
+    }
+
+    updates.push(`updated_at = NOW()`);
+    values.push(id);
+
+    const result = await postgresService.query(
+      `UPDATE features
+       SET ${updates.join(", ")}
+       WHERE id = $${paramCount}
+       RETURNING *`,
+      values,
+    );
+
+    return (result.rows[0] as unknown as Feature) || null;
   }
 
-  async findById(
-    table: string,
-    id: string,
-    schema?: string,
-  ): Promise<Record<string, unknown> | null> {
-    const tableName = schema ? `"${schema}".${table}` : table;
-    const sql = `SELECT * FROM ${tableName} WHERE id = $1`;
+  /**
+   * Delete feature (soft delete - check for dependencies first)
+   */
+  async deleteFeature(id: string): Promise<boolean> {
+    // Check if feature is in use by any plans
+    const usageCheck = await postgresService.query(
+      `SELECT COUNT(*) as count FROM plan_features WHERE feature_id = $1`,
+      [id],
+    );
 
-    const result = await this.client.query(sql, [id]);
-    return (result.rows[0] as Record<string, unknown>) || null;
-  }
+    const count = (usageCheck.rows[0] as { count: number })?.count || 0;
+    if (count > 0) {
+      throw new Error(
+        "Cannot delete feature: it is currently assigned to one or more plans",
+      );
+    }
 
-  async findByField(
-    table: string,
-    field: string,
-    value: unknown,
-    schema?: string,
-  ): Promise<Record<string, unknown>[]> {
-    const tableName = schema ? `"${schema}".${table}` : table;
-    const sql = `SELECT * FROM ${tableName} WHERE ${field} = $1`;
+    const result = await postgresService.query(
+      `DELETE FROM features WHERE id = $1`,
+      [id],
+    );
 
-    const result = await this.client.query(sql, [value]);
-    return (result.rows as Record<string, unknown>[]) || [];
-  }
-
-  async deleteById(
-    table: string,
-    id: string,
-    schema?: string,
-  ): Promise<boolean> {
-    const tableName = schema ? `"${schema}".${table}` : table;
-    const sql = `DELETE FROM ${tableName} WHERE id = $1`;
-
-    const result = await this.client.query(sql, [id]);
     return (result.rowCount ?? 0) > 0;
   }
 
-  async exists(
-    table: string,
-    field: string,
-    value: unknown,
-    schema?: string,
-  ): Promise<boolean> {
-    const tableName = schema ? `"${schema}".${table}` : table;
-    const sql = `SELECT 1 FROM ${tableName} WHERE ${field} = $1 LIMIT 1`;
+  /**
+   * Get features by category with count
+   */
+  async getFeaturesByCategory(): Promise<
+    Array<{ category: FeatureCategory; count: number; features: Feature[] }>
+  > {
+    const features = await this.getFeatures();
 
-    const result = await this.client.query(sql, [value]);
-    return result.rows && result.rows.length > 0;
+    const grouped = features.reduce(
+      (acc, feature) => {
+        if (!acc[feature.category]) {
+          acc[feature.category] = [];
+        }
+        acc[feature.category].push(feature);
+        return acc;
+      },
+      {} as Record<FeatureCategory, Feature[]>,
+    );
+
+    return Object.entries(grouped).map(([category, features]) => ({
+      category: category as FeatureCategory,
+      count: features.length,
+      features,
+    }));
   }
 
-  async count(
-    table: string,
-    whereClause?: string,
-    params?: unknown[],
-    schema?: string,
-  ): Promise<number> {
-    const tableName = schema ? `"${schema}".${table}` : table;
-    let sql = `SELECT COUNT(*) as count FROM ${tableName}`;
+  /**
+   * Bulk get features by keys
+   */
+  async getFeaturesByKeys(keys: string[]): Promise<Feature[]> {
+    if (keys.length === 0) return [];
 
-    if (whereClause) {
-      sql += ` WHERE ${whereClause}`;
-    }
+    const placeholders = keys.map((_, i) => `$${i + 1}`).join(", ");
 
-    const result = await this.client.query(sql, params);
-    const count = (result.rows[0] as { count: string }).count;
-    return parseInt(count);
+    const result = await postgresService.query(
+      `SELECT * FROM features WHERE key IN (${placeholders})`,
+      keys,
+    );
+
+    return result.rows as unknown as Feature[];
   }
 
-  // Utility for building complex queries
-  buildSelectQuery(options: {
-    table: string;
-    columns?: string[];
-    where?: string;
-    orderBy?: string;
-    limit?: number;
-    offset?: number;
-    schema?: string;
-  }): { sql: string; params: unknown[] } {
-    const {
-      table,
-      columns = ["*"],
-      where,
-      orderBy,
-      limit,
-      offset,
-      schema,
-    } = options;
+  /**
+   * Check if feature key exists
+   */
+  async featureKeyExists(key: string, excludeId?: string): Promise<boolean> {
+    let query = `SELECT COUNT(*) as count FROM features WHERE key = $1`;
+    const params: unknown[] = [key];
 
-    const tableName = schema ? `"${schema}".${table}` : table;
-    let sql = `SELECT ${columns.join(", ")} FROM ${tableName}`;
-    const params: unknown[] = [];
-
-    if (where) {
-      sql += ` WHERE ${where}`;
+    if (excludeId) {
+      query += ` AND id != $2`;
+      params.push(excludeId);
     }
 
-    if (orderBy) {
-      sql += ` ORDER BY ${orderBy}`;
-    }
+    const result = await postgresService.query(query, params);
+    const count = (result.rows[0] as { count: number })?.count || 0;
 
-    if (limit) {
-      params.push(limit);
-      sql += ` LIMIT $${params.length}`;
-    }
-
-    if (offset) {
-      params.push(offset);
-      sql += ` OFFSET $${params.length}`;
-    }
-
-    return { sql, params };
+    return count > 0;
   }
 }
