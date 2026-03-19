@@ -4,7 +4,7 @@
  * Handles subscription lifecycle, feature overrides, and plan transitions.
  * This is the service that ties organizations to their plans.
  *
- * FIXED V3: Uses postgresService + proper pivot_value from actual Feature type
+ * FIXED V4: Uses postgresService + proper type assertions
  */
 
 import { postgresService } from "../../../shared/services/postgresService.ts";
@@ -59,12 +59,14 @@ export class SubscriptionService {
     if (!subscription) {
       throw new SubscriptionError(
         `No active subscription found for organization: ${organizationId}`,
-        "NOT_FOUND", // ✅ Changed from "NO_SUBSCRIPTION" to "NOT_FOUND"
+        "NOT_FOUND",
       );
     }
 
     // Build rate limits object from plan features
-    const rateLimits: { [endpointKey: string]: RateLimitConfig } = {};
+    const rateLimits: {
+      [endpointKey: string]: RateLimitConfig;
+    } = {};
     const planFeatures = subscription.plan.features || [];
 
     // Extract rate limit features
@@ -72,7 +74,7 @@ export class SubscriptionService {
     for (const feature of planFeatures) {
       if (feature.key.startsWith("rate_limit_")) {
         try {
-          const config = JSON.parse(feature.pivot_value); // ✅ Use pivot_value, not value
+          const config = JSON.parse(feature.pivot_value);
           const endpointKey = feature.key.replace("rate_limit_", "");
           rateLimits[endpointKey] = {
             endpoint: endpointKey,
@@ -184,7 +186,7 @@ export class SubscriptionService {
       ],
     );
 
-    const subscription = result.rows[0];
+    const subscription = result.rows[0] as Subscription;
     if (!subscription) {
       throw new SubscriptionError(
         "Failed to create subscription",
@@ -192,7 +194,7 @@ export class SubscriptionService {
       );
     }
 
-    return this.getSubscriptionWithPlan(subscription.id);
+    return this.getSubscriptionWithPlan(subscription.id as string);
   }
 
   /**
@@ -216,7 +218,7 @@ export class SubscriptionService {
       [id],
     );
 
-    return result.rows[0] || null;
+    return (result.rows[0] as Subscription) || null;
   }
 
   /**
@@ -234,7 +236,7 @@ export class SubscriptionService {
       [organizationId],
     );
 
-    const subscription = result.rows[0];
+    const subscription = result.rows[0] as Subscription;
     if (!subscription) return null;
 
     return this.enrichSubscriptionWithPlan(subscription);
@@ -272,7 +274,7 @@ export class SubscriptionService {
     query += ` ORDER BY created_at DESC`;
 
     const result = await postgresService.query(query, params);
-    return result.rows;
+    return result.rows as Subscription[];
   }
 
   /**
@@ -285,7 +287,6 @@ export class SubscriptionService {
     const client = await postgresService.getClient();
 
     if (!client) {
-      // ✅ Use regular Error, not SubscriptionError (DB_ERROR is not a valid code)
       throw new Error("Failed to get database client");
     }
 
@@ -341,7 +342,7 @@ export class SubscriptionService {
       );
 
       await client.queryObject("COMMIT");
-      return result.rows[0] || null;
+      return (result.rows[0] as Subscription) || null;
     } catch (error) {
       await client.queryObject("ROLLBACK");
       throw error;
@@ -378,7 +379,7 @@ export class SubscriptionService {
       );
     }
 
-    const featureId = featureResult.rows[0].id;
+    const featureId = (featureResult.rows[0] as { id: string }).id;
 
     const expiresAt = data.expires_in_days
       ? new Date(Date.now() + data.expires_in_days * 24 * 60 * 60 * 1000)
@@ -404,7 +405,7 @@ export class SubscriptionService {
       ],
     );
 
-    return result.rows[0];
+    return result.rows[0] as SubscriptionFeatureOverride;
   }
 
   /**
@@ -421,7 +422,7 @@ export class SubscriptionService {
       [subscriptionId, featureKey],
     );
 
-    return result.rowCount !== null && result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   /**
@@ -447,9 +448,9 @@ export class SubscriptionService {
       now > subscription.trial_ends_at
     ) {
       await this.updateSubscription(subscriptionId, {
-        status: "expired" as SubscriptionStatus, // ✅ Cast to type
+        status: "expired" as SubscriptionStatus,
       });
-      return "expired" as SubscriptionStatus; // ✅ Cast to type
+      return "expired" as SubscriptionStatus;
     }
 
     // Check period expiration
@@ -499,7 +500,7 @@ export class SubscriptionService {
     return {
       ...subscription,
       plan,
-      feature_overrides: overridesResult.rows,
+      feature_overrides: overridesResult.rows as SubscriptionFeatureOverride[],
     };
   }
 }

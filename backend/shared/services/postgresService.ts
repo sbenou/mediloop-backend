@@ -131,7 +131,7 @@ export class PostgresService {
     table: string,
     id: string,
     schema?: string,
-  ): Promise<Record<string, unknown>> {
+  ): Promise<Record<string, unknown> | null> {
     return await this.queryHelper.findById(table, id, schema);
   }
 
