@@ -17,7 +17,6 @@ import type {
   SubscriptionStatus,
   SubscriptionFilters,
   SubscriptionFeatureOverride,
-  Feature,
 } from "../../../shared/types/index.ts";
 import type {
   OrganizationLimits,
