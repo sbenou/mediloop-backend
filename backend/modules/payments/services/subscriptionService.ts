@@ -17,6 +17,7 @@ import type {
   SubscriptionStatus,
   SubscriptionFilters,
   SubscriptionFeatureOverride,
+  Feature,
 } from "../../../shared/types/index.ts";
 import type {
   OrganizationLimits,
@@ -90,7 +91,10 @@ export class SubscriptionService {
     }
 
     // Helper to get feature value from pivot_value
-    const getFeatureValue = (key: string, defaultValue: any) => {
+    const getFeatureValue = (
+      key: string,
+      defaultValue: string | number | boolean,
+    ): string | number | boolean => {
       const feature = planFeatures.find((f) => f.key === key);
       if (!feature) return defaultValue;
 
@@ -116,10 +120,13 @@ export class SubscriptionService {
       plan_name: subscription.plan.name,
       status: subscription.status,
       rate_limits: rateLimits,
-      storage_limit_gb: getFeatureValue("storage_limit_gb", 10),
-      max_patients: getFeatureValue("max_patients", 100),
-      max_users: getFeatureValue("max_users", 5),
-      api_access_enabled: getFeatureValue("api_access_enabled", false),
+      storage_limit_gb: getFeatureValue("storage_limit_gb", 10) as number,
+      max_patients: getFeatureValue("max_patients", 100) as number,
+      max_users: getFeatureValue("max_users", 5) as number,
+      api_access_enabled: getFeatureValue(
+        "api_access_enabled",
+        false,
+      ) as boolean,
       trial_ends_at: subscription.trial_ends_at,
     };
   }
