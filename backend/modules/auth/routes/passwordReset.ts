@@ -1,15 +1,15 @@
 import { Router } from "oak";
-import { enhancedJwtService } from "../services/enhancedJwtService.ts";
-import { databaseService } from "../services/databaseService.ts";
-import { updatedEmailService } from "../services/updatedEmailService.ts";
-import { smsService } from "../services/smsService.ts";
-import { kvStore } from "../services/kvStore.ts";
+import { enhancedJwtService } from "../../auth/services/enhancedJwtService.ts";
+import { databaseService } from "../../../shared/services/databaseService.ts";
+import { updatedEmailService } from "../../../shared/services/updatedEmailService.ts";
+import { smsService } from "../../../shared/services/smsService.ts";
+import { kvStore } from "../../../shared/services/kvStore.ts";
 import {
   passwordResetRateLimiter,
   otpRateLimiter,
   otpVerifyRateLimiter,
   tokenVerifyRateLimiter,
-} from "../middleware/rateLimitMiddleware.ts";
+} from "../../../shared/middleware/rateLimitMiddleware.ts";
 
 const passwordResetRoutes = new Router();
 

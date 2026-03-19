@@ -6,7 +6,11 @@
  * Actual job processing happens in workers/ (Node.js with BullMQ)
  */
 
-import { createRedisConnection, JobPriority, QueueNames } from "./config.ts";
+import {
+  createRedisConnection,
+  JobPriority,
+  QueueNames,
+} from "../../../shared/queues/config.ts";
 
 export interface NotificationJobData {
   userId?: string;

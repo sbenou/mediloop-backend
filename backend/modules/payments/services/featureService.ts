@@ -1,27 +1,25 @@
 /**
  * Feature Service - Manages technical features (rate limits, storage, capacity)
  *
- * CORRECTED for Mediloop backend using PostgresClient
- *
- * File: auth-backend/services/featureService.ts
+ * FIXED: Uses postgresService instead of PostgresClient
  */
 
-import { PostgresClient } from "./postgres/PostgresClient.ts";
+import { postgresService } from "../../../shared/services/postgresService.ts";
 import type {
   Feature,
   CreateFeatureDTO,
   UpdateFeatureDTO,
   FeatureCategory,
-} from "../rateLimitingTypes.ts";
+} from "../../../shared/types/index.ts";
 
 export class FeatureService {
-  constructor(private client: PostgresClient) {}
+  // No constructor - uses singleton
 
   /**
    * Create a new feature
    */
   async createFeature(data: CreateFeatureDTO): Promise<Feature> {
-    const result = await this.client.queryObject<Feature>(
+    const result = await postgresService.query(
       `INSERT INTO features (
         name, key, category, description, default_value, value_type, metadata
       ) VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -48,7 +46,7 @@ export class FeatureService {
    * Get feature by ID
    */
   async getFeatureById(id: string): Promise<Feature | null> {
-    const result = await this.client.queryObject<Feature>(
+    const result = await postgresService.query(
       `SELECT * FROM features WHERE id = $1`,
       [id],
     );
@@ -60,7 +58,7 @@ export class FeatureService {
    * Get feature by key
    */
   async getFeatureByKey(key: string): Promise<Feature | null> {
-    const result = await this.client.queryObject<Feature>(
+    const result = await postgresService.query(
       `SELECT * FROM features WHERE key = $1`,
       [key],
     );
@@ -82,7 +80,7 @@ export class FeatureService {
 
     query += ` ORDER BY category, name`;
 
-    const result = await this.client.queryObject<Feature>(query, params);
+    const result = await postgresService.query(query, params);
     return result.rows;
   }
 
@@ -124,7 +122,7 @@ export class FeatureService {
     updates.push(`updated_at = NOW()`);
     values.push(id);
 
-    const result = await this.client.queryObject<Feature>(
+    const result = await postgresService.query(
       `UPDATE features
        SET ${updates.join(", ")}
        WHERE id = $${paramCount}
@@ -140,7 +138,7 @@ export class FeatureService {
    */
   async deleteFeature(id: string): Promise<boolean> {
     // Check if feature is in use by any plans
-    const usageCheck = await this.client.queryObject<{ count: number }>(
+    const usageCheck = await postgresService.query(
       `SELECT COUNT(*) as count FROM plan_features WHERE feature_id = $1`,
       [id],
     );
@@ -151,7 +149,7 @@ export class FeatureService {
       );
     }
 
-    const result = await this.client.queryObject(
+    const result = await postgresService.query(
       `DELETE FROM features WHERE id = $1`,
       [id],
     );
@@ -193,7 +191,7 @@ export class FeatureService {
 
     const placeholders = keys.map((_, i) => `$${i + 1}`).join(", ");
 
-    const result = await this.client.queryObject<Feature>(
+    const result = await postgresService.query(
       `SELECT * FROM features WHERE key IN (${placeholders})`,
       keys,
     );
@@ -213,10 +211,7 @@ export class FeatureService {
       params.push(excludeId);
     }
 
-    const result = await this.client.queryObject<{ count: number }>(
-      query,
-      params,
-    );
+    const result = await postgresService.query(query, params);
 
     return (result.rows[0]?.count || 0) > 0;
   }

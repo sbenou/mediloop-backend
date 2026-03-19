@@ -4,23 +4,22 @@
  * This service provides plan-based rate limiting by querying subscription
  * limits from the database and tracking usage.
  *
- * File: auth-backend/services/rateLimitService.ts
+ * FIXED: Uses postgresService instead of Pool
  */
 
-import { Pool } from "postgres";
+import { postgresService } from "./postgresService.ts";
 import type {
   RateLimitCheckResult,
   RateLimitUsage,
   RateLimitUsageFilters,
-} from "../types/rateLimiting.ts";
-import { RateLimitError } from "../types/rateLimiting.ts";
-import { SubscriptionService } from "./subscriptionService.ts";
+} from "../types/index.ts";
+import { SubscriptionService } from "../../modules/payments/services/subscriptionService.ts";
 
 export class RateLimitService {
   private subscriptionService: SubscriptionService;
 
-  constructor(private pool: Pool) {
-    this.subscriptionService = new SubscriptionService(pool);
+  constructor() {
+    this.subscriptionService = new SubscriptionService();
   }
 
   /**
@@ -111,7 +110,7 @@ export class RateLimitService {
     windowEnd: Date,
   ): Promise<RateLimitUsage> {
     // Try to find existing usage in current window
-    const existing = await this.pool.queryObject<RateLimitUsage>(
+    const existing = await postgresService.query(
       `SELECT * FROM rate_limit_usage
        WHERE organization_id = $1
        AND endpoint_key = $2
@@ -127,7 +126,7 @@ export class RateLimitService {
     }
 
     // Create new usage record
-    const result = await this.pool.queryObject<RateLimitUsage>(
+    const result = await postgresService.query(
       `INSERT INTO rate_limit_usage (
         organization_id, feature_key, endpoint_key, ip_address,
         request_count, window_start, window_end
@@ -151,7 +150,7 @@ export class RateLimitService {
    * Increment usage count atomically
    */
   private async incrementUsage(usageId: string): Promise<void> {
-    await this.pool.queryObject(
+    await postgresService.query(
       `UPDATE rate_limit_usage
        SET request_count = request_count + 1,
            updated_at = NOW()
@@ -197,7 +196,7 @@ export class RateLimitService {
 
     query += ` ORDER BY window_start DESC LIMIT 100`;
 
-    const result = await this.pool.queryObject<RateLimitUsage>(query, params);
+    const result = await postgresService.query(query, params);
     return result.rows;
   }
 
@@ -216,12 +215,7 @@ export class RateLimitService {
       avg_requests_per_window: number;
     }>
   > {
-    const result = await this.pool.queryObject<{
-      endpoint_key: string;
-      total_requests: number;
-      unique_windows: number;
-      avg_requests_per_window: number;
-    }>(
+    const result = await postgresService.query(
       `SELECT
         endpoint_key,
         SUM(request_count) as total_requests,
@@ -251,7 +245,7 @@ export class RateLimitService {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
 
-    const result = await this.pool.queryObject(
+    const result = await postgresService.query(
       `DELETE FROM rate_limit_usage
        WHERE window_end < $1`,
       [cutoffDate],
@@ -268,7 +262,7 @@ export class RateLimitService {
     organizationId: string,
     endpointKey: string,
   ): Promise<void> {
-    await this.pool.queryObject(
+    await postgresService.query(
       `DELETE FROM rate_limit_usage
        WHERE organization_id = $1
        AND endpoint_key = $2

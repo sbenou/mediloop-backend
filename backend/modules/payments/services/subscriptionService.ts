@@ -4,10 +4,10 @@
  * Handles subscription lifecycle, feature overrides, and plan transitions.
  * This is the service that ties organizations to their plans.
  *
- * File: auth-backend/services/subscriptionService.ts
+ * FIXED: Uses postgresService instead of Pool
  */
 
-import { Pool } from "postgres";
+import { postgresService } from "../../../shared/services/postgresService.ts";
 import type {
   Subscription,
   SubscriptionWithPlan,
@@ -18,17 +18,24 @@ import type {
   SubscriptionFilters,
   SubscriptionFeatureOverride,
   Feature,
-  OrganizationLimits,
-  RateLimitConfig,
-} from "../types/rateLimiting.ts";
-import { SubscriptionError } from "../types/rateLimiting.ts";
+} from "../../../shared/types/index.ts";
 import { PlanService } from "./planService.ts";
+
+export class SubscriptionError extends Error {
+  constructor(
+    message: string,
+    public code: string,
+  ) {
+    super(message);
+    this.name = "SubscriptionError";
+  }
+}
 
 export class SubscriptionService {
   private planService: PlanService;
 
-  constructor(private pool: Pool) {
-    this.planService = new PlanService(pool);
+  constructor() {
+    this.planService = new PlanService();
   }
 
   /**
@@ -68,7 +75,7 @@ export class SubscriptionService {
     const periodEnd = new Date(now);
     periodEnd.setMonth(periodEnd.getMonth() + 1);
 
-    const result = await this.pool.queryObject<Subscription>(
+    const result = await postgresService.query(
       `INSERT INTO subscriptions (
         organization_id, plan_id, status, trial_ends_at,
         current_period_start, current_period_end, metadata
@@ -112,7 +119,7 @@ export class SubscriptionService {
    * Get subscription by ID (without relations)
    */
   async getSubscriptionById(id: string): Promise<Subscription | null> {
-    const result = await this.pool.queryObject<Subscription>(
+    const result = await postgresService.query(
       `SELECT * FROM subscriptions WHERE id = $1`,
       [id],
     );
@@ -126,7 +133,7 @@ export class SubscriptionService {
   async getActiveSubscriptionByOrganization(
     organizationId: string,
   ): Promise<SubscriptionWithPlan | null> {
-    const result = await this.pool.queryObject<Subscription>(
+    const result = await postgresService.query(
       `SELECT * FROM subscriptions
        WHERE organization_id = $1
        AND status IN ('active', 'trial')
@@ -172,7 +179,7 @@ export class SubscriptionService {
 
     query += ` ORDER BY created_at DESC`;
 
-    const result = await this.pool.queryObject<Subscription>(query, params);
+    const result = await postgresService.query(query, params);
     return result.rows;
   }
 
@@ -183,7 +190,11 @@ export class SubscriptionService {
     id: string,
     data: UpdateSubscriptionDTO,
   ): Promise<Subscription | null> {
-    const client = await this.pool.connect();
+    const client = await postgresService.getClient();
+
+    if (!client) {
+      throw new SubscriptionError("Failed to get database client", "DB_ERROR");
+    }
 
     try {
       await client.queryObject("BEGIN");
@@ -242,7 +253,7 @@ export class SubscriptionService {
       await client.queryObject("ROLLBACK");
       throw error;
     } finally {
-      client.release();
+      postgresService.releaseClient(client);
     }
   }
 
@@ -262,7 +273,7 @@ export class SubscriptionService {
     }
 
     // Verify feature exists
-    const featureResult = await this.pool.queryObject<Feature>(
+    const featureResult = await postgresService.query(
       `SELECT id FROM features WHERE key = $1`,
       [data.feature_key],
     );
@@ -280,7 +291,7 @@ export class SubscriptionService {
       ? new Date(Date.now() + data.expires_in_days * 24 * 60 * 60 * 1000)
       : null;
 
-    const result = await this.pool.queryObject<SubscriptionFeatureOverride>(
+    const result = await postgresService.query(
       `INSERT INTO subscription_feature_overrides (
         subscription_id, feature_id, override_value, reason, expires_at
       ) VALUES ($1, $2, $3, $4, $5)
@@ -310,7 +321,7 @@ export class SubscriptionService {
     subscriptionId: string,
     featureKey: string,
   ): Promise<boolean> {
-    const result = await this.pool.queryObject(
+    const result = await postgresService.query(
       `DELETE FROM subscription_feature_overrides
        WHERE subscription_id = $1
        AND feature_id = (SELECT id FROM features WHERE key = $2)`,
@@ -318,100 +329,6 @@ export class SubscriptionService {
     );
 
     return result.rowCount !== null && result.rowCount > 0;
-  }
-
-  /**
-   * Get complete organization limits (plan features + overrides)
-   * This is THE key method that the rate limiting middleware will use
-   */
-  async getOrganizationLimits(
-    organizationId: string,
-  ): Promise<OrganizationLimits> {
-    const subscription =
-      await this.getActiveSubscriptionByOrganization(organizationId);
-
-    if (!subscription) {
-      throw new SubscriptionError(
-        "Organization has no active subscription",
-        "NOT_FOUND",
-      );
-    }
-
-    // Check if trial expired
-    if (
-      subscription.status === "trial" &&
-      subscription.trial_ends_at &&
-      new Date() > subscription.trial_ends_at
-    ) {
-      // Auto-expire the trial
-      await this.updateSubscription(subscription.id, { status: "expired" });
-      throw new SubscriptionError("Trial subscription expired", "EXPIRED");
-    }
-
-    // Build the limits object
-    const limits: OrganizationLimits = {
-      organization_id: organizationId,
-      subscription_id: subscription.id,
-      plan_key: subscription.plan.key,
-      plan_name: subscription.plan.name,
-      status: subscription.status,
-      rate_limits: {},
-      storage_limit_gb: 0,
-      max_patients: 0,
-      max_users: 0,
-      api_access_enabled: false,
-      trial_ends_at: subscription.trial_ends_at,
-    };
-
-    // Process all features (plan + overrides)
-    const featureMap = new Map<string, string>();
-
-    // 1. Add plan features
-    for (const feature of subscription.plan.features) {
-      featureMap.set(feature.key, feature.pivot_value);
-    }
-
-    // 2. Apply overrides (they take precedence)
-    for (const override of subscription.feature_overrides) {
-      // Check if override is still valid
-      if (!override.expires_at || new Date() < override.expires_at) {
-        featureMap.set(override.feature.key, override.override_value);
-      }
-    }
-
-    // 3. Parse features into limits
-    for (const [key, value] of featureMap.entries()) {
-      if (key.startsWith("rate_limit_")) {
-        // Parse rate limit feature
-        const endpointKey = key.replace("rate_limit_", "");
-        try {
-          const config = JSON.parse(value) as {
-            max_requests: number;
-            window_seconds: number;
-            enabled?: boolean;
-          };
-
-          limits.rate_limits[endpointKey] = {
-            endpoint: endpointKey,
-            max_requests: config.max_requests,
-            window_seconds: config.window_seconds,
-            enabled: config.enabled ?? true,
-          };
-        } catch (error) {
-          console.error(`Failed to parse rate limit for ${key}:`, error);
-        }
-      } else if (key === "storage_limit_gb") {
-        limits.storage_limit_gb = parseInt(value, 10) || 0;
-      } else if (key === "max_patients") {
-        limits.max_patients = parseInt(value, 10) || 0;
-      } else if (key === "max_users") {
-        limits.max_users = parseInt(value, 10) || 0;
-      } else if (key === "api_access_enabled") {
-        limits.api_access_enabled = value === "true" || value === "1";
-      }
-    }
-
-    return limits;
   }
 
   /**
@@ -450,7 +367,7 @@ export class SubscriptionService {
       const newEnd = new Date(subscription.current_period_end);
       newEnd.setMonth(newEnd.getMonth() + 1);
 
-      await this.pool.queryObject(
+      await postgresService.query(
         `UPDATE subscriptions
          SET current_period_start = current_period_end,
              current_period_end = $1,
@@ -475,10 +392,8 @@ export class SubscriptionService {
     );
 
     // Get active feature overrides
-    const overridesResult = await this.pool.queryObject<
-      SubscriptionFeatureOverride & { feature: Feature }
-    >(
-      `SELECT sfo.*, f.* as feature
+    const overridesResult = await postgresService.query(
+      `SELECT sfo.*, f.*
        FROM subscription_feature_overrides sfo
        JOIN features f ON sfo.feature_id = f.id
        WHERE sfo.subscription_id = $1

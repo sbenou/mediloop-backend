@@ -1,7 +1,7 @@
 import * as jose from "https://deno.land/x/jose@v4.15.5/index.ts";
-import { config } from "../config/env.ts";
+import { config } from "../../../shared/config/env.ts";
 import { sessionService } from "./sessionService.ts";
-import { postgresService } from "./postgresService.ts";
+import { postgresService } from "../../../shared//services/postgresService.ts";
 
 export interface TokenPayload {
   sub: string;

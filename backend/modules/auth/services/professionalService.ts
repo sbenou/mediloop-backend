@@ -4,25 +4,25 @@
  * This service handles CRUD operations for Services that represent
  * professional offerings included in subscription plans.
  *
- * File: auth-backend/services/professionalService.ts
+ * FIXED: Uses postgresService instead of Pool
  */
 
-import { Pool } from "postgres";
+import { postgresService } from "../../../shared/services/postgresService.ts";
 import type {
   Service,
   CreateServiceDTO,
   UpdateServiceDTO,
   ServiceCategory,
-} from "../types/rateLimiting.ts";
+} from "../../../shared/types/index.ts";
 
 export class ProfessionalService {
-  constructor(private pool: Pool) {}
+  // ✅ No constructor needed - uses singleton
 
   /**
    * Create a new service
    */
   async createService(data: CreateServiceDTO): Promise<Service> {
-    const result = await this.pool.queryObject<Service>(
+    const result = await postgresService.query(
       `INSERT INTO services (
         name, key, category, description, is_recurring, metadata
       ) VALUES ($1, $2, $3, $4, $5, $6)
@@ -48,7 +48,7 @@ export class ProfessionalService {
    * Get service by ID
    */
   async getServiceById(id: string): Promise<Service | null> {
-    const result = await this.pool.queryObject<Service>(
+    const result = await postgresService.query(
       `SELECT * FROM services WHERE id = $1`,
       [id],
     );
@@ -60,7 +60,7 @@ export class ProfessionalService {
    * Get service by key
    */
   async getServiceByKey(key: string): Promise<Service | null> {
-    const result = await this.pool.queryObject<Service>(
+    const result = await postgresService.query(
       `SELECT * FROM services WHERE key = $1`,
       [key],
     );
@@ -82,7 +82,7 @@ export class ProfessionalService {
 
     query += ` ORDER BY category, name`;
 
-    const result = await this.pool.queryObject<Service>(query, params);
+    const result = await postgresService.query(query, params);
     return result.rows;
   }
 
@@ -124,7 +124,7 @@ export class ProfessionalService {
     updates.push(`updated_at = NOW()`);
     values.push(id);
 
-    const result = await this.pool.queryObject<Service>(
+    const result = await postgresService.query(
       `UPDATE services
        SET ${updates.join(", ")}
        WHERE id = $${paramCount}
@@ -140,7 +140,7 @@ export class ProfessionalService {
    */
   async deleteService(id: string): Promise<boolean> {
     // Check if service is in use by any plans
-    const usageCheck = await this.pool.queryObject<{ count: number }>(
+    const usageCheck = await postgresService.query(
       `SELECT COUNT(*) as count FROM plan_services WHERE service_id = $1`,
       [id],
     );
@@ -151,7 +151,7 @@ export class ProfessionalService {
       );
     }
 
-    const result = await this.pool.queryObject(
+    const result = await postgresService.query(
       `DELETE FROM services WHERE id = $1`,
       [id],
     );
@@ -193,7 +193,7 @@ export class ProfessionalService {
 
     const placeholders = keys.map((_, i) => `$${i + 1}`).join(", ");
 
-    const result = await this.pool.queryObject<Service>(
+    const result = await postgresService.query(
       `SELECT * FROM services WHERE key IN (${placeholders})`,
       keys,
     );
@@ -213,10 +213,7 @@ export class ProfessionalService {
       params.push(excludeId);
     }
 
-    const result = await this.pool.queryObject<{ count: number }>(
-      query,
-      params,
-    );
+    const result = await postgresService.query(query, params);
 
     return (result.rows[0]?.count || 0) > 0;
   }

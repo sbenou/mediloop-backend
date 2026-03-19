@@ -7,7 +7,7 @@
  * Security: All endpoints require authentication and admin/compliance privileges
  */
 
-import { Router, Middleware } from "https://deno.land/x/oak@v12.6.1/mod.ts";
+import { Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 import { emailAuditService } from "../services/emailAuditService.ts";
 import { authMiddleware } from "../../modules/auth/middleware/authMiddleware.ts";
 import { requireCompliance } from "../../modules/auth/middleware/roleMiddleware.ts";
@@ -16,7 +16,7 @@ const router = new Router();
 
 // Apply authentication and role checking to all audit endpoints
 // Only authenticated users with admin or compliance roles can access audit logs
-const auditAuthMiddlewares: Middleware[] = [authMiddleware, requireCompliance];
+const auditAuthMiddlewares = [authMiddleware, requireCompliance] as const;
 
 /**
  * GET /api/email-audit-logs

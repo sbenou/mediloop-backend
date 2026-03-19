@@ -55,5 +55,43 @@ export interface UpdateFeatureDTO {
   metadata?: Record<string, unknown>;
 }
 
+// Plan DTOs
+export interface CreatePlanDTO {
+  name: string;
+  key: string;
+  description?: string;
+  status?: "active" | "deprecated" | "archived";
+  is_public?: boolean;
+  monthly_price_cents?: number;
+  annual_price_cents?: number;
+  display_order?: number;
+  metadata?: Record<string, unknown>;
+  features?: Array<{
+    feature_key: string;
+    value: string;
+  }>;
+  services?: Array<{
+    service_key: string;
+    quantity: number;
+  }>;
+}
+
+export interface UpdatePlanDTO {
+  name?: string;
+  description?: string;
+  status?: "active" | "deprecated" | "archived";
+  is_public?: boolean;
+  monthly_price_cents?: number;
+  annual_price_cents?: number;
+  display_order?: number;
+  metadata?: Record<string, unknown>;
+}
+
+export interface PlanFilters {
+  status?: "active" | "deprecated" | "archived";
+  is_public?: boolean;
+  search?: string;
+}
+
 // **Sources:**
 // - `/phase2-types.ts` (Feature, PlanFeature)

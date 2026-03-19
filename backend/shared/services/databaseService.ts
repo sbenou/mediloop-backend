@@ -5,12 +5,13 @@
  */
 
 import { PostgresService } from "./postgresService.ts";
-import { passwordService } from "./passwordService.ts";
+import { passwordService } from "../../modules/auth/services/passwordService.ts";
 import { config } from "../config/env.ts";
-import { User, Profile } from "../types.ts";
+import { User } from "../types/auth.ts";
+import { Profile } from "../types/tenant.ts";
 
 // Import email verification service (you'll need to add this file)
-import { EmailVerificationService } from "./emailVerificationService.ts";
+import { EmailVerificationService } from "../../modules/auth/services/emailVerificationService.ts";
 
 export class DatabaseService {
   private postgresService: PostgresService;
@@ -328,9 +329,7 @@ export class DatabaseService {
   /**
    * Verify email verification token
    */
-  async verifyEmailToken(
-    token: string,
-  ): Promise<{
+  async verifyEmailToken(token: string): Promise<{
     success: boolean;
     userId?: string;
     email?: string;

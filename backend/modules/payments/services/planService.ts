@@ -4,30 +4,40 @@
  * This is the core service that orchestrates the composition of plans
  * by combining features and services without requiring code changes.
  *
- * File: auth-backend/services/planService.ts
+ * FIXED: Uses postgresService instead of Pool
  */
 
-import { Pool } from "postgres";
+import { postgresService } from "../../../shared/services/postgresService.ts";
 import type {
   Plan,
   PlanWithFeatures,
   CreatePlanDTO,
   UpdatePlanDTO,
-  PlanStatus,
   PlanFilters,
   Feature,
   Service,
-} from "../types/rateLimiting.ts";
-import { PlanError } from "../types/rateLimiting.ts";
+} from "../../../shared/types/index.ts";
+
+export class PlanError extends Error {
+  constructor(
+    message: string,
+    public code: string,
+  ) {
+    super(message);
+    this.name = "PlanError";
+  }
+}
 
 export class PlanService {
-  constructor(private pool: Pool) {}
-
   /**
    * Create a new plan with features and services
    */
   async createPlan(data: CreatePlanDTO): Promise<PlanWithFeatures> {
-    const client = await this.pool.connect();
+    const client = await postgresService.getClient();
+
+    if (!client) {
+      throw new PlanError("Failed to get database client", "DB_ERROR");
+    }
 
     try {
       await client.queryObject("BEGIN");
@@ -117,7 +127,7 @@ export class PlanService {
       await client.queryObject("ROLLBACK");
       throw error;
     } finally {
-      client.release();
+      postgresService.releaseClient(client);
     }
   }
 
@@ -149,7 +159,7 @@ export class PlanService {
    * Get plan by ID (without relations)
    */
   async getPlanById(id: string): Promise<Plan | null> {
-    const result = await this.pool.queryObject<Plan>(
+    const result = await postgresService.query(
       `SELECT * FROM plans WHERE id = $1`,
       [id],
     );
@@ -161,7 +171,7 @@ export class PlanService {
    * Get plan by key (without relations)
    */
   async getPlanByKey(key: string): Promise<Plan | null> {
-    const result = await this.pool.queryObject<Plan>(
+    const result = await postgresService.query(
       `SELECT * FROM plans WHERE key = $1`,
       [key],
     );
@@ -195,7 +205,7 @@ export class PlanService {
 
     query += ` ORDER BY display_order, name`;
 
-    const result = await this.pool.queryObject<Plan>(query, params);
+    const result = await postgresService.query(query, params);
     return result.rows;
   }
 
@@ -254,7 +264,7 @@ export class PlanService {
     updates.push(`updated_at = NOW()`);
     values.push(id);
 
-    const result = await this.pool.queryObject<Plan>(
+    const result = await postgresService.query(
       `UPDATE plans
        SET ${updates.join(", ")}
        WHERE id = $${paramCount}
@@ -274,7 +284,7 @@ export class PlanService {
     value: string,
   ): Promise<void> {
     // Get feature ID
-    const featureResult = await this.pool.queryObject<{ id: string }>(
+    const featureResult = await postgresService.query(
       `SELECT id FROM features WHERE key = $1`,
       [featureKey],
     );
@@ -289,7 +299,7 @@ export class PlanService {
     const featureId = featureResult.rows[0].id;
 
     // Upsert the plan_feature
-    await this.pool.queryObject(
+    await postgresService.query(
       `INSERT INTO plan_features (plan_id, feature_id, value)
        VALUES ($1, $2, $3)
        ON CONFLICT (plan_id, feature_id)
@@ -302,7 +312,7 @@ export class PlanService {
    * Remove a feature from a plan
    */
   async removePlanFeature(planId: string, featureKey: string): Promise<void> {
-    await this.pool.queryObject(
+    await postgresService.query(
       `DELETE FROM plan_features
        WHERE plan_id = $1
        AND feature_id = (SELECT id FROM features WHERE key = $2)`,
@@ -319,7 +329,7 @@ export class PlanService {
     quantity: number,
   ): Promise<void> {
     // Get service ID
-    const serviceResult = await this.pool.queryObject<{ id: string }>(
+    const serviceResult = await postgresService.query(
       `SELECT id FROM services WHERE key = $1`,
       [serviceKey],
     );
@@ -334,7 +344,7 @@ export class PlanService {
     const serviceId = serviceResult.rows[0].id;
 
     // Upsert the plan_service
-    await this.pool.queryObject(
+    await postgresService.query(
       `INSERT INTO plan_services (plan_id, service_id, quantity)
        VALUES ($1, $2, $3)
        ON CONFLICT (plan_id, service_id)
@@ -347,7 +357,7 @@ export class PlanService {
    * Remove a service from a plan
    */
   async removePlanService(planId: string, serviceKey: string): Promise<void> {
-    await this.pool.queryObject(
+    await postgresService.query(
       `DELETE FROM plan_services
        WHERE plan_id = $1
        AND service_id = (SELECT id FROM services WHERE key = $2)`,
@@ -360,7 +370,7 @@ export class PlanService {
    */
   async deletePlan(id: string): Promise<boolean> {
     // Check if plan has active subscriptions
-    const subCheck = await this.pool.queryObject<{ count: number }>(
+    const subCheck = await postgresService.query(
       `SELECT COUNT(*) as count
        FROM subscriptions
        WHERE plan_id = $1 AND status IN ('active', 'trial')`,
@@ -374,7 +384,7 @@ export class PlanService {
       );
     }
 
-    const result = await this.pool.queryObject(
+    const result = await postgresService.query(
       `DELETE FROM plans WHERE id = $1`,
       [id],
     );
@@ -387,9 +397,7 @@ export class PlanService {
    */
   private async enrichPlanWithRelations(plan: Plan): Promise<PlanWithFeatures> {
     // Get features
-    const featuresResult = await this.pool.queryObject<
-      Feature & { pivot_value: string }
-    >(
+    const featuresResult = await postgresService.query(
       `SELECT f.*, pf.value as pivot_value
        FROM features f
        JOIN plan_features pf ON f.id = pf.feature_id
@@ -399,9 +407,7 @@ export class PlanService {
     );
 
     // Get services
-    const servicesResult = await this.pool.queryObject<
-      Service & { pivot_quantity: number }
-    >(
+    const servicesResult = await postgresService.query(
       `SELECT s.*, ps.quantity as pivot_quantity
        FROM services s
        JOIN plan_services ps ON s.id = ps.service_id
@@ -429,10 +435,7 @@ export class PlanService {
       params.push(excludeId);
     }
 
-    const result = await this.pool.queryObject<{ count: number }>(
-      query,
-      params,
-    );
+    const result = await postgresService.query(query, params);
 
     return (result.rows[0]?.count || 0) > 0;
   }

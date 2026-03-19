@@ -6,7 +6,7 @@
 import { Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 import { stripeService } from "../services/stripeService.ts";
 import { addStripeWebhookJob } from "../queues/stripeQueue.ts";
-import { JobPriority } from "../queues/config.ts";
+import { JobPriority } from "../../../shared/queues/config.ts";
 
 const router = new Router();
 

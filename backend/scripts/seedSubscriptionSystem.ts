@@ -8,30 +8,31 @@
  * - 32 professional services (healthcare-specific)
  * - 3 standard subscription plans (Starter, Professional, Enterprise)
  *
- * File: auth-backend/scripts/seedSubscriptionSystem.ts
+ * FIXED: Uses postgresService instead of Pool
  *
- * Run: deno run --allow-env --allow-net auth-backend/scripts/seedSubscriptionSystem.ts
+ * Run: deno run --allow-env --allow-net backend/scripts/seedSubscriptionSystem.ts
  */
 
 import { load } from "@std/dotenv";
-import { Pool } from "postgres";
-import { FeatureService } from "../services/featureService.ts";
-import { ProfessionalService } from "../services/professionalService.ts";
-import { PlanService } from "../services/planService.ts";
+import { postgresService } from "../shared/services/postgresService.ts";
+import { FeatureService } from "../modules/payments/services/featureService.ts";
+import { ProfessionalService } from "../modules/auth/services/professionalService.ts";
+import { PlanService } from "../modules/payments/services/planService.ts";
 import {
   FeatureCategory,
   ServiceCategory,
   PlanStatus,
-} from "../types/rateLimiting.ts";
+} from "../shared/types/index.ts";
 
 // Load environment
 await load({ export: true });
 
-const pool = new Pool(Deno.env.get("DATABASE_URL")!, 3, true);
+// Initialize postgresService (it's a singleton)
+await postgresService.initialize();
 
-const featureService = new FeatureService(pool);
-const professionalService = new ProfessionalService(pool);
-const planService = new PlanService(pool);
+const featureService = new FeatureService();
+const professionalService = new ProfessionalService();
+const planService = new PlanService();
 
 console.log("🌱 Seeding Mediloop Subscription System...\n");
 console.log("=".repeat(60));
@@ -934,4 +935,5 @@ console.log("  }");
 
 console.log("\n");
 
-await pool.end();
+// Close the postgresService connection
+await postgresService.close();

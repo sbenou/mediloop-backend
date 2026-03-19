@@ -10,10 +10,10 @@
  */
 
 import { passwordService } from "./passwordService.ts";
-import { postgresService } from "./postgresService.ts";
-import { databaseService } from "./databaseService.ts";
+import { postgresService } from "../../../shared/services/postgresService.ts";
+import { databaseService } from "../../../shared/services/databaseService.ts";
 import { invitationService } from "./invitationService.ts";
-import { emailService } from "./emailService.ts"; // ✅ NEW: You'll need to ensure this exists
+import { emailService } from "../../../shared/services/emailService.ts"; // ✅ NEW: You'll need to ensure this exists
 
 export class RegistrationService {
   async registerUser(

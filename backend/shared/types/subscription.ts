@@ -76,6 +76,21 @@ export interface UpdateSubscriptionDTO {
   metadata?: Record<string, unknown>;
 }
 
+export interface CreateFeatureOverrideDTO {
+  subscription_id: string;
+  feature_key: string;
+  override_value: string;
+  reason?: string;
+  expires_in_days?: number;
+}
+
+export interface SubscriptionFilters {
+  organization_id?: string;
+  plan_id?: string;
+  status?: SubscriptionStatus;
+  active_only?: boolean;
+}
+
 // **Sources:**
 // - `/phase2-types.ts` (Plan, Subscription, SubscriptionFeatureOverride)
 // - `/types/subscriptionTypes.ts` (MERGE & consolidate)

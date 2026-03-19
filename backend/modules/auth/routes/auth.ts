@@ -19,7 +19,7 @@ import {
   loginRateLimiter,
   registrationRateLimiter,
   tokenRefreshRateLimiter,
-} from "../middleware/rateLimitMiddleware.ts";
+} from "../../../shared/middleware/rateLimitMiddleware.ts";
 import {
   validateEmail,
   validatePassword,

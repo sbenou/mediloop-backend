@@ -1,6 +1,6 @@
-import { postgresService } from "./postgresService.ts";
-import { PostgresService } from "./postgresService.ts";
-import { emailService } from "./emailService.ts";
+import { postgresService } from "../../../shared/services/postgresService.ts";
+import { PostgresService } from "../../../shared/services/postgresService.ts";
+import { emailService } from "../../../shared/services/emailService.ts";
 
 /**
  * ✅ UPDATED INVITATION SERVICE

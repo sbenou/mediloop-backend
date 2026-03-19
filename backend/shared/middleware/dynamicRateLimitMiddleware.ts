@@ -10,7 +10,7 @@
 import { Context, Middleware } from "oak";
 import { Pool } from "postgres";
 import { RateLimitService } from "../services/rateLimitService.ts";
-import { RateLimitError, SubscriptionError } from "../types/rateLimiting.ts";
+import { RateLimitError, SubscriptionError } from "../types/errors.ts";
 
 interface DynamicRateLimitConfig {
   endpointKey: string; // e.g., "login", "api", "password_reset"

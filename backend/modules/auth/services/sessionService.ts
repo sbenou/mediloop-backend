@@ -1,4 +1,4 @@
-import { postgresService } from "./postgresService.ts";
+import { postgresService } from "../../../shared/services/postgresService.ts";
 
 export interface SessionRecord {
   id: string;
