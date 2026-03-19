@@ -4,7 +4,7 @@
  * Handles subscription lifecycle, feature overrides, and plan transitions.
  * This is the service that ties organizations to their plans.
  *
- * FIXED V2: Uses postgresService + Added getOrganizationLimits() method
+ * FIXED V3: Uses postgresService + proper pivot_value from actual Feature type
  */
 
 import { postgresService } from "../../../shared/services/postgresService.ts";
@@ -17,7 +17,6 @@ import type {
   SubscriptionStatus,
   SubscriptionFilters,
   SubscriptionFeatureOverride,
-  Feature,
 } from "../../../shared/types/index.ts";
 import type {
   OrganizationLimits,
@@ -28,7 +27,7 @@ import { PlanService } from "./planService.ts";
 export class SubscriptionError extends Error {
   constructor(
     message: string,
-    public code: string,
+    public code: "NOT_FOUND" | "EXPIRED" | "SUSPENDED" | "INVALID_PLAN",
   ) {
     super(message);
     this.name = "SubscriptionError";
@@ -60,7 +59,7 @@ export class SubscriptionService {
     if (!subscription) {
       throw new SubscriptionError(
         `No active subscription found for organization: ${organizationId}`,
-        "NO_SUBSCRIPTION",
+        "NOT_FOUND", // ✅ Changed from "NO_SUBSCRIPTION" to "NOT_FOUND"
       );
     }
 
@@ -69,10 +68,11 @@ export class SubscriptionService {
     const planFeatures = subscription.plan.features || [];
 
     // Extract rate limit features
+    // NOTE: features array has type: Array<Feature & { pivot_value: string }>
     for (const feature of planFeatures) {
       if (feature.key.startsWith("rate_limit_")) {
         try {
-          const config = JSON.parse(feature.value);
+          const config = JSON.parse(feature.pivot_value); // ✅ Use pivot_value, not value
           const endpointKey = feature.key.replace("rate_limit_", "");
           rateLimits[endpointKey] = {
             endpoint: endpointKey,
@@ -89,24 +89,24 @@ export class SubscriptionService {
       }
     }
 
-    // Extract other limits
+    // Helper to get feature value from pivot_value
     const getFeatureValue = (key: string, defaultValue: any) => {
       const feature = planFeatures.find((f) => f.key === key);
       if (!feature) return defaultValue;
 
       // Parse based on value_type
       if (feature.value_type === "integer") {
-        return parseInt(feature.value, 10);
+        return parseInt(feature.pivot_value, 10);
       } else if (feature.value_type === "boolean") {
-        return feature.value === "true";
+        return feature.pivot_value === "true";
       } else if (feature.value_type === "json") {
         try {
-          return JSON.parse(feature.value);
+          return JSON.parse(feature.pivot_value);
         } catch {
           return defaultValue;
         }
       }
-      return feature.value;
+      return feature.pivot_value;
     };
 
     return {
@@ -279,7 +279,8 @@ export class SubscriptionService {
     const client = await postgresService.getClient();
 
     if (!client) {
-      throw new SubscriptionError("Failed to get database client", "DB_ERROR");
+      // ✅ Use regular Error, not SubscriptionError (DB_ERROR is not a valid code)
+      throw new Error("Failed to get database client");
     }
 
     try {
@@ -439,8 +440,10 @@ export class SubscriptionService {
       subscription.trial_ends_at &&
       now > subscription.trial_ends_at
     ) {
-      await this.updateSubscription(subscriptionId, { status: "expired" });
-      return "expired";
+      await this.updateSubscription(subscriptionId, {
+        status: "expired" as SubscriptionStatus, // ✅ Cast to type
+      });
+      return "expired" as SubscriptionStatus; // ✅ Cast to type
     }
 
     // Check period expiration

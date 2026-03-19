@@ -22,7 +22,7 @@ import {
   FeatureCategory,
   ServiceCategory,
   PlanStatus,
-} from "../shared/types/rateLimiting.ts";
+} from "../shared/types/index.ts";
 
 // Load environment
 await load({ export: true });

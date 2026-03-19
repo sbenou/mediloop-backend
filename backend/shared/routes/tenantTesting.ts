@@ -1,3 +1,9 @@
+/**
+ * Tenant Testing Routes
+ *
+ * FIXED: Corrected result.id → result.userId and proper Promise.allSettled handling
+ */
+
 import { Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 import { postgresService } from "../services/postgresService.ts";
 import { registrationService } from "../../modules/auth/services/registrationService.ts";
@@ -29,7 +35,7 @@ router.post("/api/test/concurrent-registrations", async (ctx) => {
         .registerUser(email, password, fullName, role)
         .then((result) => {
           return {
-            userId: result.id,
+            userId: result.userId, // ✅ FIXED: Use result.userId, not result.id
             email: email,
             success: true,
             timestamp: new Date().toISOString(),
@@ -314,10 +320,10 @@ router.post("/api/test/connection-pool", async (ctx) => {
     ).length;
     const totalDuration = endTime - startTime;
 
-    // Analyze connection reuse
+    // ✅ FIXED: Analyze connection reuse - filter fulfilled promises first
     const connectionPids = results
       .filter((r) => r.status === "fulfilled" && r.value.success)
-      .map((r) => r.value.connectionPid);
+      .map((r) => (r as PromiseFulfilledResult<any>).value.connectionPid);
     const uniqueConnections = new Set(connectionPids).size;
 
     console.log(

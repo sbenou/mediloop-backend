@@ -4,17 +4,19 @@
  * This middleware integrates with the subscription system to provide
  * plan-based rate limiting without hardcoded limits.
  *
- * File: auth-backend/middleware/dynamicRateLimitMiddleware.ts
+ * FIXED: Uses postgresService instead of Pool, proper types and error codes
  */
 
 import { Context, Middleware } from "oak";
-import { Pool } from "postgres";
+import { postgresService } from "../services/postgresService.ts";
 import { RateLimitService } from "../services/rateLimitService.ts";
-import { RateLimitError, SubscriptionError } from "../types/errors.ts";
+import { SubscriptionError } from "../types/errors.ts";
 
 interface DynamicRateLimitConfig {
   endpointKey: string; // e.g., "login", "api", "password_reset"
-  extractOrganizationId: (ctx: Context) => string | Promise<string | null>;
+  extractOrganizationId: (
+    ctx: Context,
+  ) => string | Promise<string | null> | null;
   fallbackBehavior?: "allow" | "deny"; // What to do if org not found
 }
 
@@ -35,13 +37,12 @@ const getClientIP = (ctx: Context): string => {
  * This middleware checks the organization's subscription plan and applies
  * the appropriate rate limits from the database.
  *
- * @param pool Database connection pool
  * @param config Rate limit configuration
  * @returns Oak middleware function
  *
  * Example:
  * ```typescript
- * const loginLimiter = createDynamicRateLimiter(pool, {
+ * const loginLimiter = createDynamicRateLimiter({
  *   endpointKey: 'login',
  *   extractOrganizationId: async (ctx) => {
  *     // Extract org from email domain or context
@@ -61,10 +62,9 @@ const getClientIP = (ctx: Context): string => {
  * ```
  */
 export const createDynamicRateLimiter = (
-  pool: Pool,
   config: DynamicRateLimitConfig,
 ): Middleware => {
-  const rateLimitService = new RateLimitService(pool);
+  const rateLimitService = new RateLimitService();
 
   return async (ctx: Context, next: () => Promise<unknown>) => {
     try {
@@ -138,6 +138,7 @@ export const createDynamicRateLimiter = (
         );
 
         // Subscription issues (expired, not found, etc.)
+        // Valid error codes: "NOT_FOUND" | "EXPIRED" | "SUSPENDED" | "INVALID_PLAN"
         if (error.code === "NOT_FOUND") {
           ctx.response.status = 403;
           ctx.response.body = {
@@ -160,6 +161,16 @@ export const createDynamicRateLimiter = (
           ctx.response.status = 403;
           ctx.response.body = {
             error: "Subscription suspended. Please contact support.",
+            code: error.code,
+          };
+          return;
+        }
+
+        // INVALID_PLAN also possible
+        if (error.code === "INVALID_PLAN") {
+          ctx.response.status = 400;
+          ctx.response.body = {
+            error: "Invalid subscription plan.",
             code: error.code,
           };
           return;
@@ -195,7 +206,6 @@ export const extractOrgFromAuthUser = (ctx: Context): string | null => {
  */
 export const extractOrgFromEmail = async (
   ctx: Context,
-  pool: Pool,
 ): Promise<string | null> => {
   try {
     const body = await ctx.request.body().value;
@@ -206,7 +216,7 @@ export const extractOrgFromEmail = async (
     }
 
     // Query database to find user's organization
-    const result = await pool.queryObject<{ organization_id: string }>(
+    const result = await postgresService.query(
       `SELECT organization_id
        FROM public.users
        WHERE email = $1
@@ -239,10 +249,10 @@ export const extractOrgFromHeader = (
 /**
  * Create a login rate limiter that checks the user's organization plan
  */
-export const createLoginRateLimiter = (pool: Pool): Middleware => {
-  return createDynamicRateLimiter(pool, {
+export const createLoginRateLimiter = (): Middleware => {
+  return createDynamicRateLimiter({
     endpointKey: "login",
-    extractOrganizationId: (ctx) => extractOrgFromEmail(ctx, pool),
+    extractOrganizationId: extractOrgFromEmail,
     fallbackBehavior: "allow", // Allow if org not found (first-time users)
   });
 };
@@ -250,10 +260,10 @@ export const createLoginRateLimiter = (pool: Pool): Middleware => {
 /**
  * Create a password reset rate limiter
  */
-export const createPasswordResetRateLimiter = (pool: Pool): Middleware => {
-  return createDynamicRateLimiter(pool, {
+export const createPasswordResetRateLimiter = (): Middleware => {
+  return createDynamicRateLimiter({
     endpointKey: "password_reset",
-    extractOrganizationId: (ctx) => extractOrgFromEmail(ctx, pool),
+    extractOrganizationId: extractOrgFromEmail,
     fallbackBehavior: "allow",
   });
 };
@@ -261,8 +271,8 @@ export const createPasswordResetRateLimiter = (pool: Pool): Middleware => {
 /**
  * Create an API rate limiter for authenticated endpoints
  */
-export const createApiRateLimiter = (pool: Pool): Middleware => {
-  return createDynamicRateLimiter(pool, {
+export const createApiRateLimiter = (): Middleware => {
+  return createDynamicRateLimiter({
     endpointKey: "api",
     extractOrganizationId: extractOrgFromAuthUser,
     fallbackBehavior: "deny", // Require organization for API access
@@ -272,8 +282,8 @@ export const createApiRateLimiter = (pool: Pool): Middleware => {
 /**
  * Create a registration rate limiter
  */
-export const createRegistrationRateLimiter = (pool: Pool): Middleware => {
-  return createDynamicRateLimiter(pool, {
+export const createRegistrationRateLimiter = (): Middleware => {
+  return createDynamicRateLimiter({
     endpointKey: "registration",
     extractOrganizationId: (ctx) => extractOrgFromHeader(ctx),
     fallbackBehavior: "allow",
@@ -283,10 +293,10 @@ export const createRegistrationRateLimiter = (pool: Pool): Middleware => {
 /**
  * Create an OTP request rate limiter
  */
-export const createOtpRateLimiter = (pool: Pool): Middleware => {
-  return createDynamicRateLimiter(pool, {
+export const createOtpRateLimiter = (): Middleware => {
+  return createDynamicRateLimiter({
     endpointKey: "otp_request",
-    extractOrganizationId: (ctx) => extractOrgFromEmail(ctx, pool),
+    extractOrganizationId: extractOrgFromEmail,
     fallbackBehavior: "allow",
   });
 };
@@ -294,10 +304,10 @@ export const createOtpRateLimiter = (pool: Pool): Middleware => {
 /**
  * Create an OTP verification rate limiter
  */
-export const createOtpVerifyRateLimiter = (pool: Pool): Middleware => {
-  return createDynamicRateLimiter(pool, {
+export const createOtpVerifyRateLimiter = (): Middleware => {
+  return createDynamicRateLimiter({
     endpointKey: "otp_verify",
-    extractOrganizationId: (ctx) => extractOrgFromEmail(ctx, pool),
+    extractOrganizationId: extractOrgFromEmail,
     fallbackBehavior: "allow",
   });
 };
