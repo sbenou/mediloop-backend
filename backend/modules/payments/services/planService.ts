@@ -4,7 +4,7 @@
  * This is the core service that orchestrates the composition of plans
  * by combining features and services without requiring code changes.
  *
- * FIXED: Uses postgresService instead of Pool
+ * FIXED: Uses postgresService with proper type assertions
  */
 
 import { postgresService } from "../../../shared/services/postgresService.ts";
@@ -164,7 +164,8 @@ export class PlanService {
       [id],
     );
 
-    return result.rows[0] || null;
+    const row = result.rows[0] as unknown as Plan | undefined;
+    return row || null;
   }
 
   /**
@@ -176,7 +177,8 @@ export class PlanService {
       [key],
     );
 
-    return result.rows[0] || null;
+    const row = result.rows[0] as unknown as Plan | undefined;
+    return row || null;
   }
 
   /**
@@ -206,7 +208,7 @@ export class PlanService {
     query += ` ORDER BY display_order, name`;
 
     const result = await postgresService.query(query, params);
-    return result.rows;
+    return result.rows as unknown as Plan[];
   }
 
   /**
@@ -272,7 +274,8 @@ export class PlanService {
       values,
     );
 
-    return result.rows[0] || null;
+    const row = result.rows[0] as unknown as Plan | undefined;
+    return row || null;
   }
 
   /**
@@ -296,7 +299,8 @@ export class PlanService {
       );
     }
 
-    const featureId = featureResult.rows[0].id;
+    const feature = featureResult.rows[0] as unknown as { id: string };
+    const featureId = feature.id;
 
     // Upsert the plan_feature
     await postgresService.query(
@@ -341,7 +345,8 @@ export class PlanService {
       );
     }
 
-    const serviceId = serviceResult.rows[0].id;
+    const service = serviceResult.rows[0] as unknown as { id: string };
+    const serviceId = service.id;
 
     // Upsert the plan_service
     await postgresService.query(
@@ -377,7 +382,12 @@ export class PlanService {
       [id],
     );
 
-    if ((subCheck.rows[0]?.count || 0) > 0) {
+    const countRow = subCheck.rows[0] as unknown as
+      | { count: number }
+      | undefined;
+    const count = countRow?.count || 0;
+
+    if (count > 0) {
       throw new PlanError(
         "Cannot delete plan: it has active subscriptions. Mark as deprecated instead.",
         "INVALID_PLAN",
@@ -418,8 +428,12 @@ export class PlanService {
 
     return {
       ...plan,
-      features: featuresResult.rows,
-      services: servicesResult.rows,
+      features: featuresResult.rows as unknown as (Feature & {
+        pivot_value: string;
+      })[],
+      services: servicesResult.rows as unknown as (Service & {
+        pivot_quantity: number;
+      })[],
     };
   }
 
@@ -436,7 +450,9 @@ export class PlanService {
     }
 
     const result = await postgresService.query(query, params);
+    const countRow = result.rows[0] as unknown as { count: number } | undefined;
+    const count = countRow?.count || 0;
 
-    return (result.rows[0]?.count || 0) > 0;
+    return count > 0;
   }
 }

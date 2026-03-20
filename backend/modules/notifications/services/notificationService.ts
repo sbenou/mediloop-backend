@@ -214,7 +214,7 @@ export async function sendAppointmentReminder(
     (appointment.startTime.getTime() - Date.now()) / 1000 / 60,
   );
 
-  return sendNotification(userId, {
+  return await sendNotification(userId, {
     title: "📅 Appointment Reminder",
     body: `${appointment.type === "teleconsultation" ? "Teleconsultation" : "Appointment"} with ${appointment.doctorName} in ${minutesUntil} minutes`,
     data: {
@@ -246,7 +246,7 @@ export async function sendPrescriptionReady(
     pharmacyAddress: string;
   },
 ) {
-  return sendNotification(userId, {
+  return await sendNotification(userId, {
     title: "💊 Prescription Ready",
     body: `Your prescription is ready for pickup at ${prescription.pharmacyName}`,
     data: {
@@ -283,7 +283,7 @@ export async function sendNewMessage(
         ? "💊"
         : "👤";
 
-  return sendNotification(userId, {
+  return await sendNotification(userId, {
     title: `${roleEmoji} ${message.senderName}`,
     body: message.preview,
     data: {
@@ -304,7 +304,7 @@ export async function sendMaintenanceAlert(
   scheduledAt: Date,
   duration: string,
 ) {
-  return sendToTopic("all_users", {
+  return await sendToTopic("all_users", {
     title: "⚠️ System Maintenance",
     body: `Mediloop will be unavailable from ${scheduledAt.toLocaleTimeString()} for ${duration}`,
     data: {
@@ -323,7 +323,7 @@ export async function sendSecurityAlert(
   message: string,
   actionRequired?: string,
 ) {
-  return sendToTopic("all_healthcare_providers", {
+  return await sendToTopic("all_healthcare_providers", {
     title: "🔒 Security Alert",
     body: message,
     data: {
@@ -348,7 +348,7 @@ export async function sendDrugShortageAlert(
   drugName: string,
   alternatives?: string[],
 ) {
-  return sendToTopic("pharmacists_all", {
+  return await sendToTopic("pharmacists_all", {
     title: "⚠️ Drug Shortage Alert",
     body: `${drugName} - Limited supply nationwide`,
     data: {
@@ -379,7 +379,7 @@ export async function alertDoctorsNewPatient(
         ? "⚠️"
         : "ℹ️";
 
-  return sendToTopic(`clinic_id_${clinicId}_doctors_online`, {
+  return await sendToTopic(`clinic_id_${clinicId}_doctors_online`, {
     title: `${urgencyEmoji} New ${patient.urgency === "high" ? "Urgent " : ""}Patient`,
     body: `Patient waiting: ${patient.symptoms}`,
     data: {
@@ -409,7 +409,7 @@ export async function sendRegulatoryUpdate(
     documentUrl: string;
   },
 ) {
-  return sendToTopic(`doctors_region_${region}`, {
+  return await sendToTopic(`doctors_region_${region}`, {
     title: `📋 ${update.title}`,
     body: update.summary,
     data: {
@@ -434,7 +434,7 @@ export async function sendTrainingOpportunity(
     registrationUrl: string;
   },
 ) {
-  return sendToTopic(`doctors_specialty_${specialty}`, {
+  return await sendToTopic(`doctors_specialty_${specialty}`, {
     title: `📚 ${training.title}`,
     body: `${training.datetime.toLocaleDateString()} - ${training.credits} CME credits`,
     data: {

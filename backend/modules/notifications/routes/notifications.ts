@@ -6,7 +6,7 @@
 import { Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 import * as notificationService from "../services/notificationService.ts";
 import * as topicService from "../services/topicService.ts";
-import { db } from "../db/connection.ts";
+import { postgresService } from "../../../shared/services/postgresService.ts";
 
 const router = new Router();
 
@@ -150,8 +150,8 @@ router.post("/api/notifications/register-token", async (ctx) => {
       return;
     }
 
-    // Store FCM token in database
-    await db.query(
+    // Store FCM token in database using postgresService
+    await postgresService.query(
       `INSERT INTO user_push_tokens (user_id, fcm_token, platform, device_id, active, created_at, updated_at)
        VALUES ($1, $2, $3, $4, true, NOW(), NOW())
        ON CONFLICT (user_id, fcm_token) 
@@ -193,8 +193,8 @@ router.post("/api/notifications/unregister-token", async (ctx) => {
       return;
     }
 
-    // Mark token as inactive
-    await db.query(
+    // Mark token as inactive using postgresService
+    await postgresService.query(
       `UPDATE user_push_tokens 
        SET active = false, updated_at = NOW() 
        WHERE user_id = $1 AND fcm_token = $2`,
@@ -231,8 +231,8 @@ router.post("/api/notifications/subscribe-to-topic", async (ctx) => {
       return;
     }
 
-    // Get user's FCM token
-    const tokenResult = await db.query(
+    // Get user's FCM token using postgresService
+    const tokenResult = await postgresService.query(
       `SELECT fcm_token FROM user_push_tokens 
        WHERE user_id = $1 AND active = true 
        ORDER BY updated_at DESC LIMIT 1`,
@@ -245,7 +245,7 @@ router.post("/api/notifications/subscribe-to-topic", async (ctx) => {
       return;
     }
 
-    const fcmToken = tokenResult.rows[0].fcm_token;
+    const fcmToken = tokenResult.rows[0].fcm_token as string;
 
     // Subscribe to condition topic (for patients)
     const result = await topicService.subscribeToConditionTopic(
@@ -278,8 +278,8 @@ router.post("/api/notifications/unsubscribe-from-topic", async (ctx) => {
       return;
     }
 
-    // Get user's FCM token
-    const tokenResult = await db.query(
+    // Get user's FCM token using postgresService
+    const tokenResult = await postgresService.query(
       `SELECT fcm_token FROM user_push_tokens 
        WHERE user_id = $1 AND active = true 
        ORDER BY updated_at DESC LIMIT 1`,
@@ -292,7 +292,7 @@ router.post("/api/notifications/unsubscribe-from-topic", async (ctx) => {
       return;
     }
 
-    const fcmToken = tokenResult.rows[0].fcm_token;
+    const fcmToken = tokenResult.rows[0].fcm_token as string;
 
     // Unsubscribe from condition topic
     const result = await topicService.unsubscribeFromConditionTopic(
@@ -325,8 +325,8 @@ router.post("/api/notifications/update-online-status", async (ctx) => {
       return;
     }
 
-    // Get user's FCM token
-    const tokenResult = await db.query(
+    // Get user's FCM token using postgresService
+    const tokenResult = await postgresService.query(
       `SELECT fcm_token FROM user_push_tokens 
        WHERE user_id = $1 AND active = true 
        ORDER BY updated_at DESC LIMIT 1`,
@@ -339,7 +339,7 @@ router.post("/api/notifications/update-online-status", async (ctx) => {
       return;
     }
 
-    const fcmToken = tokenResult.rows[0].fcm_token;
+    const fcmToken = tokenResult.rows[0].fcm_token as string;
 
     let result;
     if (isOnline) {
@@ -372,7 +372,7 @@ router.get("/api/notifications/history", async (ctx) => {
       return;
     }
 
-    const result = await db.query(
+    const result = await postgresService.query(
       `SELECT id, title, body, data, image_url, channels, priority, 
               sent_at, read_at, clicked_at
        FROM notifications
@@ -410,7 +410,7 @@ router.post("/api/notifications/mark-read", async (ctx) => {
       return;
     }
 
-    await db.query(
+    await postgresService.query(
       `UPDATE notifications 
        SET read_at = NOW() 
        WHERE id = $1 AND read_at IS NULL`,

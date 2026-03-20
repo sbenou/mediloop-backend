@@ -10,11 +10,8 @@ import {
   cert,
   App,
   ServiceAccount,
-} from "https://esm.sh/firebase-admin@12.0.0/app";
-import {
-  getMessaging,
-  Messaging,
-} from "https://esm.sh/firebase-admin@12.0.0/messaging";
+} from "npm:firebase-admin@12.0.0/app";
+import { getMessaging, Messaging } from "npm:firebase-admin@12.0.0/messaging";
 
 let app: App | null = null;
 let messaging: Messaging | null = null;

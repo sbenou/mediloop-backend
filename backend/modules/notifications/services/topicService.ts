@@ -5,7 +5,7 @@
  * Auto-subscribes users to relevant topics based on role, region, specialty, etc.
  */
 
-import { db } from "../db/connection.ts";
+import { postgresService } from "../../../shared/services/postgresService.ts";
 import * as firebaseAdmin from "./firebaseAdminService.ts";
 
 /**
@@ -17,9 +17,9 @@ export async function autoSubscribeUserToTopics(
 ) {
   try {
     // Get user profile
-    const userResult = await db.query(
+    const userResult = await postgresService.query(
       `SELECT role, specialty, region, clinic_id, hospital_id, pharmacy_id 
-       FROM public.users WHERE id = $1`,
+       FROM auth.users WHERE id = $1`,
       [userId],
     );
 
@@ -39,31 +39,35 @@ export async function autoSubscribeUserToTopics(
       topics.push("all_healthcare_providers");
 
       if (user.specialty) {
-        topics.push(`doctors_specialty_${user.specialty.toLowerCase()}`);
+        topics.push(
+          `doctors_specialty_${(user.specialty as string).toLowerCase()}`,
+        );
       }
 
       if (user.region) {
-        topics.push(`doctors_region_${user.region.toLowerCase()}`);
+        topics.push(`doctors_region_${(user.region as string).toLowerCase()}`);
       }
     } else if (user.role === "pharmacist") {
       topics.push("pharmacists_all");
       topics.push("all_healthcare_providers");
 
       if (user.region) {
-        topics.push(`pharmacists_region_${user.region.toLowerCase()}`);
+        topics.push(
+          `pharmacists_region_${(user.region as string).toLowerCase()}`,
+        );
       }
     } else if (user.role === "nurse") {
       topics.push("nurses_all");
       topics.push("all_healthcare_providers");
 
       if (user.region) {
-        topics.push(`nurses_region_${user.region.toLowerCase()}`);
+        topics.push(`nurses_region_${(user.region as string).toLowerCase()}`);
       }
     } else if (user.role === "patient") {
       topics.push("patients_all");
 
       if (user.region) {
-        topics.push(`patients_region_${user.region.toLowerCase()}`);
+        topics.push(`patients_region_${(user.region as string).toLowerCase()}`);
       }
     } else if (user.role === "hospital_admin") {
       topics.push("hospital_admins_all");
@@ -93,7 +97,7 @@ export async function autoSubscribeUserToTopics(
       await firebaseAdmin.subscribeToTopic(fcmToken, topic);
 
       // Record subscription in database
-      await db.query(
+      await postgresService.query(
         `INSERT INTO topic_subscriptions (user_id, topic, subscribed_at)
          VALUES ($1, $2, NOW())
          ON CONFLICT (user_id, topic) DO NOTHING`,
@@ -122,8 +126,8 @@ export async function autoSubscribeUserToTopics(
  */
 export async function subscribeToOnlineTopic(userId: string, fcmToken: string) {
   try {
-    const userResult = await db.query(
-      `SELECT role FROM public.users WHERE id = $1`,
+    const userResult = await postgresService.query(
+      `SELECT role FROM auth.users WHERE id = $1`,
       [userId],
     );
 
@@ -145,7 +149,7 @@ export async function subscribeToOnlineTopic(userId: string, fcmToken: string) {
     if (topic) {
       await firebaseAdmin.subscribeToTopic(fcmToken, topic);
 
-      await db.query(
+      await postgresService.query(
         `INSERT INTO topic_subscriptions (user_id, topic, subscribed_at)
          VALUES ($1, $2, NOW())
          ON CONFLICT (user_id, topic) DO NOTHING`,
@@ -181,8 +185,8 @@ export async function unsubscribeFromOnlineTopic(
   fcmToken: string,
 ) {
   try {
-    const userResult = await db.query(
-      `SELECT role FROM public.users WHERE id = $1`,
+    const userResult = await postgresService.query(
+      `SELECT role FROM auth.users WHERE id = $1`,
       [userId],
     );
 
@@ -204,7 +208,7 @@ export async function unsubscribeFromOnlineTopic(
     if (topic) {
       await firebaseAdmin.unsubscribeFromTopic(fcmToken, topic);
 
-      await db.query(
+      await postgresService.query(
         `DELETE FROM topic_subscriptions 
          WHERE user_id = $1 AND topic = $2`,
         [userId, topic],
@@ -244,7 +248,7 @@ export async function subscribeToConditionTopic(
 
     await firebaseAdmin.subscribeToTopic(fcmToken, topic);
 
-    await db.query(
+    await postgresService.query(
       `INSERT INTO topic_subscriptions (user_id, topic, subscribed_at)
        VALUES ($1, $2, NOW())
        ON CONFLICT (user_id, topic) DO NOTHING`,
@@ -279,7 +283,7 @@ export async function unsubscribeFromConditionTopic(
 
     await firebaseAdmin.unsubscribeFromTopic(fcmToken, topic);
 
-    await db.query(
+    await postgresService.query(
       `DELETE FROM topic_subscriptions 
        WHERE user_id = $1 AND topic = $2`,
       [userId, topic],
@@ -307,7 +311,7 @@ export async function unsubscribeFromConditionTopic(
  */
 export async function getUserTopics(userId: string) {
   try {
-    const result = await db.query(
+    const result = await postgresService.query(
       `SELECT topic, subscribed_at 
        FROM topic_subscriptions 
        WHERE user_id = $1 
@@ -337,12 +341,12 @@ export async function unsubscribeFromAllTopics(
 ) {
   try {
     // Get all user's topics
-    const result = await db.query(
+    const result = await postgresService.query(
       `SELECT topic FROM topic_subscriptions WHERE user_id = $1`,
       [userId],
     );
 
-    const topics = result.rows.map((row: any) => row.topic);
+    const topics = result.rows.map((row: any) => row.topic as string);
 
     // Unsubscribe from all topics
     for (const topic of topics) {
@@ -350,9 +354,10 @@ export async function unsubscribeFromAllTopics(
     }
 
     // Remove from database
-    await db.query(`DELETE FROM topic_subscriptions WHERE user_id = $1`, [
-      userId,
-    ]);
+    await postgresService.query(
+      `DELETE FROM topic_subscriptions WHERE user_id = $1`,
+      [userId],
+    );
 
     console.log(`✅ User ${userId} unsubscribed from ${topics.length} topics`);
 

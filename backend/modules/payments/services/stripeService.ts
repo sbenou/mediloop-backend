@@ -1,10 +1,12 @@
 /**
  * Stripe Service
  * Handles all Stripe payment and subscription operations
+ *
+ * FIXED: Uses postgresService instead of old db connection
  */
 
 import Stripe from "https://esm.sh/stripe@14.21.0";
-import { db } from "../db/connection.ts";
+import { postgresService } from "../../../shared/services/postgresService.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
   apiVersion: "2023-10-16",
@@ -34,7 +36,7 @@ export class StripeService {
     const { userId, pharmacyId, email, successUrl, cancelUrl } = params;
 
     // 1. Verify user is a pharmacist
-    const userResult = await db.query(
+    const userResult = await postgresService.query(
       `SELECT role FROM public.users WHERE id = $1`,
       [userId],
     );
@@ -43,7 +45,9 @@ export class StripeService {
       throw new Error("User not found");
     }
 
-    if (userResult.rows[0].role !== "pharmacist") {
+    const user = userResult.rows[0] as unknown as { role: string };
+
+    if (user.role !== "pharmacist") {
       throw new Error("Only pharmacists can subscribe to pharmacy plans");
     }
 
@@ -68,9 +72,10 @@ export class StripeService {
 
       if (subscriptions.data.length > 0) {
         // Mark pharmacy as endorsed (subscription already exists)
-        await db.query(`UPDATE pharmacies SET endorsed = true WHERE id = $1`, [
-          pharmacyId,
-        ]);
+        await postgresService.query(
+          `UPDATE pharmacies SET endorsed = true WHERE id = $1`,
+          [pharmacyId],
+        );
 
         throw new Error("Already subscribed to the Pharmacy Partner Plan");
       }
@@ -130,7 +135,7 @@ export class StripeService {
    * Mark pharmacy as endorsed after successful subscription
    */
   async markPharmacyAsEndorsed(pharmacyId: string): Promise<void> {
-    const result = await db.query(
+    const result = await postgresService.query(
       `UPDATE pharmacies SET endorsed = true WHERE id = $1 RETURNING id`,
       [pharmacyId],
     );
@@ -146,7 +151,7 @@ export class StripeService {
    * Mark pharmacy as not endorsed after subscription cancellation
    */
   async markPharmacyAsNotEndorsed(pharmacyId: string): Promise<void> {
-    const result = await db.query(
+    const result = await postgresService.query(
       `UPDATE pharmacies SET endorsed = false WHERE id = $1 RETURNING id`,
       [pharmacyId],
     );
@@ -162,7 +167,7 @@ export class StripeService {
    * Find pharmacy by customer email (for subscription cancellation)
    */
   async findPharmacyByCustomerEmail(email: string): Promise<string | null> {
-    const result = await db.query(
+    const result = await postgresService.query(
       `
       SELECT p.id 
       FROM pharmacies p
@@ -174,7 +179,8 @@ export class StripeService {
       [email],
     );
 
-    return result.rows[0]?.id || null;
+    const row = result.rows[0] as unknown as { id: string } | undefined;
+    return row?.id || null;
   }
 
   /**
@@ -206,7 +212,7 @@ export class StripeService {
     const { sessionId, customerEmail, amount } = params;
 
     // Find user by email
-    const userResult = await db.query(
+    const userResult = await postgresService.query(
       `SELECT id FROM public.users WHERE email = $1`,
       [customerEmail],
     );
@@ -216,10 +222,11 @@ export class StripeService {
       return;
     }
 
-    const userId = userResult.rows[0].id;
+    const user = userResult.rows[0] as unknown as { id: string };
+    const userId = user.id;
 
     // Record order (adjust table name/columns as needed for your schema)
-    await db.query(
+    await postgresService.query(
       `
       INSERT INTO orders (user_id, stripe_session_id, amount, status, created_at)
       VALUES ($1, $2, $3, 'completed', NOW())
