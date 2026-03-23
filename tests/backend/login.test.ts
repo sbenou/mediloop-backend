@@ -12,7 +12,7 @@ import {
   assert,
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
 
-const BASE_URL = Deno.env.get("API_URL") || "http://localhost:8000/api";
+const BASE_URL = Deno.env.get("API_URL") || "http://localhost:8000";
 
 async function makeRequest(
   endpoint: string,

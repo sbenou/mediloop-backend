@@ -31,7 +31,7 @@ export class TestServer {
         "--allow-read",
         "--allow-run",
         "--unstable-kv",
-        "auth-backend/test-server.ts",
+        "backend/test-server.ts",
       ],
       cwd: Deno.cwd(),
       stdout: "null", // ✅ Use "null" to discard output (prevents buffer overflow)

@@ -8,9 +8,9 @@
  * 4. Check rate limits based on subscription
  * 5. Test overrides
  * 
- * File: auth-backend/tests/integration/subscriptionRateLimiting.test.ts
+ * File: tests/integration/subscriptionRateLimiting.test.ts
  * 
- * Run: deno test --allow-env --allow-net auth-backend/tests/integration/subscriptionRateLimiting.test.ts
+ * Run: deno test --allow-env --allow-net tests/integration/subscriptionRateLimiting.test.ts
  */
 
 import { assertEquals, assertExists, assert } from "@std/assert";

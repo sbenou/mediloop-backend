@@ -11,8 +11,8 @@
     "check-version": "deno run --allow-net scripts/check-deno-version.ts",
     "upgrade-deno": "deno upgrade",
     "migrate-tenants": "deno run --allow-net --allow-env --allow-read scripts/migrate-tenants.ts",
-    "cache-backend": "deno cache tests/backend/*.ts",
-    "test-backend": "deno test --allow-net --allow-env --allow-read tests/backend/",
+    "cache-backend": "deno cache ../tests/backend/*.ts",
+    "test-backend": "deno test --allow-net --allow-env --allow-read ../tests/backend/",
     "start": "deno run --allow-run --allow-env --allow-read scripts/start-all-services.ts",
 
     "docker:up": "docker-compose up -d",

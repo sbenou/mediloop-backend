@@ -72,7 +72,7 @@ TEST_DATABASE_URL=postgresql://neondb_owner:YOUR_PASSWORD@ep-test-db.gwc.azure.n
 
 ```bash
 # Make sure your backend is running first!
-cd auth-backend
+cd backend
 deno task dev
 
 # In another terminal, run the tests
@@ -249,7 +249,7 @@ Deno.test("Cleanup: Disconnect from database", async () => {
 
 **Problem:** Test expected `201 Created` but got `200 OK`
 
-**Solution:** Updated `auth-backend/routes/auth.ts` line 83:
+**Solution:** Updated `backend/modules/auth/routes/auth.ts`:
 
 ```typescript
 // ✅ BEFORE:
@@ -304,7 +304,7 @@ echo 'TEST_DATABASE_URL=postgresql://...' >> .env.test.local
 
 ```bash
 # Make sure your backend is running
-cd auth-backend
+cd backend
 deno task dev
 ```
 
