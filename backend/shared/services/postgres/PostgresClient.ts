@@ -7,42 +7,59 @@ export class PostgresClient {
   private isConnecting = false;
 
   constructor() {
-    this.connect();
+    // Lazy-connect on first query. Starting connect() from the constructor
+    // (without await) races with the first ensureConnection() and can leave a
+    // half-open TCP/TLS socket — Deno then throws "TCP stream is currently in use"
+    // / BadResource on startTls when retries create a new Client.
   }
 
-  private async connect() {
-    if (this.isConnecting) {
-      // Wait for existing connection attempt
-      while (this.isConnecting) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      }
+  /** Close and drop the current client (best-effort). */
+  private async disposeClient(): Promise<void> {
+    if (!this.client) return;
+    const c = this.client;
+    this.client = null;
+    try {
+      await c.end();
+    } catch {
+      // Ignore: socket may already be broken mid-handshake
+    }
+  }
+
+  private async connect(): Promise<void> {
+    // Wait until any in-flight connect attempt finishes
+    while (this.isConnecting) {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+
+    if (this.client) {
       return;
     }
 
-    if (!this.client) {
-      this.isConnecting = true;
-      console.log("Connecting to Neon PostgreSQL database...");
+    this.isConnecting = true;
+    console.log("Connecting to Neon PostgreSQL database...");
 
-      try {
-        await RetryService.execute(
-          async () => {
-            this.client = new Client(config.DATABASE_URL);
-            await this.client.connect();
-            console.log("✓ Connected to Neon PostgreSQL database");
-          },
-          {
-            maxAttempts: 3,
-            delay: 1000,
-            retryCondition: RetryService.conditions.network,
-          },
-        );
-      } catch (error) {
-        console.error("Failed to connect to database after retries:", error);
-        this.client = null;
-        throw error;
-      } finally {
-        this.isConnecting = false;
-      }
+    try {
+      await RetryService.execute(
+        async () => {
+          // Each retry must end the previous client or the TCP resource stays open
+          await this.disposeClient();
+          const client = new Client(config.DATABASE_URL);
+          this.client = client;
+          await client.connect();
+          console.log("✓ Connected to Neon PostgreSQL database");
+        },
+        {
+          maxAttempts: 3,
+          delay: 1000,
+          retryCondition: RetryService.conditions.network,
+        },
+      );
+    } catch (error) {
+      console.error("Failed to connect to database after retries:", error);
+      await this.disposeClient();
+      throw error;
+    } finally {
+      this.isConnecting = false;
     }
   }
 
@@ -58,7 +75,7 @@ export class PostgresClient {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       console.log("Connection test failed, reconnecting...", message);
-      this.client = null;
+      await this.disposeClient();
       await this.connect();
     }
   }
@@ -140,15 +157,12 @@ export class PostgresClient {
   }
 
   async disconnect() {
-    if (this.client) {
-      try {
-        await this.client.end();
-        this.client = null;
-        console.log("✓ Disconnected from database");
-      } catch (error) {
-        console.error("Error disconnecting from database:", error);
-        this.client = null;
-      }
+    try {
+      await this.disposeClient();
+      console.log("✓ Disconnected from database");
+    } catch (error) {
+      console.error("Error disconnecting from database:", error);
+      this.client = null;
     }
   }
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run --allow-env --allow-net
+#!/usr/bin/env -S deno run --allow-env --allow-net --allow-read
 
 /**
  * Complete Subscription System Seeding Script
@@ -8,27 +8,67 @@
  * - 32 professional services (healthcare-specific)
  * - 3 standard subscription plans (Starter, Professional, Enterprise)
  *
- * FIXED: Uses postgresService instead of Pool
+ * Database target (important):
+ * - `TEST_DATABASE_URL` overrides Vault (see `shared/config/env.ts`).
+ * - This file loads repo-root `.env.test` **before** importing DB code so `TEST_DATABASE_URL`
+ *   applies. If you migrated only your **test** Neon branch, keep `TEST_DATABASE_URL` there
+ *   and re-run this script — otherwise it uses Vault `DATABASE_URL_DEV` and you may still
+ *   see `column "key" does not exist` on an unmigrated dev database.
+ * - To seed **dev** instead, ensure `TEST_DATABASE_URL` is unset and run migrations on that dev DB.
  *
- * Run: deno run --allow-env --allow-net backend/scripts/seedSubscriptionSystem.ts
+ * Run: deno run --allow-env --allow-net --allow-read backend/scripts/seedSubscriptionSystem.ts
  */
 
 import { load } from "@std/dotenv";
-import { postgresService } from "../shared/services/postgresService.ts";
-import { FeatureService } from "../modules/payments/services/featureService.ts";
-import { ProfessionalService } from "../modules/auth/services/professionalService.ts";
-import { PlanService } from "../modules/payments/services/planService.ts";
+import { fromFileUrl } from "https://deno.land/std@0.208.0/path/mod.ts";
 import {
   FeatureCategory,
   ServiceCategory,
   PlanStatus,
 } from "../shared/types/index.ts";
 
-// Load environment
+/** Same merge rule as envLoader: do not override existing process env. */
+function mergeIntoEnv(record: Record<string, string>) {
+  for (const [key, value] of Object.entries(record)) {
+    if (value !== undefined && !Deno.env.get(key)) {
+      Deno.env.set(key, value);
+    }
+  }
+}
+
+// Default `.env` in cwd (optional)
 await load({ export: true });
 
-// postgresService is a singleton and auto-connects on first query
-// No need to call initialize()
+// Repo-root `.env.test` — must run BEFORE any import of postgresService/env (config freezes DATABASE_URL on first load)
+const envTestUrl = new URL("../../.env.test", import.meta.url);
+try {
+  const testVars = await load({ envPath: fromFileUrl(envTestUrl) }) as Record<
+    string,
+    string
+  >;
+  mergeIntoEnv(testVars);
+  // For this script only: repo-root `.env.test` wins for TEST_DATABASE_URL (cwd `.env` must not block test Neon)
+  const testDbUrl = testVars["TEST_DATABASE_URL"];
+  if (typeof testDbUrl === "string" && testDbUrl.length > 0) {
+    Deno.env.set("TEST_DATABASE_URL", testDbUrl);
+  }
+  console.log(
+    "✅ Loaded repository .env.test (TEST_DATABASE_URL applied for this seed run if present)",
+  );
+} catch {
+  // No repo-root .env.test — OK
+}
+
+const { postgresService } = await import("../shared/services/postgresService.ts");
+const { FeatureService } = await import(
+  "../modules/payments/services/featureService.ts"
+);
+const { ProfessionalService } = await import(
+  "../modules/auth/services/professionalService.ts"
+);
+const { PlanService } = await import(
+  "../modules/payments/services/planService.ts"
+);
 
 const featureService = new FeatureService();
 const professionalService = new ProfessionalService();

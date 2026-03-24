@@ -23,11 +23,15 @@ import {
 // Initialize test database connection
 const testDb = new TestDb();
 
-Deno.test("Setup: Connect to test database", async () => {
+/** Neon TLS + postgres client trips Deno's per-test resource sanitizer across steps. */
+const dbTest = (name: string, fn: (t: Deno.TestContext) => void | Promise<void>) =>
+  Deno.test({ name, sanitizeResources: false, sanitizeOps: false }, fn);
+
+dbTest("Setup: Connect to test database", async () => {
   await testDb.connect();
 });
 
-Deno.test("FeatureService - CRUD Operations", async (t) => {
+dbTest("FeatureService - CRUD Operations", async (t) => {
   const featureService = new FeatureService();
   let createdFeatureId: string;
 
@@ -148,7 +152,7 @@ Deno.test("FeatureService - CRUD Operations", async (t) => {
   });
 });
 
-Deno.test("FeatureService - Value Types", async (t) => {
+dbTest("FeatureService - Value Types", async (t) => {
   const featureService = new FeatureService();
   const createdIds: string[] = [];
 
@@ -216,7 +220,7 @@ Deno.test("FeatureService - Value Types", async (t) => {
   });
 });
 
-Deno.test("FeatureService - Error Handling", async (t) => {
+dbTest("FeatureService - Error Handling", async (t) => {
   const featureService = new FeatureService();
 
   await t.step("should return null for non-existent feature", async () => {
@@ -256,6 +260,6 @@ Deno.test("FeatureService - Error Handling", async (t) => {
   });
 });
 
-Deno.test("Cleanup: Disconnect from test database", async () => {
+dbTest("Cleanup: Disconnect from test database", async () => {
   await testDb.close();
 });
