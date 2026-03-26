@@ -169,6 +169,8 @@ The script is **additive** (new tables + new columns with safe backfill). Existi
 
 Greenfield / `scripts/db/schema.sql`: the same objects are included so new databases match.
 
+**Phase 2 (backend, branch `option-c-phase2-request-context`):** after JWT auth, `activeContextMiddleware` resolves acting tenant + membership. If both `X-Mediloop-Tenant-Id` and `X-Mediloop-Membership-Id` are sent, membership is validated against the user and tenant; denials write `public.audit_events` (`action = active_context.denied`). If headers are omitted, legacy resolution uses JWT `tenant_id` and an active `user_tenants` row for that tenant. CORS allows these headers on the API.
+
 ---
 
 ## Decision summary (CSV-friendly)

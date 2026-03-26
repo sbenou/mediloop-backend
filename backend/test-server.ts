@@ -11,6 +11,7 @@ import { tokenRoutes } from "./modules/auth/routes/tokenManagement.ts";
 import { tokenRotationRoutes } from "./modules/auth/routes/tokenRotation.ts";
 import { domainVerificationRoutes } from "./modules/auth/routes/domainVerification.ts";
 import { authMiddleware } from "./modules/auth/middleware/authMiddleware.ts";
+import { activeContextMiddleware } from "./modules/auth/middleware/activeContextMiddleware.ts";
 import { tokenBlacklistMiddleware } from "./shared/middleware/tokenBlacklistMiddleware.ts";
 import { oakCors } from "https://deno.land/x/cors@v1.2.2/mod.ts";
 import emailTemplateRoutes from "./shared/routes/emailTemplates.ts";
@@ -87,8 +88,8 @@ app.use(oauthRoutes.allowedMethods());
 app.use(luxtrustRoutes.routes());
 app.use(luxtrustRoutes.allowedMethods());
 
-// Authentication middleware (apply to specific routes)
 app.use(authMiddleware);
+app.use(activeContextMiddleware);
 
 // Routes
 app.use(authRoutes.routes());

@@ -7,6 +7,7 @@ import { tokenRotationRoutes } from "./modules/auth/routes/tokenRotation.ts";
 import { domainVerificationRoutes } from "./modules/auth/routes/domainVerification.ts";
 import { config } from "./shared/config/env.ts";
 import { authMiddleware } from "./modules/auth/middleware/authMiddleware.ts";
+import { activeContextMiddleware } from "./modules/auth/middleware/activeContextMiddleware.ts";
 import { tokenBlacklistMiddleware } from "./shared/middleware/tokenBlacklistMiddleware.ts";
 import { oakCors } from "https://deno.land/x/cors@v1.2.2/mod.ts";
 import emailTemplateRoutes from "./shared/routes/emailTemplates.ts";
@@ -43,7 +44,13 @@ app.use(
   oakCors({
     origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Mediloop-Tenant-Id",
+      "X-Mediloop-Membership-Id",
+      "X-Request-Id",
+    ],
   }),
 );
 
@@ -71,8 +78,9 @@ app.use(oauthRoutes.allowedMethods());
 app.use(luxtrustRoutes.routes());
 app.use(luxtrustRoutes.allowedMethods());
 
-// Authentication middleware (apply to specific routes)
+// Authentication + Option C acting context (membership revalidation per request)
 app.use(authMiddleware);
+app.use(activeContextMiddleware);
 
 // Routes
 app.use(authRoutes.routes());
