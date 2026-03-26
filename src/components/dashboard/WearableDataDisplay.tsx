@@ -62,6 +62,12 @@ const WearableDataDisplay: React.FC<WearableDataDisplayProps> = ({ userRole }) =
         </ManageWearablesDialog>
       </div>
 
+      {wearablesData.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          No devices connected yet. Use &quot;Manage Connections&quot; to add one.
+        </p>
+      ) : null}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {wearablesData.map((device, index) => (
           <Card key={index} className={`${device.connectionStatus === 'disconnected' ? 'opacity-70' : ''}`}>

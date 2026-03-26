@@ -266,6 +266,37 @@ export class SchemaManager {
     `);
 
     await this.client.query(`
+      CREATE TABLE "${schemaName}".user_wearables (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL,
+        device_type VARCHAR(64) NOT NULL CHECK (device_type IN (
+          'apple_watch',
+          'fitbit',
+          'oura_ring',
+          'samsung_galaxy_watch',
+          'garmin',
+          'whoop'
+        )),
+        device_name TEXT NOT NULL,
+        device_id TEXT NOT NULL,
+        connection_status TEXT NOT NULL DEFAULT 'connected',
+        last_synced TIMESTAMP WITH TIME ZONE,
+        battery_level INTEGER,
+        meta JSONB,
+        access_token TEXT,
+        refresh_token TEXT,
+        token_expires_at TIMESTAMP WITH TIME ZONE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `);
+
+    await this.client.query(`
+      CREATE INDEX IF NOT EXISTS idx_user_wearables_user_id
+      ON "${schemaName}".user_wearables(user_id)
+    `);
+
+    await this.client.query(`
       CREATE TABLE "${schemaName}".permissions (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         role_id UUID NOT NULL,

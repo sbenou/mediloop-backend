@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
+import { authClientV2 } from "@/lib/authClientV2";
 
 const DEFAULT_COOLDOWN = 60; // fallback value in seconds
 
@@ -38,15 +38,13 @@ export const usePasswordReset = () => {
     console.log("Initiating password reset for:", email);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password/new`,
-      });
-
-      if (error) throw error;
+      const response = await authClientV2.requestPasswordResetLink(email);
 
       toast({
         title: "Reset Password Request",
-        description: "If an account exists with this email address, you'll receive a password reset link. Please check your inbox and spam folder.",
+        description:
+          response?.message ||
+          "If an account exists with this email address, you'll receive a password reset link. Please check your inbox and spam folder.",
         duration: 3000,
       });
       
@@ -57,7 +55,7 @@ export const usePasswordReset = () => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to send reset email",
+        description: error?.message || "Failed to send reset email",
         duration: 3000,
       });
       return false;

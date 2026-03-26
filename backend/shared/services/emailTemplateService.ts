@@ -12,6 +12,7 @@
 
 import { postgresService } from "./postgresService.ts";
 import { crypto } from "https://deno.land/std@0.208.0/crypto/mod.ts";
+import { config } from "../config/env.ts";
 
 interface SendEmailParams {
   userId?: string;
@@ -32,9 +33,15 @@ interface EmailAuditLog {
 
 export class EmailTemplateService {
   private resendApiKey: string;
+  private fromEmail: string;
 
   constructor() {
-    this.resendApiKey = Deno.env.get("RESEND_API_KEY") || "";
+    this.resendApiKey =
+      config.RESEND_API_KEY || Deno.env.get("RESEND_API_KEY") || "";
+    this.fromEmail =
+      config.RESEND_FROM_EMAIL ||
+      Deno.env.get("RESEND_FROM_EMAIL") ||
+      "Mediloop <noreply@notifications.mediloop.lu>";
     if (!this.resendApiKey) {
       console.warn(
         "RESEND_API_KEY not configured - email sending will not work",
@@ -107,7 +114,7 @@ export class EmailTemplateService {
           Authorization: `Bearer ${this.resendApiKey}`,
         },
         body: JSON.stringify({
-          from: "Mediloop <onboarding@resend.dev>",
+          from: this.fromEmail,
           to: [recipient],
           subject,
           html: htmlContent,
@@ -153,7 +160,10 @@ export class EmailTemplateService {
    * Load email template from file system
    */
   private async loadTemplate(templateName: string): Promise<string> {
-    const templatePath = `./templates/${templateName}.html`;
+    const templatePath = new URL(
+      `../templates/${templateName}.html`,
+      import.meta.url,
+    );
     try {
       const template = await Deno.readTextFile(templatePath);
       return template;

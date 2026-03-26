@@ -1,4 +1,12 @@
-const API_BASE_URL = "http://localhost:8000";
+import {
+  clearV2SessionStorageKeys,
+  persistV2SessionFromBackendLogin,
+} from "@/lib/auth/v2SessionStorage";
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  import.meta.env.VITE_API_BASE_URL ||
+  "http://localhost:8000";
 
 interface LoginResponse {
   access_token: string;
@@ -55,6 +63,12 @@ class AuthClient {
 
     // ✅ Also store user data separately for V2 system
     localStorage.setItem("mediloop_v2_user", JSON.stringify(data.user));
+
+    persistV2SessionFromBackendLogin({
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token,
+      userId: data.user.id,
+    });
 
     console.log("✅ Tokens stored in both legacy and V2 format");
   }
@@ -194,6 +208,7 @@ class AuthClient {
     localStorage.removeItem("auth_token");
     localStorage.removeItem("mediloop_session_sync");
     localStorage.removeItem("mediloop_v2_user");
+    clearV2SessionStorageKeys();
 
     console.log("✅ Logged out - cleared all auth data");
   }

@@ -1,6 +1,7 @@
 
 import { useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { persistV2SessionFromBackendLogin } from '@/lib/auth/v2SessionStorage'
 import { authClient } from '@/services/authClient'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader } from 'lucide-react'
@@ -33,7 +34,12 @@ const AuthCallback = () => {
           // Verify the token and get user info
           const verification = await authClient.verifyToken()
           
-          if (verification.valid) {
+          if (verification.valid && verification.payload?.sub) {
+            persistV2SessionFromBackendLogin({
+              accessToken: token,
+              refreshToken: token,
+              userId: verification.payload.sub,
+            })
             toast({
               title: 'Login successful',
               description: 'Welcome! You have been successfully authenticated.'

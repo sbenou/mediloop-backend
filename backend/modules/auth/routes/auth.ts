@@ -25,6 +25,7 @@ import {
   validatePassword,
   validateFullName,
 } from "../../../shared/utils/validation.ts";
+import { config } from "../../../shared/config/env.ts";
 
 const authRoutes = new Router();
 
@@ -422,7 +423,7 @@ authRoutes.post("/api/auth/resend-verification", async (ctx) => {
     }
 
     // Send verification email
-    const verificationUrl = `${Deno.env.get("FRONTEND_URL")}/verify-email?token=${tokenResult.token}`;
+    const verificationUrl = `${config.PUBLIC_FRONTEND_URL}/verify-email?token=${tokenResult.token}`;
 
     const sent = await emailService.sendEmailConfirmation(
       email,
@@ -710,28 +711,17 @@ authRoutes.get("/api/auth/profile", async (ctx) => {
     const token = authHeader.substring(7);
     const verification = await enhancedJwtService.verifyToken(token);
 
-    if (!verification.valid) {
+    if (!verification.valid || !verification.payload?.sub) {
       ctx.response.status = 401;
       ctx.response.body = { error: verification.error || "Invalid token" };
       return;
     }
 
-    // ✅ FIX: Get user from auth.users (not tenant schema!)
-    const user = await databaseService.getUserByEmail(
-      verification.payload.email,
+    const { profile, permissions } = await databaseService.fetchAppSessionProfile(
+      verification.payload.sub,
     );
 
-    ctx.response.body = {
-      profile: {
-        id: user.id,
-        email: user.email,
-        full_name: user.full_name,
-        role: user.role,
-        email_verified: user.email_verified, // ✅ Include verification status
-        created_at: user.created_at,
-        updated_at: user.updated_at,
-      },
-    };
+    ctx.response.body = { profile, permissions };
   } catch (error) {
     console.error("Profile fetch error:", error);
     ctx.response.status = 404;

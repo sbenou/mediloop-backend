@@ -23,7 +23,7 @@ import Settings from "./pages/Settings";
 // import MedicationRequest from './pages/MedicationRequest';
 import BecomePartner from "./pages/BecomePartner";
 // import Loyalty from './pages/Loyalty';
-// import PasswordReset from './pages/PasswordReset';
+import ResetPassword from "./pages/ResetPassword";
 // import MagicLink from './pages/MagicLink';
 import DatabaseTest from "@/pages/DatabaseTest";
 import DenoBackendManagement from "@/pages/DenoBackendManagement";
@@ -66,7 +66,8 @@ const AppRoutes = () => {
       {/* <Route path="/medication-request" element={<MedicationRequest />} /> */}
       <Route path="/become-partner" element={<BecomePartner />} />
       {/* <Route path="/loyalty" element={<Loyalty />} /> */}
-      {/* <Route path="/password-reset" element={<PasswordReset />} /> */}
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/reset-password/new" element={<ResetPassword />} />
       {/* <Route path="/magic-link" element={<MagicLink />} /> */}
 
       {/* Test route for database connectivity */}

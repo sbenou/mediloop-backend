@@ -1,5 +1,6 @@
 import { Router } from "oak";
 import { enhancedJwtService } from "../../auth/services/enhancedJwtService.ts";
+import { config } from "../../../shared/config/env.ts";
 import { databaseService } from "../../../shared/services/databaseService.ts";
 import { updatedEmailService } from "../../../shared/services/updatedEmailService.ts";
 import { smsService } from "../../../shared/services/smsService.ts";
@@ -238,6 +239,10 @@ passwordResetRoutes.post(
 
         // Revoke all existing tokens for security
         const user = await databaseService.getUserByEmail(userEmail);
+        // Email-link or email OTP proves inbox access — allow login without separate verify step
+        if (storedData.identifierType === "email") {
+          await databaseService.markEmailVerifiedByUserId(user.id);
+        }
         await enhancedJwtService.revokeAllUserTokens(user.id, "PASSWORD_RESET");
 
         ctx.response.body = {
@@ -307,11 +312,14 @@ passwordResetRoutes.post(
       ); // 1 hour TTL
 
       // Create reset URL
-      const resetUrl = `${Deno.env.get("FRONTEND_URL") || "http://localhost:5173"}/reset-password/new?token=${resetToken}&email=${encodeURIComponent(email)}`;
+      const resetUrl = `${config.PUBLIC_FRONTEND_URL}/reset-password/new?token=${resetToken}&email=${encodeURIComponent(email)}`;
 
       // Send reset email
       try {
-        await updatedEmailService.sendPasswordReset(email, resetUrl);
+        const sent = await updatedEmailService.sendPasswordReset(email, resetUrl);
+        if (!sent) {
+          throw new Error("Email provider rejected password reset email");
+        }
         console.log("Password reset link sent to:", email);
       } catch (error) {
         console.error("Failed to send password reset email:", error);
@@ -377,6 +385,9 @@ passwordResetRoutes.post(
       // Update password
       try {
         await databaseService.updateUserPassword(tokenData.email, newPassword);
+
+        // Reset link was sent to this email — same assurance as verify-email link
+        await databaseService.markEmailVerifiedByUserId(tokenData.userId);
 
         // Mark token as used
         await kvStore.set(

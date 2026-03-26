@@ -1,7 +1,7 @@
-
-import { useState } from 'react';
-import { authClient } from '@/services/authClient';
-import { toast } from '@/components/ui/use-toast';
+import { useState } from "react";
+import { authClient } from "@/services/authClient";
+import { toast } from "@/components/ui/use-toast";
+import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
 
 interface LoginState {
   isLoading: boolean;
@@ -36,8 +36,8 @@ export const usePasswordLoginV2 = () => {
         description: 'Welcome back!'
       });
       
-      // Redirect to dashboard or trigger app-wide auth state update
-      window.location.href = '/dashboard';
+      const dashboard = getDashboardRouteByRole(response.user?.role);
+      window.location.href = dashboard;
       
       return { success: true, user: response.user };
     } catch (error) {

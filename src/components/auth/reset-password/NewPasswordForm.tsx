@@ -1,18 +1,19 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Key, Check, X, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { Key, Check, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { supabase } from "@/lib/supabase";
+import { authClientV2, isRateLimitError } from "@/lib/authClientV2";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 interface NewPasswordFormProps {
   email: string;
+  token: string;
 }
 
-export const NewPasswordForm = ({ email }: NewPasswordFormProps) => {
+export const NewPasswordForm = ({ email, token }: NewPasswordFormProps) => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -43,7 +44,16 @@ export const NewPasswordForm = ({ email }: NewPasswordFormProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    if (!token?.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Invalid link",
+        description: "Missing reset token. Open the link from your email again.",
+      });
+      return;
+    }
+
     if (!validatePasswords()) {
       return;
     }
@@ -51,51 +61,46 @@ export const NewPasswordForm = ({ email }: NewPasswordFormProps) => {
     setIsLoading(true);
 
     try {
-      console.log("Attempting to update password for email:", email);
-      const { data, error } = await supabase.auth.updateUser({ 
-        password: password 
-      });
+      console.log("Attempting V2 password reset for email:", email);
+      const data = (await authClientV2.resetPasswordWithToken(
+        token.trim(),
+        password,
+      )) as { success?: boolean; message?: string; error?: string };
 
-      if (error) throw error;
+      if (data && "success" in data && data.success === false) {
+        throw new Error(data.message || data.error || "Password reset failed");
+      }
 
-      console.log("Password update successful for user:", data.user.id);
-      
-      // Show success toast with icon
       toast({
         title: "Success",
         description: (
           <div className="flex items-center gap-2">
             <Check className="h-4 w-4 text-green-500" />
-            <span>Password updated successfully. Please log in with your new password.</span>
+            <span>
+              Password updated successfully. Please log in with your new password.
+            </span>
           </div>
         ),
         duration: 3000,
       });
 
-      // Sign out from all sessions
-      try {
-        const { error: signOutError } = await supabase.auth.signOut({
-          scope: 'global'
-        });
-        if (signOutError) throw signOutError;
-      } catch (signOutError) {
-        console.error('Sign out error:', signOutError);
-      }
-
-      // Delay navigation slightly to show the success message
       setTimeout(() => {
         navigate("/login", { replace: true });
       }, 2000);
-
-    } catch (error: any) {
-      console.error('Password update failed:', error);
+    } catch (error: unknown) {
+      console.error("Password update failed:", error);
+      let msg =
+        error instanceof Error ? error.message : "Failed to update password.";
+      if (isRateLimitError(error) && error.retryAfter) {
+        msg = `${msg} Try again in about ${error.retryAfter}s.`;
+      }
       toast({
         variant: "destructive",
         title: "Error",
         description: (
           <div className="flex items-center gap-2">
             <AlertCircle className="h-4 w-4 text-red-500" />
-            <span>{error.message || "Failed to update password. Please try again."}</span>
+            <span>{msg}</span>
           </div>
         ),
         duration: 5000,
@@ -107,6 +112,15 @@ export const NewPasswordForm = ({ email }: NewPasswordFormProps) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {!token?.trim() && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            This page needs a valid reset link from your email (with a token).
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="space-y-2">
         <Label htmlFor="password">New Password</Label>
         <div className="relative">
@@ -158,7 +172,7 @@ export const NewPasswordForm = ({ email }: NewPasswordFormProps) => {
       <Button
         type="submit"
         className="w-full"
-        disabled={isLoading}
+        disabled={isLoading || !token?.trim()}
       >
         {isLoading ? (
           <>

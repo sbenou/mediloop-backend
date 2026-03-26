@@ -20,7 +20,10 @@ export class EmailService {
   }
 
   private async loadTemplate(templateName: string): Promise<string> {
-    const templatePath = `./templates/${templateName}.html`;
+    const templatePath = new URL(
+      `../templates/${templateName}.html`,
+      import.meta.url,
+    );
     try {
       const template = await Deno.readTextFile(templatePath);
       return template;
@@ -204,8 +207,7 @@ export class EmailService {
     expiresAt: Date;
   }): Promise<boolean> {
     try {
-      const frontendUrl =
-        Deno.env.get("FRONTEND_URL") || "http://localhost:3000";
+      const frontendUrl = config.PUBLIC_FRONTEND_URL;
       const acceptUrl = `${frontendUrl}/accept-invite?token=${params.token}`;
 
       // Calculate expiration in human-readable format

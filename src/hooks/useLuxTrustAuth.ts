@@ -1,8 +1,11 @@
-
 import { useState } from 'react';
 import { toast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase';
 import type { LuxTrustAuthResponse } from '@/types/luxembourg';
+
+const API_BASE =
+  import.meta.env.VITE_API_URL ||
+  import.meta.env.VITE_API_BASE_URL ||
+  'http://localhost:8000';
 
 export const useLuxTrustAuth = () => {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -10,24 +13,27 @@ export const useLuxTrustAuth = () => {
 
   const authenticateWithLuxTrust = async (): Promise<LuxTrustAuthResponse | null> => {
     setIsAuthenticating(true);
-    
+
     try {
-      console.log('Starting LuxTrust authentication...');
-      
-      // Call the LuxTrust service without requiring authentication
-      const { data, error } = await supabase.functions.invoke('luxtrust-service', {
-        body: { 
+      console.log('Starting LuxTrust authentication (Deno API)...');
+
+      const res = await fetch(`${API_BASE}/api/luxtrust/auth`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           action: 'auth',
-          timestamp: new Date().toISOString()
-        }
+          timestamp: new Date().toISOString(),
+        }),
       });
 
-      if (error) {
-        console.error('LuxTrust service error:', error);
+      const data = (await res.json()) as LuxTrustAuthResponse & { error?: string };
+
+      if (!res.ok) {
+        console.error('LuxTrust API error:', res.status, data);
         toast({
           title: 'LuxTrust Error',
-          description: `Authentication failed: ${error.message}`,
-          variant: 'destructive'
+          description: data?.error || `HTTP ${res.status}`,
+          variant: 'destructive',
         });
         return null;
       }
@@ -38,24 +44,24 @@ export const useLuxTrustAuth = () => {
         toast({
           title: 'LuxTrust Success',
           description: 'Authentication completed successfully!',
-          variant: 'default'
+          variant: 'default',
         });
         return data;
-      } else {
-        console.error('LuxTrust authentication failed:', data);
-        toast({
-          title: 'LuxTrust Failed',
-          description: 'Authentication was not successful',
-          variant: 'destructive'
-        });
-        return null;
       }
+
+      console.error('LuxTrust authentication failed:', data);
+      toast({
+        title: 'LuxTrust Failed',
+        description: 'Authentication was not successful',
+        variant: 'destructive',
+      });
+      return null;
     } catch (error) {
       console.error('LuxTrust authentication failed:', error);
       toast({
         title: 'LuxTrust Error',
         description: 'Failed to connect to authentication service',
-        variant: 'destructive'
+        variant: 'destructive',
       });
       return null;
     } finally {
@@ -72,6 +78,6 @@ export const useLuxTrustAuth = () => {
     clearAuth,
     isAuthenticating,
     authResponse,
-    isAuthenticated: !!authResponse?.success
+    isAuthenticated: !!authResponse?.success,
   };
 };

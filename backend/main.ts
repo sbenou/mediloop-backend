@@ -1,5 +1,7 @@
 import { Application, Router, Context } from "oak";
 import { authRoutes } from "./modules/auth/routes/auth.ts";
+import { oauthRoutes } from "./modules/auth/routes/oauth.ts";
+import { luxtrustRoutes } from "./modules/auth/routes/luxtrust.ts";
 import { tokenRoutes } from "./modules/auth/routes/tokenManagement.ts";
 import { tokenRotationRoutes } from "./modules/auth/routes/tokenRotation.ts";
 import { domainVerificationRoutes } from "./modules/auth/routes/domainVerification.ts";
@@ -16,6 +18,8 @@ import webhookRouter from "./modules/payments/routes/webhooks.ts";
 import subscriptionRouter from "./modules/payments/routes/subscriptions.ts";
 import notificationRouter from "./modules/notifications/routes/notifications.ts";
 import { createWebSocketHandler } from "./modules/notifications/websocket/notificationHandler.ts";
+import { wearablesRoutes } from "./modules/wearables/routes/wearables.ts";
+import { clinicalRoutes } from "./modules/clinical/routes/clinical.ts";
 
 const app = new Application();
 
@@ -61,6 +65,12 @@ app.use(tokenBlacklistMiddleware);
 app.use(passwordResetRoutes.routes());
 app.use(passwordResetRoutes.allowedMethods());
 
+app.use(oauthRoutes.routes());
+app.use(oauthRoutes.allowedMethods());
+
+app.use(luxtrustRoutes.routes());
+app.use(luxtrustRoutes.allowedMethods());
+
 // Authentication middleware (apply to specific routes)
 app.use(authMiddleware);
 
@@ -101,6 +111,12 @@ app.use(subscriptionRouter.routes());
 app.use(subscriptionRouter.allowedMethods());
 app.use(notificationRouter.routes());
 app.use(notificationRouter.allowedMethods());
+
+app.use(wearablesRoutes.routes());
+app.use(wearablesRoutes.allowedMethods());
+
+app.use(clinicalRoutes.routes());
+app.use(clinicalRoutes.allowedMethods());
 
 // ✅ WebSocket endpoint using handler
 const wsHandler = createWebSocketHandler();

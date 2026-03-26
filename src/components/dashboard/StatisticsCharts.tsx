@@ -95,7 +95,13 @@ export const StatisticsCharts = () => {
                 <YAxis yAxisId="default" />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="count" fill="#8884d8" name="Prescriptions" xAxisId="default" />
+                <Bar
+                  dataKey="count"
+                  fill="#8884d8"
+                  name="Prescriptions"
+                  xAxisId="default"
+                  yAxisId="default"
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -135,7 +141,13 @@ export const StatisticsCharts = () => {
                 <YAxis yAxisId="default" />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="count" fill="#82ca9d" name="Teleconsultations" xAxisId="default" />
+                <Bar
+                  dataKey="count"
+                  fill="#82ca9d"
+                  name="Teleconsultations"
+                  xAxisId="default"
+                  yAxisId="default"
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>

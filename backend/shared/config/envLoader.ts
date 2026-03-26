@@ -18,9 +18,12 @@ export async function loadEnvironment() {
   try {
     const env = await load({ envPath: envFile });
 
-    // Set environment variables if they don't already exist
+    // Development: `.env.development` wins over pre-set process env (e.g. stale
+    // FRONTEND_URL in Windows user variables after changing Vite port).
+    // Production: only set keys that are not already defined.
+    const devLike = environment === "development" || environment === "test";
     for (const [key, value] of Object.entries(env)) {
-      if (!Deno.env.get(key)) {
+      if (devLike || !Deno.env.get(key)) {
         Deno.env.set(key, value);
       }
     }

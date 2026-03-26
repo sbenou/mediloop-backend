@@ -1,14 +1,24 @@
 import { Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 import { config } from "../../../shared/config/env.ts";
-import { jwtService } from "../services/jwtService.ts";
-import { databaseService } from "../../../shared/services/databaseService.ts";
+import { enhancedJwtService } from "../services/enhancedJwtService.ts";
+import { registrationService } from "../services/registrationService.ts";
 import { kvStore } from "../../../shared/services/kvStore.ts";
 
 const oauthRoutes = new Router();
 
+function getClientIP(ctx: { request: { headers: Headers; ip?: string } }): string {
+  const forwarded = ctx.request.headers.get("x-forwarded-for");
+  if (forwarded) return forwarded.split(",")[0].trim();
+  return ctx.request.ip || "unknown";
+}
+
+function getUserAgent(ctx: { request: { headers: Headers } }): string {
+  return ctx.request.headers.get("user-agent") || "unknown";
+}
+
 // Google OAuth initiation
-oauthRoutes.get("/oauth/google", (ctx) => {
-  const redirectUri = `${config.SERVICE_URL}/oauth/google/callback`;
+oauthRoutes.get("/api/oauth/google", (ctx) => {
+  const redirectUri = `${config.SERVICE_URL}/api/oauth/google/callback`;
   const scope = "openid email profile";
   const state = crypto.randomUUID();
 
@@ -23,11 +33,10 @@ oauthRoutes.get("/oauth/google", (ctx) => {
 });
 
 // Google OAuth callback
-oauthRoutes.get("/oauth/google/callback", async (ctx) => {
+oauthRoutes.get("/api/oauth/google/callback", async (ctx) => {
   try {
     const url = ctx.request.url;
     const code = url.searchParams.get("code");
-    const state = url.searchParams.get("state");
 
     if (!code) {
       ctx.response.status = 400;
@@ -35,7 +44,6 @@ oauthRoutes.get("/oauth/google/callback", async (ctx) => {
       return;
     }
 
-    // Exchange code for tokens
     const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: {
@@ -46,7 +54,7 @@ oauthRoutes.get("/oauth/google/callback", async (ctx) => {
         client_secret: config.GOOGLE_CLIENT_SECRET,
         code: code,
         grant_type: "authorization_code",
-        redirect_uri: `${config.SERVICE_URL}/oauth/google/callback`,
+        redirect_uri: `${config.SERVICE_URL}/api/oauth/google/callback`,
       }),
     });
 
@@ -59,7 +67,6 @@ oauthRoutes.get("/oauth/google/callback", async (ctx) => {
       return;
     }
 
-    // Get user info from Google
     const userResponse = await fetch(
       "https://www.googleapis.com/oauth2/v2/userinfo",
       {
@@ -72,32 +79,37 @@ oauthRoutes.get("/oauth/google/callback", async (ctx) => {
     const googleUser = await userResponse.json();
     console.log("Google user info:", googleUser);
 
-    // Create or get user profile
-    const profile = await databaseService.getOrCreateUserProfile(
+    if (!googleUser.email || typeof googleUser.email !== "string") {
+      ctx.response.status = 400;
+      ctx.response.body = { error: "Email not provided by Google" };
+      return;
+    }
+
+    const account = await registrationService.ensureUserForOAuth(
       googleUser.email,
-      googleUser.name,
+      googleUser.name || googleUser.email,
       "google",
     );
 
-    // Create JWT token
-    const jwtToken = await jwtService.createToken(
-      profile.id,
-      profile.email,
-      profile.role,
-      profile.tenant_id,
+    const ipAddress = getClientIP(ctx);
+    const userAgent = getUserAgent(ctx);
+    const { token: jwtToken } = await enhancedJwtService.createToken(
+      account.id,
+      account.email,
+      account.role,
+      ipAddress,
+      userAgent,
     );
 
-    // Store session in KV
     const sessionId = crypto.randomUUID();
     await kvStore.setSession(sessionId, {
-      userId: profile.id,
-      email: profile.email,
-      role: profile.role,
+      userId: account.id,
+      email: account.email,
+      role: account.role,
       authMethod: "google",
       loginTime: new Date().toISOString(),
     });
 
-    // Redirect to frontend with token
     ctx.response.redirect(
       `${config.FRONTEND_URL}/auth/callback?token=${jwtToken}`,
     );
@@ -109,8 +121,8 @@ oauthRoutes.get("/oauth/google/callback", async (ctx) => {
 });
 
 // FranceConnect OAuth initiation
-oauthRoutes.get("/oauth/franceconnect", (ctx) => {
-  const redirectUri = `${config.SERVICE_URL}/oauth/franceconnect/callback`;
+oauthRoutes.get("/api/oauth/franceconnect", (ctx) => {
+  const redirectUri = `${config.SERVICE_URL}/api/oauth/franceconnect/callback`;
   const scope = "openid email profile";
   const state = crypto.randomUUID();
 
@@ -127,7 +139,7 @@ oauthRoutes.get("/oauth/franceconnect", (ctx) => {
 });
 
 // FranceConnect OAuth callback
-oauthRoutes.get("/oauth/franceconnect/callback", async (ctx) => {
+oauthRoutes.get("/api/oauth/franceconnect/callback", async (ctx) => {
   try {
     const url = ctx.request.url;
     const code = url.searchParams.get("code");
@@ -138,7 +150,6 @@ oauthRoutes.get("/oauth/franceconnect/callback", async (ctx) => {
       return;
     }
 
-    // Exchange code for tokens
     const tokenResponse = await fetch(
       "https://fcp.integ01.dev-franceconnect.fr/api/v1/token",
       {
@@ -151,7 +162,7 @@ oauthRoutes.get("/oauth/franceconnect/callback", async (ctx) => {
           client_secret: config.FRANCECONNECT_CLIENT_SECRET,
           code: code,
           grant_type: "authorization_code",
-          redirect_uri: `${config.SERVICE_URL}/oauth/franceconnect/callback`,
+          redirect_uri: `${config.SERVICE_URL}/api/oauth/franceconnect/callback`,
         }),
       },
     );
@@ -165,7 +176,6 @@ oauthRoutes.get("/oauth/franceconnect/callback", async (ctx) => {
       return;
     }
 
-    // Get user info from FranceConnect
     const userResponse = await fetch(
       "https://fcp.integ01.dev-franceconnect.fr/api/v1/userinfo",
       {
@@ -178,32 +188,40 @@ oauthRoutes.get("/oauth/franceconnect/callback", async (ctx) => {
     const fcUser = await userResponse.json();
     console.log("FranceConnect user info:", fcUser);
 
-    // Create or get user profile
-    const profile = await databaseService.getOrCreateUserProfile(
+    if (!fcUser.email || typeof fcUser.email !== "string") {
+      ctx.response.status = 400;
+      ctx.response.body = { error: "Email not provided by FranceConnect" };
+      return;
+    }
+
+    const fullName = `${fcUser.given_name ?? ""} ${fcUser.family_name ?? ""}`
+      .trim() || fcUser.email;
+
+    const account = await registrationService.ensureUserForOAuth(
       fcUser.email,
-      `${fcUser.given_name} ${fcUser.family_name}`,
+      fullName,
       "franceconnect",
     );
 
-    // Create JWT token
-    const jwtToken = await jwtService.createToken(
-      profile.id,
-      profile.email,
-      profile.role,
-      profile.tenant_id,
+    const ipAddress = getClientIP(ctx);
+    const userAgent = getUserAgent(ctx);
+    const { token: jwtToken } = await enhancedJwtService.createToken(
+      account.id,
+      account.email,
+      account.role,
+      ipAddress,
+      userAgent,
     );
 
-    // Store session in KV
     const sessionId = crypto.randomUUID();
     await kvStore.setSession(sessionId, {
-      userId: profile.id,
-      email: profile.email,
-      role: profile.role,
+      userId: account.id,
+      email: account.email,
+      role: account.role,
       authMethod: "franceconnect",
       loginTime: new Date().toISOString(),
     });
 
-    // Redirect to frontend with token
     ctx.response.redirect(
       `${config.FRONTEND_URL}/auth/callback?token=${jwtToken}`,
     );
@@ -214,12 +232,11 @@ oauthRoutes.get("/oauth/franceconnect/callback", async (ctx) => {
   }
 });
 
-// LuxTrust OAuth placeholder
-oauthRoutes.get("/oauth/luxtrust", (ctx) => {
-  // Note: This is a placeholder - actual LuxTrust endpoints would need to be configured
+// LuxTrust OAuth placeholder (full mock flows live under /api/luxtrust/*)
+oauthRoutes.get("/api/oauth/luxtrust", (ctx) => {
   ctx.response.status = 501;
   ctx.response.body = {
-    error: "LuxTrust OAuth integration not yet configured",
+    error: "Use POST /api/luxtrust/auth for the LuxTrust sandbox flow",
   };
 });
 

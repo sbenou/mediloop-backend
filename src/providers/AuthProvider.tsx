@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useSetRecoilState } from "recoil";
 import { supabase, getSessionFromStorage } from "@/lib/supabase";
 import { authState } from "@/store/auth/atoms";
@@ -10,20 +10,12 @@ import { useSessionPolling } from "@/hooks/auth/useSessionPolling";
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const setAuth = useSetRecoilState(authState);
-  const { updateAuthState } = useSessionManagement();
+  const { updateAuthState, hydrateV2FromStorage } = useSessionManagement();
   const { handleVisibilityChange } = useVisibilityChange();
   const { handleStorageChange, handleTokenUpdate } = useStorageEvents();
-  const initialized = useRef(false);
-
   useSessionPolling();
 
   useEffect(() => {
-    // Prevent multiple initializations
-    if (initialized.current) {
-      return;
-    }
-    initialized.current = true;
-
     let mounted = true;
     let authSubscription: any = null;
 
@@ -78,6 +70,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             user: storedSession.user,
             isLoading: true,
           }));
+        }
+
+        // V2 password/OAuth (Neon JWT): tokens live in localStorage, not Supabase
+        const v2Hydrated = await hydrateV2FromStorage();
+        if (!mounted) return;
+        if (v2Hydrated) {
+          console.log(
+            "[AuthProvider] Session restored from V2 JWT (backend profile loaded)",
+          );
+          return;
         }
 
         // Get fresh session from API

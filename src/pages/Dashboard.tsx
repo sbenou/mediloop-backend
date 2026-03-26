@@ -73,8 +73,7 @@ const Dashboard = () => {
 
   // Check authentication again for safety
   if (!isAuthenticated && !isLoading) {
-    console.log("🔒 Dashboard - User not authenticated, redirecting");
-    navigate("/login", { replace: true });
+    console.log("🔒 Dashboard - User not authenticated, waiting for redirect");
     return null;
   }
 

@@ -1,19 +1,21 @@
-import { Hono } from "https://deno.land/x/hono@v3.12.11/mod.ts";
+import { Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 import { kvStore } from "../../../shared/services/kvStore.ts";
 
-const luxtrustRoutes = new Hono();
+/**
+ * LuxTrust sandbox / mock endpoints (Oak), mounted under /api/luxtrust/*.
+ */
+const luxtrustRoutes = new Router();
 
-// LuxTrust authentication
-luxtrustRoutes.post("/auth", async (c) => {
+luxtrustRoutes.post("/api/luxtrust/auth", async (ctx) => {
   try {
     console.log("LuxTrust authentication request received");
 
-    // Simulate LuxTrust authentication process
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    if (Deno.env.get("DENO_ENV") !== "test") {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
 
     const sessionId = crypto.randomUUID();
 
-    // Mock successful LuxTrust response
     const luxtrustResponse = {
       success: true,
       profile: {
@@ -30,7 +32,6 @@ luxtrustRoutes.post("/auth", async (c) => {
       sessionId: sessionId,
     };
 
-    // Store in KV
     await kvStore.setLuxTrustVerification(sessionId, luxtrustResponse);
 
     console.log(
@@ -38,27 +39,26 @@ luxtrustRoutes.post("/auth", async (c) => {
       sessionId,
     );
 
-    return c.json(luxtrustResponse);
+    ctx.response.type = "json";
+    ctx.response.body = luxtrustResponse;
   } catch (error) {
     console.error("LuxTrust authentication error:", error);
-    return c.json(
-      {
-        success: false,
-        error: "LuxTrust authentication failed",
-        timestamp: new Date().toISOString(),
-      },
-      500,
-    );
+    ctx.response.status = 500;
+    ctx.response.type = "json";
+    ctx.response.body = {
+      success: false,
+      error: "LuxTrust authentication failed",
+      timestamp: new Date().toISOString(),
+    };
   }
 });
 
-// LuxTrust ID verification
-luxtrustRoutes.post("/verify-id", async (c) => {
+luxtrustRoutes.post("/api/luxtrust/verify-id", async (ctx) => {
   try {
-    const { luxtrustId } = await c.req.json();
+    const body = await ctx.request.body({ type: "json" }).value;
+    const luxtrustId = body?.luxtrustId as string;
     console.log("LuxTrust ID verification request for:", luxtrustId);
 
-    // Validate LuxTrust ID format
     const patterns = [
       /^LUX-\d{4}-\d{6}$/,
       /^LT-[A-Z]{3}-\d{6}$/,
@@ -69,18 +69,20 @@ luxtrustRoutes.post("/verify-id", async (c) => {
     const isValidFormat = patterns.some((pattern) => pattern.test(luxtrustId));
 
     if (!isValidFormat) {
-      return c.json({
+      ctx.response.type = "json";
+      ctx.response.body = {
         success: false,
         status: "failed",
         error: "Invalid LuxTrust ID format",
         timestamp: new Date().toISOString(),
-      });
+      };
+      return;
     }
 
-    // Simulate verification process
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    if (Deno.env.get("DENO_ENV") !== "test") {
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+    }
 
-    // Mock verification - 90% success rate for demo
     const isVerificationSuccessful = Math.random() > 0.1;
 
     const sessionId = crypto.randomUUID();
@@ -93,41 +95,38 @@ luxtrustRoutes.post("/verify-id", async (c) => {
       sessionId: sessionId,
     };
 
-    // Store in KV
     await kvStore.set(
       ["luxtrust_id_verification", sessionId],
       verificationResponse,
       { expireIn: 3600000 },
     );
 
-    console.log(
-      "LuxTrust ID verification completed, stored in KV with session:",
-      sessionId,
-    );
-
-    return c.json(verificationResponse);
+    ctx.response.type = "json";
+    ctx.response.body = verificationResponse;
   } catch (error) {
     console.error("LuxTrust ID verification error:", error);
-    return c.json(
-      {
-        success: false,
-        status: "failed",
-        error: "LuxTrust ID verification failed",
-        timestamp: new Date().toISOString(),
-      },
-      500,
-    );
+    ctx.response.status = 500;
+    ctx.response.type = "json";
+    ctx.response.body = {
+      success: false,
+      status: "failed",
+      error: "LuxTrust ID verification failed",
+      timestamp: new Date().toISOString(),
+    };
   }
 });
 
-// Professional certification upload
-luxtrustRoutes.post("/certification/upload", async (c) => {
+luxtrustRoutes.post("/api/luxtrust/certification/upload", async (ctx) => {
   try {
-    const { fileName, certificationType, userId } = await c.req.json();
+    const body = await ctx.request.body({ type: "json" }).value;
+    const fileName = body?.fileName as string;
+    const certificationType = body?.certificationType as string;
+    const userId = body?.userId as string;
     console.log("Certification upload request:", fileName, certificationType);
 
-    // Simulate upload process
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    if (Deno.env.get("DENO_ENV") !== "test") {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+    }
 
     const sessionId = crypto.randomUUID();
     const certificationResponse = {
@@ -144,40 +143,35 @@ luxtrustRoutes.post("/certification/upload", async (c) => {
       timestamp: new Date().toISOString(),
     };
 
-    // Store in KV
     await kvStore.set(
       ["certification_upload", sessionId],
       certificationResponse,
       { expireIn: 3600000 },
     );
 
-    console.log(
-      "Certification upload completed, stored in KV with session:",
-      sessionId,
-    );
-
-    return c.json(certificationResponse);
+    ctx.response.type = "json";
+    ctx.response.body = certificationResponse;
   } catch (error) {
     console.error("Certification upload error:", error);
-    return c.json(
-      {
-        success: false,
-        error: "Certification upload failed",
-        timestamp: new Date().toISOString(),
-      },
-      500,
-    );
+    ctx.response.status = 500;
+    ctx.response.type = "json";
+    ctx.response.body = {
+      success: false,
+      error: "Certification upload failed",
+      timestamp: new Date().toISOString(),
+    };
   }
 });
 
-// Professional certification verification
-luxtrustRoutes.post("/certification/verify", async (c) => {
+luxtrustRoutes.post("/api/luxtrust/certification/verify", async (ctx) => {
   try {
-    const { certificationId } = await c.req.json();
+    const body = await ctx.request.body({ type: "json" }).value;
+    const certificationId = body?.certificationId as string;
     console.log("Certification verification request for:", certificationId);
 
-    // Simulate verification process
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    if (Deno.env.get("DENO_ENV") !== "test") {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
 
     const sessionId = crypto.randomUUID();
     const verificationResponse = {
@@ -190,40 +184,35 @@ luxtrustRoutes.post("/certification/verify", async (c) => {
       timestamp: new Date().toISOString(),
     };
 
-    // Store in KV
     await kvStore.set(
       ["certification_verification", sessionId],
       verificationResponse,
       { expireIn: 3600000 },
     );
 
-    console.log(
-      "Certification verification completed, stored in KV with session:",
-      sessionId,
-    );
-
-    return c.json(verificationResponse);
+    ctx.response.type = "json";
+    ctx.response.body = verificationResponse;
   } catch (error) {
     console.error("Certification verification error:", error);
-    return c.json(
-      {
-        success: false,
-        error: "Certification verification failed",
-        timestamp: new Date().toISOString(),
-      },
-      500,
-    );
+    ctx.response.status = 500;
+    ctx.response.type = "json";
+    ctx.response.body = {
+      success: false,
+      error: "Certification verification failed",
+      timestamp: new Date().toISOString(),
+    };
   }
 });
 
-// Location detection
-luxtrustRoutes.post("/location/detect", async (c) => {
+luxtrustRoutes.post("/api/luxtrust/location/detect", async (ctx) => {
   try {
-    const { countryCode } = await c.req.json();
+    const body = await ctx.request.body({ type: "json" }).value;
+    const countryCode = body?.countryCode as string;
     console.log("Location detection request for:", countryCode);
 
-    // Simulate location detection process
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    if (Deno.env.get("DENO_ENV") !== "test") {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
 
     const sessionId = crypto.randomUUID();
     const locationResponse = {
@@ -235,25 +224,19 @@ luxtrustRoutes.post("/location/detect", async (c) => {
       timestamp: new Date().toISOString(),
     };
 
-    // Store in KV
     await kvStore.setLocationData(sessionId, locationResponse);
 
-    console.log(
-      "Location detection completed, stored in KV with session:",
-      sessionId,
-    );
-
-    return c.json(locationResponse);
+    ctx.response.type = "json";
+    ctx.response.body = locationResponse;
   } catch (error) {
     console.error("Location detection error:", error);
-    return c.json(
-      {
-        success: false,
-        error: "Location detection failed",
-        timestamp: new Date().toISOString(),
-      },
-      500,
-    );
+    ctx.response.status = 500;
+    ctx.response.type = "json";
+    ctx.response.body = {
+      success: false,
+      error: "Location detection failed",
+      timestamp: new Date().toISOString(),
+    };
   }
 });
 

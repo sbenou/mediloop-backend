@@ -435,6 +435,12 @@ Deno.test(
       "Profile email_verified should be true",
     );
 
+    assertExists(data.permissions, "Profile response should include permissions array");
+    assert(
+      Array.isArray(data.permissions),
+      "permissions must be an array (may be empty)",
+    );
+
     console.log("✅ Profile correctly includes email_verified field\n");
   },
 );
@@ -677,7 +683,15 @@ Deno.test("Email Verification - Full integration flow", async () => {
 
   assertEquals(profileRes.status, 200);
   assertEquals(profileData.profile.email_verified, true);
-  console.log("  ✓ Profile shows email_verified: true");
+  assertExists(
+    profileData.permissions,
+    "GET /api/auth/profile should return permissions array",
+  );
+  assert(
+    Array.isArray(profileData.permissions),
+    "permissions must be an array",
+  );
+  console.log("  ✓ Profile shows email_verified: true and permissions array");
 
   console.log(
     "\n✅ Email verification integration flow completed successfully!\n",

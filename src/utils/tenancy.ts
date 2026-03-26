@@ -47,7 +47,7 @@ export const getTenantFromHostname = (hostname: string): string | null => {
   
   // For development environments
   if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
-    // Allow testing with localhost:8080?tenant=example
+    // Allow testing with localhost:5173?tenant=example
     const urlParams = new URLSearchParams(window.location.search);
     const tenantParam = urlParams.get('tenant');
     return tenantParam;

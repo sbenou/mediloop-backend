@@ -1,5 +1,9 @@
+import { updateV2AccessToken } from '@/lib/auth/v2SessionStorage';
 
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  import.meta.env.VITE_API_BASE_URL ||
+  'http://localhost:8000';
 
 interface RotatedTokenResponse {
   hasRotatedToken: boolean;
@@ -57,7 +61,8 @@ class TokenRotationClient {
         
         // Update stored token
         localStorage.setItem('auth_token', data.token);
-        
+        updateV2AccessToken(data.token);
+
         // Notify callback
         if (this.onTokenRotated) {
           this.onTokenRotated(data.token, data.expiresAt);

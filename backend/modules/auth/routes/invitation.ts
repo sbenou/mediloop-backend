@@ -1,4 +1,5 @@
 import { Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
+import { config } from "../../../shared/config/env.ts";
 import { invitationService } from "../services/invitationService.ts";
 import { enhancedJwtService } from "../services/enhancedJwtService.ts";
 import { postgresService } from "../../../shared/services/postgresService.ts";
@@ -92,7 +93,7 @@ invitationRoutes.post("/api/invitations/create", async (ctx) => {
         email: invitation.email,
         role: invitation.role,
         expiresAt: invitation.expires_at,
-        invitationLink: `${Deno.env.get("FRONTEND_URL") || "http://localhost:3000"}/accept-invite?token=${invitation.token}`,
+        invitationLink: `${config.PUBLIC_FRONTEND_URL}/accept-invite?token=${invitation.token}`,
       },
       message:
         "Invitation created successfully. Email would be sent in production.",

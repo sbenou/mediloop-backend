@@ -3,7 +3,15 @@
  * Enhanced client with password reset, session refresh, and rate limiting support
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+import {
+  clearV2SessionStorageKeys,
+  persistV2SessionFromBackendLogin,
+} from "@/lib/auth/v2SessionStorage";
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  import.meta.env.VITE_API_BASE_URL ||
+  "http://localhost:8000";
 
 // ✅ Backend response format (matches actual Deno backend)
 export interface BackendAuthResponse {
@@ -89,6 +97,12 @@ function storeAuthTokens(data: AuthResponse["data"]): void {
   // ✅ Store user data separately for V2 system
   localStorage.setItem("mediloop_v2_user", JSON.stringify(data.user));
 
+  persistV2SessionFromBackendLogin({
+    accessToken: data.accessToken,
+    refreshToken: data.refreshToken,
+    userId: data.user.id,
+  });
+
   console.log("✅ [authClientV2] Tokens stored in both legacy and V2 format", {
     userId: data.user.id,
     email: data.user.email,
@@ -102,6 +116,7 @@ function clearAuthTokens(): void {
   localStorage.removeItem("auth_token");
   localStorage.removeItem("mediloop_session_sync");
   localStorage.removeItem("mediloop_v2_user");
+  clearV2SessionStorageKeys();
   console.log("✅ [authClientV2] All auth tokens cleared");
 }
 

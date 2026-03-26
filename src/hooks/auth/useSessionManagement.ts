@@ -1,10 +1,13 @@
-
-import { useCallback, useRef } from 'react';
-import { useSetRecoilState } from 'recoil';
-import { authState } from '@/store/auth/atoms';
-import { storeSession } from '@/lib/auth/sessionUtils';
-import { useProfileFetch } from './useProfileFetch';
-import type { Session } from '@supabase/supabase-js';
+import { useCallback, useRef } from "react";
+import { useSetRecoilState } from "recoil";
+import { authState } from "@/store/auth/atoms";
+import { storeSession } from "@/lib/auth/sessionUtils";
+import {
+  fetchProfileForV2Jwt,
+  useProfileFetch,
+} from "./useProfileFetch";
+import type { Session, User } from "@supabase/supabase-js";
+import { V2_SESSION_STORAGE_KEYS, clearV2SessionStorageKeys } from "@/lib/auth/v2SessionStorage";
 
 export const useSessionManagement = () => {
   const setAuth = useSetRecoilState(authState);
@@ -59,7 +62,10 @@ export const useSessionManagement = () => {
       
       try {
         // Fetch profile and permissions
-        const { profile, permissions } = await fetchAndSetProfile(userId);
+        const { profile, permissions } = await fetchAndSetProfile(
+          userId,
+          session.access_token ?? null,
+        );
         
         if (profile) {
           console.log('[SessionManagement] Profile fetched successfully, updating auth state');
@@ -101,7 +107,60 @@ export const useSessionManagement = () => {
     }
   }, [setAuth, fetchAndSetProfile]);
 
-  return { updateAuthState };
+  /**
+   * Cold-start: Recoil has no Supabase session, but V2 login left JWT + user id in localStorage.
+   */
+  const hydrateV2FromStorage = useCallback(async (): Promise<boolean> => {
+    const accessToken =
+      localStorage.getItem(V2_SESSION_STORAGE_KEYS.ACCESS_TOKEN) ||
+      localStorage.getItem("auth_token");
+    const userId = localStorage.getItem(V2_SESSION_STORAGE_KEYS.USER_ID);
+
+    if (!accessToken || !userId) {
+      return false;
+    }
+
+    const outcome = await fetchProfileForV2Jwt(userId, accessToken);
+    if (outcome.status === "unauthorized") {
+      clearV2SessionStorageKeys();
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("mediloop_session_sync");
+      localStorage.removeItem("mediloop_v2_user");
+      return false;
+    }
+    if (outcome.status === "failed") {
+      return false;
+    }
+
+    let email = outcome.profile.email || "";
+    if (!email) {
+      try {
+        const raw = localStorage.getItem("mediloop_v2_user");
+        if (raw) {
+          const u = JSON.parse(raw) as { email?: string };
+          email = u.email || "";
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+
+    const minimalUser = {
+      id: userId,
+      email: email || undefined,
+    } as unknown as User;
+
+    setAuth({
+      user: minimalUser,
+      profile: outcome.profile,
+      permissions: outcome.permissions,
+      isLoading: false,
+    });
+    console.log("[SessionManagement] Hydrated Recoil from V2 JWT storage");
+    return true;
+  }, [setAuth]);
+
+  return { updateAuthState, hydrateV2FromStorage };
 };
 
 export default useSessionManagement;

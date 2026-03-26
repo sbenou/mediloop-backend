@@ -136,6 +136,140 @@ export class DatabaseService {
     }
   }
 
+  /**
+   * Full app profile + permission_ids for the authenticated user (JWT `sub`).
+   * Used by GET /api/auth/profile for frontend session/RBAC.
+   */
+  async fetchAppSessionProfile(userId: string): Promise<{
+    profile: Record<string, unknown>;
+    permissions: string[];
+  }> {
+    const client = await this.postgresService.getClient();
+
+    try {
+      let row: Record<string, unknown> | undefined;
+      try {
+        const profResult = await client.queryObject<Record<string, unknown>>(
+          `SELECT id, role, role_id, full_name, email, avatar_url, auth_method,
+           is_blocked, city, date_of_birth, license_number, cns_card_front,
+           cns_card_back, cns_number, doctor_stamp_url, doctor_signature_url,
+           pharmacist_stamp_url, pharmacist_signature_url, deleted_at,
+           created_at, updated_at, pharmacy_name, pharmacy_logo_url
+           FROM public.profiles WHERE id = $1 LIMIT 1`,
+          [userId],
+        );
+        row = profResult.rows[0];
+      } catch (profErr) {
+        console.warn(
+          "[fetchAppSessionProfile] public.profiles row not usable, using auth.users:",
+          profErr,
+        );
+        row = undefined;
+      }
+
+      let roleId: string | null = null;
+
+      if (!row) {
+        const uResult = await client.queryObject<{
+          id: string;
+          email: string;
+          full_name: string;
+          role: string;
+          role_id: string | null;
+          email_verified?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        }>(
+          `SELECT id, email, full_name, role, role_id, email_verified, created_at, updated_at
+           FROM auth.users WHERE id = $1 LIMIT 1`,
+          [userId],
+        );
+        if (uResult.rows.length === 0) {
+          throw new Error("User not found");
+        }
+        const u = uResult.rows[0];
+        roleId = u.role_id ?? null;
+        row = {
+          id: u.id,
+          role: u.role,
+          role_id: u.role_id,
+          full_name: u.full_name,
+          email: u.email,
+          avatar_url: null,
+          auth_method: null,
+          is_blocked: false,
+          city: null,
+          date_of_birth: null,
+          license_number: null,
+          cns_card_front: null,
+          cns_card_back: null,
+          cns_number: null,
+          doctor_stamp_url: null,
+          doctor_signature_url: null,
+          pharmacist_stamp_url: null,
+          pharmacist_signature_url: null,
+          deleted_at: null,
+          created_at: u.created_at ?? null,
+          updated_at: u.updated_at ?? null,
+          pharmacy_name: null,
+          pharmacy_logo_url: null,
+        };
+      } else {
+        roleId = (row.role_id as string | null) ?? null;
+      }
+
+      let permissions: string[] = [];
+      if (roleId) {
+        try {
+          const permResult = await client.queryObject<{ permission_id: string }>(
+            `SELECT permission_id FROM public.role_permissions WHERE role_id = $1`,
+            [roleId],
+          );
+          permissions = permResult.rows.map((r) => r.permission_id);
+        } catch (permErr) {
+          console.warn(
+            "[fetchAppSessionProfile] role_permissions query failed:",
+            permErr,
+          );
+          permissions = [];
+        }
+      }
+
+      let pharmacyId: string | null = null;
+      try {
+        const phResult = await client.queryObject<{ pharmacy_id: string }>(
+          `SELECT pharmacy_id FROM public.user_pharmacies WHERE user_id = $1 LIMIT 1`,
+          [userId],
+        );
+        if (phResult.rows.length > 0) {
+          pharmacyId = phResult.rows[0].pharmacy_id;
+        }
+      } catch {
+        // table may be missing in some environments
+      }
+
+      let emailVerified = false;
+      try {
+        const evResult = await client.queryObject<{ email_verified: boolean }>(
+          `SELECT email_verified FROM auth.users WHERE id = $1 LIMIT 1`,
+          [userId],
+        );
+        if (evResult.rows.length > 0) {
+          emailVerified = Boolean(evResult.rows[0].email_verified);
+        }
+      } catch {
+        // ignore
+      }
+
+      return {
+        profile: { ...row, pharmacy_id: pharmacyId, email_verified: emailVerified },
+        permissions,
+      };
+    } finally {
+      this.postgresService.releaseClient(client);
+    }
+  }
+
   async createUser(
     email: string,
     passwordPlain: string,
@@ -201,6 +335,23 @@ export class DatabaseService {
       }
 
       console.log("Password updated successfully for user:", email);
+    } finally {
+      this.postgresService.releaseClient(client);
+    }
+  }
+
+  /** Proves mailbox access — used after email-link password reset or email OTP reset. */
+  async markEmailVerifiedByUserId(userId: string): Promise<void> {
+    const client = await this.postgresService.getClient();
+    try {
+      const result = await client.queryObject(
+        `UPDATE auth.users SET email_verified = true, updated_at = NOW() WHERE id = $1`,
+        [userId],
+      );
+      if (result.rowCount === 0) {
+        throw new Error("User not found");
+      }
+      console.log("✅ email_verified set true for user:", userId);
     } finally {
       this.postgresService.releaseClient(client);
     }

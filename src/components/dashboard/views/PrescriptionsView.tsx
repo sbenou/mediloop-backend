@@ -1,12 +1,12 @@
 
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { supabase } from "@/lib/supabase";
+import { fetchPrescriptionsApi } from "@/services/clinicalApi";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/use-toast";
-import { Eye, Clock, CheckCircle } from "lucide-react";
+import { Eye, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 
@@ -26,6 +26,16 @@ interface PrescriptionsViewProps {
   userRole: string | null;
 }
 
+function isConnectivityFailure(error: unknown): boolean {
+  const msg =
+    error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+  return (
+    msg.includes("failed to fetch") ||
+    msg.includes("networkerror") ||
+    msg.includes("load failed")
+  );
+}
+
 const PrescriptionsView: React.FC<PrescriptionsViewProps> = ({ userRole }) => {
   const { profile } = useAuth();
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
@@ -34,71 +44,38 @@ const PrescriptionsView: React.FC<PrescriptionsViewProps> = ({ userRole }) => {
 
   useEffect(() => {
     const fetchPrescriptions = async () => {
+      if (!profile?.id) return;
+
       try {
         setLoading(true);
-        let query;
-        
-        if (userRole === 'patient') {
-          // Patient sees prescriptions where they are the patient
-          query = supabase
-            .from('prescriptions')
-            .select(`
-              *,
-              doctor:doctor_id(full_name)
-            `)
-            .eq('patient_id', profile?.id);
-        } else if (userRole === 'doctor') {
-          // Doctor sees prescriptions they've written
-          query = supabase
-            .from('prescriptions')
-            .select(`
-              *,
-              patient:patient_id(full_name)
-            `)
-            .eq('doctor_id', profile?.id);
-        } else if (userRole === 'pharmacist') {
-          // Pharmacist sees all prescriptions for now (in a real app, would filter by assigned pharmacy)
-          query = supabase
-            .from('prescriptions')
-            .select(`
-              *,
-              doctor:doctor_id(full_name),
-              patient:patient_id(full_name)
-            `);
-        }
-        
-        if (query) {
-          const { data, error } = await query.order('created_at', { ascending: false });
-          
-          if (error) {
-            throw error;
-          }
-          
-          // Transform data to include doctor_name and patient_name
-          const formattedData = data.map((prescription: any) => ({
-            ...prescription,
-            doctor_name: prescription.doctor?.full_name || "Unknown Doctor",
-            patient_name: prescription.patient?.full_name || "Unknown Patient",
-            status: prescription.status || "active"
-          }));
-          
-          setPrescriptions(formattedData);
-        }
+        const data = await fetchPrescriptionsApi();
+
+        const formattedData = data.map((prescription) => ({
+          ...prescription,
+          doctor_name:
+            prescription.doctor_full_name || "Unknown Doctor",
+          patient_name:
+            prescription.patient_full_name || "Unknown Patient",
+          status: (prescription.status as string) || "active",
+        }));
+
+        setPrescriptions(formattedData);
       } catch (error) {
         console.error("Error fetching prescriptions:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load prescriptions. Please try again later.",
-        });
+        setPrescriptions([]);
+        if (!isConnectivityFailure(error)) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to load prescriptions. Please try again later.",
+          });
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    if (profile?.id) {
-      fetchPrescriptions();
-    }
+    fetchPrescriptions();
   }, [userRole, profile?.id]);
 
   const getViewTitle = () => {
@@ -158,7 +135,7 @@ const PrescriptionsView: React.FC<PrescriptionsViewProps> = ({ userRole }) => {
     <div className="bg-gray-100 rounded-lg p-8 text-center">
       <p className="text-lg">No active prescriptions found</p>
       <p className="text-muted-foreground mt-2">
-        {userRole === 'patient' 
+        {userRole === 'patient'
           ? 'Your prescriptions will appear here once you receive them from your doctor'
           : userRole === 'doctor'
           ? 'Start writing prescriptions for your patients'
@@ -197,9 +174,9 @@ const PrescriptionsView: React.FC<PrescriptionsViewProps> = ({ userRole }) => {
                 <p className="font-medium">{prescription.duration}</p>
               </div>
             </div>
-            
+
             <Separator />
-            
+
             <div className="flex justify-between items-center">
               {userRole === 'patient' ? (
                 <p className="text-sm text-muted-foreground">
@@ -224,7 +201,7 @@ const PrescriptionsView: React.FC<PrescriptionsViewProps> = ({ userRole }) => {
     <div>
       <h1 className="text-3xl font-bold mb-2">{getViewTitle()}</h1>
       <p className="text-muted-foreground mb-8">{getViewDescription()}</p>
-      
+
       {loading ? (
         renderLoading()
       ) : prescriptions.length === 0 ? (

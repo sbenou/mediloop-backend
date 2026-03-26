@@ -20,13 +20,9 @@ import { supabase } from "@/lib/supabase";
 import { authClientV2 } from "@/lib/authClientV2";
 import { featureFlags } from "@/lib/featureFlags";
 import { toast } from "@/hooks/use-toast";
+import { V2_SESSION_STORAGE_KEYS } from "@/lib/auth/v2SessionStorage";
 
-// Token storage keys
-const STORAGE_KEYS = {
-  ACCESS_TOKEN: "mediloop_access_token",
-  REFRESH_TOKEN: "mediloop_refresh_token",
-  USER_ID: "mediloop_user_id",
-};
+const STORAGE_KEYS = V2_SESSION_STORAGE_KEYS;
 
 interface SessionData {
   accessToken: string | null;

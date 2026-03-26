@@ -58,7 +58,7 @@ const getClientIP = (ctx: Context): string => {
 export const createRateLimiter = (config: RateLimitConfig): Middleware => {
   return async (ctx: Context, next: () => Promise<unknown>) => {
     const clientIP = getClientIP(ctx);
-    const key = `${config.keyPrefix}:${clientIP}`;
+    const key = ["ratelimit", config.keyPrefix, clientIP];
 
     try {
       const existing = (await kvStore.get(key)) as RateLimitData | null;
@@ -73,7 +73,7 @@ export const createRateLimiter = (config: RateLimitConfig): Middleware => {
             startTime: now,
             firstAttempt: now,
           },
-          Math.ceil(config.windowMs / 1000), // TTL in seconds
+          { expireIn: config.windowMs },
         );
 
         // Set rate limit headers
@@ -106,7 +106,7 @@ export const createRateLimiter = (config: RateLimitConfig): Middleware => {
             startTime: now,
             firstAttempt: now,
           },
-          Math.ceil(config.windowMs / 1000),
+          { expireIn: config.windowMs },
         );
 
         ctx.response.headers.set(
@@ -163,7 +163,7 @@ export const createRateLimiter = (config: RateLimitConfig): Middleware => {
           ...existing,
           count: count + 1,
         },
-        Math.ceil(config.windowMs / 1000),
+        { expireIn: config.windowMs },
       );
 
       // Set rate limit headers

@@ -5,6 +5,8 @@
 
 import { Application, Router, Context } from "oak";
 import { authRoutes } from "./modules/auth/routes/auth.ts";
+import { oauthRoutes } from "./modules/auth/routes/oauth.ts";
+import { luxtrustRoutes } from "./modules/auth/routes/luxtrust.ts";
 import { tokenRoutes } from "./modules/auth/routes/tokenManagement.ts";
 import { tokenRotationRoutes } from "./modules/auth/routes/tokenRotation.ts";
 import { domainVerificationRoutes } from "./modules/auth/routes/domainVerification.ts";
@@ -15,6 +17,8 @@ import emailTemplateRoutes from "./shared/routes/emailTemplates.ts";
 import { invitationRoutes } from "./modules/auth/routes/invitation.ts";
 import loginEmailRoutes from "./shared/routes/loginEmails.ts";
 import { passwordResetRoutes } from "./modules/auth/routes/passwordReset.ts";
+import { wearablesRoutes } from "./modules/wearables/routes/wearables.ts";
+import { clinicalRoutes } from "./modules/clinical/routes/clinical.ts";
 import { load } from "https://deno.land/std@0.224.0/dotenv/mod.ts";
 
 // ✅ Load test environment variables
@@ -77,6 +81,12 @@ app.use(tokenBlacklistMiddleware);
 app.use(passwordResetRoutes.routes());
 app.use(passwordResetRoutes.allowedMethods());
 
+app.use(oauthRoutes.routes());
+app.use(oauthRoutes.allowedMethods());
+
+app.use(luxtrustRoutes.routes());
+app.use(luxtrustRoutes.allowedMethods());
+
 // Authentication middleware (apply to specific routes)
 app.use(authMiddleware);
 
@@ -101,6 +111,12 @@ app.use(loginEmailRoutes.allowedMethods());
 
 app.use(invitationRoutes.routes());
 app.use(invitationRoutes.allowedMethods());
+
+app.use(wearablesRoutes.routes());
+app.use(wearablesRoutes.allowedMethods());
+
+app.use(clinicalRoutes.routes());
+app.use(clinicalRoutes.allowedMethods());
 
 // Health check route
 const router = new Router();

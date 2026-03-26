@@ -22,6 +22,8 @@ const PUBLIC_ROUTES = [
   "/api/auth/verify-reset-token",
   "/invitations/validate",
   "/invitations/accept",
+  "/api/oauth",
+  "/api/luxtrust",
 ];
 
 export const authMiddleware = async (ctx: Context, next: Next) => {

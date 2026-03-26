@@ -48,6 +48,8 @@ export interface UserProfile {
   pharmacy_id?: string | null;
   pharmacy_name?: string | null;
   pharmacy_logo_url?: string | null;
+  /** From auth.users via API profile endpoint */
+  email_verified?: boolean | null;
 }
 
 export interface AuthUser {

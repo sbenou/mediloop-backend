@@ -78,30 +78,23 @@ async function setupVault() {
     console.log("  DATABASE_URL_DEV:", databaseUrlDev);
     console.log("  DATABASE_URL_PROD:", databaseUrlProd);
 
-    // Store each URL individually to avoid any potential issues with batch storage
-    console.log("📝 Storing DATABASE_URL...");
-    await vaultService.setSecret("auth", {
-      DATABASE_URL: databaseUrl,
-      JWT_SECRET: Deno.env.get("JWT_SECRET") || "your-super-secret-jwt-key",
-    });
-
-    console.log("📝 Storing DATABASE_URL_DEV...");
-    await vaultService.setSecret("auth", {
-      DATABASE_URL: databaseUrl,
-      DATABASE_URL_DEV: databaseUrlDev,
-      JWT_SECRET: Deno.env.get("JWT_SECRET") || "your-super-secret-jwt-key",
-    });
-
-    console.log("📝 Storing DATABASE_URL_PROD...");
+    console.log("📝 Storing auth/database/email/sms secrets...");
     await vaultService.setSecret("auth", {
       DATABASE_URL: databaseUrl,
       DATABASE_URL_DEV: databaseUrlDev,
       DATABASE_URL_PROD: databaseUrlProd,
       JWT_SECRET: Deno.env.get("JWT_SECRET") || "your-super-secret-jwt-key",
+      RESEND_API_KEY: Deno.env.get("RESEND_API_KEY") || "",
+      RESEND_FROM_EMAIL:
+        Deno.env.get("RESEND_FROM_EMAIL") || "noreply@notifications.mediloop.lu",
+      SMS_PROVIDER: Deno.env.get("SMS_PROVIDER") || "twilio",
+      SMS_API_KEY: Deno.env.get("SMS_API_KEY") || "",
+      SMS_API_SECRET: Deno.env.get("SMS_API_SECRET") || "",
+      SMS_SENDER_ID: Deno.env.get("SMS_SENDER_ID") || "",
     });
 
     console.log(
-      "✅ Auth secrets stored in Vault (all database URLs with complete connection strings)",
+      "✅ Auth secrets stored in Vault (database + jwt + email + sms)",
     );
 
     // OAuth secrets

@@ -213,9 +213,16 @@ class EnvironmentConfig {
       SMS_API_SECRET: this.getSecret("SMS_API_SECRET"),
       SMS_SENDER_ID: this.getSecret("SMS_SENDER_ID"),
 
-      // Service URLs from app config
-      FRONTEND_URL: appConfig.urls.frontend,
-      SERVICE_URL: appConfig.urls.service,
+      // Service URLs — read Deno.env after loadEnvironment() (appConfig.urls is
+      // evaluated at import time, before dotenv runs).
+      FRONTEND_URL: Deno.env.get("FRONTEND_URL") || "http://localhost:5173",
+      // HTTPS tunnel / public URL for links inside emails (password reset, verify, invites).
+      // Falls back to FRONTEND_URL when unset. OAuth redirects still use FRONTEND_URL unless you register the tunnel with the IdP.
+      PUBLIC_FRONTEND_URL:
+        Deno.env.get("PUBLIC_FRONTEND_URL") ||
+        Deno.env.get("FRONTEND_URL") ||
+        "http://localhost:5173",
+      SERVICE_URL: Deno.env.get("SERVICE_URL") || appConfig.urls.service,
 
       // Application settings
       ENVIRONMENT: appConfig.app.environment,
@@ -258,6 +265,7 @@ type ConfigType = {
   SMS_API_SECRET: string;
   SMS_SENDER_ID: string;
   FRONTEND_URL: string;
+  PUBLIC_FRONTEND_URL: string;
   SERVICE_URL: string;
   ENVIRONMENT: string;
   LOG_LEVEL: string;

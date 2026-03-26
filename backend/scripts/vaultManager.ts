@@ -76,7 +76,15 @@ async function setupCommand() {
   const secrets = {
     auth: {
       DATABASE_URL: Deno.env.get('DATABASE_URL') || '',
-      JWT_SECRET: Deno.env.get('JWT_SECRET') || 'your-super-secret-jwt-key'
+      DATABASE_URL_DEV: Deno.env.get('DATABASE_URL_DEV') || '',
+      DATABASE_URL_PROD: Deno.env.get('DATABASE_URL_PROD') || '',
+      JWT_SECRET: Deno.env.get('JWT_SECRET') || 'your-super-secret-jwt-key',
+      RESEND_API_KEY: Deno.env.get('RESEND_API_KEY') || '',
+      RESEND_FROM_EMAIL: Deno.env.get('RESEND_FROM_EMAIL') || 'noreply@notifications.mediloop.lu',
+      SMS_PROVIDER: Deno.env.get('SMS_PROVIDER') || 'twilio',
+      SMS_API_KEY: Deno.env.get('SMS_API_KEY') || '',
+      SMS_API_SECRET: Deno.env.get('SMS_API_SECRET') || '',
+      SMS_SENDER_ID: Deno.env.get('SMS_SENDER_ID') || '',
     },
     oauth: {
       GOOGLE_CLIENT_SECRET: Deno.env.get('GOOGLE_CLIENT_SECRET') || '',

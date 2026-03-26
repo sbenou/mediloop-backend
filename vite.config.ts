@@ -8,7 +8,7 @@ import { componentTagger } from "lovable-tagger";
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
-    port: 8080,
+    port: 5173,
     // Add these settings to ensure proper serving of the React app
     open: true, // Opens the browser automatically
     strictPort: true, // Ensures the specified port is used

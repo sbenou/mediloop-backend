@@ -10,6 +10,7 @@
  */
 
 import { passwordService } from "./passwordService.ts";
+import { config } from "../../../shared/config/env.ts";
 import { postgresService } from "../../../shared/services/postgresService.ts";
 import { databaseService } from "../../../shared/services/databaseService.ts";
 import { invitationService } from "./invitationService.ts";
@@ -66,7 +67,7 @@ export class RegistrationService {
           }
 
           // Send verification email
-          const verificationUrl = `${Deno.env.get("FRONTEND_URL")}/verify-email?token=${tokenResult.token}`;
+          const verificationUrl = `${config.PUBLIC_FRONTEND_URL}/verify-email?token=${tokenResult.token}`;
 
           const sent = await emailService.sendEmailConfirmation(
             email,
@@ -227,7 +228,7 @@ export class RegistrationService {
 
       // Send verification email
       console.log("Step 10: Sending verification email...");
-      const verificationUrl = `${Deno.env.get("FRONTEND_URL")}/verify-email?token=${tokenResult.token}`;
+      const verificationUrl = `${config.PUBLIC_FRONTEND_URL}/verify-email?token=${tokenResult.token}`;
 
       try {
         const sent = await emailService.sendEmailConfirmation(
@@ -420,6 +421,85 @@ export class RegistrationService {
       console.error("Error checking existing tenant:", error.message);
       throw error;
     }
+  }
+
+  /**
+   * Google / FranceConnect (and similar) — find or create user + primary tenant,
+   * mark email verified, return fields needed for JWT issuance.
+   */
+  async ensureUserForOAuth(
+    email: string,
+    fullName: string,
+    _authMethod: string,
+  ): Promise<{
+    id: string;
+    email: string;
+    role: string;
+    tenant_id: string;
+  }> {
+    const existing = await this.checkExistingUser(email);
+    if (existing) {
+      const tenantId = await this.getTenantIdForUser(existing.id);
+      if (!tenantId) {
+        throw new Error(
+          "OAuth login failed: user has no primary tenant. Contact support.",
+        );
+      }
+      await postgresService.query(
+        `UPDATE auth.users SET email_verified = true, updated_at = NOW() WHERE id = $1`,
+        [existing.id],
+      );
+      return {
+        id: existing.id as string,
+        email: existing.email as string,
+        role: existing.role as string,
+        tenant_id: tenantId,
+      };
+    }
+
+    const userId = crypto.randomUUID();
+    const hashedPassword = await passwordService.hashPassword(crypto.randomUUID());
+    const tenantType = "personal";
+    const tenantName = `${fullName}'s Health Records`;
+    const role = "patient";
+
+    const tenant = await this.createTenantWithType(
+      userId,
+      tenantType,
+      tenantName,
+      role,
+    );
+
+    const user = await databaseService.createUserInAuthTable(
+      userId,
+      email,
+      fullName,
+      hashedPassword,
+      role,
+    );
+
+    await postgresService.updateTenantWithUser(tenant.id, userId);
+
+    await postgresService.query(
+      `INSERT INTO public.user_tenants 
+       (user_id, tenant_id, is_primary, role, is_active) 
+       VALUES ($1, $2, true, $3, true)`,
+      [userId, tenant.id, role],
+    );
+
+    await postgresService.query(
+      `UPDATE auth.users SET email_verified = true, updated_at = NOW() WHERE id = $1`,
+      [userId],
+    );
+
+    console.log("✅ OAuth user provisioned:", { userId, tenantId: tenant.id });
+
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      tenant_id: tenant.id as string,
+    };
   }
 }
 
