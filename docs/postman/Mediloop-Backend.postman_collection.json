@@ -1,0 +1,1203 @@
+{
+  "info": {
+    "name": "Mediloop Backend",
+    "description": "Mediloop HTTP API (from backend/main.ts). Set collection variables: baseUrl, accessToken. Optional Option C: set **both** tenantId + membershipId (user_tenants.id UUID), or leave both empty. A pre-request script sends workspace headers only when both are non-empty.\n\nWebSocket: ws://{{host}}:{{port}}/ws/notifications (not HTTP).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const t = (pm.collectionVariables.get('tenantId') || '').trim();",
+          "const m = (pm.collectionVariables.get('membershipId') || '').trim();",
+          "if (t && m) {",
+          "  pm.request.headers.upsert({ key: 'X-Mediloop-Tenant-Id', value: t });",
+          "  pm.request.headers.upsert({ key: 'X-Mediloop-Membership-Id', value: m });",
+          "} else {",
+          "  pm.request.headers.remove('X-Mediloop-Tenant-Id');",
+          "  pm.request.headers.remove('X-Mediloop-Membership-Id');",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "tenantId",
+      "value": ""
+    },
+    {
+      "key": "membershipId",
+      "value": ""
+    },
+    {
+      "key": "verificationToken",
+      "value": ""
+    },
+    {
+      "key": "inviteToken",
+      "value": ""
+    },
+    {
+      "key": "resetToken",
+      "value": ""
+    },
+    {
+      "key": "wearableId",
+      "value": ""
+    },
+    {
+      "key": "subscriptionId",
+      "value": ""
+    },
+    {
+      "key": "stripeCustomerId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET Health",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/health",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth — Core",
+      "item": [
+        {
+          "name": "POST Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/register",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newuser@example.com\",\n  \"password\": \"SecurePass1!\",\n  \"fullName\": \"Test User\",\n  \"role\": \"patient\",\n  \"workplaceName\": null,\n  \"pharmacyName\": null\n}"
+            }
+          }
+        },
+        {
+          "name": "GET Verify email (query)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/auth/verify-email?token={{verificationToken}}",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "POST Verify email (body)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/verify-email",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{verificationToken}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST Resend verification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/resend-verification",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}"
+            }
+          }
+        },
+        {
+          "name": "GET Verification status",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/auth/verification-status?email=user@example.com",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "POST Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"your-password\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/logout",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "description": "Uses Authorization: Bearer (collection auth). Revokes current access token."
+          }
+        },
+        {
+          "name": "POST Verify token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/verify-token",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "description": "Public middleware route, but requires Authorization: Bearer with the JWT to verify."
+          }
+        },
+        {
+          "name": "POST Refresh",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/refresh",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{accessToken}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "GET Profile",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/auth/profile"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth — Password reset",
+      "item": [
+        {
+          "name": "POST Request reset OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/request-password-reset-otp",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST Reset password with OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/reset-password-with-otp",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"otp\": \"123456\",\n  \"newPassword\": \"NewSecurePass1!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST Request reset link",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/request-password-reset-link",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST Reset password with token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/reset-password-with-token",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{resetToken}}\",\n  \"newPassword\": \"NewSecurePass1!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "GET Verify reset token",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/auth/verify-reset-token/{{resetToken}}",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth — Invitations",
+      "item": [
+        {
+          "name": "POST Create invitation (deprecated)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/invitations/create",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"invitee@example.com\",\n  \"tenantId\": \"00000000-0000-4000-8000-000000000000\",\n  \"role\": \"doctor\",\n  \"message\": \"Join us\",\n  \"expiresInHours\": 72\n}"
+            }
+          }
+        },
+        {
+          "name": "POST Send invitation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/invitations/send",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"invitee@example.com\",\n  \"tenantId\": \"00000000-0000-4000-8000-000000000000\",\n  \"role\": \"doctor\",\n  \"message\": \"Join us\"\n}"
+            }
+          }
+        },
+        {
+          "name": "GET Validate invitation",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/invitations/validate/{{inviteToken}}",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "POST Accept invitation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/invitations/accept",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{inviteToken}}\",\n  \"password\": \"SecurePass1!\",\n  \"fullName\": \"Invited User\"\n}"
+            }
+          }
+        },
+        {
+          "name": "GET My pending invites",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/invitations/pending/my-invites"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth — OAuth",
+      "item": [
+        {
+          "name": "GET Google OAuth start",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/oauth/google",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "GET Google OAuth callback",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/oauth/google/callback?code=...",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "GET FranceConnect start",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/oauth/franceconnect",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "GET FranceConnect callback",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/oauth/franceconnect/callback?code=...",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "GET OAuth LuxTrust placeholder",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/oauth/luxtrust",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth — LuxTrust sandbox",
+      "item": [
+        {
+          "name": "POST LuxTrust auth",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/luxtrust/auth",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          }
+        },
+        {
+          "name": "POST Verify LuxTrust ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/luxtrust/verify-id",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"luxtrustId\": \"LUX-2024-123456\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST Certification upload",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/luxtrust/certification/upload",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fileName\": \"cert.pdf\",\n  \"certificationType\": \"medical\",\n  \"userId\": \"00000000-0000-4000-8000-000000000000\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST Certification verify",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/luxtrust/certification/verify",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"certificationId\": \"cert-123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST Location detect",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/luxtrust/location/detect",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"countryCode\": \"LU\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth — Domain verification",
+      "item": [
+        {
+          "name": "POST Initiate verification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/domain/initiate-verification",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenantId\": \"00000000-0000-4000-8000-000000000000\",\n  \"domain\": \"clinic.example.com\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST Verify domain",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/domain/verify",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"verificationId\": \"verification-id-from-initiate\"\n}"
+            }
+          }
+        },
+        {
+          "name": "DELETE Remove domain",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/domain/remove",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenantId\": \"00000000-0000-4000-8000-000000000000\"\n}"
+            }
+          }
+        },
+        {
+          "name": "GET Verifications for tenant",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/domain/verifications/00000000-0000-4000-8000-000000000000"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth — Token management (legacy paths)",
+      "item": [
+        {
+          "name": "POST Refresh token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/refresh-token",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{accessToken}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST Revoke token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/revoke-token",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{accessToken}}\",\n  \"reason\": \"USER_REVOKED\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST Revoke all tokens",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/revoke-all-tokens",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"USER_SIGNOUT_ALL\"\n}"
+            }
+          }
+        },
+        {
+          "name": "GET Sessions",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/sessions"
+          }
+        },
+        {
+          "name": "GET Security log",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/security-log?limit=50"
+          }
+        },
+        {
+          "name": "POST Verify token (legacy)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/verify-token",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "description": "Requires Authorization: Bearer with the JWT."
+          }
+        },
+        {
+          "name": "POST Cleanup expired tokens",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cleanup-expired",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth — Token rotation (legacy paths)",
+      "item": [
+        {
+          "name": "GET Rotated token",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/rotated-token"
+          }
+        },
+        {
+          "name": "POST Trigger rotation (manual)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/trigger-rotation",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Email",
+      "item": [
+        {
+          "name": "POST Send templated email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/send-templated-email",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"templateName\": \"welcome\",\n  \"recipientEmail\": \"user@example.com\",\n  \"variables\": { \"name\": \"Ada\" }\n}"
+            }
+          }
+        },
+        {
+          "name": "GET Email templates",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/email-templates"
+          }
+        },
+        {
+          "name": "GET Email logs",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/email-logs?limit=50"
+          }
+        },
+        {
+          "name": "POST Send login email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/send-login-email",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"otp\": \"123456\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Wearables",
+      "item": [
+        {
+          "name": "GET Wearables",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/wearables"
+          }
+        },
+        {
+          "name": "POST Wearable",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/wearables",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_type\": \"apple_watch\",\n  \"device_name\": \"Watch\",\n  \"device_id\": \"device-unique-id\",\n  \"connection_status\": \"connected\",\n  \"battery_level\": 80,\n  \"meta\": {}\n}"
+            }
+          }
+        },
+        {
+          "name": "PATCH Wearable",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/wearables/{{wearableId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"last_synced\": \"2025-01-01T12:00:00.000Z\",\n  \"battery_level\": 75,\n  \"connection_status\": \"connected\"\n}"
+            }
+          }
+        },
+        {
+          "name": "DELETE Wearable",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/wearables/{{wearableId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Clinical",
+      "item": [
+        {
+          "name": "GET Prescriptions",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/prescriptions"
+          }
+        },
+        {
+          "name": "GET Teleconsultations",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/teleconsultations"
+          }
+        },
+        {
+          "name": "GET Has accepted doctor",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/clinical/has-accepted-doctor"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "POST Send notification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/notifications/send",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"00000000-0000-4000-8000-000000000000\",\n  \"notification\": { \"title\": \"Hi\", \"body\": \"Test\" },\n  \"channels\": [\"in_app\"]\n}"
+            }
+          }
+        },
+        {
+          "name": "POST Send to topic",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/notifications/send-to-topic",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"topic\": \"news\",\n  \"notification\": { \"title\": \"Broadcast\", \"body\": \"Test\" },\n  \"channels\": [\"push\"]\n}"
+            }
+          }
+        },
+        {
+          "name": "POST Send to multiple",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/notifications/send-to-multiple",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userIds\": [\"00000000-0000-4000-8000-000000000000\"],\n  \"notification\": { \"title\": \"Hi\", \"body\": \"Test\" },\n  \"channels\": [\"in_app\"]\n}"
+            }
+          }
+        },
+        {
+          "name": "POST Schedule",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/notifications/schedule",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"00000000-0000-4000-8000-000000000000\",\n  \"notification\": { \"title\": \"Later\", \"body\": \"Test\" },\n  \"sendAt\": \"2030-01-01T12:00:00.000Z\",\n  \"channels\": [\"in_app\"]\n}"
+            }
+          }
+        },
+        {
+          "name": "POST Register FCM token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/notifications/register-token",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"00000000-0000-4000-8000-000000000000\",\n  \"fcmToken\": \"fcm-token-here\",\n  \"platform\": \"web\",\n  \"deviceId\": \"device-1\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST Unregister FCM token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/notifications/unregister-token",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"00000000-0000-4000-8000-000000000000\",\n  \"fcmToken\": \"fcm-token-here\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST Subscribe to topic",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/notifications/subscribe-to-topic",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"00000000-0000-4000-8000-000000000000\",\n  \"topic\": \"some-topic\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST Unsubscribe from topic",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/notifications/unsubscribe-from-topic",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"00000000-0000-4000-8000-000000000000\",\n  \"topic\": \"some-topic\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST Update online status",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/notifications/update-online-status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"00000000-0000-4000-8000-000000000000\",\n  \"isOnline\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "GET History",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/notifications/history?userId=00000000-0000-4000-8000-000000000000&limit=20"
+          }
+        },
+        {
+          "name": "POST Mark read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/notifications/mark-read",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notificationId\": \"00000000-0000-4000-8000-000000000000\"\n}"
+            }
+          }
+        },
+        {
+          "name": "GET Topics",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/notifications/topics?userId=00000000-0000-4000-8000-000000000000"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments — Subscriptions",
+      "item": [
+        {
+          "name": "POST Pharmacy checkout session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/subscriptions/pharmacy",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"00000000-0000-4000-8000-000000000000\",\n  \"pharmacyId\": \"00000000-0000-4000-8000-000000000000\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST Cancel pharmacy subscription",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/subscriptions/pharmacy/cancel",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subscriptionId\": \"{{subscriptionId}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "GET Subscription by id",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/subscriptions/{{subscriptionId}}"
+          }
+        },
+        {
+          "name": "GET Subscriptions for Stripe customer",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/subscriptions/customer/{{stripeCustomerId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments — Webhooks",
+      "item": [
+        {
+          "name": "POST Stripe webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "stripe-signature",
+                "value": "<from-stripe>",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/webhooks/stripe",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "description": "Send raw body + stripe-signature header (normally from Stripe, not Bearer)."
+          }
+        },
+        {
+          "name": "GET Webhook health",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/webhooks/health",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
