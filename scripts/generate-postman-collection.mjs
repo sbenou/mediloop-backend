@@ -202,6 +202,12 @@ const collection = {
           method: "GET",
           path: "/api/auth/profile",
         }),
+        item({
+          name: "GET My contexts",
+          method: "GET",
+          path: "/api/auth/me/contexts",
+          desc: "Workspace switcher source: membership ids + tenant metadata + current resolved context.",
+        }),
       ],
     },
     {

@@ -256,6 +256,14 @@
             "method": "GET",
             "url": "{{baseUrl}}/api/auth/profile"
           }
+        },
+        {
+          "name": "GET My contexts",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/auth/me/contexts",
+            "description": "Workspace switcher source: membership ids + tenant metadata + current resolved context."
+          }
         }
       ]
     },

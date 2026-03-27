@@ -12,6 +12,7 @@
 import { Router } from "oak";
 import { enhancedJwtService } from "../services/enhancedJwtService.ts";
 import { databaseService } from "../../../shared/services/databaseService.ts";
+import { postgresService } from "../../../shared/services/postgresService.ts";
 import { registrationService } from "../services/registrationService.ts";
 import { kvStore } from "../../../shared/services/kvStore.ts";
 import { emailService } from "../../../shared/services/emailService.ts";
@@ -726,6 +727,97 @@ authRoutes.get("/api/auth/profile", async (ctx) => {
     console.error("Profile fetch error:", error);
     ctx.response.status = 404;
     ctx.response.body = { error: "Profile not found" };
+  }
+});
+
+/**
+ * GET /api/auth/me/contexts
+ * Workspace switcher source for Option C.
+ */
+authRoutes.get("/api/auth/me/contexts", async (ctx) => {
+  try {
+    const authHeader = ctx.request.headers.get("Authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      ctx.response.status = 401;
+      ctx.response.body = { error: "Authorization header required" };
+      return;
+    }
+
+    const token = authHeader.substring(7);
+    const verification = await enhancedJwtService.verifyToken(token);
+    if (!verification.valid || !verification.payload?.sub) {
+      ctx.response.status = 401;
+      ctx.response.body = { error: verification.error || "Invalid token" };
+      return;
+    }
+
+    const userId = verification.payload.sub;
+    const membershipsResult = await postgresService.query(
+      `SELECT
+         ut.id AS membership_id,
+         ut.user_id,
+         ut.tenant_id,
+         ut.role,
+         ut.status,
+         ut.is_active,
+         ut.is_primary,
+         ut.created_at,
+         t.name AS tenant_name,
+         t.tenant_type,
+         t.schema AS tenant_schema,
+         t.domain AS tenant_domain,
+         (pht.user_id IS NOT NULL) AS is_personal_health_owner
+       FROM public.user_tenants ut
+       INNER JOIN public.tenants t ON t.id = ut.tenant_id
+       LEFT JOIN public.personal_health_tenants pht
+         ON pht.tenant_id = ut.tenant_id AND pht.user_id = ut.user_id
+       WHERE ut.user_id = $1::uuid
+       ORDER BY ut.is_primary DESC, ut.created_at ASC`,
+      [userId],
+    );
+
+    const memberships = membershipsResult.rows.map((row) => {
+      const status = String(
+        row.status ?? (row.is_active === false ? "left" : "active"),
+      ).toLowerCase();
+      const isActive = row.is_active !== false && status === "active";
+      return {
+        membership_id: String(row.membership_id),
+        tenant_id: String(row.tenant_id),
+        role: String(row.role ?? ""),
+        status,
+        is_active: isActive,
+        is_default: row.is_primary === true,
+        created_at: row.created_at,
+        tenant: {
+          id: String(row.tenant_id),
+          name: String(row.tenant_name ?? ""),
+          tenant_type: row.tenant_type ? String(row.tenant_type) : null,
+          schema: row.tenant_schema ? String(row.tenant_schema) : null,
+          domain: row.tenant_domain ? String(row.tenant_domain) : null,
+          is_personal_health_owner: row.is_personal_health_owner === true,
+        },
+      };
+    });
+
+    const activeContext = (ctx.state.activeContext as
+      | {
+          tenantId: string;
+          membershipId: string;
+          tenantRole: string;
+          source: "request_headers" | "legacy_jwt_membership";
+        }
+      | undefined) ?? null;
+
+    ctx.response.body = {
+      user_id: userId,
+      memberships,
+      current_context: activeContext,
+    };
+  } catch (error) {
+    console.error("Auth me contexts error:", error);
+    ctx.response.status = 500;
+    ctx.response.body = { error: "Failed to load user contexts" };
   }
 });
 
