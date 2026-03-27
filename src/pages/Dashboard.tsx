@@ -14,17 +14,36 @@ import { ActivityFeed } from "@/components/activity/ActivityFeed";
 import { Advertisements } from "@/components/activity/Advertisements";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useWorkspaceContext } from "@/hooks/auth/useWorkspaceContext";
 
 const Dashboard = () => {
   const { isAuthenticated, isLoading, userRole, profile } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const patientModeParam = searchParams.get("mode") === "patient";
+  const isPatientDashboardView = userRole === "patient" || patientModeParam;
+
+  const togglePatientDashboardMode = () => {
+    const next = new URLSearchParams(searchParams);
+    if (patientModeParam) {
+      next.delete("mode");
+    } else {
+      next.set("mode", "patient");
+      if (!next.get("view")) {
+        next.set("view", "home");
+      }
+    }
+    setSearchParams(next, { replace: true });
+  };
+
   const hasInitializedRef = useRef(false);
   const redirectedRef = useRef(false);
   
   // Activity drawer state
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
   const [activeDrawerTab, setActiveDrawerTab] = useState<string>("home");
+  const { activeContext } = useWorkspaceContext();
 
   // Add more detailed logging to help debug
   useEffect(() => {
@@ -121,6 +140,22 @@ const Dashboard = () => {
   const WithRightDrawer = ({ children }: { children: React.ReactNode }) => (
     <div className="flex flex-1 overflow-hidden relative">
       <main className={`flex-1 p-4 md:p-6 overflow-auto hover-scroll main-content-scroll transition-all duration-300 ${isDrawerOpen ? 'mr-[300px]' : 'mr-0'}`}>
+        {isAuthenticated && userRole && userRole !== "patient" && (
+          <div className="mb-3 flex items-center gap-2">
+            <Badge variant={isPatientDashboardView ? "default" : "outline"}>
+              {isPatientDashboardView ? "Patient Dashboard View" : "Role Dashboard View"}
+            </Badge>
+            <Button size="sm" variant="outline" onClick={togglePatientDashboardMode}>
+              {isPatientDashboardView ? "Back to role dashboard" : "Open patient dashboard"}
+            </Button>
+            {import.meta.env.DEV && activeContext && (
+              <span className="text-xs text-muted-foreground">
+                ctx: {activeContext.membershipId.slice(0, 8)} /{" "}
+                {activeContext.tenantId.slice(0, 8)}
+              </span>
+            )}
+          </div>
+        )}
         <ScrollArea className="h-full w-full">
           {children}
         </ScrollArea>
@@ -139,7 +174,7 @@ const Dashboard = () => {
           <CartProvider>
             <PatientLayout>
               <WithRightDrawer>
-                <DashboardRouter userRole={userRole} />
+                <DashboardRouter userRole={userRole} forcePatientView={isPatientDashboardView} />
               </WithRightDrawer>
             </PatientLayout>
           </CartProvider>
@@ -153,7 +188,7 @@ const Dashboard = () => {
           <CartProvider>
             <DoctorLayout>
               <WithRightDrawer>
-                <DashboardRouter userRole={userRole} />
+                <DashboardRouter userRole={userRole} forcePatientView={isPatientDashboardView} />
               </WithRightDrawer>
             </DoctorLayout>
           </CartProvider>
@@ -167,7 +202,7 @@ const Dashboard = () => {
           <CartProvider>
             <UnifiedLayoutTemplate>
               <WithRightDrawer>
-                <DashboardRouter userRole={userRole} />
+                <DashboardRouter userRole={userRole} forcePatientView={isPatientDashboardView} />
               </WithRightDrawer>
             </UnifiedLayoutTemplate>
           </CartProvider>

@@ -38,6 +38,7 @@ import ProtectedBillingDetails from "@/router/roles/ProtectedBillingDetails";
 import ProtectedUpgradePage from "@/router/roles/ProtectedUpgradePage";
 import Account from "@/pages/Account";
 import AcceptInvite from "@/pages/AcceptInvite";
+import VerifyEmailSystemRouter from "@/auth-v2/components/VerifyEmailSystemRouter";
 
 const AppRoutes = () => {
   return (
@@ -48,6 +49,7 @@ const AppRoutes = () => {
       <Route path="/products/:id" element={<ProductDetail />} />
       <Route path="/login" element={<AuthSystemRouter type="login" />} />
       <Route path="/signup" element={<AuthSystemRouter type="signup" />} />
+      <Route path="/verify-email" element={<VerifyEmailSystemRouter />} />
       <Route path="/profile" element={<Profile />} />
       {/* <Route path="/pharmacies" element={<Pharmacies />} /> */}
       {/* <Route path="/pharmacies/:id" element={<PharmacyDetailsPage />} /> */}

@@ -6,6 +6,12 @@ import { toast } from '@/components/ui/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
+import { persistV2SessionFromBackendLogin } from '@/lib/auth/v2SessionStorage';
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  import.meta.env.VITE_API_BASE_URL ||
+  'http://localhost:8000';
 
 const EmailConfirmationHandler = () => {
   const navigate = useNavigate();
@@ -18,6 +24,7 @@ const EmailConfirmationHandler = () => {
         // Get the URL parameters
         const params = new URLSearchParams(window.location.search);
         const code = params.get('code');
+        const token = params.get('token');
         const errorParam = params.get('error');
         const errorCode = params.get('error_code');
         const errorDescription = params.get('error_description');
@@ -45,15 +52,59 @@ const EmailConfirmationHandler = () => {
           return;
         }
         
-        console.log('Email confirmation code:', code);
+        // New backend flow: /verify-email?token=<uuid>
+        if (token) {
+          const response = await fetch(
+            `${API_BASE_URL}/api/auth/verify-email?token=${encodeURIComponent(token)}`,
+            { method: 'GET' },
+          );
+          const data = await response.json().catch(() => ({})) as {
+            error?: string;
+            message?: string;
+            access_token?: string;
+            user?: { id?: string };
+          };
 
+          if (!response.ok || !data.access_token || !data.user?.id) {
+            setError(data.error || 'Failed to verify email');
+            setIsProcessing(false);
+            return;
+          }
+
+          // Keep both legacy and V2 storage in sync
+          localStorage.setItem('auth_token', data.access_token);
+          localStorage.setItem(
+            'mediloop_session_sync',
+            JSON.stringify({
+              accessToken: data.access_token,
+              refreshToken: data.access_token,
+              userId: data.user.id,
+              timestamp: Date.now(),
+            }),
+          );
+          persistV2SessionFromBackendLogin({
+            accessToken: data.access_token,
+            refreshToken: data.access_token,
+            userId: data.user.id,
+          });
+
+          console.log('Email verified successfully via backend token');
+          toast({
+            title: "Email Confirmed",
+            description: data.message || "Your email has been confirmed.",
+          });
+          navigate('/dashboard');
+          return;
+        }
+
+        // Legacy Supabase flow: /verify-email?code=<token_hash>
+        console.log('Email confirmation code:', code);
         if (!code) {
-          setError('No confirmation code found in URL');
+          setError('No confirmation code or token found in URL');
           setIsProcessing(false);
           return;
         }
 
-        // The type should be "signup" for email confirmation
         const { error: verifyError } = await supabase.auth.verifyOtp({
           token_hash: code,
           type: 'signup'
@@ -67,13 +118,10 @@ const EmailConfirmationHandler = () => {
         }
 
         console.log('Email verified successfully');
-        
         toast({
           title: "Email Confirmed",
           description: "Your email has been confirmed. You can now log in.",
         });
-        
-        // Redirect to login page after successful verification
         navigate('/login');
       } catch (err) {
         console.error('Email confirmation error:', err);

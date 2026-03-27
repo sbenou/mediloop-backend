@@ -21,9 +21,13 @@ import NotificationsView from "@/components/dashboard/views/NotificationsView";
 
 interface DashboardRouterProps {
   userRole: string;
+  forcePatientView?: boolean;
 }
 
-const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
+const DashboardRouter: React.FC<DashboardRouterProps> = ({
+  userRole,
+  forcePatientView = false,
+}) => {
   const { isPharmacist, profile } = useAuth();
   const { params } = useDashboardParams();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -42,15 +46,15 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
     }
   }, [userRole, isPharmacist, section, setSearchParams]);
   
-  // For pharmacists, always show pharmacy views
-  if (userRole === "pharmacist" || isPharmacist) {
+  // For pharmacists, always show pharmacy views unless patient-view is explicitly requested.
+  if (!forcePatientView && (userRole === "pharmacist" || isPharmacist)) {
     const sectionToUse = section || "dashboard";
     console.log("Rendering PharmacyView for pharmacist with section:", sectionToUse);
     return <PharmacyView userRole={userRole} section={sectionToUse} />;
   }
   
   // For doctors, handle special views based on section parameter
-  if (userRole === "doctor") {
+  if (!forcePatientView && userRole === "doctor") {
     console.log("Handling doctor view with section:", section);
     
     // Check for section parameter first (doctor specific routing)

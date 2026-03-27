@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { UserProfile } from '@/types/user';
 import { fetchUserPermissions } from '@/lib/auth/sessionUtils';
+import { buildAuthHeaders } from "@/lib/activeContext";
 
 const API_BASE =
   import.meta.env.VITE_API_URL ||
@@ -72,10 +73,10 @@ export async function fetchProfileForV2Jwt(
   try {
     const res = await fetch(`${API_BASE}/api/auth/profile`, {
       method: "GET",
-      headers: {
+      headers: buildAuthHeaders({
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
-      },
+      }),
       signal,
     });
     if (res.status === 401 || res.status === 403) {
@@ -174,10 +175,10 @@ export const useProfileFetch = () => {
           try {
             const res = await fetch(`${API_BASE}/api/auth/profile`, {
               method: 'GET',
-              headers: {
+              headers: buildAuthHeaders({
                 Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json',
-              },
+              }),
               signal: abortController.signal,
             });
 

@@ -1,4 +1,5 @@
 import { updateV2AccessToken } from '@/lib/auth/v2SessionStorage';
+import { buildAuthHeaders } from "@/lib/activeContext";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -46,10 +47,10 @@ class TokenRotationClient {
 
       const response = await fetch(`${API_BASE_URL}/rotated-token`, {
         method: 'GET',
-        headers: {
+        headers: buildAuthHeaders({
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
-        },
+        }),
       });
 
       if (!response.ok) return;
@@ -81,10 +82,10 @@ class TokenRotationClient {
 
       const response = await fetch(`${API_BASE_URL}/rotated-token`, {
         method: 'GET',
-        headers: {
+        headers: buildAuthHeaders({
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
-        },
+        }),
       });
 
       if (!response.ok) return null;

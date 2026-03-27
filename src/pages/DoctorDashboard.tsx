@@ -16,6 +16,9 @@ import DoctorAppointmentsView from "@/components/dashboard/views/doctor/DoctorAp
 import DoctorLayout from "@/components/layout/DoctorLayout";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import DashboardRouter from "@/components/dashboard/DashboardRouter";
 
 interface DoctorDashboardProps {
   initialParams?: URLSearchParams;
@@ -33,6 +36,7 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
   const profileTab = searchParams.get("profileTab") || initialParams?.get("profileTab") || "personal";
   const ordersTab = searchParams.get("ordersTab") || initialParams?.get("ordersTab") || "orders";
   const workplacesTab = searchParams.get("workplacesTab") || initialParams?.get("workplacesTab") || "selection";
+  const patientModeParam = searchParams.get("mode") === "patient";
   
   // Set URL params on initial load if initialParams was provided
   useEffect(() => {
@@ -72,6 +76,11 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
   }
   
   const getContent = () => {
+    if (patientModeParam) {
+      // Reuse the existing patient dashboard views with doctor auth context.
+      return <DashboardRouter userRole="doctor" forcePatientView />;
+    }
+
     console.log("Getting content for section:", section, "with ordersTab:", ordersTab);
     
     // For the doctor dashboard, show content based on the section
@@ -98,6 +107,19 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
         return <HomeView userRole="doctor" />;
     }
   };
+
+  const togglePatientDashboardMode = () => {
+    const next = new URLSearchParams(searchParams);
+    if (patientModeParam) {
+      next.delete("mode");
+    } else {
+      next.set("mode", "patient");
+      if (!next.get("view")) {
+        next.set("view", "home");
+      }
+    }
+    setSearchParams(next, { replace: true });
+  };
   
   // Show loading skeleton only on initial load, not during navigation
   if (isInitialLoad && isLoading) {
@@ -121,6 +143,14 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
   return (
     <DoctorLayout>
       <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
+        <div className="mb-3 flex items-center gap-2">
+          <Badge variant={patientModeParam ? "default" : "outline"}>
+            {patientModeParam ? "Patient Dashboard View" : "Doctor Dashboard View"}
+          </Badge>
+          <Button size="sm" variant="outline" onClick={togglePatientDashboardMode}>
+            {patientModeParam ? "Back to doctor dashboard" : "Open patient dashboard"}
+          </Button>
+        </div>
         <ScrollArea className="h-full w-full hover-scroll main-content-scroll">
           {getContent()}
         </ScrollArea>

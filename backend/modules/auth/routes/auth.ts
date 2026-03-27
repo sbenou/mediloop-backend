@@ -185,9 +185,32 @@ authRoutes.get("/api/auth/verify-email", async (ctx) => {
 
     if (!result.success) {
       console.error("❌ Email verification failed:", result.error);
+      const tokenMetaResult = await postgresService.query(
+        `SELECT email, verified, expires_at
+         FROM auth.email_verifications
+         WHERE token = $1
+         LIMIT 1`,
+        [token],
+      );
+      const tokenMeta = tokenMetaResult.rows[0] as
+        | { email?: string; verified?: boolean; expires_at?: string }
+        | undefined;
+      const isExpired =
+        !!tokenMeta?.expires_at &&
+        new Date(tokenMeta.expires_at) < new Date();
+      const errorCode = tokenMeta
+        ? tokenMeta.verified
+          ? "token_already_used"
+          : isExpired
+            ? "token_expired"
+            : "token_invalid"
+        : "token_invalid";
+
       ctx.response.status = 400;
       ctx.response.body = {
         error: result.error || "Invalid verification token",
+        error_code: errorCode,
+        email: tokenMeta?.email || null,
       };
       return;
     }
@@ -279,9 +302,32 @@ authRoutes.post("/api/auth/verify-email", async (ctx) => {
 
     if (!result.success) {
       console.error("❌ Email verification failed:", result.error);
+      const tokenMetaResult = await postgresService.query(
+        `SELECT email, verified, expires_at
+         FROM auth.email_verifications
+         WHERE token = $1
+         LIMIT 1`,
+        [token],
+      );
+      const tokenMeta = tokenMetaResult.rows[0] as
+        | { email?: string; verified?: boolean; expires_at?: string }
+        | undefined;
+      const isExpired =
+        !!tokenMeta?.expires_at &&
+        new Date(tokenMeta.expires_at) < new Date();
+      const errorCode = tokenMeta
+        ? tokenMeta.verified
+          ? "token_already_used"
+          : isExpired
+            ? "token_expired"
+            : "token_invalid"
+        : "token_invalid";
+
       ctx.response.status = 400;
       ctx.response.body = {
         error: result.error || "Invalid verification token",
+        error_code: errorCode,
+        email: tokenMeta?.email || null,
       };
       return;
     }

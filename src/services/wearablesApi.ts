@@ -1,4 +1,4 @@
-import { V2_SESSION_STORAGE_KEYS } from "@/lib/auth/v2SessionStorage";
+import { buildAuthHeaders } from "@/lib/activeContext";
 import type { UserWearable } from "@/types/wearables";
 
 const API_BASE =
@@ -6,19 +6,8 @@ const API_BASE =
   import.meta.env.VITE_API_BASE_URL ||
   "http://localhost:8000";
 
-function getAccessToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return (
-    localStorage.getItem(V2_SESSION_STORAGE_KEYS.ACCESS_TOKEN) ||
-    localStorage.getItem("auth_token")
-  );
-}
-
 async function authHeaders(): Promise<HeadersInit> {
-  const token = getAccessToken();
-  const h: Record<string, string> = { "Content-Type": "application/json" };
-  if (token) h.Authorization = `Bearer ${token}`;
-  return h;
+  return buildAuthHeaders({ "Content-Type": "application/json" });
 }
 
 export async function fetchMyWearables(): Promise<UserWearable[]> {

@@ -10,6 +10,7 @@ import { CurrencySelector } from '@/components/CurrencySelector';
 import LanguageSelector from '@/components/LanguageSelector';
 import NotificationBell from '@/components/NotificationBell';
 import { TenantDisplay } from '@/components/tenant/TenantDisplay';
+import WorkspaceSwitcher from '@/components/tenant/WorkspaceSwitcher';
 import { useIsMobile } from '@/hooks/use-mobile';
 import UserMenu from '@/components/UserMenu';
 
@@ -37,6 +38,7 @@ const UnifiedHeader = () => {
             />
           </Link>
           <TenantDisplay />
+          <WorkspaceSwitcher />
         </div>
         <div className="flex items-center gap-2">
           <div className="hidden md:flex">
