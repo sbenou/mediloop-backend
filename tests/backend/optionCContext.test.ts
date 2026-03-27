@@ -221,6 +221,29 @@ optionCTest("Step 2 - valid context headers allow request (200)", async () => {
   assertExists(data.profile);
 });
 
+optionCTest(
+  "Step 2 - switching context across memberships stays deterministic",
+  async () => {
+    const first = await getWithAuth("/api/auth/profile", {
+      "X-Mediloop-Tenant-Id": tenantAId,
+      "X-Mediloop-Membership-Id": membershipAId,
+    });
+    assertEquals(first.status, 200);
+
+    const second = await getWithAuth("/api/auth/profile", {
+      "X-Mediloop-Tenant-Id": tenantBId,
+      "X-Mediloop-Membership-Id": membershipBId,
+    });
+    assertEquals(second.status, 200);
+
+    const third = await getWithAuth("/api/auth/profile", {
+      "X-Mediloop-Tenant-Id": tenantAId,
+      "X-Mediloop-Membership-Id": membershipAId,
+    });
+    assertEquals(third.status, 200);
+  },
+);
+
 optionCTest("Step 2 - mismatched context denied and audit written", async () => {
   const beforeRows = await testDb.query<{ c: number }>(
     `SELECT COUNT(*)::int AS c

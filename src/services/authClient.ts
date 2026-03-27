@@ -2,6 +2,7 @@ import {
   clearV2SessionStorageKeys,
   persistV2SessionFromBackendLogin,
 } from "@/lib/auth/v2SessionStorage";
+import { buildAuthHeaders } from "@/lib/activeContext";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -123,10 +124,10 @@ class AuthClient {
 
     const response = await fetch(`${API_BASE_URL}/api/protected`, {
       method: "GET",
-      headers: {
+      headers: buildAuthHeaders({
         Authorization: `Bearer ${this.token}`,
         "Content-Type": "application/json",
-      },
+      }),
     });
 
     if (!response.ok) {
@@ -144,10 +145,10 @@ class AuthClient {
 
     const response = await fetch(`${API_BASE_URL}/api/me`, {
       method: "GET",
-      headers: {
+      headers: buildAuthHeaders({
         Authorization: `Bearer ${this.token}`,
         "Content-Type": "application/json",
-      },
+      }),
     });
 
     if (!response.ok) {
@@ -181,10 +182,10 @@ class AuthClient {
     try {
       const response = await fetch(`${API_BASE_URL}/api/verify-token`, {
         method: "POST",
-        headers: {
+        headers: buildAuthHeaders({
           Authorization: `Bearer ${this.token}`,
           "Content-Type": "application/json",
-        },
+        }),
       });
 
       if (!response.ok) {

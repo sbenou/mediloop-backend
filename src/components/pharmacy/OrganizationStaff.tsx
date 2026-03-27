@@ -12,6 +12,7 @@ import { StaffMember } from "./staff/types";
 import { Button } from "@/components/ui/button";
 import { UserPlus, LayoutList, LayoutGrid } from "lucide-react";
 import { TeamMemberDialog } from "./team/TeamMemberDialog";
+import { buildAuthHeaders } from "@/lib/activeContext";
 
 interface OrganizationStaffProps {
   pharmacyId: string;
@@ -247,10 +248,10 @@ const OrganizationStaff: React.FC<OrganizationStaffProps> = ({
       // Call your invitation API endpoint
       const response = await fetch(`${backendUrl}/api/invitations/send`, {
         method: "POST",
-        headers: {
+        headers: buildAuthHeaders({
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
-        },
+        }),
         body: JSON.stringify(invitationData),
       });
 
