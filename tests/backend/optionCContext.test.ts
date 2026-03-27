@@ -22,6 +22,8 @@ import { TestServer } from "../utils/testServer.ts";
 const PORT = 8003;
 const testServer = new TestServer(PORT);
 const testDb = new TestDb();
+const runSeed = Date.now() % 200;
+let requestCounter = 1;
 
 let testEmail = "";
 let testPassword = "";
@@ -43,9 +45,14 @@ async function postJson(
   body: Record<string, unknown>,
   headers?: Record<string, string>,
 ) {
+  const requestIp = `10.20.${runSeed}.${(requestCounter++ % 200) + 1}`;
   const res = await fetch(`${testServer.getBaseUrl()}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", ...(headers || {}) },
+    headers: {
+      "Content-Type": "application/json",
+      "X-Forwarded-For": requestIp,
+      ...(headers || {}),
+    },
     body: JSON.stringify(body),
   });
   const data = await res.json().catch(() => ({}));
@@ -56,11 +63,13 @@ async function getWithAuth(
   path: string,
   extraHeaders?: Record<string, string>,
 ) {
+  const requestIp = `10.20.${runSeed}.${(requestCounter++ % 200) + 1}`;
   return await fetch(`${testServer.getBaseUrl()}${path}`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${accessToken}`,
       "Content-Type": "application/json",
+      "X-Forwarded-For": requestIp,
       ...(extraHeaders || {}),
     },
   });

@@ -13,15 +13,22 @@ import {
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
 
 const BASE_URL = Deno.env.get("API_URL") || "http://localhost:8000";
+const runSeed = Date.now() % 200;
+let requestCounter = 1;
 
 async function makeRequest(
   endpoint: string,
   body: any,
   headers: Record<string, string> = {},
 ) {
+  const requestIp = `10.21.${runSeed}.${(requestCounter++ % 200) + 1}`;
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", ...headers },
+    headers: {
+      "Content-Type": "application/json",
+      "X-Forwarded-For": requestIp,
+      ...headers,
+    },
     body: JSON.stringify(body),
   });
   const data = await response.json();

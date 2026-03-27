@@ -29,6 +29,12 @@ import {
 import { config } from "../../../shared/config/env.ts";
 
 const authRoutes = new Router();
+const UUID_V4_OR_V1_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isUuidLike(value: string): boolean {
+  return UUID_V4_OR_V1_REGEX.test(value);
+}
 
 function getClientIP(ctx: any): string {
   const forwarded = ctx.request.headers.get("x-forwarded-for");
@@ -178,6 +184,16 @@ authRoutes.get("/api/auth/verify-email", async (ctx) => {
       return;
     }
 
+    if (!isUuidLike(token)) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        error: "Invalid verification token",
+        error_code: "token_invalid",
+        email: null,
+      };
+      return;
+    }
+
     console.log("📧 Email verification (GET): Verifying token...");
 
     // ✅ Use databaseService wrapper method
@@ -291,6 +307,16 @@ authRoutes.post("/api/auth/verify-email", async (ctx) => {
       ctx.response.status = 400;
       ctx.response.body = {
         error: "Verification token is required",
+      };
+      return;
+    }
+
+    if (!isUuidLike(token)) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        error: "Invalid verification token",
+        error_code: "token_invalid",
+        email: null,
       };
       return;
     }

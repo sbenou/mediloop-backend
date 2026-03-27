@@ -16,6 +16,8 @@ import { TestServer } from "../utils/testServer.ts";
 // ✅ Create test server instance
 const testServer = new TestServer(8001);
 const BASE_URL = testServer.getBaseUrl();
+const runSeed = Date.now() % 200;
+let requestCounter = 1;
 
 // const BASE_URL = Deno.env.get("API_URL") || "http://localhost:8000";
 
@@ -56,9 +58,14 @@ async function makeRequest(
   method = "POST",
   headers: Record<string, string> = {},
 ) {
+  const requestIp = `10.22.${runSeed}.${(requestCounter++ % 200) + 1}`;
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     method,
-    headers: { "Content-Type": "application/json", ...headers },
+    headers: {
+      "Content-Type": "application/json",
+      "X-Forwarded-For": requestIp,
+      ...headers,
+    },
     body: body ? JSON.stringify(body) : undefined,
   });
   const data = await response.json();
