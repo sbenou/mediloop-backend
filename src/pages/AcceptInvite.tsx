@@ -19,8 +19,7 @@ import {
   Lock,
   User,
 } from "lucide-react";
-
-const API_BASE_URL = "http://localhost:8000";
+import { MEDILOOP_API_BASE } from "@/lib/activeContext";
 
 interface InvitationDetails {
   email: string;
@@ -58,7 +57,7 @@ export default function AcceptInvite() {
       try {
         setValidating(true);
         const response = await fetch(
-          `${API_BASE_URL}/api/invitations/validate/${token}`,
+          `${MEDILOOP_API_BASE}/api/invitations/validate/${token}`,
           {
             method: "GET",
             headers: {
@@ -120,7 +119,7 @@ export default function AcceptInvite() {
       setAccepting(true);
       setError(null);
 
-      const response = await fetch(`${API_BASE_URL}/api/invitations/accept`, {
+      const response = await fetch(`${MEDILOOP_API_BASE}/api/invitations/accept`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

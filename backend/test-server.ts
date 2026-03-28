@@ -21,10 +21,12 @@ import { passwordResetRoutes } from "./modules/auth/routes/passwordReset.ts";
 import { wearablesRoutes } from "./modules/wearables/routes/wearables.ts";
 import { clinicalRoutes } from "./modules/clinical/routes/clinical.ts";
 import { load } from "https://deno.land/std@0.224.0/dotenv/mod.ts";
+import { resolveEnvTestPath } from "../tests/utils/resolveEnvTestPath.ts";
 
-// ✅ Load test environment variables
+// ✅ Load repo-root `.env.test` (cwd is usually `backend/` when spawned by TestServer)
+const envTestPath = await resolveEnvTestPath();
 const env = await load({
-  envPath: ".env.test",
+  envPath: envTestPath ?? ".env.test",
   export: true,
   allowEmptyValues: true,
 });

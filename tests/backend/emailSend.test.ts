@@ -2,8 +2,11 @@
  * Simple Resend Email Send Test
  * Tests if Resend can actually send emails with your verified domain
  *
- * Run with:
- * deno test --allow-net --allow-env --allow-read tests/backend/emailSend.test.ts
+ * Opt-in only (consumes Resend quota):
+ *   RUN_RESEND_TESTS=1 deno test --allow-net --allow-env --allow-read tests/backend/emailSend.test.ts
+ *
+ * When RUN_RESEND_TESTS is not set, all tests here are registered as ignored so full-suite runs
+ * do not call the Resend API.
  */
 
 import {
@@ -12,12 +15,13 @@ import {
   assert,
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { load as loadEnv } from "https://deno.land/std@0.224.0/dotenv/mod.ts";
+import { resolveEnvTestPath } from "../utils/resolveEnvTestPath.ts";
 
-// Load .env.test file for test environment variables
-const envPath = ".env.test";
+// Load repo-root `.env.test` even when cwd is `backend/`
+const envPath = (await resolveEnvTestPath()) ?? ".env.test";
 try {
   const env = await loadEnv({ envPath });
-  console.log("🔧 Loaded .env.test file");
+  console.log(`🔧 Loaded .env.test (${envPath})`);
 
   // Set environment variables
   for (const [key, value] of Object.entries(env)) {
@@ -33,6 +37,23 @@ try {
     "⚠️  Could not load .env.test file:",
     error instanceof Error ? error.message : String(error),
   );
+}
+
+/** When not "1", tests are ignored to avoid burning Resend quota in routine runs. */
+const RUN_RESEND_TESTS = Deno.env.get("RUN_RESEND_TESTS") === "1";
+
+function resendTest(
+  name: string,
+  fn: () => void | Promise<void>,
+): void {
+  if (!RUN_RESEND_TESTS) {
+    Deno.test.ignore(
+      `${name} (skipped: set RUN_RESEND_TESTS=1 to call Resend API)`,
+      () => {},
+    );
+    return;
+  }
+  Deno.test(name, fn);
 }
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
@@ -127,7 +148,7 @@ async function sendTestEmail(to: string, testName: string) {
 // TEST 1: Check Environment Variables
 // ============================================================================
 
-Deno.test("Email Send - Environment variables are configured", () => {
+resendTest("Email Send - Environment variables are configured", () => {
   console.log("\n🔍 Checking environment variables...");
 
   console.log(`   RESEND_API_KEY: ${RESEND_API_KEY ? "✅ Set" : "❌ Not set"}`);
@@ -143,7 +164,7 @@ Deno.test("Email Send - Environment variables are configured", () => {
 // TEST 2: Send to Verified Email (Should Always Work)
 // ============================================================================
 
-Deno.test(
+resendTest(
   "Email Send - Send to verified email (sbenou@hotmail.com)",
   async () => {
     console.log("\n🧪 Testing email send to verified address...");
@@ -174,7 +195,7 @@ Deno.test(
 // TEST 3: Send to Test Email 1
 // ============================================================================
 
-Deno.test("Email Send - Send to test email 1 (test@mediloop.com)", async () => {
+resendTest("Email Send - Send to test email 1 (test@mediloop.com)", async () => {
   console.log("\n🧪 Testing email send to test address 1...");
   console.log("   If this fails, there may be a sandbox restriction");
 
@@ -202,7 +223,7 @@ Deno.test("Email Send - Send to test email 1 (test@mediloop.com)", async () => {
 // TEST 4: Send to Test Email 2
 // ============================================================================
 
-Deno.test("Email Send - Send to test email 2 (user@example.com)", async () => {
+resendTest("Email Send - Send to test email 2 (user@example.com)", async () => {
   console.log("\n🧪 Testing email send to test address 2...");
 
   const result = await sendTestEmail(TEST_EMAILS[1], "Test Email 2");
@@ -225,7 +246,7 @@ Deno.test("Email Send - Send to test email 2 (user@example.com)", async () => {
 // TEST 5: Send to Test Email 3
 // ============================================================================
 
-Deno.test("Email Send - Send to test email 3 (test123@test.com)", async () => {
+resendTest("Email Send - Send to test email 3 (test123@test.com)", async () => {
   console.log("\n🧪 Testing email send to test address 3...");
 
   const result = await sendTestEmail(TEST_EMAILS[2], "Test Email 3");
@@ -248,7 +269,7 @@ Deno.test("Email Send - Send to test email 3 (test123@test.com)", async () => {
 // TEST 6: Rate Limit Test (Send Multiple Emails)
 // ============================================================================
 
-Deno.test("Email Send - Rate limit test (multiple sends)", async () => {
+resendTest("Email Send - Rate limit test (multiple sends)", async () => {
   console.log("\n🧪 Testing rate limits (sending 3 emails quickly)...");
 
   const results = [];

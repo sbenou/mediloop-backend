@@ -3,6 +3,14 @@
  * Start and stop a test-specific server instance
  */
 
+import { dirname, fromFileUrl, join } from "https://deno.land/std@0.224.0/path/mod.ts";
+
+/** `backend/` directory (works when `deno test` cwd is repo root or `backend/`) */
+function resolveBackendDir(): string {
+  const utilsDir = dirname(fromFileUrl(import.meta.url));
+  return join(utilsDir, "..", "..", "backend");
+}
+
 export class TestServer {
   private process: Deno.ChildProcess | null = null;
   private port: number;
@@ -22,6 +30,9 @@ export class TestServer {
     // Set test port
     Deno.env.set("TEST_PORT", this.port.toString());
 
+    const backendDir = resolveBackendDir();
+    const testServerScript = join(backendDir, "test-server.ts");
+
     // Start server process - use "null" to discard output and prevent buffer overflow
     const command = new Deno.Command("deno", {
       args: [
@@ -31,9 +42,9 @@ export class TestServer {
         "--allow-read",
         "--allow-run",
         "--unstable-kv",
-        "backend/test-server.ts",
+        testServerScript,
       ],
-      cwd: Deno.cwd(),
+      cwd: backendDir,
       stdout: "null", // ✅ Use "null" to discard output (prevents buffer overflow)
       stderr: "null", // ✅ Use "null" to discard errors (prevents buffer overflow)
     });

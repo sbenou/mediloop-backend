@@ -1,5 +1,8 @@
-
-import { useState } from 'react';
+import { useState } from "react";
+import {
+  buildAuthHeaders,
+  MEDILOOP_API_BASE,
+} from "@/lib/activeContext";
 
 interface EmailTemplate {
   id: string;
@@ -37,11 +40,11 @@ export const useEmailTemplates = () => {
 
     try {
       // Call your Deno backend service instead of Supabase edge function
-      const response = await fetch('http://localhost:8000/api/send-templated-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const response = await fetch(`${MEDILOOP_API_BASE}/api/send-templated-email`, {
+        method: "POST",
+        headers: buildAuthHeaders({
+          "Content-Type": "application/json",
+        }),
         body: JSON.stringify({
           templateName,
           recipientEmail,
@@ -66,7 +69,9 @@ export const useEmailTemplates = () => {
 
   const getEmailTemplates = async (): Promise<EmailTemplate[]> => {
     try {
-      const response = await fetch('http://localhost:8000/api/email-templates');
+      const response = await fetch(`${MEDILOOP_API_BASE}/api/email-templates`, {
+        headers: buildAuthHeaders(),
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch templates');
       }
@@ -79,7 +84,10 @@ export const useEmailTemplates = () => {
 
   const getEmailLogs = async (limit = 50): Promise<EmailLog[]> => {
     try {
-      const response = await fetch(`http://localhost:8000/api/email-logs?limit=${limit}`);
+      const response = await fetch(
+        `${MEDILOOP_API_BASE}/api/email-logs?limit=${limit}`,
+        { headers: buildAuthHeaders() },
+      );
       if (!response.ok) {
         throw new Error('Failed to fetch logs');
       }
@@ -180,11 +188,11 @@ export const useEmailTemplates = () => {
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:8000/api/send-login-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const response = await fetch(`${MEDILOOP_API_BASE}/api/send-login-email`, {
+        method: "POST",
+        headers: buildAuthHeaders({
+          "Content-Type": "application/json",
+        }),
         body: JSON.stringify({
           email,
           otp

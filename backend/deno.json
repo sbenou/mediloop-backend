@@ -2,7 +2,7 @@
   "tasks": {
     "dev": "deno run --allow-net --allow-env --allow-read --unstable-kv --unstable-cron --watch main.ts",
     "prod": "deno run --allow-net --allow-env --allow-read --unstable-kv --cached-only main.ts",
-    "test": "deno test --allow-net --allow-env --allow-read ../tests/backend/",
+    "test": "deno test --allow-net --allow-env --allow-read --allow-run --unstable-kv ../tests/backend/",
     "setup-vault": "deno run --allow-net --allow-env --allow-read --allow-run scripts/setup-vault-launcher.ts",
     "start-dev": "deno run --allow-net --allow-env --allow-read --allow-run scripts/start-dev-launcher.ts",
     "worker": "deno run --allow-all --unstable workers/main.ts",
@@ -12,7 +12,8 @@
     "upgrade-deno": "deno upgrade",
     "migrate-tenants": "deno run --allow-net --allow-env --allow-read scripts/migrate-tenants.ts",
     "cache-backend": "deno cache ../tests/backend/*.ts",
-    "test-backend": "deno test --allow-net --allow-env --allow-read ../tests/backend/",
+    "test-backend": "deno test --allow-net --allow-env --allow-read --allow-run --unstable-kv ../tests/backend/",
+    "test-backend-no-email": "deno run -A scripts/run-backend-tests-no-email.ts",
     "start": "deno run --allow-run --allow-env --allow-read scripts/start-all-services.ts",
 
     "docker:up": "docker-compose up -d",

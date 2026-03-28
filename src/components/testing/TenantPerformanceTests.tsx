@@ -1,5 +1,8 @@
-
-import React, { useState } from 'react';
+import React, { useState } from "react";
+import {
+  buildAuthHeaders,
+  MEDILOOP_API_BASE,
+} from "@/lib/activeContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -38,12 +41,12 @@ export const TenantPerformanceTests = () => {
     }));
 
     try {
-      const response = await fetch(`http://localhost:8000${endpoint}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
+      const response = await fetch(`${MEDILOOP_API_BASE}${endpoint}`, {
+        method: "POST",
+        headers: buildAuthHeaders({
+          "Content-Type": "application/json",
+        }),
+        body: JSON.stringify(payload),
       });
 
       const result = await response.json();

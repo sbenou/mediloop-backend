@@ -3,6 +3,9 @@
  * Tests the new email verification flow integrated with registration and login
  *
  * ✅ NOW INCLUDES: Automatic token fetching from database!
+ *
+ * Optional: SKIP_AUTH_RESEND_ROUTES=1 skips tests that POST /api/auth/resend-verification
+ * (saves Resend quota). Registration still sends one verification email per new user.
  */
 
 import {
@@ -23,6 +26,10 @@ let requestCounter = 1;
 
 // ✅ NEW: Create test database instance
 const testDb = new TestDb();
+
+/** Skip tests that call POST /api/auth/resend-verification (saves Resend quota). Registration still sends one verification email per new user. */
+const SKIP_AUTH_RESEND_ROUTES =
+  Deno.env.get("SKIP_AUTH_RESEND_ROUTES") === "1";
 
 // Setup: Start test server and connect to database
 Deno.test({
@@ -233,28 +240,35 @@ Deno.test("Email Verification - Check verification status", async () => {
 // TEST 4: Resend Verification Email
 // ============================================================================
 
-Deno.test("Email Verification - Resend verification email", async () => {
-  console.log("\n🧪 Testing resend verification email...");
-
-  const email = Deno.env.get("TEST_USER_EMAIL") || "test@mediloop.com";
-
-  const { response, data } = await makeRequest(
-    "/api/auth/resend-verification",
-    { email },
+if (SKIP_AUTH_RESEND_ROUTES) {
+  Deno.test.ignore(
+    "Email Verification - Resend verification email (skipped: SKIP_AUTH_RESEND_ROUTES=1)",
+    () => {},
   );
+} else {
+  Deno.test("Email Verification - Resend verification email", async () => {
+    console.log("\n🧪 Testing resend verification email...");
 
-  console.log(`  Status: ${response.status}`);
-  console.log(`  Response:`, data);
+    const email = Deno.env.get("TEST_USER_EMAIL") || "test@mediloop.com";
 
-  assertEquals(response.status, 200);
-  assertExists(data.message, "Should have success message");
-  assert(
-    data.message.includes("sent") || data.message.includes("email"),
-    "Message should confirm email sent",
-  );
+    const { response, data } = await makeRequest(
+      "/api/auth/resend-verification",
+      { email },
+    );
 
-  console.log("✅ Verification email resend successful\n");
-});
+    console.log(`  Status: ${response.status}`);
+    console.log(`  Response:`, data);
+
+    assertEquals(response.status, 200);
+    assertExists(data.message, "Should have success message");
+    assert(
+      data.message.includes("sent") || data.message.includes("email"),
+      "Message should confirm email sent",
+    );
+
+    console.log("✅ Verification email resend successful\n");
+  });
+}
 
 // ============================================================================
 // TEST 5: Verify Email with Token (POST) - ✅ NOW AUTO-FETCHES TOKEN!
@@ -480,41 +494,48 @@ Deno.test("Email Verification - Invalid token rejected", async () => {
 // TEST 10: Resend Verification for Already Verified User - ✅ NOW CHECKS DB!
 // ============================================================================
 
-Deno.test("Email Verification - Resend blocked for verified user", async () => {
-  console.log("\n🧪 Testing resend for already verified user...");
+if (SKIP_AUTH_RESEND_ROUTES) {
+  Deno.test.ignore(
+    "Email Verification - Resend blocked for verified user (skipped: SKIP_AUTH_RESEND_ROUTES=1)",
+    () => {},
+  );
+} else {
+  Deno.test("Email Verification - Resend blocked for verified user", async () => {
+    console.log("\n🧪 Testing resend for already verified user...");
 
-  const email = Deno.env.get("TEST_USER_EMAIL") || "test@mediloop.com";
+    const email = Deno.env.get("TEST_USER_EMAIL") || "test@mediloop.com";
 
-  // ✅ Verify user is actually verified
-  const isVerified = await testDb.isEmailVerified(email);
-  console.log(`  📊 Email verified status: ${isVerified}`);
+    // ✅ Verify user is actually verified
+    const isVerified = await testDb.isEmailVerified(email);
+    console.log(`  📊 Email verified status: ${isVerified}`);
 
-  if (!isVerified) {
-    console.log(
-      "  ⚠️  Email not verified - this test depends on Test 5 passing",
+    if (!isVerified) {
+      console.log(
+        "  ⚠️  Email not verified - this test depends on Test 5 passing",
+      );
+      console.log("  Skipping resend test");
+      return;
+    }
+
+    const { response, data } = await makeRequest(
+      "/api/auth/resend-verification",
+      { email },
     );
-    console.log("  Skipping resend test");
-    return;
-  }
 
-  const { response, data } = await makeRequest(
-    "/api/auth/resend-verification",
-    { email },
-  );
+    console.log(`  Status: ${response.status}`);
+    console.log(`  Response:`, data);
 
-  console.log(`  Status: ${response.status}`);
-  console.log(`  Response:`, data);
+    // ✅ Should return 400 Bad Request
+    assertEquals(response.status, 400, "Should block resend for verified user");
+    assertExists(data.error, "Should have error message");
+    assert(
+      data.error.includes("already verified") || data.error.includes("verified"),
+      "Error should mention email is already verified",
+    );
 
-  // ✅ Should return 400 Bad Request
-  assertEquals(response.status, 400, "Should block resend for verified user");
-  assertExists(data.error, "Should have error message");
-  assert(
-    data.error.includes("already verified") || data.error.includes("verified"),
-    "Error should mention email is already verified",
-  );
-
-  console.log("✅ Resend correctly blocked for verified user\n");
-});
+    console.log("✅ Resend correctly blocked for verified user\n");
+  });
+}
 
 // ============================================================================
 // TEST 11: Verify Email with GET (Email Link Click) - ✅ AUTO-FETCH TOKEN!
@@ -572,28 +593,35 @@ Deno.test(
 // TEST 12: Security - No User Enumeration
 // ============================================================================
 
-Deno.test(
-  "Email Verification - Security: No user enumeration on resend",
-  async () => {
-    console.log("\n🧪 Testing security: No user enumeration...");
+if (SKIP_AUTH_RESEND_ROUTES) {
+  Deno.test.ignore(
+    "Email Verification - Security: No user enumeration on resend (skipped: SKIP_AUTH_RESEND_ROUTES=1)",
+    () => {},
+  );
+} else {
+  Deno.test(
+    "Email Verification - Security: No user enumeration on resend",
+    async () => {
+      console.log("\n🧪 Testing security: No user enumeration...");
 
-    const { response, data } = await makeRequest(
-      "/api/auth/resend-verification",
-      { email: "nonexistent@mediloop.com" },
-    );
+      const { response, data } = await makeRequest(
+        "/api/auth/resend-verification",
+        { email: "nonexistent@mediloop.com" },
+      );
 
-    console.log(`  Status: ${response.status}`);
-    console.log(`  Response:`, data);
+      console.log(`  Status: ${response.status}`);
+      console.log(`  Response:`, data);
 
-    // Should return 200 (don't reveal if user exists)
-    assertEquals(response.status, 200, "Should not reveal if user exists");
+      // Should return 200 (don't reveal if user exists)
+      assertEquals(response.status, 200, "Should not reveal if user exists");
 
-    // Should have generic success message
-    assertExists(data.message, "Should have message");
+      // Should have generic success message
+      assertExists(data.message, "Should have message");
 
-    console.log("✅ No user enumeration - security check passed\n");
-  },
-);
+      console.log("✅ No user enumeration - security check passed\n");
+    },
+  );
+}
 
 // ============================================================================
 // INTEGRATION TEST: Full Flow - ✅ AUTO-FETCH TOKEN!
@@ -640,15 +668,21 @@ Deno.test("Email Verification - Full integration flow", async () => {
   assertEquals(statusData1.email_verified, false);
   console.log("  ✓ Status shows unverified");
 
-  // Step 4: Resend verification
-  console.log("  Step 4: Resend verification");
-  const { response: resendRes } = await makeRequest(
-    "/api/auth/resend-verification",
-    { email },
-  );
+  if (!SKIP_AUTH_RESEND_ROUTES) {
+    // Step 4: Resend verification
+    console.log("  Step 4: Resend verification");
+    const { response: resendRes } = await makeRequest(
+      "/api/auth/resend-verification",
+      { email },
+    );
 
-  assertEquals(resendRes.status, 200);
-  console.log("  ✓ Resend successful");
+    assertEquals(resendRes.status, 200);
+    console.log("  ✓ Resend successful");
+  } else {
+    console.log(
+      "  Step 4: Resend verification (skipped: SKIP_AUTH_RESEND_ROUTES=1 — token from registration is enough)",
+    );
+  }
 
   // ✅ Step 5: Auto-fetch token and verify!
   console.log("  Step 5: Fetch verification token from database");

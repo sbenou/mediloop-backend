@@ -1,17 +1,18 @@
-
 // This file now acts as an API client instead of direct database access
 // Direct database connections should not be made from the browser for security reasons
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+import { buildAuthHeaders, MEDILOOP_API_BASE } from "@/lib/activeContext";
 
 class DatabaseClient {
   private async request(endpoint: string, options: RequestInit = {}) {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const { headers: optHeaders, ...rest } = options;
+    const response = await fetch(`${MEDILOOP_API_BASE}${endpoint}`, {
+      ...rest,
       headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
+        "Content-Type": "application/json",
+        ...buildAuthHeaders(),
+        ...(optHeaders as Record<string, string>),
       },
-      ...options,
     });
 
     if (!response.ok) {

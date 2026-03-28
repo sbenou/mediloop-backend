@@ -7,6 +7,7 @@ import {
   clearV2SessionStorageKeys,
   persistV2SessionFromBackendLogin,
 } from "@/lib/auth/v2SessionStorage";
+import { buildAuthHeaders, clearStoredActiveContext } from "@/lib/activeContext";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -117,6 +118,7 @@ function clearAuthTokens(): void {
   localStorage.removeItem("mediloop_session_sync");
   localStorage.removeItem("mediloop_v2_user");
   clearV2SessionStorageKeys();
+  clearStoredActiveContext();
   console.log("✅ [authClientV2] All auth tokens cleared");
 }
 
@@ -127,11 +129,13 @@ async function apiFetch<T>(
   endpoint: string,
   options: RequestInit = {},
 ): Promise<T> {
+  const { headers: optHeaders, ...rest } = options;
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
+    ...rest,
     headers: {
       "Content-Type": "application/json",
-      ...options.headers,
+      ...buildAuthHeaders(),
+      ...(optHeaders as Record<string, string>),
     },
   });
 

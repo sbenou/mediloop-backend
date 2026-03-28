@@ -1,4 +1,5 @@
-import { sql } from '@/lib/database';
+import { sql } from "@/lib/database";
+import { buildAuthHeaders, MEDILOOP_API_BASE } from "@/lib/activeContext";
 
 export interface Tenant {
   id: string;
@@ -226,14 +227,16 @@ export const initiateDomainVerification = async (tenantId: string, domain: strin
   try {
     console.log('Initiating domain verification for:', { tenantId, domain });
     
-    const response = await fetch('http://localhost:8000/api/domain/initiate-verification', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        // TODO: Add authorization header when auth is implemented
+    const response = await fetch(
+      `${MEDILOOP_API_BASE}/api/domain/initiate-verification`,
+      {
+        method: "POST",
+        headers: buildAuthHeaders({
+          "Content-Type": "application/json",
+        }),
+        body: JSON.stringify({ tenantId, domain }),
       },
-      body: JSON.stringify({ tenantId, domain })
-    });
+    );
 
     if (!response.ok) {
       const error = await response.json();
@@ -253,13 +256,12 @@ export const verifyDomainOwnership = async (verificationId: string) => {
   try {
     console.log('Verifying domain ownership for:', verificationId);
     
-    const response = await fetch('http://localhost:8000/api/domain/verify', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        // TODO: Add authorization header when auth is implemented
-      },
-      body: JSON.stringify({ verificationId })
+    const response = await fetch(`${MEDILOOP_API_BASE}/api/domain/verify`, {
+      method: "POST",
+      headers: buildAuthHeaders({
+        "Content-Type": "application/json",
+      }),
+      body: JSON.stringify({ verificationId }),
     });
 
     if (!response.ok) {
@@ -280,13 +282,12 @@ export const removeCustomDomain = async (tenantId: string) => {
   try {
     console.log('Removing custom domain for tenant:', tenantId);
     
-    const response = await fetch('http://localhost:8000/api/domain/remove', {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        // TODO: Add authorization header when auth is implemented
-      },
-      body: JSON.stringify({ tenantId })
+    const response = await fetch(`${MEDILOOP_API_BASE}/api/domain/remove`, {
+      method: "DELETE",
+      headers: buildAuthHeaders({
+        "Content-Type": "application/json",
+      }),
+      body: JSON.stringify({ tenantId }),
     });
 
     if (!response.ok) {
@@ -311,13 +312,15 @@ export const fetchDomainVerifications = async (tenantId?: string): Promise<Domai
       return [];
     }
 
-    const response = await fetch(`http://localhost:8000/api/domain/verifications/${tenantId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        // TODO: Add authorization header when auth is implemented
-      }
-    });
+    const response = await fetch(
+      `${MEDILOOP_API_BASE}/api/domain/verifications/${tenantId}`,
+      {
+        method: "GET",
+        headers: buildAuthHeaders({
+          "Content-Type": "application/json",
+        }),
+      },
+    );
 
     if (!response.ok) {
       const error = await response.json();

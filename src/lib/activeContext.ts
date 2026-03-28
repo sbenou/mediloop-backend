@@ -1,7 +1,10 @@
-const API_BASE =
+/** Use this for every Mediloop Deno API URL (matches other clients). */
+export const MEDILOOP_API_BASE =
   import.meta.env.VITE_API_URL ||
   import.meta.env.VITE_API_BASE_URL ||
   "http://localhost:8000";
+
+const API_BASE = MEDILOOP_API_BASE;
 
 const ACTIVE_CONTEXT_KEY = "mediloop_active_context_v1";
 

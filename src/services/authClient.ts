@@ -2,7 +2,7 @@ import {
   clearV2SessionStorageKeys,
   persistV2SessionFromBackendLogin,
 } from "@/lib/auth/v2SessionStorage";
-import { buildAuthHeaders } from "@/lib/activeContext";
+import { buildAuthHeaders, clearStoredActiveContext } from "@/lib/activeContext";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -210,6 +210,7 @@ class AuthClient {
     localStorage.removeItem("mediloop_session_sync");
     localStorage.removeItem("mediloop_v2_user");
     clearV2SessionStorageKeys();
+    clearStoredActiveContext();
 
     console.log("✅ Logged out - cleared all auth data");
   }
