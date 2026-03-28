@@ -155,7 +155,7 @@ Optional: `created_by_user_id` where useful for reporting.
 |-------|--------|
 | **1** | `tenant_type` on `public.tenants`; `public.personal_health_tenants`; `public.tenant_invitations`; extend `public.user_tenants`; `public.audit_events` |
 | **2** | Identity-only JWT; context headers; membership revalidation per request; audit denied/switch events |
-| **3** | `professional_tenant_id` + `created_by_membership_id` on prescriptions, teleconsultations, and other professional-origin tables |
+| **3** | `professional_tenant_id` + `created_by_membership_id` on prescriptions, teleconsultations, and other professional-origin tables — apply [`migration_020_option_c_phase3_clinical_attribution.sql`](../backend/migrations/migration_020_option_c_phase3_clinical_attribution.sql); list APIs scope doctor/pharmacist by active tenant (NULL = legacy) |
 | **4** | Legacy backfill/quarantine rules; wire P0 matrix to real routes; optional CSV/Jira tracker |
 
 ### Phase 1 — apply on database (manual)

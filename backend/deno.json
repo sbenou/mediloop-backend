@@ -14,6 +14,7 @@
     "cache-backend": "deno cache ../tests/backend/*.ts",
     "test-backend": "deno test --allow-net --allow-env --allow-read --allow-run --unstable-kv ../tests/backend/",
     "test-backend-no-email": "deno run -A scripts/run-backend-tests-no-email.ts",
+    "test-backend-phase3": "deno run -A scripts/run-phase3-clinical-tests.ts",
     "start": "deno run --allow-run --allow-env --allow-read scripts/start-all-services.ts",
 
     "docker:up": "docker-compose up -d",
