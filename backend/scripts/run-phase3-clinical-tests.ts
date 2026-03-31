@@ -1,5 +1,5 @@
 /**
- * Runs clinical Phase 3 tests (requires migration_020 applied on TEST_DATABASE_URL).
+ * Runs clinical Phase 3 tests (requires migrations 018–022 applied on TEST_DATABASE_URL).
  *
  *   cd backend && deno task test-backend-phase3
  */

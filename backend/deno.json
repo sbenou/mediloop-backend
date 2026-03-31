@@ -15,6 +15,8 @@
     "test-backend": "deno test --allow-net --allow-env --allow-read --allow-run --unstable-kv ../tests/backend/",
     "test-backend-no-email": "deno run -A scripts/run-backend-tests-no-email.ts",
     "test-backend-phase3": "deno run -A scripts/run-phase3-clinical-tests.ts",
+    "apply-clinical-option-c-migrations": "deno run -A scripts/apply-clinical-option-c-migrations.ts",
+    "seed-clinical-demo": "deno run -A scripts/apply-seed-clinical-demo.ts",
     "start": "deno run --allow-run --allow-env --allow-read scripts/start-all-services.ts",
 
     "docker:up": "docker-compose up -d",

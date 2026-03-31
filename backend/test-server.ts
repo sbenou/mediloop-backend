@@ -19,7 +19,12 @@ import { invitationRoutes } from "./modules/auth/routes/invitation.ts";
 import loginEmailRoutes from "./shared/routes/loginEmails.ts";
 import { passwordResetRoutes } from "./modules/auth/routes/passwordReset.ts";
 import { wearablesRoutes } from "./modules/wearables/routes/wearables.ts";
-import { clinicalRoutes } from "./modules/clinical/routes/clinical.ts";
+import {
+  clinicalRoutes,
+  servePlatformClinicalStats,
+} from "./modules/clinical/routes/clinical.ts";
+import { legacyClinicalAdminRoutes } from "./modules/admin/routes/legacyClinicalReview.ts";
+import { superadminPlatformRoutes } from "./modules/admin/routes/superadminPlatform.ts";
 import { load } from "https://deno.land/std@0.224.0/dotenv/mod.ts";
 import { resolveEnvTestPath } from "../tests/utils/resolveEnvTestPath.ts";
 
@@ -39,6 +44,12 @@ if (env.TEST_DATABASE_URL) {
 
 // ✅ Set test-specific environment
 Deno.env.set("DENO_ENV", "test");
+
+const publicClinicalRouter = new Router();
+publicClinicalRouter.get(
+  "/api/clinical/platform-stats",
+  servePlatformClinicalStats,
+);
 
 const app = new Application();
 
@@ -61,7 +72,7 @@ app.use(async (ctx, next) => {
 app.use(
   oakCors({
     origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
@@ -89,6 +100,10 @@ app.use(oauthRoutes.allowedMethods());
 
 app.use(luxtrustRoutes.routes());
 app.use(luxtrustRoutes.allowedMethods());
+
+// Public clinical aggregate stats (same mount order as main.ts)
+app.use(publicClinicalRouter.routes());
+app.use(publicClinicalRouter.allowedMethods());
 
 app.use(authMiddleware);
 app.use(activeContextMiddleware);
@@ -120,6 +135,12 @@ app.use(wearablesRoutes.allowedMethods());
 
 app.use(clinicalRoutes.routes());
 app.use(clinicalRoutes.allowedMethods());
+
+app.use(legacyClinicalAdminRoutes.routes());
+app.use(legacyClinicalAdminRoutes.allowedMethods());
+
+app.use(superadminPlatformRoutes.routes());
+app.use(superadminPlatformRoutes.allowedMethods());
 
 // Health check route
 const router = new Router();

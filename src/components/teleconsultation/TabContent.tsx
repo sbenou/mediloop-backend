@@ -2,7 +2,7 @@
 import React from 'react';
 import { TabsContent } from "@/components/ui/tabs";
 import ConsultationCard from './ConsultationCard';
-import { Teleconsultation } from '@/types/supabase';
+import type { Teleconsultation } from "@/types/clinical";
 
 interface TabContentProps {
   value: string;
@@ -10,6 +10,7 @@ interface TabContentProps {
   userRole?: string;
   emptyMessage: string;
   onJoinMeeting: (consultation: Teleconsultation) => void;
+  onConsultationsChanged?: () => void;
 }
 
 const TabContent: React.FC<TabContentProps> = ({
@@ -17,7 +18,8 @@ const TabContent: React.FC<TabContentProps> = ({
   consultations,
   userRole,
   emptyMessage,
-  onJoinMeeting
+  onJoinMeeting,
+  onConsultationsChanged,
 }) => {
   return (
     <TabsContent value={value} className="mt-4">
@@ -26,11 +28,12 @@ const TabContent: React.FC<TabContentProps> = ({
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {consultations.map(consultation => (
-            <ConsultationCard 
-              key={consultation.id} 
-              consultation={consultation} 
-              userRole={userRole} 
-              onJoinMeeting={onJoinMeeting} 
+            <ConsultationCard
+              key={consultation.id}
+              consultation={consultation}
+              userRole={userRole}
+              onJoinMeeting={onJoinMeeting}
+              onConsultationsChanged={onConsultationsChanged}
             />
           ))}
         </div>

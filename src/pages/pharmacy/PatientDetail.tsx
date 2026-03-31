@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase";
 import { UserProfile } from "@/types/user";
-import { Address } from "@/types/supabase";
+import { Address } from "@/types/domain";
 
 const PatientDetail = () => {
   const { id } = useParams<{ id: string }>();

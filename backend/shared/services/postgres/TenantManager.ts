@@ -76,7 +76,7 @@ export class TenantManager {
     try {
       // Get user info
       const userResult = await this.client.query(
-        "SELECT role, full_name FROM public.profiles WHERE id = $1",
+        "SELECT role, full_name FROM auth.users WHERE id = $1",
         [userId],
       );
 

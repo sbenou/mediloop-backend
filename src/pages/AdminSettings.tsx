@@ -14,6 +14,9 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const legacySupabaseAdminTabs =
+  import.meta.env.VITE_SUPABASE_ADMIN_TABS === "true";
+
 const AdminSettings = () => {
   const navigate = useNavigate();
   const { profile, isLoading: authLoading } = useAuth();
@@ -94,7 +97,9 @@ const AdminSettings = () => {
             <Skeleton className="h-12 w-full" />
           </div>
         ) : (
-          <AdminTabs 
+          <AdminTabs
+            tabBasePath="/admin-settings"
+            legacySupabaseAdminTabs={legacySupabaseAdminTabs}
             users={users}
             isLoading={adminDataLoading}
             updateUserRole={updateUserRole}

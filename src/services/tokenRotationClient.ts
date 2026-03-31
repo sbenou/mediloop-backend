@@ -13,6 +13,23 @@ interface RotatedTokenResponse {
   rotatedAt?: string;
 }
 
+export interface RotationQueueItem {
+  keyTimestamp: number;
+  sessionId: string;
+  userId: string;
+  expiresAt: string;
+  nextAttemptAt: string;
+  failedAttempts: number;
+  lastError?: string;
+}
+
+export interface RotationQueueResponse {
+  count: number;
+  limit: number;
+  now: string;
+  items: RotationQueueItem[];
+}
+
 class TokenRotationClient {
   private checkInterval: number | null = null;
   private onTokenRotated?: (newToken: string, expiresAt: string) => void;
@@ -99,3 +116,26 @@ class TokenRotationClient {
 }
 
 export const tokenRotationClient = new TokenRotationClient();
+
+export async function fetchRotationQueueHealth(
+  limit = 200,
+): Promise<RotationQueueResponse> {
+  const token = localStorage.getItem("auth_token");
+  if (!token) throw new Error("No auth token");
+
+  const response = await fetch(
+    `${API_BASE_URL}/admin/rotation-queue?limit=${encodeURIComponent(String(limit))}`,
+    {
+      method: "GET",
+      headers: buildAuthHeaders({
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      }),
+    },
+  );
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error((data as { error?: string }).error || response.statusText);
+  }
+  return data as RotationQueueResponse;
+}

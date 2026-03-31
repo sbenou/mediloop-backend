@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Plus, X, Save, Clock } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
-import { DoctorAvailability, TimeSlot, isTimeSlot, AppointmentType } from "@/types/supabase";
+import { DoctorAvailability, TimeSlot, isTimeSlot, AppointmentType } from "@/types/domain";
 
 interface DoctorAvailabilityCalendarProps {
   doctorId: string;

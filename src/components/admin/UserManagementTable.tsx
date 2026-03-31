@@ -5,9 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Ban, Trash2, UserCheck } from "lucide-react";
 import { UserProfile } from "@/types/user";
-import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  postAdminProfileSoftDelete,
+  postAdminProfileToggleBlock,
+} from "@/services/adminApi";
 
 interface UserManagementTableProps {
   users?: UserProfile[];
@@ -17,36 +21,23 @@ interface UserManagementTableProps {
 
 export const UserManagementTable = ({ users, isLoading, updateUserRole }: UserManagementTableProps) => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
+  const list = users ?? [];
 
   const handleRoleChange = async (userId: string, newRole: UserProfile['role']) => {
     try {
-      const { data: rolePermissions, error: roleError } = await supabase
-        .from('role_permissions')
-        .select('permission_id')
-        .eq('role_id', newRole);
-
-      if (roleError) throw roleError;
-
-      const { error: updateError } = await supabase.rpc('update_user_role_and_permissions', {
-        p_user_id: userId,
-        p_new_role: newRole,
-        p_new_permissions: rolePermissions.map(rp => rp.permission_id)
-      });
-
-      if (updateError) throw updateError;
       await updateUserRole(userId, newRole);
-
       toast({
         title: "Role Updated",
-        description: "User role and permissions have been updated successfully.",
+        description: "User role has been updated successfully.",
       });
     } catch (error) {
-      console.error('Error updating user role and permissions:', error);
+      console.error('Error updating user role:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to update user role and permissions. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to update user role. Please try again.",
       });
     }
   };
@@ -54,12 +45,8 @@ export const UserManagementTable = ({ users, isLoading, updateUserRole }: UserMa
   const handleSoftDelete = async (userId: string) => {
     setProcessingIds(prev => new Set(prev).add(userId));
     try {
-      const { error } = await supabase.rpc('soft_delete_user', {
-        user_id: userId
-      });
-
-      if (error) throw error;
-
+      await postAdminProfileSoftDelete(userId);
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
       toast({
         title: "User Deleted",
         description: "User has been successfully deleted.",
@@ -69,7 +56,7 @@ export const UserManagementTable = ({ users, isLoading, updateUserRole }: UserMa
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to delete user. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to delete user. Please try again.",
       });
     } finally {
       setProcessingIds(prev => {
@@ -83,12 +70,8 @@ export const UserManagementTable = ({ users, isLoading, updateUserRole }: UserMa
   const handleToggleBlock = async (userId: string) => {
     setProcessingIds(prev => new Set(prev).add(userId));
     try {
-      const { error } = await supabase.rpc('toggle_user_block', {
-        user_id: userId
-      });
-
-      if (error) throw error;
-
+      await postAdminProfileToggleBlock(userId);
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
       toast({
         title: "User Status Updated",
         description: "User block status has been successfully updated.",
@@ -98,7 +81,7 @@ export const UserManagementTable = ({ users, isLoading, updateUserRole }: UserMa
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to update user status. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to update user status. Please try again.",
       });
     } finally {
       setProcessingIds(prev => {
@@ -127,13 +110,13 @@ export const UserManagementTable = ({ users, isLoading, updateUserRole }: UserMa
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Current Role</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Change role</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users?.map((user) => (
+              {list.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell>{user.full_name}</TableCell>
                   <TableCell>{user.email}</TableCell>
@@ -149,6 +132,7 @@ export const UserManagementTable = ({ users, isLoading, updateUserRole }: UserMa
                         <SelectValue placeholder="Select role" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="patient">Patient</SelectItem>
                         <SelectItem value="user">User</SelectItem>
                         <SelectItem value="doctor">Doctor</SelectItem>
                         <SelectItem value="pharmacist">Pharmacist</SelectItem>

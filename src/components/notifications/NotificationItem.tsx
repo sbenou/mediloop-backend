@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Notification } from "@/types/supabase";
+import { Notification } from "@/types/domain";
 import { Check, BellRing, AlertTriangle } from "lucide-react";
 import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";

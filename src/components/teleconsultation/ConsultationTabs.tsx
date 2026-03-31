@@ -2,9 +2,9 @@
 import React from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Teleconsultation } from "@/types/supabase";
+import type { Teleconsultation } from "@/types/clinical";
 import TabContent from "./TabContent";
-import { Profile } from "@/types/supabase";
+import type { Profile } from "@/types/domain";
 
 interface ConsultationTabsProps {
   todayConsultations: Teleconsultation[];
@@ -14,6 +14,7 @@ interface ConsultationTabsProps {
   cancelledConsultations: Teleconsultation[];
   profile?: Profile | null;
   onJoinMeeting: (consultation: Teleconsultation) => void;
+  onConsultationsChanged?: () => void;
 }
 
 const ConsultationTabs: React.FC<ConsultationTabsProps> = ({
@@ -23,7 +24,8 @@ const ConsultationTabs: React.FC<ConsultationTabsProps> = ({
   pastConsultations,
   cancelledConsultations,
   profile,
-  onJoinMeeting
+  onJoinMeeting,
+  onConsultationsChanged,
 }) => {
   return (
     <Tabs defaultValue="today">
@@ -53,6 +55,7 @@ const ConsultationTabs: React.FC<ConsultationTabsProps> = ({
         userRole={profile?.role}
         emptyMessage="No teleconsultations scheduled for today."
         onJoinMeeting={onJoinMeeting}
+        onConsultationsChanged={onConsultationsChanged}
       />
       
       <TabContent
@@ -61,6 +64,7 @@ const ConsultationTabs: React.FC<ConsultationTabsProps> = ({
         userRole={profile?.role}
         emptyMessage="No upcoming teleconsultations scheduled."
         onJoinMeeting={onJoinMeeting}
+        onConsultationsChanged={onConsultationsChanged}
       />
       
       <TabContent
@@ -69,6 +73,7 @@ const ConsultationTabs: React.FC<ConsultationTabsProps> = ({
         userRole={profile?.role}
         emptyMessage="No pending teleconsultation requests."
         onJoinMeeting={onJoinMeeting}
+        onConsultationsChanged={onConsultationsChanged}
       />
       
       <TabContent
@@ -77,6 +82,7 @@ const ConsultationTabs: React.FC<ConsultationTabsProps> = ({
         userRole={profile?.role}
         emptyMessage="No past teleconsultations."
         onJoinMeeting={onJoinMeeting}
+        onConsultationsChanged={onConsultationsChanged}
       />
       
       <TabContent
@@ -85,6 +91,7 @@ const ConsultationTabs: React.FC<ConsultationTabsProps> = ({
         userRole={profile?.role}
         emptyMessage="No cancelled teleconsultations."
         onJoinMeeting={onJoinMeeting}
+        onConsultationsChanged={onConsultationsChanged}
       />
     </Tabs>
   );

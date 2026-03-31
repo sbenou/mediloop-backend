@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { fetchDoctorPatientConnectionsApi } from "@/services/clinicalApi";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
@@ -35,17 +35,21 @@ const DoctorConnections = () => {
   const { data: connections, isLoading, error } = useQuery({
     queryKey: ['connections'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('doctor_patient_connections')
-        .select(`
-          *,
-          doctor:profiles!doctor_id(full_name, license_number),
-          patient:profiles!patient_id(full_name)
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data as Connection[];
+      const rows = await fetchDoctorPatientConnectionsApi();
+      return rows.map((c) => ({
+        id: c.id,
+        doctor_id: c.doctor_id,
+        patient_id: c.patient_id,
+        status: c.status,
+        created_at: c.created_at,
+        doctor: {
+          full_name: c.doctor?.full_name ?? "Unknown",
+          license_number: c.doctor?.license_number ?? "—",
+        },
+        patient: {
+          full_name: c.patient?.full_name ?? "Unknown",
+        },
+      })) as Connection[];
     },
   });
 

@@ -1,6 +1,5 @@
-
-import { useState, useEffect } from "react";
-import { Teleconsultation } from "@/types/supabase";
+import { useState, useEffect, useCallback } from "react";
+import type { Teleconsultation } from "@/types/clinical";
 import { isPast, isFuture, isToday } from "date-fns";
 import {
   fetchTeleconsultationsApi,
@@ -37,35 +36,35 @@ export const useConsultations = (
     (c) => c.status === "cancelled",
   );
 
-  useEffect(() => {
-    const fetchConsultations = async () => {
-      if (!profileId) return;
+  const refetch = useCallback(async () => {
+    if (!profileId) return;
 
-      setIsLoading(true);
+    setIsLoading(true);
 
-      try {
-        const typedConsultations = await fetchTeleconsultationsApi();
-        setConsultations(typedConsultations);
+    try {
+      const typedConsultations = await fetchTeleconsultationsApi();
+      setConsultations(typedConsultations);
 
-        if (filterRole === "patient") {
-          const hasDoc = await fetchHasAcceptedDoctorApi();
-          setHasConnections(hasDoc);
-        } else {
-          setHasConnections(true);
-        }
-      } catch (err) {
-        console.error("Error fetching teleconsultations:", err);
-        setConsultations([]);
-        if (filterRole === "patient") {
-          setHasConnections(false);
-        }
-      } finally {
-        setIsLoading(false);
+      if (filterRole === "patient") {
+        const hasDoc = await fetchHasAcceptedDoctorApi();
+        setHasConnections(hasDoc);
+      } else {
+        setHasConnections(true);
       }
-    };
-
-    fetchConsultations();
+    } catch (err) {
+      console.error("Error fetching teleconsultations:", err);
+      setConsultations([]);
+      if (filterRole === "patient") {
+        setHasConnections(false);
+      }
+    } finally {
+      setIsLoading(false);
+    }
   }, [profileId, filterRole]);
+
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
 
   return {
     isLoading,
@@ -76,5 +75,6 @@ export const useConsultations = (
     pastConsultations,
     pendingConsultations,
     cancelledConsultations,
+    refetch,
   };
 };

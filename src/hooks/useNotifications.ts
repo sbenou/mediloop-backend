@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Notification } from '@/types/supabase';
+import { Notification } from '@/types/domain';
 import { toast } from '@/components/ui/use-toast';
 import { useAuth } from '@/hooks/auth/useAuth';
 

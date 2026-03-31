@@ -1,5 +1,5 @@
 
-import { Notification } from "@/types/supabase";
+import { Notification } from "@/types/domain";
 import { Activity } from "@/hooks/activity/types";
 
 /**

@@ -7,7 +7,7 @@ import DoctorAvailabilityCalendar from "@/components/teleconsultation/DoctorAvai
 import AvailabilityWeeklyCalendar from "@/components/teleconsultation/AvailabilityWeeklyCalendar";
 import TeleconsultationList from "@/components/teleconsultation/TeleconsultationList";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { Teleconsultation } from "@/types/supabase";
+import type { Teleconsultation } from "@/types/clinical";
 
 const DoctorTeleconsultationsView = () => {
   const { profile } = useAuth();

@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useRecoilState } from "recoil";
 import { userLocationState } from "@/store/location/atoms";
 import { supabase } from "@/lib/supabase";
-import { Address } from "@/types/supabase";
+import { Address } from "@/types/domain";
 import { useAuth } from "@/hooks/auth/useAuth";
 
 type Country = {

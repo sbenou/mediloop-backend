@@ -3,7 +3,13 @@ import { useState, useEffect } from "react";
 import { addDays, startOfWeek } from "date-fns";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
-import { BankHoliday, DoctorAvailability, Teleconsultation, SupportedCountry, AppointmentType } from "@/types/supabase";
+import type { Teleconsultation } from "@/types/clinical";
+import type {
+  BankHoliday,
+  DoctorAvailability,
+  SupportedCountry,
+  AppointmentType,
+} from "@/types/domain";
 import { useAvailabilityData } from "./useAvailabilityData";
 import { useAvailabilityHelpers } from "./useAvailabilityHelpers";
 

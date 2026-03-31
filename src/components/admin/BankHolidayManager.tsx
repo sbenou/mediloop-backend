@@ -9,9 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
-import { BankHoliday, SupportedCountry } from "@/types/supabase";
+import {
+  createAdminBankHoliday,
+  deleteAdminBankHoliday,
+  fetchAdminBankHolidays,
+} from "@/services/adminApi";
+import { BankHoliday, SupportedCountry } from "@/types/domain";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const BankHolidayManager = () => {
@@ -25,33 +29,27 @@ const BankHolidayManager = () => {
 
   // Fetch holidays for the selected country
   useEffect(() => {
-    const fetchHolidays = async () => {
+    const load = async () => {
       setIsLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('bank_holidays')
-          .select('*')
-          .eq('country', selectedCountry)
-          .order('holiday_date', { ascending: true });
-
-        if (error) {
-          throw error;
-        }
-
-        setHolidays(data || []);
+        const data = await fetchAdminBankHolidays(selectedCountry);
+        setHolidays(data);
       } catch (error) {
-        console.error('Error fetching bank holidays:', error);
+        console.error("Error fetching bank holidays:", error);
         toast({
           variant: "destructive",
           title: "Failed to fetch bank holidays",
-          description: "There was an error loading bank holidays. Please try again."
+          description:
+            error instanceof Error
+              ? error.message
+              : "There was an error loading bank holidays. Please try again.",
         });
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchHolidays();
+    load();
   }, [selectedCountry]);
 
   const handleAddHoliday = async () => {
@@ -66,46 +64,30 @@ const BankHolidayManager = () => {
 
     setIsSubmitting(true);
     try {
-      // Format date to ISO string (YYYY-MM-DD)
       const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+      const row = await createAdminBankHoliday({
+        country: selectedCountry,
+        holiday_name: holidayName.trim(),
+        holiday_date: formattedDate,
+      });
 
-      const { data, error } = await supabase
-        .from('bank_holidays')
-        .insert([
-          {
-            country: selectedCountry,
-            holiday_name: holidayName,
-            holiday_date: formattedDate
-          }
-        ])
-        .select();
-
-      if (error) {
-        if (error.code === '23505') { // unique constraint violation
-          throw new Error('A holiday already exists on this date for the selected country');
-        }
-        throw error;
-      }
-
-      // Add the new holiday to the list
-      if (data) {
-        setHolidays([...holidays, data[0]]);
-      }
+      setHolidays([...holidays, row].sort((a, b) =>
+        a.holiday_date.localeCompare(b.holiday_date)
+      ));
 
       toast({
         title: "Holiday added",
         description: `${holidayName} has been added to the calendar`
       });
 
-      // Reset form
       setHolidayName("");
       setSelectedDate(new Date());
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error adding bank holiday:', error);
       toast({
         variant: "destructive",
         title: "Failed to add holiday",
-        description: error.message || "There was an error adding the holiday. Please try again."
+        description: error instanceof Error ? error.message : "There was an error adding the holiday. Please try again."
       });
     } finally {
       setIsSubmitting(false);
@@ -114,16 +96,7 @@ const BankHolidayManager = () => {
 
   const handleDeleteHoliday = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('bank_holidays')
-        .delete()
-        .eq('id', id);
-
-      if (error) {
-        throw error;
-      }
-
-      // Remove the deleted holiday from the list
+      await deleteAdminBankHoliday(id);
       setHolidays(holidays.filter(holiday => holiday.id !== id));
 
       toast({
@@ -135,7 +108,7 @@ const BankHolidayManager = () => {
       toast({
         variant: "destructive",
         title: "Failed to delete holiday",
-        description: "There was an error deleting the holiday. Please try again."
+        description: error instanceof Error ? error.message : "There was an error deleting the holiday. Please try again."
       });
     }
   };

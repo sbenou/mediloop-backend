@@ -7,7 +7,7 @@ import { Loader2, User, Clock, CircleAlert } from "lucide-react";
 import { useBookingDialog } from "./hooks/useBookingDialog";
 import BookingDetailsForm from "./BookingDetailsForm";
 import BookingTimeForm from "./BookingTimeForm";
-import { AppointmentType } from "@/types/supabase";
+import { AppointmentType } from "@/types/domain";
 
 // Define props for the component
 interface TeleconsultationBookingDialogProps {

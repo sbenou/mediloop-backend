@@ -1,12 +1,12 @@
 
 import { useState } from "react";
-import { 
-  BankHoliday, 
-  DoctorAvailability, 
-  Teleconsultation, 
-  SupportedCountry, 
-  AppointmentType 
-} from "@/types/supabase";
+import type { Teleconsultation } from "@/types/clinical";
+import type {
+  BankHoliday,
+  DoctorAvailability,
+  SupportedCountry,
+  AppointmentType,
+} from "@/types/domain";
 import { 
   fetchDoctorAvailability, 
   fetchTeleconsultations, 
