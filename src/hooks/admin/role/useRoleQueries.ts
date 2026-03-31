@@ -1,7 +1,7 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
 import { Role } from "@/types/role";
+import { fetchAdminRoles } from "@/services/adminApi";
 
 export const useRoleQueries = () => {
   const queryClient = useQueryClient();
@@ -9,13 +9,7 @@ export const useRoleQueries = () => {
   const { data: roles = [], isLoading } = useQuery({
     queryKey: ['roles'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('roles')
-        .select('*')
-        .order('created_at', { ascending: true });
-      
-      if (error) throw error;
-      return data as Role[];
+      return (await fetchAdminRoles()) as Role[];
     },
   });
 

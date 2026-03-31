@@ -8,11 +8,36 @@ import { RoleManagementTable } from "../RoleManagementTable";
 import { PermissionsManagementCard } from "./PermissionsManagementCard";
 import { ProductManagementCard } from "./ProductManagementCard";
 import { CustomersCard } from "./CustomersCard";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-export const AdminTabs = ({ users, isLoading, updateUserRole }: {
+function NeonAdminTabPlaceholder({ title }: { title: string }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>
+          This area previously depended on Supabase (roles, permissions, products). It is not wired to the Neon API yet. Set{" "}
+          <span className="font-mono text-xs">VITE_SUPABASE_ADMIN_TABS=true</span> only if you still run those tables through Supabase.
+        </CardDescription>
+      </CardHeader>
+    </Card>
+  );
+}
+
+export const AdminTabs = ({
+  users,
+  isLoading,
+  updateUserRole,
+  tabBasePath = "/admin-settings",
+  legacySupabaseAdminTabs = false,
+}: {
   users?: any[];
   isLoading: boolean;
   updateUserRole: (userId: string, newRole: string) => Promise<void>;
+  /** Route used when changing tabs (must match the page that hosts this component). */
+  tabBasePath?: string;
+  /** When true, load legacy Supabase-backed role/product/customer admin. Default false (Neon). */
+  legacySupabaseAdminTabs?: boolean;
 }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -38,7 +63,7 @@ export const AdminTabs = ({ users, isLoading, updateUserRole }: {
   };
 
   const handleTabChange = (value: string) => {
-    navigate(`/admin-settings?tab=${value}`);
+    navigate(`${tabBasePath}?tab=${value}`);
   };
 
   return (
@@ -85,19 +110,35 @@ export const AdminTabs = ({ users, isLoading, updateUserRole }: {
       </TabsContent>
 
       <TabsContent value="roles">
-        <RoleManagementTable />
+        {legacySupabaseAdminTabs ? (
+          <RoleManagementTable />
+        ) : (
+          <NeonAdminTabPlaceholder title="Roles" />
+        )}
       </TabsContent>
 
       <TabsContent value="permissions">
-        <PermissionsManagementCard />
+        {legacySupabaseAdminTabs ? (
+          <PermissionsManagementCard />
+        ) : (
+          <NeonAdminTabPlaceholder title="Permissions" />
+        )}
       </TabsContent>
 
       <TabsContent value="products">
-        <ProductManagementCard />
+        {legacySupabaseAdminTabs ? (
+          <ProductManagementCard />
+        ) : (
+          <NeonAdminTabPlaceholder title="Products" />
+        )}
       </TabsContent>
 
       <TabsContent value="customers">
-        <CustomersCard />
+        {legacySupabaseAdminTabs ? (
+          <CustomersCard />
+        ) : (
+          <NeonAdminTabPlaceholder title="Customers" />
+        )}
       </TabsContent>
     </Tabs>
   );

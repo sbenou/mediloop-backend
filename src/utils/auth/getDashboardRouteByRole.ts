@@ -1,4 +1,6 @@
 
+import { getPreferredDashboardMode } from "@/utils/dashboard/dashboardMode";
+
 /**
  * Get the appropriate dashboard route for a user based on their role
  * @param role The user role
@@ -10,10 +12,11 @@ export function getDashboardRouteByRole(role?: string | null): string {
   }
 
   switch (role.toLowerCase()) {
-    case "pharmacist":
-      return "/pharmacy/dashboard";
     case "doctor":
-      return "/doctor/dashboard";
+    case "pharmacist": {
+      const preferredMode = getPreferredDashboardMode(role);
+      return preferredMode === "patient" ? "/dashboard?mode=patient" : "/dashboard";
+    }
     case "superadmin":
       return "/superadmin/dashboard";
     case "user":

@@ -37,7 +37,7 @@ export function UserMenuItems() {
     }
     
     // For pharmacy dashboard specific paths, compare with the current section
-    if (isPharmacist && location.pathname === '/pharmacy/dashboard') {
+    if (isPharmacist && location.pathname === '/dashboard') {
       const currentSection = new URLSearchParams(location.search).get('section');
       const itemSection = new URLSearchParams(item.path.split('?')[1] || '').get('section');
       

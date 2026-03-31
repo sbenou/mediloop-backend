@@ -30,8 +30,11 @@ import DenoBackendManagement from "@/pages/DenoBackendManagement";
 import AdminSettings from "@/pages/AdminSettings";
 import SuperAdminDashboard from "@/pages/superadmin/SuperAdminDashboard";
 import TenantManagement from "@/pages/superadmin/TenantManagement";
+import LegacyClinicalReviewPage from "@/pages/superadmin/LegacyClinicalReviewPage";
+import RotationQueuePage from "@/pages/superadmin/RotationQueuePage";
 import ProtectedDoctorDashboard from "@/router/roles/ProtectedDoctorDashboard";
 import ProtectedDoctorProfilePage from "@/router/roles/ProtectedDoctorProfilePage";
+import ProtectedPharmacyDashboard from "@/router/roles/ProtectedPharmacyDashboard";
 import Notifications from "@/pages/Notifications";
 import ProtectedReferral from "@/router/roles/ProtectedReferral";
 import ProtectedBillingDetails from "@/router/roles/ProtectedBillingDetails";
@@ -39,6 +42,10 @@ import ProtectedUpgradePage from "@/router/roles/ProtectedUpgradePage";
 import Account from "@/pages/Account";
 import AcceptInvite from "@/pages/AcceptInvite";
 import VerifyEmailSystemRouter from "@/auth-v2/components/VerifyEmailSystemRouter";
+import ProtectedRoute from "@/components/routing/ProtectedRoute";
+import CreatePrescription from "@/pages/CreatePrescription";
+import EditPrescription from "@/pages/EditPrescription";
+import PrescriptionDetail from "@/pages/PrescriptionDetail";
 
 const AppRoutes = () => {
   return (
@@ -84,6 +91,17 @@ const AppRoutes = () => {
       {/* Doctor Routes */}
       <Route path="/doctor/dashboard" element={<ProtectedDoctorDashboard />} />
       <Route path="/doctor/profile" element={<ProtectedDoctorProfilePage />} />
+      <Route path="/pharmacy/dashboard" element={<ProtectedPharmacyDashboard />} />
+      <Route
+        path="/create-prescription"
+        element={
+          <ProtectedRoute allowedRoles={["doctor", "superadmin"]}>
+            <CreatePrescription />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="/edit-prescription/:id" element={<EditPrescription />} />
+      <Route path="/prescriptions/:id" element={<PrescriptionDetail />} />
 
       {/* Additional Routes */}
       <Route path="/notifications" element={<Notifications />} />
@@ -95,6 +113,8 @@ const AppRoutes = () => {
       {/* Super Admin Routes */}
       <Route path="/superadmin/dashboard" element={<SuperAdminDashboard />} />
       <Route path="/superadmin/tenants" element={<TenantManagement />} />
+      <Route path="/superadmin/legacy-clinical" element={<LegacyClinicalReviewPage />} />
+      <Route path="/superadmin/rotation-queue" element={<RotationQueuePage />} />
 
       {/* 404 Route - Must be last */}
       <Route path="*" element={<NotFound />} />

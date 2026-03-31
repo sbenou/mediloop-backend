@@ -33,9 +33,6 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({
   const [searchParams, setSearchParams] = useSearchParams();
   const { view, section, profileTab, ordersTab } = params;
   
-  console.log("🚦 DashboardRouter rendering:", { userRole, view, section, profileTab, ordersTab });
-  console.log("🚦 DashboardRouter auth state:", { isPharmacist, profileRole: profile?.role });
-  
   useEffect(() => {
     if (userRole === "pharmacist" || isPharmacist) {
       // For pharmacist users, simply set view=pharmacy and section=dashboard if no section
@@ -49,14 +46,11 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({
   // For pharmacists, always show pharmacy views unless patient-view is explicitly requested.
   if (!forcePatientView && (userRole === "pharmacist" || isPharmacist)) {
     const sectionToUse = section || "dashboard";
-    console.log("Rendering PharmacyView for pharmacist with section:", sectionToUse);
     return <PharmacyView userRole={userRole} section={sectionToUse} />;
   }
   
   // For doctors, handle special views based on section parameter
   if (!forcePatientView && userRole === "doctor") {
-    console.log("Handling doctor view with section:", section);
-    
     // Check for section parameter first (doctor specific routing)
     if (section) {
       switch (section) {
@@ -77,7 +71,6 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({
         case "notifications":
           return <NotificationsView userRole="doctor" />;
         case "orders":
-          console.log("Rendering OrdersView for doctor with tab:", ordersTab);
           return <OrdersView activeTab={ordersTab || "orders"} userRole="doctor" />;
         case "dashboard":
         default:
@@ -99,7 +92,6 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({
         case "notifications":
           return <NotificationsView userRole="doctor" />;
         case "orders":
-          console.log("Fallback: Rendering OrdersView for doctor with tab:", ordersTab);
           return <OrdersView activeTab={ordersTab || "orders"} userRole="doctor" />;
         default:
           return <HomeView userRole="doctor" />;
@@ -111,23 +103,23 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({
   }
   
   // For patients (or any other role), handle based on view parameter
-  console.log("Handling patient view:", view);
+  const patientViewRole = forcePatientView ? "patient" : userRole;
   switch (view) {
     case "profile":
-      return <ProfileView activeTab={profileTab} userRole={userRole} />;
+      return <ProfileView activeTab={profileTab} userRole={patientViewRole} />;
     case "settings":
-      return <SettingsView userRole={userRole} />;
+      return <SettingsView userRole={patientViewRole} />;
     case "orders":
-      return <OrdersView activeTab={ordersTab} userRole={userRole} />;
+      return <OrdersView activeTab={ordersTab} userRole={patientViewRole} />;
     case "prescriptions":
-      return <PrescriptionsView userRole={userRole} />;
+      return <PrescriptionsView userRole={patientViewRole} />;
     case "teleconsultations":
-      return <TeleconsultationsView userRole={userRole} />;
+      return <TeleconsultationsView userRole={patientViewRole} />;
     case "notifications":
-      return <NotificationsView userRole={userRole} />;
+      return <NotificationsView userRole={patientViewRole} />;
     case "home":
     default:
-      return <HomeView userRole={userRole} />;
+      return <HomeView userRole={patientViewRole} />;
   }
 };
 

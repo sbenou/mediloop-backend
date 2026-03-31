@@ -18,6 +18,7 @@ const PharmacistNavigation = ({
   canManagePrescriptions = false,
   canViewPrescriptions = true
 }: PharmacistNavigationProps) => {
+  const DASHBOARD_BASE = "/dashboard";
   const navigate = useNavigate();
   const location = useLocation();
   const { 
@@ -26,8 +27,7 @@ const PharmacistNavigation = ({
   } = useSidebarNavigation("pharmacist");
 
   const handleDashboardClick = () => {
-    console.log("PharmacistNavigation: Navigating to pharmacy dashboard");
-    navigate("/pharmacy/dashboard", {
+    navigate(DASHBOARD_BASE, {
       state: { preserveAuth: true },
       replace: false
     });
@@ -40,7 +40,7 @@ const PharmacistNavigation = ({
           icon={<Home className="h-4 w-4" />}
           label="Dashboard"
           onClick={handleDashboardClick}
-          active={location.pathname === '/pharmacy/dashboard'}
+          active={location.pathname === DASHBOARD_BASE && !location.search}
         />
 
         {canViewProducts && (
@@ -56,16 +56,16 @@ const PharmacistNavigation = ({
           <SidebarLink
             icon={<FileText className="h-4 w-4" />}
             label="Prescriptions"
-            onClick={() => navigateToLink('/pharmacy/dashboard?section=prescriptions')}
-            active={location.pathname.includes('/pharmacy/dashboard') && location.search.includes('section=prescriptions')}
+            onClick={() => navigateToLink('/dashboard?section=prescriptions')}
+            active={location.pathname === DASHBOARD_BASE && location.search.includes('section=prescriptions')}
           />
         )}
         
         <SidebarLink
           icon={<Users className="h-4 w-4" />}
           label="Patients"
-          onClick={() => navigateToLink('/pharmacy/dashboard?section=patients')}
-          active={location.pathname.includes('/pharmacy/dashboard') && location.search.includes('section=patients')}
+          onClick={() => navigateToLink('/dashboard?section=patients')}
+          active={location.pathname === DASHBOARD_BASE && location.search.includes('section=patients')}
         />
       </SidebarSection>
       
@@ -73,8 +73,8 @@ const PharmacistNavigation = ({
         <SidebarLink
           icon={<Settings className="h-4 w-4" />}
           label="Settings"
-          onClick={() => navigateToLink('/pharmacy/dashboard?section=settings')}
-          active={location.pathname.includes('/pharmacy/dashboard') && location.search.includes('section=settings')}
+          onClick={() => navigateToLink('/dashboard?section=settings')}
+          active={location.pathname === DASHBOARD_BASE && location.search.includes('section=settings')}
         />
       </SidebarSection>
     </>

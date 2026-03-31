@@ -19,6 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import DashboardRouter from "@/components/dashboard/DashboardRouter";
+import { setPreferredDashboardMode } from "@/utils/dashboard/dashboardMode";
 
 interface DoctorDashboardProps {
   initialParams?: URLSearchParams;
@@ -41,24 +42,9 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
   // Set URL params on initial load if initialParams was provided
   useEffect(() => {
     if (initialParams && isInitialLoad && !isLoading) {
-      console.log("Setting initial params from props:", Object.fromEntries(initialParams.entries()));
       setSearchParams(initialParams);
     }
   }, [initialParams, isInitialLoad, isLoading, setSearchParams]);
-  
-  // Console logging for debugging
-  useEffect(() => {
-    console.log("DoctorDashboard render:", { 
-      currentView, 
-      section,
-      profileTab,
-      ordersTab,
-      searchParams: Object.fromEntries(searchParams.entries()),
-      location: location.pathname + location.search,
-      hasInitialParams: !!initialParams,
-      userRole
-    });
-  }, [currentView, section, profileTab, ordersTab, searchParams, location, initialParams, userRole]);
   
   // Track initial load to avoid flashing loading state during navigation
   useEffect(() => {
@@ -81,8 +67,6 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
       return <DashboardRouter userRole="doctor" forcePatientView />;
     }
 
-    console.log("Getting content for section:", section, "with ordersTab:", ordersTab);
-    
     // For the doctor dashboard, show content based on the section
     switch (section) {
       case "profile":
@@ -100,7 +84,6 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
       case "workplaces":
         return <WorkplacesView />;
       case "orders":
-        console.log("Rendering OrdersView with tab:", ordersTab, "and userRole:", userRole || "doctor");
         return <OrdersView activeTab={ordersTab} userRole={userRole || "doctor"} />;
       case "dashboard":
       default:
@@ -110,6 +93,7 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
 
   const togglePatientDashboardMode = () => {
     const next = new URLSearchParams(searchParams);
+    const nextMode = patientModeParam ? "role" : "patient";
     if (patientModeParam) {
       next.delete("mode");
     } else {
@@ -118,6 +102,7 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
         next.set("view", "home");
       }
     }
+    setPreferredDashboardMode("doctor", nextMode);
     setSearchParams(next, { replace: true });
   };
   

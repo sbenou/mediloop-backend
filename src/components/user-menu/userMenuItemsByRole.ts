@@ -66,9 +66,9 @@ const doctorItems: MenuItem[] = [
 // Pharmacist specific menu items
 const pharmacistItems: MenuItem[] = [
   {
-    label: "Pharmacy Dashboard",
+    label: "Dashboard",
     icon: Building,
-    path: "/pharmacy/dashboard"
+    path: "/dashboard"
   },
   {
     label: "Pharmacy Profile",

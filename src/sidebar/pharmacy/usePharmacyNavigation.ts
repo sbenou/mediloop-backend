@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 export const usePharmacyNavigation = () => {
+  const DASHBOARD_BASE = '/dashboard';
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -22,11 +23,9 @@ export const usePharmacyNavigation = () => {
   
   // Fix the dashboard navigation to preserve or clean up search params correctly
   const navigateToDashboard = useCallback(() => {
-    console.log('Navigating to pharmacy dashboard main view');
-    
     // If we're already on the dashboard, just clear search params if needed
-    if (location.pathname === '/pharmacy/dashboard' && location.search) {
-      navigate('/pharmacy/dashboard', { 
+    if (location.pathname === DASHBOARD_BASE && location.search) {
+      navigate(DASHBOARD_BASE, { 
         state: { preserveAuth: true },
         replace: true
       });
@@ -34,14 +33,13 @@ export const usePharmacyNavigation = () => {
     }
     
     // Otherwise navigate to the dashboard page
-    navigate('/pharmacy/dashboard', { 
+    navigate(DASHBOARD_BASE, { 
       state: { preserveAuth: true },
       replace: false
     });
-  }, [navigate, location]);
+  }, [navigate, location, DASHBOARD_BASE]);
 
   const navigateToPharmacyProfile = useCallback(() => {
-    console.log('Navigating to pharmacy profile');
     navigate('/pharmacy/profile', { 
       state: { preserveAuth: true },
       replace: false
@@ -49,9 +47,8 @@ export const usePharmacyNavigation = () => {
   }, [navigate]);
 
   const navigateToPrescriptions = useCallback(() => {
-    console.log('Navigating to prescriptions page');
     // Instead of using search in NavigateOptions, create the URL with the search params
-    const url = '/pharmacy/dashboard?section=prescriptions';
+    const url = `${DASHBOARD_BASE}?section=prescriptions`;
     navigate(url, { 
       state: { preserveAuth: true },
       replace: false
@@ -59,7 +56,6 @@ export const usePharmacyNavigation = () => {
   }, [navigate]);
 
   const navigateToPharmacyPatientsPage = useCallback(() => {
-    console.log('Navigating to pharmacy patients page');
     navigate('/pharmacy/patients', {
       state: { preserveAuth: true },
       replace: false
@@ -67,7 +63,6 @@ export const usePharmacyNavigation = () => {
   }, [navigate]);
 
   const navigateToReferral = useCallback(() => {
-    console.log('Navigating to referral page');
     navigate('/referral', { 
       state: { preserveAuth: true },
       replace: false
@@ -75,7 +70,6 @@ export const usePharmacyNavigation = () => {
   }, [navigate]);
   
   const navigateToBilling = useCallback(() => {
-    console.log('Navigating to billing details');
     navigate('/billing-details', { 
       state: { preserveAuth: true, showHeader: false },
       replace: false
@@ -83,9 +77,8 @@ export const usePharmacyNavigation = () => {
   }, [navigate]);
 
   const navigateToSettings = useCallback(() => {
-    console.log('Navigating to settings page');
     // Create the URL with search params instead of using the search property
-    const url = '/pharmacy/dashboard?section=settings';
+    const url = `${DASHBOARD_BASE}?section=settings`;
     navigate(url, { 
       state: { preserveAuth: true },
       replace: false
@@ -93,7 +86,6 @@ export const usePharmacyNavigation = () => {
   }, [navigate]);
 
   const navigateToLink = useCallback((path: string) => {
-    console.log(`Navigating to: ${path}`);
     navigate(path, { 
       state: { preserveAuth: true },
       replace: false
@@ -102,10 +94,8 @@ export const usePharmacyNavigation = () => {
 
   // Use search parameters for sections within the pharmacy dashboard
   const navigateToPharmacySection = useCallback((section: string, tab?: string, tabParam?: string) => {
-    console.log(`Navigating to pharmacy section: ${section}${tab ? ` with ${tabParam}: ${tab}` : ''}`);
-    
     // Create the URL with search params
-    let url = `/pharmacy/dashboard?section=${section}`;
+    let url = `${DASHBOARD_BASE}?section=${section}`;
     if (tab && tabParam) {
       url += `&${tabParam}=${tab}`;
     }
@@ -131,7 +121,7 @@ export const usePharmacyNavigation = () => {
     isOrdersOpen,
     setIsOrdersOpen,
     isProfilePage: location.pathname.includes('/pharmacy/profile'),
-    isDashboardPage: location.pathname === '/pharmacy/dashboard' || location.pathname.includes('/pharmacy/dashboard')
+    isDashboardPage: location.pathname === DASHBOARD_BASE
   };
 };
 

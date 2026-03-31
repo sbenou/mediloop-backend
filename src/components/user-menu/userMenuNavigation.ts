@@ -17,17 +17,13 @@ export function useUserMenuNavigation() {
   }, [location.pathname, location.search]);
 
   const handleNavigation = useCallback((path: string) => {
-    console.log("Navigation requested to:", path);
-    
     // Prevent duplicate navigations
     if (navigationInProgressRef.current) {
-      console.log("Navigation already in progress, skipping");
       return;
     }
     
     // Prevent unnecessary navigation if we're already on the same path
     if (location.pathname === path && !path.includes("?")) {
-      console.log("Already on this path, skipping navigation");
       return;
     }
     
@@ -38,7 +34,6 @@ export function useUserMenuNavigation() {
     if (path === '/dashboard') {
       // Get the correct dashboard route based on user role
       const dashboardRoute = getDashboardRouteByRole(userRole);
-      console.log(`Navigating to dashboard: ${dashboardRoute} for role: ${userRole}`);
       navigate(dashboardRoute, {
         replace: false,
         state: { preserveAuth: true, keepSidebar: true }
