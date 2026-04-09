@@ -4,10 +4,13 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MapPin, Phone, Mail, Clock, UserPlus } from "lucide-react";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { sendConnectionRequestNotification } from '@/utils/doctorConnectionNotifications';
+import {
+  fetchDoctorPatientConnectionsApi,
+  requestDoctorConnectionAsPatientApi,
+} from "@/services/clinicalApi";
 
 interface Doctor {
   id: string;
@@ -31,95 +34,37 @@ interface DoctorListProps {
 }
 
 const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListProps) => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const queryClient = useQueryClient();
 
   const connectMutation = useMutation({
     mutationFn: async (doctorId: string) => {
-      console.log('=== Starting connection request process ===');
-      console.log('Doctor ID:', doctorId);
-      console.log('Current user:', user?.id);
-      
       if (!user?.id) {
-        console.error('No authenticated user found');
         throw new Error('Not authenticated');
       }
 
-      try {
-        console.log('Checking for existing connection...');
-        // First check if connection already exists
-        const { data: existingConnection, error: checkError } = await supabase
-          .from('doctor_patient_connections')
-          .select('id, status')
-          .eq('doctor_id', doctorId)
-          .eq('patient_id', user.id)
-          .maybeSingle();
-
-        if (checkError) {
-          console.error('Error checking existing connection:', checkError);
-          throw checkError;
+      const connections = await fetchDoctorPatientConnectionsApi();
+      const existing = connections.find((c) => c.doctor_id === doctorId);
+      if (existing) {
+        if (existing.status === 'pending') {
+          throw new Error('Connection request already exists');
         }
-
-        if (existingConnection) {
-          console.log('Existing connection found:', existingConnection);
-          const message = existingConnection.status === 'pending' 
-            ? 'Connection request already exists' 
-            : 'Connection already established';
-          throw new Error(message);
+        if (existing.status === 'accepted') {
+          throw new Error('Connection already established');
         }
-
-        console.log('No existing connection found, creating new request...');
-
-        // Create new connection request
-        const { data, error } = await supabase
-          .from('doctor_patient_connections')
-          .insert({
-            doctor_id: doctorId,
-            patient_id: user.id,
-            status: 'pending'
-          })
-          .select()
-          .single();
-
-        if (error) {
-          console.error('Connection insert error:', error);
-          throw error;
-        }
-
-        console.log('✅ Connection request created successfully:', data);
-
-        // Get patient name and tenant info for notification
-        console.log('Fetching patient profile for notification...');
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('full_name, tenant_id')
-          .eq('id', user.id)
-          .single();
-
-        if (profileError) {
-          console.warn('Could not fetch profile for notification:', profileError);
-        }
-
-        const patientName = profileData?.full_name || 'A patient';
-        console.log('Patient name for notification:', patientName);
-
-        // Send notification to doctor with tenant awareness
-        console.log('=== Starting notification creation ===');
-        try {
-          const notificationResult = await sendConnectionRequestNotification(doctorId, patientName);
-          console.log('✅ Notification process completed successfully:', notificationResult);
-        } catch (notificationError) {
-          console.error('❌ CRITICAL: Notification creation failed:', notificationError);
-          // Don't throw here as the connection was successful
-          console.warn('⚠️ Connection created but doctor notification failed');
-        }
-
-        console.log('=== Connection request process completed ===');
-        return data;
-      } catch (error) {
-        console.error('❌ Error in connection mutation:', error);
-        throw error;
+        throw new Error('A connection already exists for this doctor');
       }
+
+      const data = await requestDoctorConnectionAsPatientApi(doctorId);
+
+      const patientName = profile?.full_name || 'A patient';
+      try {
+        await sendConnectionRequestNotification(doctorId, patientName);
+      } catch (notificationError) {
+        console.warn('Connection created but doctor notification failed:', notificationError);
+      }
+
+      return data;
     },
     onSuccess: (data) => {
       console.log('Connection request successful:', data);
@@ -134,9 +79,12 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
       console.error('Connection request failed:', error);
       
       let errorMessage = "Failed to connect to doctor. Please try again.";
-      if (error.message.includes('already exists')) {
+      if (
+        error.message.includes("already exists") ||
+        error.message.includes("Connection already exists")
+      ) {
         errorMessage = "You have already sent a connection request to this doctor.";
-      } else if (error.message.includes('already established')) {
+      } else if (error.message.includes("already established")) {
         errorMessage = "You are already connected to this doctor.";
       }
       

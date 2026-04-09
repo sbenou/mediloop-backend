@@ -4,11 +4,84 @@
  */
 
 import { Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
+import type { ResolvedActiveContext } from "../../auth/types/activeContext.ts";
 import * as notificationService from "../services/notificationService.ts";
 import * as topicService from "../services/topicService.ts";
 import { postgresService } from "../../../shared/services/postgresService.ts";
 
 const router = new Router();
+
+type JwtUser = { id?: string; role?: string };
+
+function stateUser(ctx: { state: Record<string, unknown> }): JwtUser | undefined {
+  return ctx.state.user as JwtUser | undefined;
+}
+
+function getActiveContext(
+  ctx: { state: Record<string, unknown> },
+): ResolvedActiveContext | undefined {
+  return ctx.state.activeContext as ResolvedActiveContext | undefined;
+}
+
+async function personalHealthTenantIdForUser(
+  userId: string,
+): Promise<string | null> {
+  const r = await postgresService.query(
+    `SELECT tenant_id::text AS tenant_id
+     FROM public.personal_health_tenants
+     WHERE user_id = $1::uuid
+     LIMIT 1`,
+    [userId],
+  );
+  const row = r.rows[0] as { tenant_id?: string } | undefined;
+  return row?.tenant_id ?? null;
+}
+
+/** Resolve inbox kind: explicit query vs auto (PH tenant vs workplace tenant). */
+function resolveNotificationInbox(
+  rawInbox: string | null,
+  phTenantId: string | null,
+  activeTenantId: string,
+): "personal_health" | "tenant" | "professional_personal" {
+  const v = (rawInbox || "").trim().toLowerCase();
+  if (v === "professional_personal") return "professional_personal";
+  if (v === "personal_health") return "personal_health";
+  if (v === "tenant") return "tenant";
+  if (phTenantId && activeTenantId === phTenantId) return "personal_health";
+  return "tenant";
+}
+
+type NotificationScopeRow = {
+  scope_type: string;
+  scope_tenant_id: string | null;
+  scope_membership_id: string | null;
+  read_at: unknown;
+};
+
+/** Same visibility rules as GET /history for the resolved inbox. */
+function notificationRowMatchesResolvedInbox(
+  row: NotificationScopeRow,
+  inbox: "personal_health" | "tenant" | "professional_personal",
+  ac: ResolvedActiveContext | undefined,
+  phTenantId: string | null,
+): boolean {
+  if (inbox === "professional_personal") {
+    return row.scope_type === "professional_personal";
+  }
+  if (!ac?.tenantId || !ac?.membershipId) return false;
+  if (inbox === "personal_health") {
+    if (!phTenantId || ac.tenantId !== phTenantId) return false;
+    const st = row.scope_tenant_id != null ? String(row.scope_tenant_id) : "";
+    return row.scope_type === "personal_health" && st === phTenantId;
+  }
+  const stid = row.scope_tenant_id != null ? String(row.scope_tenant_id) : "";
+  const smid = row.scope_membership_id != null
+    ? String(row.scope_membership_id)
+    : "";
+  if (row.scope_type !== "tenant" || stid !== ac.tenantId) return false;
+  if (row.scope_membership_id == null) return true;
+  return smid === ac.membershipId;
+}
 
 /**
  * Send notification to specific user
@@ -358,51 +431,176 @@ router.post("/api/notifications/update-online-status", async (ctx) => {
 });
 
 /**
- * Get notification history for user
- * GET /api/notifications/history?userId=xxx&limit=20
+ * Get notification history — Option C scoped inbox (JWT user + active workspace).
+ *
+ * GET /api/notifications/history?limit=20&inbox=tenant|personal_health|professional_personal
+ *
+ * - Identity: always the authenticated user (`ctx.state.user.id`). Query `userId` is ignored
+ *   unless it matches JWT (legacy callers may omit it).
+ * - Scope: rows must match `inbox` (default: auto — personal health tenant vs workplace tenant).
+ * - Requires `activeContextMiddleware` to have set `ctx.state.activeContext` (except
+ *   `inbox=professional_personal`, which only needs auth).
  */
 router.get("/api/notifications/history", async (ctx) => {
   try {
-    const userId = ctx.request.url.searchParams.get("userId");
-    const limit = parseInt(ctx.request.url.searchParams.get("limit") || "20");
+    const user = stateUser(ctx);
+    if (!user?.id) {
+      ctx.response.status = 401;
+      ctx.response.body = { error: "Unauthorized" };
+      return;
+    }
 
-    if (!userId) {
-      ctx.response.status = 400;
-      ctx.response.body = { error: "userId parameter is required" };
+    const qpUserId = ctx.request.url.searchParams.get("userId")?.trim();
+    if (qpUserId && qpUserId !== user.id) {
+      ctx.response.status = 403;
+      ctx.response.body = { error: "Cannot read another user's notifications" };
+      return;
+    }
+
+    const rawLimit = parseInt(ctx.request.url.searchParams.get("limit") || "20", 10);
+    const limit = Math.min(Math.max(Number.isFinite(rawLimit) ? rawLimit : 20, 1), 100);
+
+    const ac = getActiveContext(ctx);
+    const rawInbox = ctx.request.url.searchParams.get("inbox");
+    const phTenantId = await personalHealthTenantIdForUser(user.id);
+
+    const inbox = resolveNotificationInbox(
+      rawInbox,
+      phTenantId,
+      ac?.tenantId || "",
+    );
+
+    if (inbox === "professional_personal") {
+      const result = await postgresService.query(
+        `SELECT id, user_id, tenant_id, title, body, body_preview, data, image_url, channels, priority,
+                sent_at, read_at, clicked_at, created_at, updated_at,
+                scope_type, scope_tenant_id, scope_membership_id, workspace_kind,
+                category, event_type, contains_sensitive_health_data, status,
+                archived_at, expires_at, created_by_user_id, source_resource_type,
+                source_resource_id, dedupe_key, topic, actions
+         FROM public.notifications
+         WHERE user_id = $1::uuid
+           AND scope_type = 'professional_personal'
+           AND (archived_at IS NULL)
+           AND (expires_at IS NULL OR expires_at > NOW())
+         ORDER BY COALESCE(sent_at, created_at) DESC
+         LIMIT $2`,
+        [user.id, limit],
+      );
+      ctx.response.status = 200;
+      ctx.response.body = {
+        success: true,
+        inbox: "professional_personal",
+        notifications: result.rows,
+        count: result.rows.length,
+      };
+      return;
+    }
+
+    if (!ac?.tenantId || !ac.membershipId) {
+      ctx.response.status = 403;
+      ctx.response.body = {
+        error: "No active workspace context",
+        detail:
+          "Send X-Mediloop-Tenant-Id and X-Mediloop-Membership-Id for tenant or personal-health inbox.",
+      };
+      return;
+    }
+
+    if (inbox === "personal_health") {
+      if (!phTenantId || ac.tenantId !== phTenantId) {
+        ctx.response.status = 403;
+        ctx.response.body = {
+          error: "Forbidden",
+          detail:
+            "Personal health notifications require active context to be your personal-health tenant.",
+        };
+        return;
+      }
+      const result = await postgresService.query(
+        `SELECT id, user_id, tenant_id, title, body, body_preview, data, image_url, channels, priority,
+                sent_at, read_at, clicked_at, created_at, updated_at,
+                scope_type, scope_tenant_id, scope_membership_id, workspace_kind,
+                category, event_type, contains_sensitive_health_data, status,
+                archived_at, expires_at, created_by_user_id, source_resource_type,
+                source_resource_id, dedupe_key, topic, actions
+         FROM public.notifications
+         WHERE user_id = $1::uuid
+           AND scope_type = 'personal_health'
+           AND scope_tenant_id = $2::uuid
+           AND (archived_at IS NULL)
+           AND (expires_at IS NULL OR expires_at > NOW())
+         ORDER BY COALESCE(sent_at, created_at) DESC
+         LIMIT $3`,
+        [user.id, ac.tenantId, limit],
+      );
+      ctx.response.status = 200;
+      ctx.response.body = {
+        success: true,
+        inbox: "personal_health",
+        notifications: result.rows,
+        count: result.rows.length,
+      };
       return;
     }
 
     const result = await postgresService.query(
-      `SELECT id, title, body, data, image_url, channels, priority, 
-              sent_at, read_at, clicked_at
-       FROM notifications
-       WHERE user_id = $1
-       ORDER BY sent_at DESC
-       LIMIT $2`,
-      [userId, limit],
+      `SELECT id, user_id, tenant_id, title, body, body_preview, data, image_url, channels, priority,
+              sent_at, read_at, clicked_at, created_at, updated_at,
+              scope_type, scope_tenant_id, scope_membership_id, workspace_kind,
+              category, event_type, contains_sensitive_health_data, status,
+              archived_at, expires_at, created_by_user_id, source_resource_type,
+              source_resource_id, dedupe_key, topic, actions
+       FROM public.notifications
+       WHERE user_id = $1::uuid
+         AND scope_type = 'tenant'
+         AND scope_tenant_id = $2::uuid
+         AND (scope_membership_id IS NULL OR scope_membership_id = $4::uuid)
+         AND (archived_at IS NULL)
+         AND (expires_at IS NULL OR expires_at > NOW())
+       ORDER BY COALESCE(sent_at, created_at) DESC
+       LIMIT $3`,
+      [user.id, ac.tenantId, limit, ac.membershipId],
     );
 
     ctx.response.status = 200;
     ctx.response.body = {
       success: true,
+      inbox: "tenant",
       notifications: result.rows,
       count: result.rows.length,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
     console.error("❌ Error fetching notification history:", error);
     ctx.response.status = 500;
-    ctx.response.body = { error: error.message };
+    ctx.response.body = { error: msg };
   }
 });
 
 /**
- * Mark notification as read
+ * Mark notification as read (scoped to active workspace unless inbox=professional_personal).
+ *
  * POST /api/notifications/mark-read
+ * Body: { notificationId, inbox?: "tenant" | "personal_health" | "professional_personal" }
+ *
+ * Resolves `inbox` like GET /history (omitted = auto from PH tenant vs active tenant).
+ * Rejects when the row is not visible in that inbox for the current context.
  */
 router.post("/api/notifications/mark-read", async (ctx) => {
   try {
+    const user = stateUser(ctx);
+    if (!user?.id) {
+      ctx.response.status = 401;
+      ctx.response.body = { error: "Unauthorized" };
+      return;
+    }
+
     const body = await ctx.request.body({ type: "json" }).value;
-    const { notificationId } = body;
+    const { notificationId, inbox: rawInboxBody } = body as {
+      notificationId?: string;
+      inbox?: string;
+    };
 
     if (!notificationId) {
       ctx.response.status = 400;
@@ -410,11 +608,70 @@ router.post("/api/notifications/mark-read", async (ctx) => {
       return;
     }
 
+    const sel = await postgresService.query(
+      `SELECT scope_type, scope_tenant_id, scope_membership_id, read_at
+       FROM public.notifications
+       WHERE id = $1::uuid AND user_id = $2::uuid`,
+      [notificationId, user.id],
+    );
+    const row = sel.rows[0] as NotificationScopeRow | undefined;
+    if (!row) {
+      ctx.response.status = 404;
+      ctx.response.body = { error: "Notification not found" };
+      return;
+    }
+
+    if (row.read_at != null) {
+      ctx.response.status = 200;
+      ctx.response.body = {
+        success: true,
+        message: "Notification already read",
+        alreadyRead: true,
+      };
+      return;
+    }
+
+    const ac = getActiveContext(ctx);
+    const phTenantId = await personalHealthTenantIdForUser(user.id);
+    const rawInbox =
+      typeof rawInboxBody === "string" && rawInboxBody.trim()
+        ? rawInboxBody.trim()
+        : null;
+    const inbox = resolveNotificationInbox(
+      rawInbox,
+      phTenantId,
+      ac?.tenantId || "",
+    );
+
+    if (inbox !== "professional_personal") {
+      if (!ac?.tenantId || !ac?.membershipId) {
+        ctx.response.status = 403;
+        ctx.response.body = {
+          error: "No active workspace context",
+          detail:
+            "Send X-Mediloop-Tenant-Id and X-Mediloop-Membership-Id, or mark professional_personal items with inbox=professional_personal.",
+        };
+        return;
+      }
+    }
+
+    if (!notificationRowMatchesResolvedInbox(row, inbox, ac, phTenantId)) {
+      ctx.response.status = 403;
+      ctx.response.body = {
+        error: "Forbidden",
+        detail:
+          "Notification is not visible in this workspace; switch workspace or pass the matching inbox.",
+      };
+      return;
+    }
+
     await postgresService.query(
-      `UPDATE notifications 
-       SET read_at = NOW() 
-       WHERE id = $1 AND read_at IS NULL`,
-      [notificationId],
+      `UPDATE public.notifications
+       SET read_at = NOW(),
+           status = 'read',
+           updated_at = NOW()
+       WHERE id = $1::uuid AND user_id = $2::uuid AND read_at IS NULL`,
+      [notificationId, user.id],
     );
 
     ctx.response.status = 200;
@@ -422,10 +679,11 @@ router.post("/api/notifications/mark-read", async (ctx) => {
       success: true,
       message: "Notification marked as read",
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
     console.error("❌ Error marking notification as read:", error);
     ctx.response.status = 500;
-    ctx.response.body = { error: error.message };
+    ctx.response.body = { error: msg };
   }
 });
 

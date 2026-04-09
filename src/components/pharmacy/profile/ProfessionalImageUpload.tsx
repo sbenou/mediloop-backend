@@ -3,24 +3,27 @@ import React, { useRef, useState } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Image, Upload } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import { useSetRecoilState } from "recoil";
 import { pharmacyLogoUrlState, doctorLogoUrlState } from "@/store/images/atoms";
+import {
+  updatePharmacyWorkspaceApi,
+  updateDoctorWorkspaceApi,
+} from "@/services/professionalWorkspaceApi";
+
+const MAX_BYTES = 750_000;
 
 interface ProfessionalImageUploadProps {
   entityId: string;
-  entityType: 'doctor' | 'pharmacy';
+  entityType: "doctor" | "pharmacy";
   logoUrl: string | null | undefined;
   onImageUpdate: (newLogoUrl: string) => void;
   userId?: string;
 }
 
-const ProfessionalImageUpload: React.FC<ProfessionalImageUploadProps> = ({ 
-  entityId,
+const ProfessionalImageUpload: React.FC<ProfessionalImageUploadProps> = ({
   entityType,
   logoUrl,
   onImageUpdate,
-  userId
 }) => {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -28,142 +31,76 @@ const ProfessionalImageUpload: React.FC<ProfessionalImageUploadProps> = ({
   const setDoctorLogoUrl = useSetRecoilState(doctorLogoUrlState);
 
   const handleImageClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
+    fileInputRef.current?.click();
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !entityId) return;
+    if (!file) return;
+
+    if (file.size > MAX_BYTES) {
+      toast({
+        variant: "destructive",
+        title: "File too large",
+        description: "Please choose an image under ~750KB (Neon stores logo as data URL).",
+      });
+      return;
+    }
 
     try {
       setIsUploading(true);
       toast({
         title: "Uploading image",
-        description: `Please wait while we upload your ${entityType} image...`,
+        description: `Saving your ${entityType} logo…`,
       });
-      
-      // Determine the correct bucket and path based on entity type
-      const bucketName = entityType === 'doctor' ? 'doctor-images' : 'pharmacy-images';
-      const folderPath = entityType === 'doctor' ? 'doctors' : 'pharmacies';
-      
-      // Create a consistent path for entity images
-      const filePath = `${folderPath}/${entityId}/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
-      
-      console.log(`Attempting to upload to: ${bucketName}`, filePath);
-      
-      const { error: uploadError, data } = await supabase.storage
-        .from(bucketName)
-        .upload(filePath, file, {
-          upsert: true,
-          cacheControl: '3600'
-        });
 
-      if (uploadError) {
-        console.error('Upload error details:', uploadError);
-        throw uploadError;
-      }
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result));
+        r.onerror = () => reject(new Error("read failed"));
+        r.readAsDataURL(file);
+      });
 
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucketName)
-        .getPublicUrl(filePath);
-
-      console.log('Successfully uploaded, publicUrl:', publicUrl);
-      
-      // Add cache-busting parameter
-      const publicUrlWithCacheBust = `${publicUrl}?t=${Date.now()}`;
-
-      // Create or update the appropriate metadata with the logo URL
-      if (entityType === 'pharmacy') {
-        // Update pharmacy metadata
-        const { error: metadataError } = await supabase
-          .from('pharmacy_metadata')
-          .upsert({ 
-            pharmacy_id: entityId,
-            logo_url: publicUrlWithCacheBust
-          });
-
-        if (metadataError) {
-          console.error('Metadata error:', metadataError);
-          throw metadataError;
-        }
-
-        // Update the Recoil state for global access
-        console.log("Setting pharmacy logo after upload:", publicUrlWithCacheBust);
-        setPharmacyLogoUrl(publicUrlWithCacheBust);
-        
+      if (entityType === "pharmacy") {
+        await updatePharmacyWorkspaceApi({ logo_url: dataUrl });
+        setPharmacyLogoUrl(dataUrl);
       } else {
-        // Handle doctor metadata - we'll use a try-catch because the doctor_metadata might be new
-        try {
-          // Use the `from` method with a type assertion to tell TypeScript about our table
-          // @ts-ignore - The doctor_metadata table exists in the database but not in types yet
-          const { error: metadataError } = await supabase
-            .from('doctor_metadata')
-            .upsert({ 
-              doctor_id: entityId,
-              logo_url: publicUrlWithCacheBust
-            });
-            
-          if (metadataError) {
-            console.error('Doctor metadata error:', metadataError);
-            // We'll just log this for now, but still update the profile
-          }
-          
-          // Update the Recoil state for global access
-          console.log("Setting doctor logo after upload:", publicUrlWithCacheBust);
-          setDoctorLogoUrl(publicUrlWithCacheBust);
-        } catch (metaError) {
-          console.error('Error with doctor_metadata:', metaError);
-        }
-      }
-      
-      // Also update the profile with appropriate field based on entity type
-      if (userId) {
-        const fieldToUpdate = entityType === 'doctor' ? 'doctor_stamp_url' : 'pharmacy_logo_url';
-        
-        const { error: profileUpdateError } = await supabase
-          .from('profiles')
-          .update({ [fieldToUpdate]: publicUrlWithCacheBust })
-          .eq('id', userId);
-          
-        if (profileUpdateError) {
-          console.error(`Error updating profile with ${fieldToUpdate}:`, profileUpdateError);
-          // Not throwing here as the main upload was successful
-        }
+        await updateDoctorWorkspaceApi({ logo_url: dataUrl });
+        setDoctorLogoUrl(dataUrl);
       }
 
-      // Update parent component
-      onImageUpdate(publicUrlWithCacheBust);
+      onImageUpdate(dataUrl);
 
       toast({
         title: "Success",
-        description: `${entityType.charAt(0).toUpperCase() + entityType.slice(1)} image updated successfully`,
+        description: `${entityType.charAt(0).toUpperCase() + entityType.slice(1)} image updated`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Unknown error";
       console.error(`Error uploading ${entityType} image:`, error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: `Error uploading ${entityType} image: ${error.message || 'Unknown error'}`,
+        description: msg,
       });
     } finally {
       setIsUploading(false);
+      e.target.value = "";
     }
   };
 
   const entityLabel = entityType.charAt(0).toUpperCase() + entityType.slice(1);
 
   return (
-    <div 
+    <div
       onClick={handleImageClick}
       className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center cursor-pointer relative overflow-hidden border border-dashed border-gray-300 hover:bg-gray-50 transition-colors"
     >
       {logoUrl ? (
         <div className="w-full h-full relative">
-          <img 
-            src={`${logoUrl}${logoUrl.includes('?') ? '&' : '?'}t=${Date.now()}`}
-            alt={`${entityLabel} Logo`} 
+          <img
+            src={`${logoUrl}${logoUrl.includes("?") ? "&" : "?"}t=${Date.now()}`}
+            alt={`${entityLabel} Logo`}
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
@@ -176,8 +113,12 @@ const ProfessionalImageUpload: React.FC<ProfessionalImageUploadProps> = ({
       ) : (
         <div className="text-center">
           <Image className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-semibold text-gray-900">Upload {entityLabel.toLowerCase()} image</h3>
-          <p className="mt-1 text-sm text-gray-500">Click to upload a logo or image for your {entityLabel.toLowerCase()}</p>
+          <h3 className="mt-2 text-sm font-semibold text-gray-900">
+            Upload {entityLabel.toLowerCase()} image
+          </h3>
+          <p className="mt-1 text-sm text-gray-500">
+            Click to upload a logo (stored on the server; max ~750KB)
+          </p>
         </div>
       )}
       <input

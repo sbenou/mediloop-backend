@@ -1,4 +1,5 @@
 import { buildAuthHeaders } from "@/lib/activeContext";
+import type { Activity } from "@/hooks/activity/types";
 import type { ConnectionStatus, Teleconsultation } from "@/types/clinical";
 
 const API_BASE =
@@ -111,12 +112,192 @@ export interface PlatformClinicalStats {
   doctors_count: number;
 }
 
+/** GET /api/clinical/doctor-home — doctor + active workspace (tenant-scoped clinical aggregates). */
+export interface DoctorHomeResponse {
+  stats: {
+    total_patients: number;
+    active_teleconsultations: number;
+    active_consultations: number;
+    active_prescriptions: number;
+    percent_change: number;
+  };
+  recent_patients: Array<{
+    id: string;
+    full_name: string;
+    avatar_url: string | null;
+    created_at: string;
+  }>;
+  activities: Activity[];
+}
+
+export async function fetchDoctorHomeApi(): Promise<DoctorHomeResponse> {
+  const res = await fetch(`${API_BASE}/api/clinical/doctor-home`, {
+    method: "GET",
+    headers: await authHeaders(),
+  });
+  const data = await parseJson<DoctorHomeResponse & { error?: string }>(res);
+  await requireOk(res, data as { error?: string });
+  return {
+    stats: {
+      total_patients: Number(data.stats?.total_patients ?? 0),
+      active_teleconsultations: Number(data.stats?.active_teleconsultations ?? 0),
+      active_consultations: Number(data.stats?.active_consultations ?? 0),
+      active_prescriptions: Number(data.stats?.active_prescriptions ?? 0),
+      percent_change: Number(data.stats?.percent_change ?? 0),
+    },
+    recent_patients: data.recent_patients ?? [],
+    activities: (data.activities ?? []) as Activity[],
+  };
+}
+
+/** Row shape from GET/PUT doctor-availability (Neon). */
+export interface DoctorAvailabilityApiRow {
+  id: string;
+  doctor_id: string;
+  day_of_week: number;
+  start_time: string | null;
+  end_time: string | null;
+  additional_time_slots: unknown;
+  is_available: boolean;
+  appointment_type: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function fetchDoctorAvailabilityApi(
+  doctorId: string,
+  appointmentType: string = "teleconsultation",
+): Promise<DoctorAvailabilityApiRow[]> {
+  const q = new URLSearchParams();
+  q.set("doctor_id", doctorId);
+  q.set("appointment_type", appointmentType);
+  const res = await fetch(
+    `${API_BASE}/api/clinical/doctor-availability?${q.toString()}`,
+    { method: "GET", headers: await authHeaders() },
+  );
+  const data = await parseJson<{
+    availability?: DoctorAvailabilityApiRow[];
+    error?: string;
+  }>(res);
+  await requireOk(res, data as { error?: string });
+  return data.availability ?? [];
+}
+
+export async function upsertDoctorAvailabilityDayApi(body: {
+  id?: string;
+  day_of_week: number;
+  is_available: boolean;
+  start_time: string;
+  end_time: string;
+  additional_time_slots: Array<{ startTime: string; endTime: string }> | null;
+  appointment_type: string;
+}): Promise<DoctorAvailabilityApiRow> {
+  const res = await fetch(`${API_BASE}/api/clinical/doctor-availability`, {
+    method: "PUT",
+    headers: await authHeaders(),
+    body: JSON.stringify(body),
+  });
+  const data = await parseJson<{
+    availability?: DoctorAvailabilityApiRow;
+    error?: string;
+  }>(res);
+  await requireOk(res, data as { error?: string });
+  if (!data.availability) throw new Error("Missing availability in response");
+  return data.availability;
+}
+
+export async function bulkReplaceDoctorAvailabilityApi(body: {
+  appointment_type: string;
+  rows: Array<{
+    day_of_week: number;
+    is_available: boolean;
+    start_time: string;
+    end_time: string;
+    additional_time_slots: Array<{ startTime: string; endTime: string }> | null;
+  }>;
+}): Promise<DoctorAvailabilityApiRow[]> {
+  const res = await fetch(
+    `${API_BASE}/api/clinical/doctor-availability/bulk-replace`,
+    {
+      method: "POST",
+      headers: await authHeaders(),
+      body: JSON.stringify(body),
+    },
+  );
+  const data = await parseJson<{
+    availability?: DoctorAvailabilityApiRow[];
+    error?: string;
+  }>(res);
+  await requireOk(res, data as { error?: string });
+  return data.availability ?? [];
+}
+
+/** Workspace-scoped pharmacy home metrics (Neon / active tenant). */
+export interface PharmacyDashboardStats {
+  total_patients: number;
+  pending_orders: number;
+  monthly_revenue: number;
+  total_prescriptions: number;
+}
+
+export interface PharmacyPatientRow {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  created_at: string;
+}
+
 /** Public aggregate counts (no auth). */
 export async function fetchPlatformClinicalStatsApi(): Promise<PlatformClinicalStats> {
   const res = await fetch(`${API_BASE}/api/clinical/platform-stats`);
   const data = await parseJson<PlatformClinicalStats & { error?: string }>(res);
   await requireOk(res, data as { error?: string });
   return data;
+}
+
+/** GET /api/clinical/pharmacy-dashboard-stats — pharmacist + active workspace context headers. */
+export async function fetchPharmacyDashboardStatsApi(): Promise<PharmacyDashboardStats> {
+  const res = await fetch(`${API_BASE}/api/clinical/pharmacy-dashboard-stats`, {
+    method: "GET",
+    headers: await authHeaders(),
+  });
+  const data = await parseJson<PharmacyDashboardStats & { error?: string }>(res);
+  await requireOk(res, data as { error?: string });
+  return {
+    total_patients: Number(data.total_patients ?? 0),
+    pending_orders: Number(data.pending_orders ?? 0),
+    monthly_revenue: Number(data.monthly_revenue ?? 0),
+    total_prescriptions: Number(data.total_prescriptions ?? 0),
+  };
+}
+
+/** GET /api/clinical/pharmacy-patients — distinct patients with Rx in active workspace. */
+export async function fetchPharmacyPatientsApi(): Promise<PharmacyPatientRow[]> {
+  const res = await fetch(`${API_BASE}/api/clinical/pharmacy-patients`, {
+    method: "GET",
+    headers: await authHeaders(),
+  });
+  const data = await parseJson<{ patients?: PharmacyPatientRow[]; error?: string }>(
+    res,
+  );
+  await requireOk(res, data as { error?: string });
+  return data.patients ?? [];
+}
+
+/** GET /api/clinical/pharmacy-patients/:id — patient row if linked via workspace prescriptions. */
+export async function fetchPharmacyPatientByIdApi(
+  patientId: string,
+): Promise<PharmacyPatientRow> {
+  const res = await fetch(
+    `${API_BASE}/api/clinical/pharmacy-patients/${encodeURIComponent(patientId)}`,
+    { method: "GET", headers: await authHeaders() },
+  );
+  const data = await parseJson<{ patient?: PharmacyPatientRow; error?: string }>(
+    res,
+  );
+  await requireOk(res, data as { error?: string });
+  if (!data.patient?.id) throw new Error("Missing patient in response");
+  return data.patient;
 }
 
 export async function fetchPrescriptionByIdApi(
@@ -333,8 +514,8 @@ function normalizeConnectionRow(
   return withNested;
 }
 
-/** PATCH /api/clinical/doctor-patient-connections/:id — patient; status accepted | rejected. */
-export async function respondToDoctorPatientConnectionApi(
+/** PATCH /api/clinical/doctor-patient-connections/:id — patient or doctor; status accepted | rejected. */
+export async function patchDoctorPatientConnectionApi(
   id: string,
   status: Extract<ConnectionStatus, "accepted" | "rejected">,
 ): Promise<DoctorPatientConnectionRow> {
@@ -350,10 +531,13 @@ export async function respondToDoctorPatientConnectionApi(
     connection?: DoctorPatientConnectionRow;
     error?: string;
   }>(res);
-  await requireOk(res, data);
+  await requireOk(res, data as { error?: string });
   if (!data.connection) throw new Error("Missing connection in response");
-  return data.connection;
+  return normalizeConnectionRow(data.connection);
 }
+
+/** Alias — patient responds to doctor-initiated request. */
+export const respondToDoctorPatientConnectionApi = patchDoctorPatientConnectionApi;
 
 /** Phase 5A — superadmin read-only legacy / attribution review (requires JWT role superadmin). */
 export interface LegacyClinicalReviewRow {

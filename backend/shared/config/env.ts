@@ -56,9 +56,12 @@ class EnvironmentConfig {
         errorMessage,
       );
 
-      // Fallback to environment variables
+      // Fallback to environment variables (same keys Vault would provide, so
+      // `.env.development` can define DATABASE_URL_DEV / DATABASE_URL_PROD locally).
       this.secrets = {
         DATABASE_URL: Deno.env.get("DATABASE_URL") || "",
+        DATABASE_URL_DEV: Deno.env.get("DATABASE_URL_DEV") || "",
+        DATABASE_URL_PROD: Deno.env.get("DATABASE_URL_PROD") || "",
         JWT_SECRET: Deno.env.get("JWT_SECRET") || "",
         GOOGLE_CLIENT_SECRET: Deno.env.get("GOOGLE_CLIENT_SECRET") || "",
         FRANCECONNECT_CLIENT_SECRET:
@@ -121,11 +124,29 @@ class EnvironmentConfig {
     const environment = appConfig.app.environment;
     let databaseUrl = "";
 
+    // `.env.test` is merged in development so scripts/tests see TEST_DATABASE_URL.
+    // The live API (`main.ts`) must still use dev/prod URLs from Vault or DATABASE_URL*;
+    // otherwise every `start-dev` hits the test Neon branch and logins fail (user rows differ).
     const testDatabaseUrl = Deno.env.get("TEST_DATABASE_URL");
-    if (testDatabaseUrl) {
-      console.log("🧪 Using TEST database URL from environment variable");
+    // Used by scripts/seedSubscriptionSystem.ts when seeding DATABASE_URL_DEV
+    // while `.env.test` would otherwise re-merge TEST_DATABASE_URL.
+    const ignoreTestDatabaseUrl =
+      Deno.env.get("MEDILOOP_IGNORE_TEST_DATABASE_URL") === "1";
+    const mainModule = Deno.mainModule.replace(/\\/g, "/");
+    const isMainApiServer = /(^|\/)main\.ts(\?|$)/.test(mainModule);
+    if (
+      testDatabaseUrl &&
+      !ignoreTestDatabaseUrl &&
+      !isMainApiServer
+    ) {
+      console.log("🧪 Using TEST_DATABASE_URL (non-main entry)");
       console.log("   Database:", testDatabaseUrl.replace(/:[^@]+@/, ":***@"));
       return this.validateDatabaseUrl(testDatabaseUrl);
+    }
+    if (testDatabaseUrl && isMainApiServer) {
+      console.log(
+        "🔧 Ignoring TEST_DATABASE_URL for main API server; using Vault / DATABASE_URL*",
+      );
     }
 
     // Try to get environment-specific database URL from Vault

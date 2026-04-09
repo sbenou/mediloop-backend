@@ -29,12 +29,14 @@ interface DoctorProfileContentProps {
   doctorData: ProfileData;
   userId?: string;
   onLogoUpdate: (newLogoUrl: string) => void;
+  onSaved?: () => void;
 }
 
 const DoctorProfileContent: React.FC<DoctorProfileContentProps> = ({
   doctorData,
   userId,
-  onLogoUpdate
+  onLogoUpdate,
+  onSaved,
 }) => {
   const [isEditingInfo, setIsEditingInfo] = useState(false);
   const [isEditingHours, setIsEditingHours] = useState(false);
@@ -123,6 +125,7 @@ const DoctorProfileContent: React.FC<DoctorProfileContentProps> = ({
               doctorId={doctorData.id}
               isEditing={isEditingHours}
               setIsEditing={setIsEditingHours}
+              onSaved={onSaved}
             />
           </CardContent>
         </Card>

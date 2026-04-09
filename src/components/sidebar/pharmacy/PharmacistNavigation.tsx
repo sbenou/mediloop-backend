@@ -1,6 +1,6 @@
 
 import { useNavigate, useLocation } from "react-router-dom";
-import { Home, ShoppingCart, FileText, Users, Settings } from "lucide-react";
+import { Home, ShoppingCart, FileText, Users, Settings, Gift } from "lucide-react";
 import { useSidebarNavigation } from "../hooks/useSidebarNavigation";
 import SidebarSection from "../SidebarSection";
 import SidebarLink from "../SidebarLink";
@@ -27,11 +27,18 @@ const PharmacistNavigation = ({
   } = useSidebarNavigation("pharmacist");
 
   const handleDashboardClick = () => {
-    navigate(DASHBOARD_BASE, {
+    navigate(`${DASHBOARD_BASE}?view=pharmacy&section=dashboard`, {
       state: { preserveAuth: true },
       replace: false
     });
   };
+
+  const dashboardSection = new URLSearchParams(location.search).get("section");
+  const isPharmacyDashboardHome =
+    location.pathname === DASHBOARD_BASE &&
+    (dashboardSection === null ||
+      dashboardSection === "" ||
+      dashboardSection === "dashboard");
 
   return (
     <>
@@ -40,7 +47,7 @@ const PharmacistNavigation = ({
           icon={<Home className="h-4 w-4" />}
           label="Dashboard"
           onClick={handleDashboardClick}
-          active={location.pathname === DASHBOARD_BASE && !location.search}
+          active={isPharmacyDashboardHome}
         />
 
         {canViewProducts && (
@@ -56,7 +63,7 @@ const PharmacistNavigation = ({
           <SidebarLink
             icon={<FileText className="h-4 w-4" />}
             label="Prescriptions"
-            onClick={() => navigateToLink('/dashboard?section=prescriptions')}
+            onClick={() => navigateToLink('/dashboard?view=pharmacy&section=prescriptions')}
             active={location.pathname === DASHBOARD_BASE && location.search.includes('section=prescriptions')}
           />
         )}
@@ -64,8 +71,15 @@ const PharmacistNavigation = ({
         <SidebarLink
           icon={<Users className="h-4 w-4" />}
           label="Patients"
-          onClick={() => navigateToLink('/dashboard?section=patients')}
+          onClick={() => navigateToLink('/dashboard?view=pharmacy&section=patients')}
           active={location.pathname === DASHBOARD_BASE && location.search.includes('section=patients')}
+        />
+
+        <SidebarLink
+          icon={<Gift className="h-4 w-4" />}
+          label="Referrals"
+          onClick={() => navigateToLink('/referral')}
+          active={location.pathname === '/referral'}
         />
       </SidebarSection>
       
@@ -73,7 +87,7 @@ const PharmacistNavigation = ({
         <SidebarLink
           icon={<Settings className="h-4 w-4" />}
           label="Settings"
-          onClick={() => navigateToLink('/dashboard?section=settings')}
+          onClick={() => navigateToLink('/dashboard?view=pharmacy&section=settings')}
           active={location.pathname === DASHBOARD_BASE && location.search.includes('section=settings')}
         />
       </SidebarSection>

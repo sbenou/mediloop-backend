@@ -1,6 +1,6 @@
 
 import React, { useState, Dispatch, SetStateAction } from 'react';
-import { supabase } from '@/lib/supabase';
+import { updatePharmacyWorkspaceApi } from '@/services/professionalWorkspaceApi';
 import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,7 @@ interface PharmacyInfoProps {
   };
   isEditing?: boolean;
   setIsEditing?: Dispatch<SetStateAction<boolean>>;
+  onSaved?: () => void;
 }
 
 const PharmacyInfo: React.FC<PharmacyInfoProps> = ({ 
@@ -42,19 +43,14 @@ const PharmacyInfo: React.FC<PharmacyInfoProps> = ({
 
   const handleSave = async () => {
     try {
-      const { error } = await supabase
-        .from('pharmacies')
-        .update({
-          name: formData.name,
-          address: formData.address,
-          city: formData.city,
-          postal_code: formData.postal_code,
-          phone: formData.phone,
-          email: formData.email,
-        })
-        .eq('id', pharmacy.id);
-
-      if (error) throw error;
+      await updatePharmacyWorkspaceApi({
+        name: formData.name,
+        address: formData.address,
+        city: formData.city,
+        postal_code: formData.postal_code,
+        phone: formData.phone || null,
+        email: formData.email || null,
+      });
 
       toast({
         title: "Success",
@@ -62,6 +58,7 @@ const PharmacyInfo: React.FC<PharmacyInfoProps> = ({
       });
       
       if (setIsEditing) setIsEditing(false);
+      onSaved?.();
     } catch (error) {
       console.error('Error updating pharmacy:', error);
       toast({

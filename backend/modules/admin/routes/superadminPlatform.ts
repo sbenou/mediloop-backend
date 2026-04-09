@@ -439,4 +439,41 @@ router.delete("/api/admin/bank-holidays/:id", async (ctx: Context) => {
   }
 });
 
+/** Aggregate counts for superadmin home (replaces Supabase RPC get_admin_dashboard_stats). */
+router.get("/api/admin/dashboard-stats", async (ctx: Context) => {
+  const admin = requireSuperadmin(ctx);
+  if (!admin) return;
+
+  try {
+    let total_products = 0;
+    try {
+      const pc = await postgresService.query(
+        `SELECT COUNT(*)::int AS c FROM public.products`,
+      );
+      total_products = Number((pc.rows[0] as { c?: number })?.c ?? 0);
+    } catch {
+      total_products = 0;
+    }
+
+    const r = await postgresService.query(
+      `SELECT
+        (SELECT COUNT(*)::int FROM auth.users
+         WHERE COALESCE(status::text, 'active') <> 'deleted') AS total_users,
+        (SELECT COUNT(*)::int FROM public.roles) AS total_roles,
+        (SELECT COUNT(*)::int FROM public.role_permissions) AS total_permissions`,
+    );
+    const row = r.rows[0] as Record<string, number>;
+    ctx.response.body = {
+      total_users: row.total_users ?? 0,
+      total_roles: row.total_roles ?? 0,
+      total_permissions: row.total_permissions ?? 0,
+      total_products,
+    };
+  } catch (e) {
+    console.error("[admin] dashboard-stats error:", e);
+    ctx.response.status = 500;
+    ctx.response.body = { error: "Failed to load dashboard stats" };
+  }
+});
+
 export const superadminPlatformRoutes = router;

@@ -638,18 +638,24 @@ authRoutes.post("/api/auth/login", loginRateLimiter, async (ctx) => {
       },
     };
   } catch (error) {
-    console.error("V3 Login error:", error);
+    const errMsg = error instanceof Error ? error.message : String(error);
+    const invalidCreds = errMsg.includes("Invalid login credentials");
+    if (!invalidCreds) {
+      console.error("V3 Login error:", error);
+    }
 
     let errorMessage = "Login failed";
-    if (error.message.includes("Invalid login credentials")) {
+    if (invalidCreds) {
       errorMessage =
         "Invalid email or password. Please check your credentials.";
-    } else if (error.message.includes("Profile not found")) {
+    } else if (errMsg.includes("Profile not found")) {
       errorMessage =
         "No account found with this email address. Please sign up first.";
     }
 
-    ctx.response.status = 401;
+    ctx.response.status = invalidCreds || errMsg.includes("Profile not found")
+      ? 401
+      : 500;
     ctx.response.body = { error: errorMessage };
   }
 });

@@ -12,9 +12,14 @@ export function getDashboardRouteByRole(role?: string | null): string {
   }
 
   switch (role.toLowerCase()) {
-    case "doctor":
+    case "doctor": {
+      const preferredMode = getPreferredDashboardMode("doctor");
+      return preferredMode === "patient"
+        ? "/dashboard?mode=patient"
+        : "/doctor/doctor-dashboard";
+    }
     case "pharmacist": {
-      const preferredMode = getPreferredDashboardMode(role);
+      const preferredMode = getPreferredDashboardMode("pharmacist");
       return preferredMode === "patient" ? "/dashboard?mode=patient" : "/dashboard";
     }
     case "superadmin":

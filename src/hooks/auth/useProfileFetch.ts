@@ -3,20 +3,53 @@ import { supabase } from '@/lib/supabase';
 import { UserProfile } from '@/types/user';
 import { fetchUserPermissions } from '@/lib/auth/sessionUtils';
 import { buildAuthHeaders } from "@/lib/activeContext";
+import { V2_SESSION_STORAGE_KEYS } from "@/lib/auth/v2SessionStorage";
 
 const API_BASE =
   import.meta.env.VITE_API_URL ||
   import.meta.env.VITE_API_BASE_URL ||
   'http://localhost:8000';
 
+/** Mediloop API expects the Deno JWT. Prefer stored V2 token over a Supabase session token. */
 function resolveAccessToken(explicit?: string | null): string | null {
-  if (explicit) return explicit;
   if (typeof window === 'undefined') return null;
-  return (
-    localStorage.getItem('mediloop_access_token') ||
+  const v2 =
+    localStorage.getItem(V2_SESSION_STORAGE_KEYS.ACCESS_TOKEN) ||
     localStorage.getItem('auth_token') ||
-    null
-  );
+    null;
+  if (v2) return v2;
+  if (explicit) return explicit;
+  return null;
+}
+
+const PROFILE_FETCH_DEADLINE_MS = 25_000;
+
+async function fetchWithOptionalDeadline(
+  url: string,
+  init: RequestInit,
+  outerSignal: AbortSignal | undefined,
+): Promise<Response> {
+  const ctrl = new AbortController();
+  const tid = window.setTimeout(() => ctrl.abort(), PROFILE_FETCH_DEADLINE_MS);
+  const cancelTimer = () => window.clearTimeout(tid);
+  if (outerSignal) {
+    if (outerSignal.aborted) ctrl.abort();
+    else {
+      outerSignal.addEventListener(
+        'abort',
+        () => {
+          cancelTimer();
+          ctrl.abort();
+        },
+        { once: true },
+      );
+    }
+  }
+  try {
+    return await fetch(url, { ...init, signal: ctrl.signal });
+  } finally {
+    cancelTimer();
+  }
 }
 
 function profileFromApiPayload(
@@ -71,14 +104,17 @@ export async function fetchProfileForV2Jwt(
   signal?: AbortSignal,
 ): Promise<V2JwtProfileResult> {
   try {
-    const res = await fetch(`${API_BASE}/api/auth/profile`, {
-      method: "GET",
-      headers: buildAuthHeaders({
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      }),
+    const res = await fetchWithOptionalDeadline(
+      `${API_BASE}/api/auth/profile`,
+      {
+        method: "GET",
+        headers: buildAuthHeaders({
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        }),
+      },
       signal,
-    });
+    );
     if (res.status === 401 || res.status === 403) {
       return { status: "unauthorized" };
     }
@@ -162,6 +198,11 @@ export const useProfileFetch = () => {
     console.log('Starting profile fetch for user:', userId);
 
     const fetchPromise = (async () => {
+      const deadlineId = window.setTimeout(
+        () => abortController.abort(),
+        PROFILE_FETCH_DEADLINE_MS,
+      );
+      const clearDeadline = () => window.clearTimeout(deadlineId);
       try {
         setIsLoading(true);
 
@@ -173,14 +214,17 @@ export const useProfileFetch = () => {
 
         if (token) {
           try {
-            const res = await fetch(`${API_BASE}/api/auth/profile`, {
-              method: 'GET',
-              headers: buildAuthHeaders({
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json',
-              }),
-              signal: abortController.signal,
-            });
+            const res = await fetchWithOptionalDeadline(
+              `${API_BASE}/api/auth/profile`,
+              {
+                method: 'GET',
+                headers: buildAuthHeaders({
+                  Authorization: `Bearer ${token}`,
+                  'Content-Type': 'application/json',
+                }),
+              },
+              abortController.signal,
+            );
 
             if (res.ok) {
               const data = (await res.json()) as {
@@ -211,6 +255,21 @@ export const useProfileFetch = () => {
             }
             console.warn('API profile error, falling back to Supabase:', apiErr);
           }
+        }
+
+        const v2StoredId = localStorage.getItem(V2_SESSION_STORAGE_KEYS.USER_ID);
+        const v2Token =
+          localStorage.getItem(V2_SESSION_STORAGE_KEYS.ACCESS_TOKEN) ||
+          localStorage.getItem('auth_token');
+        if (v2StoredId === userId && v2Token) {
+          const v2 = await fetchProfileForV2Jwt(userId, v2Token, abortController.signal);
+          if (v2.status === 'ok') {
+            return { profile: v2.profile, permissions: v2.permissions };
+          }
+          console.warn(
+            '[fetchAndSetProfile] V2 JWT session active but profile not loaded; skipping legacy Supabase (often absent on Neon)',
+          );
+          return { profile: null, permissions: [] };
         }
 
         console.log('Fetching profile from Supabase (legacy)...');
@@ -292,6 +351,7 @@ export const useProfileFetch = () => {
 
         return { profile: minimalProfile(userId), permissions: [] };
       } finally {
+        clearDeadline();
         setIsLoading(false);
         fetchInProgress.current.delete(userId);
         abortControllers.current.delete(userId);

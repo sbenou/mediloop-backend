@@ -15,6 +15,7 @@ import { postgresService } from "../../../shared/services/postgresService.ts";
 import { databaseService } from "../../../shared/services/databaseService.ts";
 import { invitationService } from "./invitationService.ts";
 import { emailService } from "../../../shared/services/emailService.ts"; // ✅ NEW: You'll need to ensure this exists
+import { ensurePersonalHealthWorkspaceForUser } from "./personalHealthWorkspaceService.ts";
 
 export class RegistrationService {
   async registerUser(
@@ -148,7 +149,6 @@ export class RegistrationService {
           userId,
           tenantType,
           tenantName,
-          role,
         );
         console.log("✓ Tenant created successfully:", {
           id: tenant.id,
@@ -190,6 +190,13 @@ export class RegistrationService {
         userId,
         tenantId: tenant.id,
         role,
+      });
+
+      await ensurePersonalHealthWorkspaceForUser({
+        userId,
+        fullName,
+        role,
+        primaryTenantId: tenant.id as string,
       });
 
       // Auto-accept any pending invitations for this email
@@ -335,28 +342,42 @@ export class RegistrationService {
     }
   }
 
+  private tenantsRowTenantType(registrationKind: string): string {
+    switch (registrationKind) {
+      case "personal":
+        return "personal_health";
+      case "clinic":
+        return "clinic";
+      case "pharmacy":
+        return "pharmacy";
+      default:
+        return "personal_health";
+    }
+  }
+
   private async createTenantWithType(
     userId: string,
     tenantType: string,
     tenantName: string,
-    role: string,
   ): Promise<any> {
     const tenantId = crypto.randomUUID();
     const schemaName = `tenant_${tenantId.replace(/-/g, "_")}`;
+    const dbTenantType = this.tenantsRowTenantType(tenantType);
 
     console.log("Creating tenant:", {
       tenantId,
       tenantType,
+      dbTenantType,
       tenantName,
       schemaName,
     });
 
     const result = await postgresService.query(
       `INSERT INTO public.tenants 
-       (id, name, schema, domain, is_active, created_at, updated_at) 
-       VALUES ($1, $2, $3, $4, true, NOW(), NOW())
+       (id, name, schema, domain, is_active, created_at, updated_at, tenant_type) 
+       VALUES ($1, $2, $3, $4, true, NOW(), NOW(), $5)
        RETURNING *`,
-      [tenantId, tenantName, schemaName, userId],
+      [tenantId, tenantName, schemaName, userId, dbTenantType],
     );
 
     if (result.rows.length === 0) {
@@ -467,7 +488,6 @@ export class RegistrationService {
       userId,
       tenantType,
       tenantName,
-      role,
     );
 
     const user = await databaseService.createUserInAuthTable(
@@ -486,6 +506,13 @@ export class RegistrationService {
        VALUES ($1, $2, true, $3, true)`,
       [userId, tenant.id, role],
     );
+
+    await ensurePersonalHealthWorkspaceForUser({
+      userId,
+      fullName,
+      role,
+      primaryTenantId: tenant.id as string,
+    });
 
     await postgresService.query(
       `UPDATE auth.users SET email_verified = true, updated_at = NOW() WHERE id = $1`,

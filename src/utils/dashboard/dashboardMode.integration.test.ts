@@ -43,6 +43,13 @@ describe("dashboard mode persistence flow", () => {
     expect(getDashboardRouteByRole("doctor")).toBe("/dashboard?mode=patient");
   });
 
+  it("doctor in role mode resolves to new doctor home", () => {
+    setPreferredDashboardMode("doctor", "patient");
+    setPreferredDashboardMode("doctor", "role");
+    expect(getPreferredDashboardMode("doctor")).toBe("role");
+    expect(getDashboardRouteByRole("doctor")).toBe("/doctor/doctor-dashboard");
+  });
+
   it("pharmacist keeps role mode after toggling back", () => {
     setPreferredDashboardMode("pharmacist", "patient");
     setPreferredDashboardMode("pharmacist", "role");

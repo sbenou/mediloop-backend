@@ -11,6 +11,7 @@ on:
     paths:
       - "backend/**"
       - "tests/backend/**"
+      - "tests/utils/**"
       - "src/services/clinicalApi.ts"
       - "src/components/teleconsultation/**"
       - ".github/workflows/backend-ci.yml"
@@ -19,6 +20,7 @@ on:
     paths:
       - "backend/**"
       - "tests/backend/**"
+      - "tests/utils/**"
       - "src/services/clinicalApi.ts"
       - "src/components/teleconsultation/**"
       - ".github/workflows/backend-ci.yml"
@@ -35,6 +37,9 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v1.x
+
+      - name: Verify Deno entrypoints (module graph)
+        run: deno task verify-deno-entrypoints
 
       - name: Run backend tests
         run: deno task test-backend

@@ -6,8 +6,12 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Plus, X, Save, Clock } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
+import {
+  bulkReplaceDoctorAvailabilityApi,
+  fetchDoctorAvailabilityApi,
+  upsertDoctorAvailabilityDayApi,
+} from "@/services/clinicalApi";
 import { DoctorAvailability, TimeSlot, isTimeSlot, AppointmentType } from "@/types/domain";
 
 interface DoctorAvailabilityCalendarProps {
@@ -62,26 +66,8 @@ const DoctorAvailabilityCalendar = ({
       setLoadError(null);
       console.log('Loading availability for doctor:', doctorId);
       
-      let query = supabase
-        .from('doctor_availability')
-        .select('*')
-        .eq('doctor_id', doctorId);
-      
-      // Filter by appointment type if specified
-      if (appointmentType === 'teleconsultation') {
-        query = query.or('appointment_type.eq.teleconsultation,appointment_type.eq.both,appointment_type.is.null');
-      } else if (appointmentType === 'in-person') {
-        query = query.or('appointment_type.eq.in-person,appointment_type.eq.both,appointment_type.is.null');
-      }
-      
-      const { data, error } = await query;
-      
-      if (error) {
-        console.error('Error fetching doctor availability:', error);
-        setLoadError('Failed to load availability data');
-        throw error;
-      }
-      
+      const data = await fetchDoctorAvailabilityApi(doctorId, appointmentType);
+
       console.log('Received doctor availability data:', data);
       
       if (data && data.length > 0) {
@@ -333,6 +319,15 @@ const DoctorAvailabilityCalendar = ({
     }
 
     try {
+      if (profile?.id !== doctorId) {
+        toast({
+          variant: "destructive",
+          title: "Cannot save",
+          description: "You can only edit your own availability.",
+        });
+        return;
+      }
+
       setIsSaving(true);
       console.log('Saving availability for day:', DAYS_OF_WEEK[selectedDay]);
 
@@ -347,49 +342,32 @@ const DoctorAvailabilityCalendar = ({
       // Find existing record for this day
       const existingDay = availabilityData.find(day => day.day_of_week === selectedDay);
       
-      if (existingDay?.id && !existingDay.id.includes('temp-')) {
-        // Update existing record
-        console.log('Updating existing availability record:', existingDay.id);
-        const { error } = await supabase
-          .from('doctor_availability')
-          .update({
-            is_available: isAvailable,
-            start_time: primaryTimeSlot.startTime,
-            end_time: primaryTimeSlot.endTime,
-            additional_time_slots: additionalTimeSlots.length > 0 ? JSON.stringify(additionalTimeSlots) : null,
-            appointment_type: appointmentType,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', existingDay.id);
-          
-        if (error) {
-          console.error('Error updating availability:', error);
-          throw error;
-        }
-        
-        console.log('Successfully updated availability');
+      const additionalPayload =
+        additionalTimeSlots.length > 0 ? additionalTimeSlots : null;
+
+      if (existingDay?.id && !existingDay.id.includes("temp-")) {
+        console.log("Updating existing availability record:", existingDay.id);
+        await upsertDoctorAvailabilityDayApi({
+          id: existingDay.id,
+          day_of_week: selectedDay,
+          is_available: isAvailable,
+          start_time: primaryTimeSlot.startTime,
+          end_time: primaryTimeSlot.endTime,
+          additional_time_slots: additionalPayload,
+          appointment_type: appointmentType,
+        });
+        console.log("Successfully updated availability");
       } else {
-        // Insert new record
-        console.log('Creating new availability record');
-        const { error, data } = await supabase
-          .from('doctor_availability')
-          .insert([{
-            doctor_id: doctorId,
-            day_of_week: selectedDay,
-            start_time: primaryTimeSlot.startTime,
-            end_time: primaryTimeSlot.endTime,
-            additional_time_slots: additionalTimeSlots.length > 0 ? JSON.stringify(additionalTimeSlots) : null,
-            is_available: isAvailable,
-            appointment_type: appointmentType
-          }])
-          .select();
-          
-        if (error) {
-          console.error('Error creating availability:', error);
-          throw error;
-        }
-        
-        console.log('Successfully created availability:', data);
+        console.log("Creating new availability record");
+        await upsertDoctorAvailabilityDayApi({
+          day_of_week: selectedDay,
+          is_available: isAvailable,
+          start_time: primaryTimeSlot.startTime,
+          end_time: primaryTimeSlot.endTime,
+          additional_time_slots: additionalPayload,
+          appointment_type: appointmentType,
+        });
+        console.log("Successfully created availability");
       }
 
       // Reload data after update
@@ -414,6 +392,15 @@ const DoctorAvailabilityCalendar = ({
 
   const updateAllDaysAtOnce = async () => {
     try {
+      if (profile?.id !== doctorId) {
+        toast({
+          variant: "destructive",
+          title: "Cannot save",
+          description: "You can only edit your own availability.",
+        });
+        return;
+      }
+
       if (isAvailable && !validateTimeSlots()) {
         return;
       }
@@ -421,43 +408,25 @@ const DoctorAvailabilityCalendar = ({
       setIsSaving(true);
       console.log('Updating availability for all days');
       
-      // First, delete all existing availability records for this appointment type
-      const { error: deleteError } = await supabase
-        .from('doctor_availability')
-        .delete()
-        .eq('doctor_id', doctorId)
-        .or(`appointment_type.eq.${appointmentType},appointment_type.is.null`);
-        
-      if (deleteError) {
-        console.error('Error deleting existing availability:', deleteError);
-        throw deleteError;
-      }
-      
-      // Get additional time slots if any
       const primaryTimeSlot = timeSlots[0];
       const additionalTimeSlots = timeSlots.length > 1 ? timeSlots.slice(1) : [];
-      
-      // Then, insert new availability for all days
+      const additionalPayload =
+        additionalTimeSlots.length > 0 ? additionalTimeSlots : null;
+
       const newAvailabilityRecords = DAYS_OF_WEEK.map((_, index) => ({
-        doctor_id: doctorId,
         day_of_week: index,
         start_time: primaryTimeSlot.startTime,
         end_time: primaryTimeSlot.endTime,
-        additional_time_slots: additionalTimeSlots.length > 0 ? JSON.stringify(additionalTimeSlots) : null,
+        additional_time_slots: additionalPayload,
         is_available: isAvailable,
-        appointment_type: appointmentType
       }));
       
       console.log('Creating availability records for all days:', newAvailabilityRecords);
       
-      const { error: insertError } = await supabase
-        .from('doctor_availability')
-        .insert(newAvailabilityRecords);
-        
-      if (insertError) {
-        console.error('Error creating availability records:', insertError);
-        throw insertError;
-      }
+      await bulkReplaceDoctorAvailabilityApi({
+        appointment_type: appointmentType,
+        rows: newAvailabilityRecords,
+      });
       
       // Reload the data to ensure we have the correct IDs and timestamps
       await loadAvailability();

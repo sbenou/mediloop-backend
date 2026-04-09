@@ -83,7 +83,7 @@ describe("Dashboard mode hydration", () => {
     expect(optionsArg).toEqual({ replace: true });
   });
 
-  it("hydrates pharmacist patient mode from stored preference", () => {
+  it("does not auto-hydrate pharmacist patient mode from localStorage (in-dashboard toggle only)", () => {
     authState.userRole = "pharmacist";
     authState.profile.role = "pharmacist";
     window.localStorage.setItem(
@@ -93,11 +93,13 @@ describe("Dashboard mode hydration", () => {
 
     render(<Dashboard />);
 
-    expect(setSearchParamsMock).toHaveBeenCalled();
-    const [paramsArg, optionsArg] = setSearchParamsMock.mock.calls[0];
-    expect(paramsArg.get("mode")).toBe("patient");
-    expect(paramsArg.get("view")).toBe("home");
-    expect(optionsArg).toEqual({ replace: true });
+    expect(setSearchParamsMock).not.toHaveBeenCalled();
+  });
+
+  it("redirects doctor in role mode from /dashboard to new doctor home", () => {
+    window.localStorage.removeItem("mediloop.dashboard_mode_by_role");
+    render(<Dashboard />);
+    expect(navigateMock).toHaveBeenCalledWith("/doctor/doctor-dashboard", { replace: true });
   });
 });
 

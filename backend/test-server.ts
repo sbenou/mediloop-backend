@@ -25,8 +25,9 @@ import {
 } from "./modules/clinical/routes/clinical.ts";
 import { legacyClinicalAdminRoutes } from "./modules/admin/routes/legacyClinicalReview.ts";
 import { superadminPlatformRoutes } from "./modules/admin/routes/superadminPlatform.ts";
+import notificationRouter from "./modules/notifications/routes/notifications.ts";
 import { load } from "https://deno.land/std@0.224.0/dotenv/mod.ts";
-import { resolveEnvTestPath } from "../tests/utils/resolveEnvTestPath.ts";
+import { resolveEnvTestPath } from "./shared/config/resolveEnvTestPath.ts";
 
 // ✅ Load repo-root `.env.test` (cwd is usually `backend/` when spawned by TestServer)
 const envTestPath = await resolveEnvTestPath();
@@ -73,7 +74,13 @@ app.use(
   oakCors({
     origin: "*",
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Mediloop-Tenant-Id",
+      "X-Mediloop-Membership-Id",
+      "X-Request-Id",
+    ],
   }),
 );
 
@@ -141,6 +148,9 @@ app.use(legacyClinicalAdminRoutes.allowedMethods());
 
 app.use(superadminPlatformRoutes.routes());
 app.use(superadminPlatformRoutes.allowedMethods());
+
+app.use(notificationRouter.routes());
+app.use(notificationRouter.allowedMethods());
 
 // Health check route
 const router = new Router();

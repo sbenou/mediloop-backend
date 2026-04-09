@@ -16,6 +16,7 @@ import type {
   PlanFilters,
   Feature,
   Service,
+  PlanMarketingItem,
 } from "../../../shared/types/index.ts";
 
 export class PlanError extends Error {
@@ -399,7 +400,7 @@ export class PlanService {
       [id],
     );
 
-    return result.rowCount !== null && result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   /**
@@ -426,6 +427,14 @@ export class PlanService {
       [plan.id],
     );
 
+    const marketingResult = await postgresService.query(
+      `SELECT *
+       FROM plan_marketing_items
+       WHERE plan_id = $1
+       ORDER BY sort_order ASC, kind ASC`,
+      [plan.id],
+    );
+
     return {
       ...plan,
       features: featuresResult.rows as unknown as (Feature & {
@@ -434,6 +443,7 @@ export class PlanService {
       services: servicesResult.rows as unknown as (Service & {
         pivot_quantity: number;
       })[],
+      marketing_items: marketingResult.rows as unknown as PlanMarketingItem[],
     };
   }
 

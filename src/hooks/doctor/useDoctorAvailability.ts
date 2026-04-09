@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { fetchDoctorAvailabilityApi } from '@/services/clinicalApi';
 import { UserProfile } from '@/types/user';
 
 export const useDoctorAvailability = (userProfile: UserProfile | undefined) => {
@@ -11,32 +11,24 @@ export const useDoctorAvailability = (userProfile: UserProfile | undefined) => {
       if (userProfile?.role === 'doctor' && userProfile?.id) {
         try {
           const now = new Date();
-          const currentDay = now.getDay();
-          const dayOfWeek = currentDay === 0 ? 7 : currentDay;
-          
+          const dayOfWeek = now.getDay();
+
           const currentHour = now.getHours();
           const currentMinute = now.getMinutes();
           const currentTime = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
-          
-          const { data, error } = await supabase
-            .from('doctor_availability')
-            .select('is_available, start_time, end_time')
-            .eq('doctor_id', userProfile.id)
-            .eq('day_of_week', dayOfWeek)
-            .maybeSingle();
-            
-          if (error) {
-            console.error('Error fetching doctor availability:', error);
-            setIsAvailable(false);
-            return;
-          }
-          
+
+          const rows = await fetchDoctorAvailabilityApi(
+            userProfile.id,
+            'teleconsultation',
+          );
+          const data = rows.find((r) => r.day_of_week === dayOfWeek);
+
           if (data) {
             if (!data.is_available) {
               setIsAvailable(false);
               return;
             }
-            
+
             if (data.start_time && data.end_time) {
               setIsAvailable(currentTime >= data.start_time && currentTime <= data.end_time);
             } else {

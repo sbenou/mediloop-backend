@@ -16,10 +16,11 @@ interface DoctorInfoProps {
   };
   isEditing: boolean;
   setIsEditing: (isEditing: boolean) => void;
+  onSaved?: () => void;
 }
 
-const DoctorInfo = ({ doctor, isEditing, setIsEditing }: DoctorInfoProps) => {
-  const { isSubmitting, handleSave } = useDoctorInfo(doctor.id);
+const DoctorInfo = ({ doctor, isEditing, setIsEditing, onSaved }: DoctorInfoProps) => {
+  const { isSubmitting, handleSave } = useDoctorInfo(doctor.id, onSaved);
 
   if (isEditing) {
     return (

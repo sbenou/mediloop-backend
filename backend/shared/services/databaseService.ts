@@ -59,6 +59,13 @@ export class DatabaseService {
       console.log("✅ Password verification successful for:", email);
       return user;
     } catch (error) {
+      const msg = error instanceof Error ? error.message : "";
+      if (msg === "Invalid login credentials") {
+        throw error;
+      }
+      if (msg === "Password data not found for user") {
+        throw new Error("Invalid login credentials");
+      }
       console.error("Error verifying password:", error);
       throw new Error("Invalid login credentials");
     } finally {

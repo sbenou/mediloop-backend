@@ -2,11 +2,59 @@ import { useEffect } from "react";
 import { useSetRecoilState } from "recoil";
 import { supabase, getSessionFromStorage } from "@/lib/supabase";
 import { authState } from "@/store/auth/atoms";
-import { toast } from "@/components/ui/use-toast";
 import { useSessionManagement } from "@/hooks/auth/useSessionManagement";
 import { useVisibilityChange } from "@/hooks/auth/useVisibilityChange";
 import { useStorageEvents } from "@/hooks/auth/useStorageEvents";
 import { useSessionPolling } from "@/hooks/auth/useSessionPolling";
+import { V2_SESSION_STORAGE_KEYS } from "@/lib/auth/v2SessionStorage";
+import {
+  hasV2SessionStorage,
+  readBootstrapProfileFromV2Storage,
+} from "@/lib/auth/bootstrapV2Profile";
+const SUPABASE_SESSION_WAIT_MS = 8_000;
+const AUTH_INIT_WATCHDOG_MS = 20_000;
+
+async function getSupabaseSessionBounded() {
+  try {
+    return await Promise.race([
+      supabase.auth.getSession(),
+      new Promise<Awaited<ReturnType<typeof supabase.auth.getSession>>>(
+        (_, reject) => {
+          window.setTimeout(
+            () => reject(new Error("supabase.getSession timeout")),
+            SUPABASE_SESSION_WAIT_MS,
+          );
+        },
+      ),
+    ]);
+  } catch {
+    return {
+      data: { session: null },
+      error: null,
+    } as Awaited<ReturnType<typeof supabase.auth.getSession>>;
+  }
+}
+
+async function refreshSupabaseSessionBounded() {
+  try {
+    return await Promise.race([
+      supabase.auth.refreshSession(),
+      new Promise<Awaited<ReturnType<typeof supabase.auth.refreshSession>>>(
+        (_, reject) => {
+          window.setTimeout(
+            () => reject(new Error("refreshSession timeout")),
+            SUPABASE_SESSION_WAIT_MS,
+          );
+        },
+      ),
+    ]);
+  } catch {
+    return {
+      data: { session: null, user: null },
+      error: new Error("timeout"),
+    } as Awaited<ReturnType<typeof supabase.auth.refreshSession>>;
+  }
+}
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const setAuth = useSetRecoilState(authState);
@@ -20,12 +68,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     let authSubscription: any = null;
 
     const initializeAuth = async () => {
+      const watchdog = window.setTimeout(() => {
+        if (!mounted) return;
+        setAuth((prev) =>
+          prev.isLoading ? { ...prev, isLoading: false } : prev,
+        );
+        console.error(
+          "[AuthProvider] Auth init watchdog: forced isLoading false after stall",
+        );
+      }, AUTH_INIT_WATCHDOG_MS);
+
+      const clearWatchdog = () => window.clearTimeout(watchdog);
+
       try {
         console.log("[AuthProvider] Starting auth initialization", {
           timestamp: new Date().toISOString(),
         });
 
-        setAuth((prev) => ({ ...prev, isLoading: true }));
+        // V2 (Neon JWT): apply local bootstrap immediately so Dashboard is not blocked on
+        // default Recoil isLoading:true, Strict Mode re-runs, or async profile hydration.
+        if (hasV2SessionStorage()) {
+          const v2Uid =
+            localStorage.getItem(V2_SESSION_STORAGE_KEYS.USER_ID) ?? "";
+          const boot = readBootstrapProfileFromV2Storage(v2Uid);
+          if (boot) {
+            setAuth({ ...boot, isLoading: false });
+          } else {
+            setAuth((prev) => ({ ...prev, isLoading: true }));
+          }
+        } else {
+          setAuth((prev) => ({ ...prev, isLoading: true }));
+        }
 
         // Set up auth state listener FIRST to catch all events
         authSubscription = supabase.auth.onAuthStateChange(
@@ -39,6 +112,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             });
 
             if (event === "SIGNED_IN") {
+              if (hasV2SessionStorage()) {
+                console.log(
+                  "[AuthProvider] Skipping Supabase SIGNED_IN; V2 JWT session is authoritative",
+                );
+                return;
+              }
               console.log("[AuthProvider] Processing SIGNED_IN event");
               await updateAuthState(session);
             } else if (event === "SIGNED_OUT") {
@@ -50,6 +129,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 isLoading: false,
               });
             } else if (event === "TOKEN_REFRESHED") {
+              if (hasV2SessionStorage()) {
+                console.log(
+                  "[AuthProvider] Skipping Supabase TOKEN_REFRESHED; V2 JWT session is authoritative",
+                );
+                return;
+              }
               console.log("[AuthProvider] Processing TOKEN_REFRESHED event");
               await updateAuthState(session);
             }
@@ -59,7 +144,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Check for stored session
         const storedSession = getSessionFromStorage();
 
-        if (storedSession && mounted) {
+        if (storedSession && mounted && !hasV2SessionStorage()) {
           console.log("[AuthProvider] Found stored session:", {
             userId: storedSession.user?.id,
             timestamp: new Date().toISOString(),
@@ -79,7 +164,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           console.log(
             "[AuthProvider] Session restored from V2 JWT (backend profile loaded)",
           );
+          clearWatchdog();
           return;
+        }
+
+        if (hasV2SessionStorage()) {
+          const v2Uid =
+            localStorage.getItem(V2_SESSION_STORAGE_KEYS.USER_ID) ?? "";
+          const boot = readBootstrapProfileFromV2Storage(v2Uid);
+          if (boot && mounted) {
+            setAuth({ ...boot, isLoading: false });
+            console.warn(
+              "[AuthProvider] V2 tokens present; applied local user bootstrap (avoid Supabase init hang)",
+            );
+            return;
+          }
         }
 
         // Get fresh session from API
@@ -87,7 +186,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const {
           data: { session },
           error,
-        } = await supabase.auth.getSession();
+        } = await getSupabaseSessionBounded();
 
         if (error) {
           console.error(
@@ -115,7 +214,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           // Try to refresh the session
           try {
             const { data: refreshData, error: refreshError } =
-              await supabase.auth.refreshSession();
+              await refreshSupabaseSessionBounded();
             if (refreshError || !refreshData.session) {
               console.log(
                 "[AuthProvider] Session refresh failed, clearing stored session",
@@ -166,6 +265,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             isLoading: false,
           });
         }
+      } finally {
+        clearWatchdog();
       }
     };
 

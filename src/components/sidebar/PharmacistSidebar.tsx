@@ -72,6 +72,16 @@ const PharmacistSidebar = ({
       replace: false 
     });
   };
+
+  const navigateToReferral = () => {
+    navigate("/referral", {
+      state: { preserveAuth: true },
+      replace: false,
+    });
+  };
+
+  /** Same destination as “Pharmacy profile”; fills the generic “Profile” slot in the user menu. */
+  const navigateToProfile = navigateToPharmacyProfile;
   
   return (
     <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
@@ -94,11 +104,12 @@ const PharmacistSidebar = ({
         getUserInitials={getUserInitials}
         handleLogout={handleLogout}
         handleFileChange={handleFileChange}
+        navigateToProfile={navigateToProfile}
         navigateToAccount={navigateToAccount}
         navigateToPharmacyDashboard={navigateToPharmacyDashboard}
-        navigateToPharmacyProfile={navigateToPharmacyProfile}
         navigateToBilling={navigateToBilling}
         navigateToUpgrade={navigateToUpgrade}
+        navigateToReferral={navigateToReferral}
       />
     </aside>
   );

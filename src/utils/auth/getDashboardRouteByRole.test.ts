@@ -36,6 +36,11 @@ describe("getDashboardRouteByRole", () => {
     expect(getDashboardRouteByRole("doctor")).toBe("/dashboard?mode=patient");
   });
 
+  it("returns new doctor home when doctor has no patient-mode preference", () => {
+    mockWindowStorage();
+    expect(getDashboardRouteByRole("doctor")).toBe("/doctor/doctor-dashboard");
+  });
+
   it("returns role dashboard for pharmacist when no preference exists", () => {
     mockWindowStorage();
     expect(getDashboardRouteByRole("pharmacist")).toBe("/dashboard");

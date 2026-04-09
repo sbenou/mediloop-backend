@@ -2,9 +2,15 @@
  * Applies Option C clinical-related SQL migrations in order for Postgres (e.g. Neon).
  * Uses `psql` (install PostgreSQL client, or run the same files in Neon SQL Editor).
  *
- *   TEST_DATABASE_URL=... deno task apply-clinical-option-c-migrations
+ * Loads the same env files as the API (`loadEnvironment`): repo-root `.env.test` (fills
+ * unset keys, e.g. TEST_DATABASE_URL) then `backend/.env.development` when NODE_ENV is development.
+ *
+ * Override: `TEST_DATABASE_URL=... deno task apply-clinical-option-c-migrations`
  */
 import { dirname, fromFileUrl, join } from "https://deno.land/std@0.224.0/path/mod.ts";
+import { loadEnvironment } from "../shared/config/envLoader.ts";
+
+await loadEnvironment();
 
 const MIGRATIONS = [
   "migration_018_prescriptions_teleconsultations.sql",
@@ -14,6 +20,9 @@ const MIGRATIONS = [
   "migration_022_platform_stats_marketplace.sql",
   "migration_023_option_c_phase4_attribution_status.sql",
   "migration_024_bank_holidays.sql",
+  "migration_025_auth_users_status.sql",
+  "migration_030_doctor_availability.sql",
+  "migration_031_plan_marketing_items.sql",
 ] as const;
 
 const scriptDir = dirname(fromFileUrl(import.meta.url));
@@ -45,4 +54,6 @@ for (const name of MIGRATIONS) {
   console.log(`Applying ${name}...`);
   await runPsql(path);
 }
-console.log("Applied clinical Option C migrations 018 → 024.");
+console.log(
+  "Applied clinical Option C migrations (includes doctor_availability 030 and plan_marketing_items 031).",
+);

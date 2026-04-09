@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, User, Settings, LogOut, CreditCard, Rocket, Home } from "lucide-react";
+import { ChevronDown, User, Settings, LogOut, CreditCard, Rocket, Home, Gift } from "lucide-react";
 import { UserProfile } from "@/types/user";
 
 interface SidebarUserMenuProps {
@@ -43,7 +43,8 @@ const SidebarUserMenu: React.FC<SidebarUserMenuProps> = ({
   navigateToUpgrade,
   navigateToPharmacyProfile,
   navigateToDoctorProfile,
-  navigateToPharmacyDashboard
+  navigateToPharmacyDashboard,
+  navigateToReferral,
 }) => {
   const initials = getUserInitials(profile);
 
@@ -104,6 +105,13 @@ const SidebarUserMenu: React.FC<SidebarUserMenuProps> = ({
             <DropdownMenuItem className="cursor-pointer" onClick={navigateToUpgrade}>
               <Rocket className="mr-2 h-4 w-4" />
               <span>Upgrade Plan</span>
+            </DropdownMenuItem>
+          )}
+
+          {navigateToReferral && (
+            <DropdownMenuItem className="cursor-pointer" onClick={navigateToReferral}>
+              <Gift className="mr-2 h-4 w-4" />
+              <span>Referrals</span>
             </DropdownMenuItem>
           )}
           

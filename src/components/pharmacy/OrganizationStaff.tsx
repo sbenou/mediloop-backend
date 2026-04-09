@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,7 +11,11 @@ import { StaffMember } from "./staff/types";
 import { Button } from "@/components/ui/button";
 import { UserPlus, LayoutList, LayoutGrid } from "lucide-react";
 import { TeamMemberDialog } from "./team/TeamMemberDialog";
-import { buildAuthHeaders } from "@/lib/activeContext";
+import { buildAuthHeaders, MEDILOOP_API_BASE } from "@/lib/activeContext";
+import {
+  fetchPharmacyTeamApi,
+  patchPharmacyTeamMemberBlockedApi,
+} from "@/services/professionalWorkspaceApi";
 
 interface OrganizationStaffProps {
   pharmacyId: string;
@@ -54,63 +57,16 @@ const OrganizationStaff: React.FC<OrganizationStaffProps> = ({
           },
         ]);
       } else {
-        // For pharmacy view, fetch staff from pharmacy team members
-        const { data, error } = await supabase
-          .from("pharmacy_team_members")
-          .select(
-            `
-            id,
-            profiles:user_id (
-              id,
-              full_name,
-              email,
-              role,
-              avatar_url,
-              is_blocked
-            )
-          `,
-          )
-          .eq("pharmacy_id", pharmacyId)
-          .is("deleted_at", null);
-
-        if (error) throw error;
-
-        // Always include the current user/pharmacist if they aren't in the results
-        const formattedStaff: StaffMember[] = [];
-
-        // Add fetched team members
-        if (data) {
-          data.forEach((item: any) => {
-            if (item.profiles) {
-              formattedStaff.push({
-                id: item.id,
-                full_name: item.profiles.full_name || "Unknown",
-                email: item.profiles.email || "",
-                role: item.profiles.role || "staff",
-                status: item.profiles.is_blocked ? "inactive" : "active",
-                avatar_url: item.profiles.avatar_url,
-                user_id: item.profiles.id,
-              });
-            }
-          });
-        }
-
-        // Add the current user if they're not already in the list
-        if (
-          profile &&
-          !formattedStaff.some((member) => member.email === profile.email)
-        ) {
-          formattedStaff.unshift({
-            id: profile.id || "current-user",
-            full_name: profile.full_name || "Current User",
-            email: profile.email || "",
-            role: profile.role || "pharmacist",
-            status: "active",
-            avatar_url: profile.avatar_url,
-            user_id: profile.id,
-          });
-        }
-
+        const rows = await fetchPharmacyTeamApi();
+        const formattedStaff: StaffMember[] = rows.map((row) => ({
+          id: row.id,
+          full_name: row.full_name || "Unknown",
+          email: row.email || "",
+          role: row.role || "pharmacist",
+          status: row.is_blocked ? "inactive" : "active",
+          avatar_url: row.avatar_url ?? undefined,
+          user_id: row.id,
+        }));
         setStaff(formattedStaff);
       }
     } catch (error) {
@@ -141,18 +97,19 @@ const OrganizationStaff: React.FC<OrganizationStaffProps> = ({
     staffId: string,
     currentStatus: "active" | "inactive",
   ) => {
+    if (entityType === "doctor") {
+      toast({
+        title: "Not available",
+        description: "Team blocking is only available for pharmacy organizations.",
+      });
+      return;
+    }
     try {
       // Determine new status
       const newStatus = currentStatus === "active" ? "inactive" : "active";
       const isActive = newStatus === "active";
 
-      // Update in the database
-      const { error } = await supabase
-        .from("profiles")
-        .update({ is_blocked: !isActive })
-        .eq("id", staffId);
-
-      if (error) throw error;
+      await patchPharmacyTeamMemberBlockedApi(staffId, !isActive);
 
       // Update local state
       setStaff((prev) =>
@@ -202,19 +159,6 @@ const OrganizationStaff: React.FC<OrganizationStaffProps> = ({
   // UPDATED: Use invitation system instead of direct user creation
   const handleAddMember = async (values: any) => {
     try {
-      // Get the backend API URL from environment variable or use default
-      const backendUrl =
-        import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
-
-      // Get the current session token for authentication
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session) {
-        throw new Error("Not authenticated");
-      }
-
       // Prepare invitation data
       const invitationData = {
         email: values.email,
@@ -245,12 +189,10 @@ const OrganizationStaff: React.FC<OrganizationStaffProps> = ({
         },
       };
 
-      // Call your invitation API endpoint
-      const response = await fetch(`${backendUrl}/api/invitations/send`, {
+      const response = await fetch(`${MEDILOOP_API_BASE}/api/invitations/send`, {
         method: "POST",
         headers: buildAuthHeaders({
           "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
         }),
         body: JSON.stringify(invitationData),
       });

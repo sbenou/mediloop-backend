@@ -6,7 +6,7 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { fetchCatalogTree } from '@/services/catalogApi';
 import { CategoryContent } from './CategoryContent';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useState } from 'react';
@@ -19,30 +19,22 @@ export const CategoriesNavigation = () => {
   const { t } = useTranslation();
 
   const { data: categories } = useQuery({
-    queryKey: ['categories'],
+    queryKey: ['categories', 'navigation', 'neon'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('categories')
-        .select(`
-          id,
-          name,
-          type,
-          subcategories (
-            id,
-            name,
-            products (
-              id,
-              name,
-              description
-            )
-          )
-        `)
-        .order('name');
-      
-      if (error) throw error;
-      console.log('Categories with subcategories:', data);
-      return data;
+      try {
+        const tree = await fetchCatalogTree();
+        console.log('Categories with subcategories (Neon):', tree);
+        return tree;
+      } catch (e) {
+        console.warn(
+          '[CategoriesNavigation] Catalog API unavailable (backend /api/catalog/tree, migration_029):',
+          e,
+        );
+        return [];
+      }
     },
+    retry: 0,
+    staleTime: 1000 * 60 * 10,
   });
 
   const getUniqueCategories = (categories: any[], type: string) => {

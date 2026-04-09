@@ -1,7 +1,10 @@
 
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
-import { fetchTeleconsultationsApi } from "@/services/clinicalApi";
+import {
+  fetchDoctorAvailabilityApi,
+  fetchTeleconsultationsApi,
+} from "@/services/clinicalApi";
 import type { Teleconsultation } from "@/types/clinical";
 import type {
   BankHoliday,
@@ -74,7 +77,7 @@ const extractEntityData = (entity: any, defaultName: string) => {
 };
 
 /**
- * Fetches doctor availability data from Supabase
+ * Fetches doctor availability from the Deno API (Neon).
  */
 export const fetchDoctorAvailability = async (
   doctorId: string | undefined,
@@ -85,25 +88,8 @@ export const fetchDoctorAvailability = async (
   }
   
   try {
-    const query = supabase
-      .from('doctor_availability')
-      .select('*')
-      .eq('doctor_id', doctorId);
+    const data = await fetchDoctorAvailabilityApi(doctorId, appointmentType);
 
-    // Filter by appointment type if specified
-    if (appointmentType === 'teleconsultation') {
-      query.or('appointment_type.eq.teleconsultation,appointment_type.eq.both,appointment_type.is.null');
-    } else if (appointmentType === 'in-person') {
-      query.or('appointment_type.eq.in-person,appointment_type.eq.both,appointment_type.is.null');
-    }
-    
-    const { data, error } = await query;
-    
-    if (error) {
-      throw error;
-    }
-    
-    // Process data and return
     const processedData = data.map(item => {
       const timeSlots = processTimeSlots(item);
       

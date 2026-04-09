@@ -40,6 +40,15 @@ describe("legacy dashboard redirects", () => {
     });
   });
 
+  it("redirects /doctor/dashboard to new doctor home when not in patient mode", () => {
+    authState.userRole = "doctor";
+    window.localStorage.removeItem("mediloop.dashboard_mode_by_role");
+    render(<ProtectedDoctorDashboard />);
+    expect(navigateMock).toHaveBeenCalledWith("/doctor/doctor-dashboard", {
+      replace: true,
+    });
+  });
+
   it("redirects /pharmacy/dashboard to canonical resolved dashboard", () => {
     authState.userRole = "pharmacist";
     render(<ProtectedPharmacyDashboard />);

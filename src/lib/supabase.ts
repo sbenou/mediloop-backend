@@ -2,8 +2,13 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '@/integrations/supabase/types'
 
-const supabaseUrl = 'https://hrrlefgnhkbzuwyklejj.supabase.co'
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaGtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U'
+/** Prefer `.env` so local DNS / retired projects do not hard-fail the whole app (see CategoriesNavigation). */
+const supabaseUrl =
+  import.meta.env.VITE_SUPABASE_URL ||
+  'https://hrrlefgnhkbzuwyklejj.supabase.co'
+const supabaseAnonKey =
+  import.meta.env.VITE_SUPABASE_ANON_KEY ||
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaGtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U'
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
 

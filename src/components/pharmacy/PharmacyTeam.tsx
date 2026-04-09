@@ -24,9 +24,10 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
   // Function to transform TeamMember from the hook to the format expected by TeamMemberCard
   const mapTeamMemberToCardMember = (member: any): TeamMember => {
     // Check if this member is the current user to use the correct avatar
-    const avatarUrl = userAvatar && 
-      profile?.id === member.id ? 
-      userAvatar : member.avatar_url;
+    const avatarUrl = userAvatar &&
+      profile?.id === member.id
+      ? userAvatar
+      : member.profile_image;
       
     return {
       id: member.id,

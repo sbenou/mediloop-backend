@@ -32,9 +32,22 @@ export interface PlanFeature {
   created_at: Date;
 }
 
+export interface PlanMarketingItem {
+  id: string;
+  plan_id: string;
+  sort_order: number;
+  kind: "feature" | "service";
+  label: string;
+  visibility: "card" | "expandable" | "comparison_only";
+  locale: string;
+  created_at: Date;
+  updated_at: Date;
+}
+
 export interface PlanWithFeatures extends Plan {
   features: Array<Feature & { pivot_value: string }>;
   services: Array<Service & { pivot_quantity: number }>;
+  marketing_items?: PlanMarketingItem[];
 }
 
 // DTOs

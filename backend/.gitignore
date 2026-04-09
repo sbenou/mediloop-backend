@@ -38,3 +38,6 @@ Thumbs.db
 
 # Vault data (if running locally)
 vault-data/
+
+# Marketplace catalog import temp CSV/SQL (run-import-marketplace-catalog-csv.ts)
+scripts/.catalog-import-tmp/

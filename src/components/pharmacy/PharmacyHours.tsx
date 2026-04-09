@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, Dispatch, SetStateAction } from 'react';
-import { supabase } from '@/lib/supabase';
+import { updatePharmacyWorkspaceApi } from '@/services/professionalWorkspaceApi';
 import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,7 +19,8 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({
   hours, 
   pharmacyId, 
   isEditing = false,
-  setIsEditing
+  setIsEditing,
+  onSaved,
 }) => {
   const [weekHours, setWeekHours] = useState<WeekHours | null>(null);
   const [isJsonFormat, setIsJsonFormat] = useState(false);
@@ -112,14 +113,7 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({
       if (!hoursString) return;
       setIsSaving(true);
       
-      const { error } = await supabase
-        .from('pharmacies')
-        .update({
-          hours: hoursString,
-        })
-        .eq('id', pharmacyId);
-
-      if (error) throw error;
+      await updatePharmacyWorkspaceApi({ hours: hoursString });
 
       toast({
         title: "Success",
@@ -127,6 +121,7 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({
       });
       
       if (setIsEditing) setIsEditing(false);
+      onSaved?.();
       
       // Update the parsed hours from the string
       const parsedHours = parseStringHours(hoursString);

@@ -47,6 +47,19 @@ describe("useUserMenuNavigation", () => {
     });
   });
 
+  it("routes doctor dashboard click to new doctor home when in role mode", () => {
+    window.localStorage.removeItem("mediloop.dashboard_mode_by_role");
+    const { result } = renderHook(() => useUserMenuNavigation());
+    act(() => {
+      result.current.handleNavigation("/dashboard");
+    });
+
+    expect(navigateMock).toHaveBeenCalledWith("/doctor/doctor-dashboard", {
+      replace: false,
+      state: { preserveAuth: true, keepSidebar: true },
+    });
+  });
+
   it("routes pharmacist dashboard click to canonical dashboard route", () => {
     authState.userRole = "pharmacist";
     authState.isPharmacist = true;

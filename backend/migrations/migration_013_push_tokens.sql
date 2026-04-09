@@ -6,7 +6,7 @@ BEGIN;
 -- User push tokens (FCM tokens from mobile devices)
 CREATE TABLE IF NOT EXISTS user_push_tokens (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   
   -- Token information
   fcm_token TEXT NOT NULL,
@@ -42,7 +42,7 @@ COMMENT ON COLUMN user_push_tokens.active IS 'false when token is expired or use
 -- Topic subscriptions (for tracking and analytics)
 CREATE TABLE IF NOT EXISTS topic_subscriptions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   
   -- Topic information
   topic VARCHAR(255) NOT NULL,       -- e.g., 'doctors_all', 'pharmacists_region_paris'

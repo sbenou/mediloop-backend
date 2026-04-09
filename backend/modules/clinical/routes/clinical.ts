@@ -1353,17 +1353,12 @@ router.post("/api/clinical/doctor-patient-connections", async (ctx) => {
   ctx.response.body = { error: "Only doctors or patients can create connections" };
 });
 
-/** PATCH /api/clinical/doctor-patient-connections/:id — patient accepts/rejects. */
+/** PATCH /api/clinical/doctor-patient-connections/:id — patient or doctor accepts/rejects pending row. */
 router.patch("/api/clinical/doctor-patient-connections/:id", async (ctx) => {
   const user = ctx.state.user as JwtUser | undefined;
   if (!user?.id) {
     ctx.response.status = 401;
     ctx.response.body = { error: "Unauthorized" };
-    return;
-  }
-  if (roleLower(ctx) !== "patient") {
-    ctx.response.status = 403;
-    ctx.response.body = { error: "Only patients can respond to connection requests" };
     return;
   }
 
@@ -1386,14 +1381,34 @@ router.patch("/api/clinical/doctor-patient-connections/:id", async (ctx) => {
     return;
   }
 
+  const role = roleLower(ctx);
+
   try {
-    const result = await postgresService.query(
-      `UPDATE public.doctor_patient_connections
-       SET status = $1::connection_status, updated_at = NOW()
-       WHERE id = $2::uuid AND patient_id = $3::uuid AND status = 'pending'::connection_status
-       RETURNING *`,
-      [statusRaw, id, user.id],
-    );
+    let result: { rows: Record<string, unknown>[] };
+    if (role === "patient") {
+      result = await postgresService.query(
+        `UPDATE public.doctor_patient_connections
+         SET status = $1::connection_status, updated_at = NOW()
+         WHERE id = $2::uuid AND patient_id = $3::uuid AND status = 'pending'::connection_status
+         RETURNING *`,
+        [statusRaw, id, user.id],
+      );
+    } else if (role === "doctor") {
+      result = await postgresService.query(
+        `UPDATE public.doctor_patient_connections
+         SET status = $1::connection_status, updated_at = NOW()
+         WHERE id = $2::uuid AND doctor_id = $3::uuid AND status = 'pending'::connection_status
+         RETURNING *`,
+        [statusRaw, id, user.id],
+      );
+    } else {
+      ctx.response.status = 403;
+      ctx.response.body = {
+        error: "Only patients or doctors can respond to connection requests",
+      };
+      return;
+    }
+
     if (!result.rows.length) {
       ctx.response.status = 404;
       ctx.response.body = {
@@ -1411,12 +1426,644 @@ router.patch("/api/clinical/doctor-patient-connections/:id", async (ctx) => {
        WHERE c.id = $1::uuid`,
       [id],
     );
-    const mapped = mapDoctorPatientConnectionRows(full.rows, { forPatient: true });
+    const mapped = mapDoctorPatientConnectionRows(full.rows, {
+      forPatient: role === "patient",
+    });
     ctx.response.body = { connection: mapped[0] };
   } catch (e) {
     console.error("[clinical] doctor-patient connection patch error:", e);
     ctx.response.status = 500;
     ctx.response.body = { error: "Failed to update connection" };
+  }
+});
+
+/** GET /api/clinical/pharmacy-dashboard-stats — pharmacist; workspace-scoped aggregates (Neon). */
+router.get("/api/clinical/pharmacy-dashboard-stats", async (ctx) => {
+  const user = ctx.state.user as JwtUser | undefined;
+  if (!user?.id) {
+    ctx.response.status = 401;
+    ctx.response.body = { error: "Unauthorized" };
+    return;
+  }
+  if (roleLower(ctx) !== "pharmacist") {
+    ctx.response.status = 403;
+    ctx.response.body = { error: "Only pharmacists can load pharmacy dashboard stats" };
+    return;
+  }
+  const ac = requireActiveContext(ctx);
+  if (!ac) return;
+
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  try {
+    const result = await postgresService.query(
+      `SELECT
+        (SELECT COUNT(DISTINCT p.patient_id)::int
+         FROM public.prescriptions p
+         WHERE p.professional_tenant_id = $1::uuid
+           AND p.attribution_status = 'attributed'::public.clinical_attribution_status)
+          AS total_patients,
+        (SELECT COUNT(*)::int
+         FROM public.prescriptions p
+         WHERE p.professional_tenant_id = $1::uuid
+           AND p.attribution_status = 'attributed'::public.clinical_attribution_status)
+          AS total_prescriptions,
+        (SELECT COUNT(*)::int
+         FROM public.orders o
+         WHERE LOWER(TRIM(COALESCE(o.status, ''))) = 'pending'
+           AND EXISTS (
+             SELECT 1 FROM public.prescriptions p
+             WHERE p.patient_id = o.user_id
+               AND p.professional_tenant_id = $1::uuid
+               AND p.attribution_status = 'attributed'::public.clinical_attribution_status
+           )) AS pending_orders,
+        (SELECT COALESCE(SUM(o.total), 0)::float8
+         FROM public.orders o
+         WHERE LOWER(TRIM(COALESCE(o.status, ''))) = 'delivered'
+           AND o.created_at >= $2::timestamptz
+           AND EXISTS (
+             SELECT 1 FROM public.prescriptions p
+             WHERE p.patient_id = o.user_id
+               AND p.professional_tenant_id = $1::uuid
+               AND p.attribution_status = 'attributed'::public.clinical_attribution_status
+           )) AS monthly_revenue`,
+      [ac.tenantId, startOfMonth.toISOString()],
+    );
+    const row = result.rows[0] as Record<string, unknown>;
+    ctx.response.body = {
+      total_patients: Number(row.total_patients ?? 0),
+      total_prescriptions: Number(row.total_prescriptions ?? 0),
+      pending_orders: Number(row.pending_orders ?? 0),
+      monthly_revenue: Number(row.monthly_revenue ?? 0),
+    };
+  } catch (e) {
+    console.error("[clinical] pharmacy-dashboard-stats error:", e);
+    ctx.response.status = 500;
+    ctx.response.body = { error: "Failed to load pharmacy dashboard stats" };
+  }
+});
+
+/** GET /api/clinical/pharmacy-patients — distinct patients with prescriptions attributed to workspace. */
+router.get("/api/clinical/pharmacy-patients", async (ctx) => {
+  const user = ctx.state.user as JwtUser | undefined;
+  if (!user?.id) {
+    ctx.response.status = 401;
+    ctx.response.body = { error: "Unauthorized" };
+    return;
+  }
+  if (roleLower(ctx) !== "pharmacist") {
+    ctx.response.status = 403;
+    ctx.response.body = { error: "Only pharmacists can list pharmacy patients" };
+    return;
+  }
+  const ac = requireActiveContext(ctx);
+  if (!ac) return;
+
+  try {
+    const result = await postgresService.query(
+      `SELECT u.id::text AS id,
+              u.full_name,
+              u.email,
+              u.created_at
+       FROM auth.users u
+       WHERE u.id IN (
+         SELECT DISTINCT p.patient_id
+         FROM public.prescriptions p
+         WHERE p.professional_tenant_id = $1::uuid
+           AND p.attribution_status = 'attributed'::public.clinical_attribution_status
+       )
+       ORDER BY u.created_at DESC
+       LIMIT 200`,
+      [ac.tenantId],
+    );
+    ctx.response.body = { patients: result.rows };
+  } catch (e) {
+    console.error("[clinical] pharmacy-patients list error:", e);
+    ctx.response.status = 500;
+    ctx.response.body = { error: "Failed to load patients" };
+  }
+});
+
+/** GET /api/clinical/pharmacy-patients/:patientId — one patient if linked to workspace via prescriptions. */
+router.get("/api/clinical/pharmacy-patients/:patientId", async (ctx) => {
+  const user = ctx.state.user as JwtUser | undefined;
+  if (!user?.id) {
+    ctx.response.status = 401;
+    ctx.response.body = { error: "Unauthorized" };
+    return;
+  }
+  if (roleLower(ctx) !== "pharmacist") {
+    ctx.response.status = 403;
+    ctx.response.body = { error: "Only pharmacists can view pharmacy patient details" };
+    return;
+  }
+  const ac = requireActiveContext(ctx);
+  if (!ac) return;
+
+  const patientId = parseUuid(ctx.params.patientId);
+  if (!patientId) {
+    ctx.response.status = 400;
+    ctx.response.body = { error: "Invalid patient id" };
+    return;
+  }
+
+  try {
+    const result = await postgresService.query(
+      `SELECT u.id::text AS id,
+              u.full_name,
+              u.email,
+              u.created_at
+       FROM auth.users u
+       WHERE u.id = $2::uuid
+         AND EXISTS (
+           SELECT 1 FROM public.prescriptions p
+           WHERE p.patient_id = u.id
+             AND p.professional_tenant_id = $1::uuid
+             AND p.attribution_status = 'attributed'::public.clinical_attribution_status
+         )
+       LIMIT 1`,
+      [ac.tenantId, patientId],
+    );
+    if (!result.rows.length) {
+      ctx.response.status = 404;
+      ctx.response.body = { error: "Patient not found in this workspace" };
+      return;
+    }
+    ctx.response.body = { patient: result.rows[0] };
+  } catch (e) {
+    console.error("[clinical] pharmacy-patient detail error:", e);
+    ctx.response.status = 500;
+    ctx.response.body = { error: "Failed to load patient" };
+  }
+});
+
+/**
+ * GET /api/clinical/doctor-home — doctor + active workspace.
+ * Aggregates dashboard stats, recent connected patients, and activity feed rows (no Supabase client on the frontend).
+ */
+router.get("/api/clinical/doctor-home", async (ctx: Context) => {
+  const user = ctx.state.user as JwtUser | undefined;
+  if (!user?.id) {
+    ctx.response.status = 401;
+    ctx.response.body = { error: "Unauthorized" };
+    return;
+  }
+  if (roleLower(ctx) !== "doctor") {
+    ctx.response.status = 403;
+    ctx.response.body = { error: "Only doctors can load this resource" };
+    return;
+  }
+  const ac = requireActiveContext(ctx);
+  if (!ac) return;
+
+  const doctorId = user.id;
+  const tenantId = ac.tenantId;
+
+  const now = new Date();
+  const oneMonthAgo = new Date(
+    now.getFullYear(),
+    now.getMonth() - 1,
+    now.getDate(),
+  );
+  const twoMonthsAgo = new Date(
+    now.getFullYear(),
+    now.getMonth() - 2,
+    now.getDate(),
+  );
+
+  try {
+    const [
+      patientsRes,
+      teleRes,
+      rxRes,
+      lastMonthRes,
+      prevMonthRes,
+      recentRes,
+    ] = await Promise.all([
+      postgresService.query(
+        `SELECT COUNT(*)::int AS n FROM public.doctor_patient_connections c
+         WHERE c.doctor_id = $1::uuid AND c.status = 'accepted'${TENANT_SCOPE("c", 2)}`,
+        [doctorId, tenantId],
+      ),
+      postgresService.query(
+        `SELECT COUNT(*)::int AS n FROM public.teleconsultations t
+         WHERE t.doctor_id = $1::uuid AND t.status::text IN ('pending','confirmed')${TENANT_SCOPE("t", 2)}`,
+        [doctorId, tenantId],
+      ),
+      postgresService.query(
+        `SELECT COUNT(*)::int AS n FROM public.prescriptions p
+         WHERE p.doctor_id = $1::uuid${TENANT_SCOPE("p", 2)}`,
+        [doctorId, tenantId],
+      ),
+      postgresService.query(
+        `SELECT COUNT(*)::int AS n FROM public.doctor_patient_connections c
+         WHERE c.doctor_id = $1::uuid AND c.status = 'accepted'
+           AND c.created_at >= $3::timestamptz AND c.created_at < $4::timestamptz${TENANT_SCOPE("c", 2)}`,
+        [doctorId, tenantId, oneMonthAgo.toISOString(), now.toISOString()],
+      ),
+      postgresService.query(
+        `SELECT COUNT(*)::int AS n FROM public.doctor_patient_connections c
+         WHERE c.doctor_id = $1::uuid AND c.status = 'accepted'
+           AND c.created_at >= $3::timestamptz AND c.created_at < $4::timestamptz${TENANT_SCOPE("c", 2)}`,
+        [doctorId, tenantId, twoMonthsAgo.toISOString(), oneMonthAgo.toISOString()],
+      ),
+      postgresService.query(
+        `SELECT pat.id AS id, pat.full_name AS full_name, c.created_at AS created_at
+         FROM public.doctor_patient_connections c
+         INNER JOIN auth.users pat ON pat.id = c.patient_id
+         WHERE c.doctor_id = $1::uuid AND c.status = 'accepted'${TENANT_SCOPE("c", 2)}
+         ORDER BY c.created_at DESC
+         LIMIT 12`,
+        [doctorId, tenantId],
+      ),
+    ]);
+
+    const patientsCount = (patientsRes.rows[0] as { n?: number })?.n ?? 0;
+    const teleCount = (teleRes.rows[0] as { n?: number })?.n ?? 0;
+    const rxCount = (rxRes.rows[0] as { n?: number })?.n ?? 0;
+    const lastMonthCount = (lastMonthRes.rows[0] as { n?: number })?.n ?? 0;
+    const previousMonthCount = (prevMonthRes.rows[0] as { n?: number })?.n ?? 0;
+
+    const percentChange = previousMonthCount
+      ? Number(
+        (((lastMonthCount - previousMonthCount) / previousMonthCount) * 100).toFixed(1),
+      )
+      : 0;
+
+    const recent_patients = (recentRes.rows as Record<string, unknown>[]).map(
+      (row) => ({
+        id: String(row.id),
+        full_name: (row.full_name as string) ?? "Patient",
+        avatar_url: null as string | null,
+        created_at: row.created_at
+          ? new Date(row.created_at as string).toISOString()
+          : new Date().toISOString(),
+      }),
+    );
+
+    let activities: Record<string, unknown>[] = [];
+    try {
+      const actRes = await postgresService.query(
+        `SELECT a.id, a.type, a.title, a.description,
+                a.created_at AS ts,
+                a.read, a.meta, a.created_at
+         FROM public.activities a
+         WHERE a.user_id = $1::uuid
+         ORDER BY a.created_at DESC
+         LIMIT 12`,
+        [doctorId],
+      );
+      activities = actRes.rows.map((row) => {
+        let metaObj: Record<string, unknown> = {};
+        const rawMeta = row.meta;
+        if (rawMeta != null && typeof rawMeta === "object" && !Array.isArray(rawMeta)) {
+          metaObj = rawMeta as Record<string, unknown>;
+        } else if (typeof rawMeta === "string") {
+          try {
+            const parsed = JSON.parse(rawMeta) as unknown;
+            if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+              metaObj = parsed as Record<string, unknown>;
+            }
+          } catch {
+            /* ignore */
+          }
+        }
+        return {
+          id: String(row.id),
+          type: String(row.type ?? "system_alert"),
+          title: String(row.title ?? ""),
+          description: (row.description as string) ?? "",
+          timestamp: row.ts
+            ? new Date(row.ts as string).toISOString()
+            : new Date().toISOString(),
+          read: Boolean(row.read),
+          metadata: metaObj,
+        };
+      });
+    } catch (actErr) {
+      console.warn(
+        "[clinical] doctor-home: activities unavailable:",
+        actErr instanceof Error ? actErr.message : actErr,
+      );
+      activities = [];
+    }
+
+    ctx.response.body = {
+      stats: {
+        total_patients: patientsCount,
+        active_teleconsultations: teleCount,
+        active_consultations: 0,
+        active_prescriptions: rxCount,
+        percent_change: percentChange,
+      },
+      recent_patients,
+      activities,
+    };
+  } catch (e) {
+    console.error("[clinical] doctor-home error:", e);
+    ctx.response.status = 500;
+    ctx.response.body = { error: "Failed to load doctor home" };
+  }
+});
+
+/** SQL fragment: rows visible for teleconsultation vs in-person calendars (legacy OR logic). */
+function doctorAvailabilityTypePredicate(
+  alias: string,
+  filterType: string,
+): string {
+  if (filterType === "in-person") {
+    return `(${alias}.appointment_type IS NULL OR ${alias}.appointment_type = 'both' OR ${alias}.appointment_type = 'in-person')`;
+  }
+  return `(${alias}.appointment_type IS NULL OR ${alias}.appointment_type = 'both' OR ${alias}.appointment_type = 'teleconsultation')`;
+}
+
+function mapDoctorAvailabilityRow(
+  row: Record<string, unknown>,
+): Record<string, unknown> {
+  return {
+    id: String(row.id),
+    doctor_id: String(row.doctor_id),
+    day_of_week: Number(row.day_of_week),
+    start_time: row.start_time ?? null,
+    end_time: row.end_time ?? null,
+    additional_time_slots: row.additional_time_slots ?? null,
+    is_available: Boolean(row.is_available),
+    appointment_type: row.appointment_type ?? null,
+    created_at: row.created_at
+      ? new Date(row.created_at as string).toISOString()
+      : new Date().toISOString(),
+    updated_at: row.updated_at
+      ? new Date(row.updated_at as string).toISOString()
+      : new Date().toISOString(),
+  };
+}
+
+/**
+ * GET /api/clinical/doctor-availability?doctor_id=&appointment_type=
+ * Any authenticated user may read a doctor's availability (booking UIs).
+ * Optional doctor_id defaults to the current user.
+ */
+router.get("/api/clinical/doctor-availability", async (ctx: Context) => {
+  const user = ctx.state.user as JwtUser | undefined;
+  if (!user?.id) {
+    ctx.response.status = 401;
+    ctx.response.body = { error: "Unauthorized" };
+    return;
+  }
+
+  const qpDoctor = ctx.request.url.searchParams.get("doctor_id");
+  const targetDoctorId = parseUuid(qpDoctor) ?? user.id;
+  if (targetDoctorId !== user.id && roleLower(ctx) === "doctor") {
+    ctx.response.status = 403;
+    ctx.response.body = { error: "Doctors may only read their own availability here" };
+    return;
+  }
+
+  const aptRaw = (ctx.request.url.searchParams.get("appointment_type") ||
+    "teleconsultation").toLowerCase();
+  const filterType = aptRaw === "in-person" ? "in-person" : "teleconsultation";
+
+  try {
+    const pred = doctorAvailabilityTypePredicate("a", filterType);
+    const result = await postgresService.query(
+      `SELECT a.* FROM public.doctor_availability a
+       WHERE a.doctor_id = $1::uuid AND ${pred}
+       ORDER BY a.day_of_week ASC`,
+      [targetDoctorId],
+    );
+    ctx.response.body = {
+      availability: result.rows.map((r) =>
+        mapDoctorAvailabilityRow(r as Record<string, unknown>)
+      ),
+    };
+  } catch (e) {
+    console.error("[clinical] doctor-availability list error:", e);
+    ctx.response.status = 500;
+    ctx.response.body = { error: "Failed to load availability" };
+  }
+});
+
+/**
+ * PUT /api/clinical/doctor-availability — upsert one day (doctor only, own rows).
+ */
+router.put("/api/clinical/doctor-availability", async (ctx: Context) => {
+  const user = ctx.state.user as JwtUser | undefined;
+  if (!user?.id) {
+    ctx.response.status = 401;
+    ctx.response.body = { error: "Unauthorized" };
+    return;
+  }
+  if (roleLower(ctx) !== "doctor") {
+    ctx.response.status = 403;
+    ctx.response.body = { error: "Only doctors can update availability" };
+    return;
+  }
+
+  const raw = await readJson(ctx);
+  if (raw === null) return;
+
+  const dayOfWeek = typeof raw.day_of_week === "number"
+    ? raw.day_of_week
+    : Number(raw.day_of_week);
+  if (!Number.isInteger(dayOfWeek) || dayOfWeek < 0 || dayOfWeek > 6) {
+    ctx.response.status = 400;
+    ctx.response.body = { error: "day_of_week must be 0–6" };
+    return;
+  }
+
+  const appointmentType = typeof raw.appointment_type === "string" &&
+      raw.appointment_type.length > 0
+    ? raw.appointment_type
+    : "teleconsultation";
+  const startTime = typeof raw.start_time === "string" ? raw.start_time : "09:00";
+  const endTime = typeof raw.end_time === "string" ? raw.end_time : "17:00";
+  const isAvailable = Boolean(raw.is_available);
+  const additional = raw.additional_time_slots;
+  let additionalJson: string | null = null;
+  if (additional != null) {
+    try {
+      additionalJson = JSON.stringify(additional);
+    } catch {
+      ctx.response.status = 400;
+      ctx.response.body = { error: "Invalid additional_time_slots" };
+      return;
+    }
+  }
+
+  const idRaw = typeof raw.id === "string" ? raw.id.trim() : "";
+  const existingId = UUID_RE.test(idRaw) ? idRaw : null;
+
+  try {
+    if (existingId) {
+      const upd = await postgresService.query(
+        `UPDATE public.doctor_availability
+         SET is_available = $3,
+             start_time = $4,
+             end_time = $5,
+             additional_time_slots = $6::jsonb,
+             appointment_type = $7,
+             updated_at = now()
+         WHERE id = $1::uuid AND doctor_id = $2::uuid
+         RETURNING *`,
+        [
+          existingId,
+          user.id,
+          isAvailable,
+          startTime,
+          endTime,
+          additionalJson,
+          appointmentType,
+        ],
+      );
+      if (!upd.rows.length) {
+        ctx.response.status = 404;
+        ctx.response.body = { error: "Availability row not found" };
+        return;
+      }
+      ctx.response.body = {
+        availability: mapDoctorAvailabilityRow(
+          upd.rows[0] as Record<string, unknown>,
+        ),
+      };
+      return;
+    }
+
+    const pred = doctorAvailabilityTypePredicate("a", appointmentType);
+    const find = await postgresService.query(
+      `SELECT a.id FROM public.doctor_availability a
+       WHERE a.doctor_id = $1::uuid AND a.day_of_week = $2::int AND ${pred}
+       LIMIT 1`,
+      [user.id, dayOfWeek],
+    );
+
+    if (find.rows.length) {
+      const rid = String((find.rows[0] as { id: string }).id);
+      const upd = await postgresService.query(
+        `UPDATE public.doctor_availability
+         SET is_available = $3,
+             start_time = $4,
+             end_time = $5,
+             additional_time_slots = $6::jsonb,
+             appointment_type = $7,
+             updated_at = now()
+         WHERE id = $1::uuid AND doctor_id = $2::uuid
+         RETURNING *`,
+        [
+          rid,
+          user.id,
+          isAvailable,
+          startTime,
+          endTime,
+          additionalJson,
+          appointmentType,
+        ],
+      );
+      ctx.response.body = {
+        availability: mapDoctorAvailabilityRow(
+          upd.rows[0] as Record<string, unknown>,
+        ),
+      };
+      return;
+    }
+
+    const ins = await postgresService.query(
+      `INSERT INTO public.doctor_availability (
+         doctor_id, day_of_week, start_time, end_time,
+         additional_time_slots, is_available, appointment_type
+       ) VALUES ($1::uuid, $2::int, $3, $4, $5::jsonb, $6, $7)
+       RETURNING *`,
+      [
+        user.id,
+        dayOfWeek,
+        startTime,
+        endTime,
+        additionalJson,
+        isAvailable,
+        appointmentType,
+      ],
+    );
+    ctx.response.body = {
+      availability: mapDoctorAvailabilityRow(
+        ins.rows[0] as Record<string, unknown>,
+      ),
+    };
+  } catch (e) {
+    console.error("[clinical] doctor-availability put error:", e);
+    ctx.response.status = 500;
+    ctx.response.body = { error: "Failed to save availability" };
+  }
+});
+
+/**
+ * POST /api/clinical/doctor-availability/bulk-replace — replace all days for one appointment_type bucket (legacy delete + insert).
+ */
+router.post("/api/clinical/doctor-availability/bulk-replace", async (ctx: Context) => {
+  const user = ctx.state.user as JwtUser | undefined;
+  if (!user?.id) {
+    ctx.response.status = 401;
+    ctx.response.body = { error: "Unauthorized" };
+    return;
+  }
+  if (roleLower(ctx) !== "doctor") {
+    ctx.response.status = 403;
+    ctx.response.body = { error: "Only doctors can update availability" };
+    return;
+  }
+
+  const raw = await readJson(ctx);
+  if (raw === null) return;
+
+  const appointmentType = typeof raw.appointment_type === "string" &&
+      raw.appointment_type.length > 0
+    ? raw.appointment_type
+    : "teleconsultation";
+  const rows = raw.rows;
+  if (!Array.isArray(rows) || rows.length === 0) {
+    ctx.response.status = 400;
+    ctx.response.body = { error: "rows array required" };
+    return;
+  }
+
+  try {
+    await postgresService.query(
+      `DELETE FROM public.doctor_availability
+       WHERE doctor_id = $1::uuid
+         AND (appointment_type IS NULL OR appointment_type = $2::text)`,
+      [user.id, appointmentType],
+    );
+
+    const out: Record<string, unknown>[] = [];
+    for (const r of rows as Record<string, unknown>[]) {
+      const dow = typeof r.day_of_week === "number"
+        ? r.day_of_week
+        : Number(r.day_of_week);
+      if (!Number.isInteger(dow) || dow < 0 || dow > 6) continue;
+      const st = typeof r.start_time === "string" ? r.start_time : "09:00";
+      const en = typeof r.end_time === "string" ? r.end_time : "17:00";
+      const avail = Boolean(r.is_available);
+      let addJson: string | null = null;
+      if (r.additional_time_slots != null) {
+        addJson = JSON.stringify(r.additional_time_slots);
+      }
+      const ins = await postgresService.query(
+        `INSERT INTO public.doctor_availability (
+           doctor_id, day_of_week, start_time, end_time,
+           additional_time_slots, is_available, appointment_type
+         ) VALUES ($1::uuid, $2::int, $3, $4, $5::jsonb, $6, $7)
+         RETURNING *`,
+        [user.id, dow, st, en, addJson, avail, appointmentType],
+      );
+      if (ins.rows[0]) {
+        out.push(mapDoctorAvailabilityRow(ins.rows[0] as Record<string, unknown>));
+      }
+    }
+
+    ctx.response.body = { availability: out };
+  } catch (e) {
+    console.error("[clinical] doctor-availability bulk-replace error:", e);
+    ctx.response.status = 500;
+    ctx.response.body = { error: "Failed to replace availability" };
   }
 });
 

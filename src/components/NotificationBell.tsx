@@ -12,7 +12,7 @@ import { registerFCMToken } from "@/utils/firebaseNotificationUtils";
 const NotificationBell = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, userRole, isPharmacist } = useAuth();
   const { 
     notifications, 
     unreadCount, 
@@ -130,8 +130,16 @@ const NotificationBell = () => {
   // Navigate to notifications view
   const handleViewAllClick = () => {
     setIsOpen(false);
-    navigate("/notifications", { 
-      state: { preserveAuth: true, keepSidebar: true }
+    if (userRole === "pharmacist" || isPharmacist) {
+      navigate("/dashboard?view=pharmacy&section=notifications");
+      return;
+    }
+    if (userRole === "doctor") {
+      navigate("/dashboard?section=notifications");
+      return;
+    }
+    navigate("/notifications", {
+      state: { preserveAuth: true, keepSidebar: true },
     });
   };
 

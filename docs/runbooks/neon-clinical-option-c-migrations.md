@@ -81,9 +81,34 @@ GitHub Actions workflow `.github/workflows/backend-ci.yml` runs `test-backend` o
 6. Value: your Neon connection string for a **non-production** database (recommended: a dedicated Neon branch used only for CI).  
 7. Save. Forked PRs from outside contributors do not receive secrets; the Phase 3 job will be skipped for those runs unless you use another mechanism.
 
+## Notifications (012 + 027)
+
+For **scoped, compliant** inbox storage (`scope_type`, `scope_tenant_id`, delivery log, preferences):
+
+| Step | File | Notes |
+|------|------|--------|
+| A | `backend/migrations/migration_012_notifications.sql` | Base `public.notifications` (`user_id` → `auth.users`). |
+| B | `backend/migrations/migration_019_option_c_phase1_schema.sql` | **Recommended before 027** so `public.tenants` and `public.user_tenants` exist for FKs. |
+| C | `backend/migrations/migration_027_notifications_option_c_scope.sql` | Extends inbox + creates `notification_deliveries`, `notification_preferences`. |
+| D | `backend/migrations/migration_028_personal_health_tenant_link_patients.sql` | Tags existing **patients’** primary tenants as `personal_health` and inserts missing `personal_health_tenants` rows. |
+
+**Professionals (doctors / pharmacists / owners)** already registered without a personal-health workspace: after **028** (or anytime), run:
+
+```bash
+cd backend
+TEST_DATABASE_URL='postgresql://…' deno task backfill-professional-personal-health
+```
+
+Use the **same connection string** as migrations / `notificationsScoped` tests (the database that has **`auth.users`**). The backend **`loadEnvironment()`** (in `shared/config/envLoader.ts`) merges **repo-root `.env.test`** before `.env.development`, filling unset keys such as **`TEST_DATABASE_URL`** — same idea as `tests/utils/testDb.ts`. For a one-off override, set **`TEST_DATABASE_URL`** in the shell for that command.
+
+New registrations provision PH automatically (see `personalHealthWorkspaceService.ts`).
+
+Details and event catalog: [`docs/architecture-notifications.md`](../architecture-notifications.md).
+
 ## Related docs
 
 - [`docs/architecture-option-c-decisions.md`](../architecture-option-c-decisions.md) — decisions and phase list
+- [`docs/architecture-notifications.md`](../architecture-notifications.md) — notification schema, scopes, compliance notes
 - [`docs/architecture-option-c-phase4-design.md`](../architecture-option-c-phase4-design.md) — legacy rows & patient read design (Phase 4)
 - [`docs/architecture-option-c-phase4-implementation-checklist.md`](../architecture-option-c-phase4-implementation-checklist.md) — routes, serializers, backfill tasks after **023**
 

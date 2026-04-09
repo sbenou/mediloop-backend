@@ -1,20 +1,23 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { supabase } from "@/lib/supabase";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  fetchDoctorPatientConnectionsApi,
+  patchDoctorPatientConnectionApi,
+} from "@/services/clinicalApi";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/use-toast";
-import { UserCircle, Mail, Phone } from "lucide-react";
+import { UserCircle, Mail } from "lucide-react";
 
 interface Patient {
   id: string;
   full_name: string;
   email: string;
   avatar_url: string | null;
-  connection_status: 'pending' | 'accepted' | 'rejected';
+  connection_status: "pending" | "accepted" | "rejected";
   connection_id: string;
   created_at: string;
 }
@@ -31,44 +34,23 @@ const DoctorPatientView = () => {
     const fetchPatients = async () => {
       try {
         setLoading(true);
-        
-        // Get connections with patients
-        const { data: connections, error } = await supabase
-          .from('doctor_patient_connections')
-          .select(`
-            id,
-            status,
-            created_at,
-            patient:patient_id (
-              id,
-              full_name,
-              email,
-              avatar_url
-            )
-          `)
-          .eq('doctor_id', profile.id)
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        // Transform data to desired format
-        const formattedPatients = connections.map((connection: any) => ({
-          id: connection.patient.id,
-          full_name: connection.patient.full_name,
-          email: connection.patient.email,
-          avatar_url: connection.patient.avatar_url,
-          connection_status: connection.status,
-          connection_id: connection.id,
-          created_at: connection.created_at
+        const connections = await fetchDoctorPatientConnectionsApi();
+        const formattedPatients: Patient[] = connections.map((c) => ({
+          id: c.patient?.id ?? c.patient_id,
+          full_name: c.patient?.full_name ?? "Unknown",
+          email: c.patient?.email ?? "",
+          avatar_url: null,
+          connection_status: c.status as Patient["connection_status"],
+          connection_id: c.id,
+          created_at: c.created_at,
         }));
-        
         setPatients(formattedPatients);
       } catch (error) {
-        console.error('Error fetching patients:', error);
+        console.error("Error fetching patients:", error);
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Failed to load patients. Please try again."
+          description: "Failed to load patients. Please try again.",
         });
       } finally {
         setLoading(false);
@@ -80,64 +62,48 @@ const DoctorPatientView = () => {
 
   const handleAcceptPatient = async (connectionId: string) => {
     try {
-      const { error } = await supabase
-        .from('doctor_patient_connections')
-        .update({ status: 'accepted' })
-        .eq('id', connectionId);
-
-      if (error) throw error;
-
-      // Update local state
-      setPatients(prevPatients => 
-        prevPatients.map(patient => 
-          patient.connection_id === connectionId 
-            ? {...patient, connection_status: 'accepted'} 
-            : patient
-        )
+      await patchDoctorPatientConnectionApi(connectionId, "accepted");
+      setPatients((prev) =>
+        prev.map((patient) =>
+          patient.connection_id === connectionId
+            ? { ...patient, connection_status: "accepted" }
+            : patient,
+        ),
       );
-
       toast({
         title: "Success",
-        description: "Patient connection accepted."
+        description: "Patient connection accepted.",
       });
     } catch (error) {
-      console.error('Error accepting patient:', error);
+      console.error("Error accepting patient:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to accept patient. Please try again."
+        description: "Failed to accept patient. Please try again.",
       });
     }
   };
 
   const handleRejectPatient = async (connectionId: string) => {
     try {
-      const { error } = await supabase
-        .from('doctor_patient_connections')
-        .update({ status: 'rejected' })
-        .eq('id', connectionId);
-
-      if (error) throw error;
-
-      // Update local state
-      setPatients(prevPatients => 
-        prevPatients.map(patient => 
-          patient.connection_id === connectionId 
-            ? {...patient, connection_status: 'rejected'} 
-            : patient
-        )
+      await patchDoctorPatientConnectionApi(connectionId, "rejected");
+      setPatients((prev) =>
+        prev.map((patient) =>
+          patient.connection_id === connectionId
+            ? { ...patient, connection_status: "rejected" }
+            : patient,
+        ),
       );
-
       toast({
         title: "Success",
-        description: "Patient connection rejected."
+        description: "Patient connection rejected.",
       });
     } catch (error) {
-      console.error('Error rejecting patient:', error);
+      console.error("Error rejecting patient:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to reject patient. Please try again."
+        description: "Failed to reject patient. Please try again.",
       });
     }
   };
@@ -164,18 +130,18 @@ const DoctorPatientView = () => {
             </div>
           </div>
           <div className="flex gap-2">
-            {patient.connection_status === 'pending' ? (
+            {patient.connection_status === "pending" ? (
               <>
-                <Button 
-                  size="sm" 
-                  variant="default" 
+                <Button
+                  size="sm"
+                  variant="default"
                   onClick={() => handleAcceptPatient(patient.connection_id)}
                 >
                   Accept
                 </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
+                <Button
+                  size="sm"
+                  variant="outline"
                   onClick={() => handleRejectPatient(patient.connection_id)}
                 >
                   Reject
@@ -214,21 +180,21 @@ const DoctorPatientView = () => {
       );
     }
 
-    const filteredPatients = patients.filter(patient => {
-      if (activeTab === 'pending') return patient.connection_status === 'pending';
-      if (activeTab === 'active') return patient.connection_status === 'accepted';
-      return true; // All tab
+    const filteredPatients = patients.filter((patient) => {
+      if (activeTab === "pending") return patient.connection_status === "pending";
+      if (activeTab === "active") return patient.connection_status === "accepted";
+      return true;
     });
 
     if (filteredPatients.length === 0) {
       return (
         <div className="text-center py-12">
           <p className="text-muted-foreground mb-4">
-            {activeTab === 'pending' 
-              ? 'No pending patient requests' 
-              : activeTab === 'active'
-              ? 'No active patients yet'
-              : 'No patients found'}
+            {activeTab === "pending"
+              ? "No pending patient requests"
+              : activeTab === "active"
+                ? "No active patients yet"
+                : "No patients found"}
           </p>
         </div>
       );
@@ -246,9 +212,9 @@ const DoctorPatientView = () => {
         </p>
       </div>
 
-      <Tabs 
-        defaultValue="active" 
-        value={activeTab} 
+      <Tabs
+        defaultValue="active"
+        value={activeTab}
         onValueChange={setActiveTab}
         className="space-y-4"
       >

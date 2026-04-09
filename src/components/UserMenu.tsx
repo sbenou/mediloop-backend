@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useCallback, memo, useState, useEffect, useRef } from 'react';
 import { supabase } from "@/lib/supabase";
 import { getSessionFromStorage } from "@/lib/supabase";
+import { hasV2SessionStorage } from "@/lib/auth/bootstrapV2Profile";
 import { toast } from "@/components/ui/use-toast";
 import { useRecoilState } from "recoil";
 import { userAvatarState } from "@/store/user/atoms";
@@ -219,8 +220,15 @@ const UserMenu = memo(() => {
 
   // Determine whether to show loading skeleton, login button, or user avatar
   // This is the critical part for the logout issue
-  const shouldShowSkeleton = isLoading && localLoading && !hasVisibleSession;
-  const isEffectivelyAuthenticated = isAuthenticated || (!isLoading && !localLoading && hasVisibleSession);
+  const shouldShowSkeleton =
+    isLoading &&
+    localLoading &&
+    !hasVisibleSession &&
+    !hasV2SessionStorage();
+  const isEffectivelyAuthenticated =
+    isAuthenticated ||
+    (hasV2SessionStorage() && !localLoading) ||
+    (!isLoading && !localLoading && hasVisibleSession);
 
   // Memoize the user profile prop to prevent unnecessary re-renders
   const avatarProfile = profile && avatarUrl ? {

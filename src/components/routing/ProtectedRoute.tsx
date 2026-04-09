@@ -36,8 +36,11 @@ const ProtectedRoute = ({
     return <Navigate to="/login" replace />;
   }
 
+  const role = profile?.role?.toLowerCase();
+  const allowed = allowedRoles.some((r) => r.toLowerCase() === role);
+
   // Check if user is authorized for this route
-  if (!profile || !allowedRoles.includes(profile.role)) {
+  if (!profile || !role || !allowed) {
     // Either show unauthorized page or redirect to appropriate dashboard
     if (showUnauthorizedPage) {
       return <UnauthorizedPage />;

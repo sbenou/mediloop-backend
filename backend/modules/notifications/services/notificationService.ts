@@ -11,6 +11,16 @@
 
 import { notificationQueue } from "../queues/notificationQueue.ts";
 
+/** Optional DB row scope for `public.notifications` (migration 027). Worker resolves per user if omitted. */
+export interface NotificationDbScope {
+  scopeType: "personal_health" | "tenant" | "professional_personal";
+  /** UUID when scope is tenant or personal_health */
+  scopeTenantId?: string;
+  /** UUID; omit for tenant-wide rows visible to all members */
+  scopeMembershipId?: string;
+  eventType?: string;
+}
+
 export interface NotificationPayload {
   title: string;
   body: string;
@@ -23,6 +33,8 @@ export interface NotificationPayload {
   priority?: "high" | "default" | "low";
   sound?: string;
   badge?: number;
+  /** Passed to the Node worker for scoped `INSERT` into `public.notifications`. */
+  dbScope?: NotificationDbScope;
 }
 
 export interface NotificationChannels {

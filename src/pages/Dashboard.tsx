@@ -70,6 +70,10 @@ const Dashboard = () => {
   useEffect(() => {
     if (userRole !== "doctor" && userRole !== "pharmacist") return;
     if (searchParams.get("mode")) return;
+    // Pharmacists: do not auto-open patient marketplace from localStorage — it hijacks
+    // `section=prescriptions|patients|…` routing. Use the in-dashboard toggle only.
+    if (userRole === "pharmacist") return;
+
     const preferredMode = getPreferredDashboardMode(userRole);
     if (preferredMode !== "patient") return;
 
@@ -80,6 +84,34 @@ const Dashboard = () => {
     }
     setSearchParams(next, { replace: true });
   }, [searchParams, setSearchParams, userRole]);
+
+  const dashboardModeParam = searchParams.get("mode");
+  const dashboardSectionParam = searchParams.get("section");
+
+  // Doctors: default /dashboard and /dashboard?section=dashboard still mount the legacy HomeView.
+  // Send role-mode doctors to the new doctor home (patient marketplace mode stays on /dashboard).
+  useEffect(() => {
+    if (isLoading || !isAuthenticated) return;
+    if (userRole !== "doctor") return;
+    if (dashboardModeParam === "patient") return;
+    // Same tick as patient-mode hydration: URL may not have mode=patient yet.
+    if (getPreferredDashboardMode("doctor") === "patient") return;
+    if (
+      dashboardSectionParam != null &&
+      dashboardSectionParam !== "" &&
+      dashboardSectionParam !== "dashboard"
+    ) {
+      return;
+    }
+    navigate("/doctor/doctor-dashboard", { replace: true });
+  }, [
+    isLoading,
+    isAuthenticated,
+    userRole,
+    dashboardModeParam,
+    dashboardSectionParam,
+    navigate,
+  ]);
   
   // Force recalculation of chart dimensions when drawer state changes
   useEffect(() => {

@@ -217,3 +217,9 @@ Section,Decision,Implementation Direction
 §2 Legacy,No full trust without attribution,Quarantine or deterministic backfill
 §2 Patient read,Read via authorized projection,Do not rewrite authoritative creation tenant
 ```
+
+---
+
+## See also
+
+- In-app notification storage, `tenant_id`, and **event type catalog**: [architecture-notifications.md](./architecture-notifications.md)

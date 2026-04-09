@@ -26,6 +26,8 @@ import {
 } from "./modules/clinical/routes/clinical.ts";
 import { legacyClinicalAdminRoutes } from "./modules/admin/routes/legacyClinicalReview.ts";
 import { superadminPlatformRoutes } from "./modules/admin/routes/superadminPlatform.ts";
+import { professionalWorkspaceRoutes } from "./modules/professional/routes/professionalWorkspace.ts";
+import { catalogPublicRouter } from "./modules/catalog/routes/catalogPublic.ts";
 
 const publicClinicalRouter = new Router();
 publicClinicalRouter.get(
@@ -93,6 +95,10 @@ app.use(luxtrustRoutes.allowedMethods());
 app.use(publicClinicalRouter.routes());
 app.use(publicClinicalRouter.allowedMethods());
 
+// Marketplace catalog tree (Neon) — public read, replaces Supabase categories REST
+app.use(catalogPublicRouter.routes());
+app.use(catalogPublicRouter.allowedMethods());
+
 // Authentication + Option C acting context (membership revalidation per request)
 app.use(authMiddleware);
 app.use(activeContextMiddleware);
@@ -146,6 +152,9 @@ app.use(legacyClinicalAdminRoutes.allowedMethods());
 
 app.use(superadminPlatformRoutes.routes());
 app.use(superadminPlatformRoutes.allowedMethods());
+
+app.use(professionalWorkspaceRoutes.routes());
+app.use(professionalWorkspaceRoutes.allowedMethods());
 
 // ✅ WebSocket endpoint using handler
 const wsHandler = createWebSocketHandler();

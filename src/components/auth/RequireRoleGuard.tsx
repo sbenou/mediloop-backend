@@ -33,8 +33,12 @@ const RequireRoleGuard = ({ allowedRoles, children }: RequireRoleGuardProps) => 
     );
   }
 
+  const roleAllowed =
+    userRole &&
+    allowedRoles.some((r) => r.toLowerCase() === userRole.toLowerCase());
+
   // If not authenticated or role not allowed, redirect
-  if (!isAuthenticated || !userRole || !allowedRoles.includes(userRole)) {
+  if (!isAuthenticated || !userRole || !roleAllowed) {
     console.warn("🚫 Unauthorized access. Redirecting to /unauthorized");
     navigate("/unauthorized", { replace: true });
     return null;
