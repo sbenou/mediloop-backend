@@ -127,7 +127,8 @@ export class StripeService {
       return event;
     } catch (err) {
       console.error(`❌ Webhook signature verification failed:`, err);
-      throw new Error(`Webhook verification failed: ${err.message}`);
+      const message = err instanceof Error ? err.message : "Unknown webhook error";
+      throw new Error(`Webhook verification failed: ${message}`);
     }
   }
 
