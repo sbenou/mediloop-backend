@@ -15,6 +15,7 @@ import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import NotificationsView from "@/components/dashboard/views/NotificationsView";
+import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
 
 const UniversalDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -28,19 +29,6 @@ const UniversalDashboard = () => {
   const profileTab = searchParams.get("profileTab") || "personal";
   const pharmacySection = searchParams.get("section") || "dashboard";
   
-  // Console logging for debugging
-  useEffect(() => {
-    console.log("UniversalDashboard render:", { 
-      userRole, 
-      isPharmacist,
-      profile: profile?.role,
-      currentView, 
-      pharmacySection,
-      searchParams: Object.fromEntries(searchParams.entries()),
-      location: location.pathname + location.search
-    });
-  }, [userRole, currentView, pharmacySection, searchParams, location, isPharmacist, profile]);
-  
   // Track initial load to avoid flashing loading state during navigation
   useEffect(() => {
     if (!isLoading) {
@@ -51,14 +39,12 @@ const UniversalDashboard = () => {
   // If user is a pharmacist, redirect to pharmacy dashboard
   useEffect(() => {
     if ((userRole === "pharmacist" || isPharmacist) && !isInitialLoad) {
-      // Instead of updating search params, we'll redirect to the dedicated pharmacy route
-      // This prevents the infinite loop from occurring
-      navigate("/pharmacy/dashboard", { replace: true });
+      navigate(getDashboardRouteByRole("pharmacist"), { replace: true });
     }
   }, [userRole, isPharmacist, isInitialLoad, navigate]);
   
   const getContent = () => {
-    // For pharmacy roles, direct them to use /pharmacy/dashboard instead
+    // For pharmacy roles, direct them to the canonical dashboard route.
     if (userRole === "pharmacist" || isPharmacist) {
       return <HomeView userRole={userRole} />;
     }

@@ -19,6 +19,16 @@ import DoctorTeleconsultationsView from "@/components/dashboard/views/doctor/Doc
 import DoctorAppointmentsView from "@/components/dashboard/views/doctor/DoctorAppointmentsView";
 import NotificationsView from "@/components/dashboard/views/NotificationsView";
 
+/** Sidebar / deep links that must stay on workspace UI even if `mode=patient` (marketplace). */
+const PHARMACY_PROFESSIONAL_SECTIONS = new Set([
+  "prescriptions",
+  "patients",
+  "orders",
+  "settings",
+  "profile",
+  "notifications",
+]);
+
 interface DashboardRouterProps {
   userRole: string;
   forcePatientView?: boolean;
@@ -28,35 +38,67 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({
   userRole,
   forcePatientView = false,
 }) => {
-  const { isPharmacist, profile } = useAuth();
+  const { isPharmacist } = useAuth();
   const { params } = useDashboardParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const { view, section, profileTab, ordersTab } = params;
-  
-  console.log("🚦 DashboardRouter rendering:", { userRole, view, section, profileTab, ordersTab });
-  console.log("🚦 DashboardRouter auth state:", { isPharmacist, profileRole: profile?.role });
-  
+  /** Raw query value — `useDashboardParams` defaults missing section to "dashboard", which broke this effect. */
+  const sectionInUrl = searchParams.get("section");
+  const viewInUrl = searchParams.get("view");
+  const patientBrowseMode = searchParams.get("mode") === "patient";
+
   useEffect(() => {
-    if (userRole === "pharmacist" || isPharmacist) {
-      // For pharmacist users, simply set view=pharmacy and section=dashboard if no section
-      // This simplifies the approach by just ensuring pharmacists have a default view
-      if (!section) {
-        setSearchParams({ view: 'pharmacy', section: 'dashboard' }, { replace: true });
-      }
+    if (!(userRole === "pharmacist" || isPharmacist)) return;
+    // Browsing marketplace as patient: don't inject pharmacy query params.
+    if (
+      patientBrowseMode &&
+      !(sectionInUrl && PHARMACY_PROFESSIONAL_SECTIONS.has(sectionInUrl))
+    ) {
+      return;
     }
-  }, [userRole, isPharmacist, section, setSearchParams]);
-  
-  // For pharmacists, always show pharmacy views unless patient-view is explicitly requested.
-  if (!forcePatientView && (userRole === "pharmacist" || isPharmacist)) {
-    const sectionToUse = section || "dashboard";
-    console.log("Rendering PharmacyView for pharmacist with section:", sectionToUse);
-    return <PharmacyView userRole={userRole} section={sectionToUse} />;
+    if (sectionInUrl == null || sectionInUrl === "") {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set("view", "pharmacy");
+          next.set("section", "dashboard");
+          return next;
+        },
+        { replace: true },
+      );
+    } else if (!viewInUrl) {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set("view", "pharmacy");
+          return next;
+        },
+        { replace: true },
+      );
+    }
+  }, [
+    userRole,
+    isPharmacist,
+    sectionInUrl,
+    viewInUrl,
+    patientBrowseMode,
+    setSearchParams,
+  ]);
+
+  if (userRole === "pharmacist" || isPharmacist) {
+    const wantsProfessionalSurface =
+      Boolean(sectionInUrl && PHARMACY_PROFESSIONAL_SECTIONS.has(sectionInUrl));
+    if (wantsProfessionalSurface || !forcePatientView) {
+      const sectionToUse =
+        sectionInUrl && sectionInUrl !== ""
+          ? sectionInUrl
+          : section || "dashboard";
+      return <PharmacyView userRole={userRole} section={sectionToUse} />;
+    }
   }
   
   // For doctors, handle special views based on section parameter
   if (!forcePatientView && userRole === "doctor") {
-    console.log("Handling doctor view with section:", section);
-    
     // Check for section parameter first (doctor specific routing)
     if (section) {
       switch (section) {
@@ -77,7 +119,6 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({
         case "notifications":
           return <NotificationsView userRole="doctor" />;
         case "orders":
-          console.log("Rendering OrdersView for doctor with tab:", ordersTab);
           return <OrdersView activeTab={ordersTab || "orders"} userRole="doctor" />;
         case "dashboard":
         default:
@@ -99,7 +140,6 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({
         case "notifications":
           return <NotificationsView userRole="doctor" />;
         case "orders":
-          console.log("Fallback: Rendering OrdersView for doctor with tab:", ordersTab);
           return <OrdersView activeTab={ordersTab || "orders"} userRole="doctor" />;
         default:
           return <HomeView userRole="doctor" />;
@@ -111,23 +151,23 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({
   }
   
   // For patients (or any other role), handle based on view parameter
-  console.log("Handling patient view:", view);
+  const patientViewRole = forcePatientView ? "patient" : userRole;
   switch (view) {
     case "profile":
-      return <ProfileView activeTab={profileTab} userRole={userRole} />;
+      return <ProfileView activeTab={profileTab} userRole={patientViewRole} />;
     case "settings":
-      return <SettingsView userRole={userRole} />;
+      return <SettingsView userRole={patientViewRole} />;
     case "orders":
-      return <OrdersView activeTab={ordersTab} userRole={userRole} />;
+      return <OrdersView activeTab={ordersTab} userRole={patientViewRole} />;
     case "prescriptions":
-      return <PrescriptionsView userRole={userRole} />;
+      return <PrescriptionsView userRole={patientViewRole} />;
     case "teleconsultations":
-      return <TeleconsultationsView userRole={userRole} />;
+      return <TeleconsultationsView userRole={patientViewRole} />;
     case "notifications":
-      return <NotificationsView userRole={userRole} />;
+      return <NotificationsView userRole={patientViewRole} />;
     case "home":
     default:
-      return <HomeView userRole={userRole} />;
+      return <HomeView userRole={patientViewRole} />;
   }
 };
 

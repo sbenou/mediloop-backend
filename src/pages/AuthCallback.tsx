@@ -6,6 +6,7 @@ import { authClient } from '@/services/authClient'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader } from 'lucide-react'
 import { toast } from '@/components/ui/use-toast'
+import { getDashboardRouteByRole } from '@/utils/auth/getDashboardRouteByRole'
 
 const AuthCallback = () => {
   const [searchParams] = useSearchParams()
@@ -45,21 +46,8 @@ const AuthCallback = () => {
               description: 'Welcome! You have been successfully authenticated.'
             })
             
-            // Redirect based on user role
             const userRole = verification.payload?.role
-            switch (userRole) {
-              case 'doctor':
-                navigate('/doctor/dashboard')
-                break
-              case 'pharmacist':
-                navigate('/pharmacy/dashboard')
-                break
-              case 'superadmin':
-                navigate('/superadmin/dashboard')
-                break
-              default:
-                navigate('/dashboard')
-            }
+            navigate(getDashboardRouteByRole(userRole))
           } else {
             throw new Error('Token verification failed')
           }

@@ -1,13 +1,19 @@
 
-import ProtectedRoute from '@/components/routing/ProtectedRoute';
-import PharmacyDashboard from '@/pages/pharmacy/PharmacyDashboard';
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/auth/useAuth";
+import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
 
 const ProtectedPharmacyDashboard = () => {
-  return (
-    <ProtectedRoute allowedRoles={['pharmacist']}>
-      <PharmacyDashboard />
-    </ProtectedRoute>
-  );
+  const { userRole, isLoading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isLoading) return;
+    navigate(getDashboardRouteByRole(userRole), { replace: true });
+  }, [isLoading, navigate, userRole]);
+
+  return null;
 };
 
 export default ProtectedPharmacyDashboard;

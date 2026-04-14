@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import WeekNavigation from "@/components/teleconsultation/calendar/WeekNavigation";
 import { useAvailabilityCalendar } from "@/components/teleconsultation/hooks/useAvailabilityCalendar";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { Teleconsultation } from "@/types/supabase";
+import type { Teleconsultation } from "@/types/clinical";
 import DoctorAvailabilityCalendar from "@/components/teleconsultation/DoctorAvailabilityCalendar";
 
 const DoctorAppointmentsView = () => {

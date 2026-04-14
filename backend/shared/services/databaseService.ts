@@ -59,6 +59,13 @@ export class DatabaseService {
       console.log("✅ Password verification successful for:", email);
       return user;
     } catch (error) {
+      const msg = error instanceof Error ? error.message : "";
+      if (msg === "Invalid login credentials") {
+        throw error;
+      }
+      if (msg === "Password data not found for user") {
+        throw new Error("Invalid login credentials");
+      }
       console.error("Error verifying password:", error);
       throw new Error("Invalid login credentials");
     } finally {
@@ -147,76 +154,51 @@ export class DatabaseService {
     const client = await this.postgresService.getClient();
 
     try {
-      let row: Record<string, unknown> | undefined;
-      try {
-        const profResult = await client.queryObject<Record<string, unknown>>(
-          `SELECT id, role, role_id, full_name, email, avatar_url, auth_method,
-           is_blocked, city, date_of_birth, license_number, cns_card_front,
-           cns_card_back, cns_number, doctor_stamp_url, doctor_signature_url,
-           pharmacist_stamp_url, pharmacist_signature_url, deleted_at,
-           created_at, updated_at, pharmacy_name, pharmacy_logo_url
-           FROM public.profiles WHERE id = $1 LIMIT 1`,
-          [userId],
-        );
-        row = profResult.rows[0];
-      } catch (profErr) {
-        console.warn(
-          "[fetchAppSessionProfile] public.profiles row not usable, using auth.users:",
-          profErr,
-        );
-        row = undefined;
+      // Neon Option C: session profile from auth.users only.
+      const uResult = await client.queryObject<{
+        id: string;
+        email: string;
+        full_name: string;
+        role: string;
+        role_id: string | null;
+        email_verified?: boolean;
+        created_at?: string;
+        updated_at?: string;
+      }>(
+        `SELECT id, email, full_name, role, role_id, email_verified, created_at, updated_at
+         FROM auth.users WHERE id = $1 LIMIT 1`,
+        [userId],
+      );
+      if (uResult.rows.length === 0) {
+        throw new Error("User not found");
       }
-
-      let roleId: string | null = null;
-
-      if (!row) {
-        const uResult = await client.queryObject<{
-          id: string;
-          email: string;
-          full_name: string;
-          role: string;
-          role_id: string | null;
-          email_verified?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        }>(
-          `SELECT id, email, full_name, role, role_id, email_verified, created_at, updated_at
-           FROM auth.users WHERE id = $1 LIMIT 1`,
-          [userId],
-        );
-        if (uResult.rows.length === 0) {
-          throw new Error("User not found");
-        }
-        const u = uResult.rows[0];
-        roleId = u.role_id ?? null;
-        row = {
-          id: u.id,
-          role: u.role,
-          role_id: u.role_id,
-          full_name: u.full_name,
-          email: u.email,
-          avatar_url: null,
-          auth_method: null,
-          is_blocked: false,
-          city: null,
-          date_of_birth: null,
-          license_number: null,
-          cns_card_front: null,
-          cns_card_back: null,
-          cns_number: null,
-          doctor_stamp_url: null,
-          doctor_signature_url: null,
-          pharmacist_stamp_url: null,
-          pharmacist_signature_url: null,
-          deleted_at: null,
-          created_at: u.created_at ?? null,
-          updated_at: u.updated_at ?? null,
-          pharmacy_name: null,
-          pharmacy_logo_url: null,
-        };
-      } else {
-        roleId = (row.role_id as string | null) ?? null;
-      }
+      const u = uResult.rows[0];
+      const roleId: string | null = u.role_id ?? null;
+      const row: Record<string, unknown> = {
+        id: u.id,
+        role: u.role,
+        role_id: u.role_id,
+        full_name: u.full_name,
+        email: u.email,
+        avatar_url: null,
+        auth_method: null,
+        is_blocked: false,
+        city: null,
+        date_of_birth: null,
+        license_number: null,
+        cns_card_front: null,
+        cns_card_back: null,
+        cns_number: null,
+        doctor_stamp_url: null,
+        doctor_signature_url: null,
+        pharmacist_stamp_url: null,
+        pharmacist_signature_url: null,
+        deleted_at: null,
+        created_at: u.created_at ?? null,
+        updated_at: u.updated_at ?? null,
+        pharmacy_name: null,
+        pharmacy_logo_url: null,
+      };
 
       let permissions: string[] = [];
       if (roleId) {

@@ -5,6 +5,7 @@ import PrescriptionActions from "./prescription/PrescriptionActions";
 import ViewPrescriptionHeader from "./prescription/ViewPrescriptionHeader";
 import PharmacySelectionSection from "./prescription/PharmacySelectionSection";
 import { toast } from "@/components/ui/use-toast";
+import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
 
 interface Medication {
   name: string;
@@ -20,6 +21,9 @@ interface PrescriptionData {
   doctorAddress: string;
   medications: Medication[];
   createdAt: string;
+  doctorStampUrl?: string;
+  doctorSignatureUrl?: string;
+  prescriptionIds?: string[];
 }
 
 const pharmacies = [
@@ -51,15 +55,41 @@ const ViewPrescription = ({ data: defaultData }: { data: PrescriptionData }) => 
   const data = location.state?.data || defaultData;
 
   const handleEdit = () => {
+    const first = data.prescriptionIds?.[0];
+    if (first) {
+      navigate(`/edit-prescription/${first}`);
+      return;
+    }
     navigate("/create-prescription", { state: { data } });
   };
 
-  const handleDelete = () => {
-    toast({
-      title: "Prescription Deleted",
-      description: "The prescription has been successfully deleted.",
-    });
-    navigate("/");
+  const handleDelete = async () => {
+    const ids = data.prescriptionIds?.filter(Boolean) ?? [];
+    if (ids.length > 0) {
+      try {
+        for (const id of ids) {
+          await deletePrescriptionApi(id);
+        }
+        toast({
+          title: "Deleted",
+          description: "Prescription line(s) removed.",
+        });
+      } catch (e) {
+        console.error(e);
+        toast({
+          variant: "destructive",
+          title: "Delete failed",
+          description: e instanceof Error ? e.message : "Try again",
+        });
+        return;
+      }
+    } else {
+      toast({
+        title: "Removed from view",
+        description: "Nothing was stored to delete.",
+      });
+    }
+    navigate(getDashboardRouteByRole("doctor"));
   };
 
   return (

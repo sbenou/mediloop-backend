@@ -36,7 +36,7 @@ const commonItems: MenuItem[] = [
   {
     label: "Notifications",
     icon: Activity,
-    path: "/notifications"
+    path: "/notifications",
   }
 ];
 
@@ -63,13 +63,8 @@ const doctorItems: MenuItem[] = [
   }
 ];
 
-// Pharmacist specific menu items
+// Pharmacist specific menu items (Dashboard is already in commonItems)
 const pharmacistItems: MenuItem[] = [
-  {
-    label: "Pharmacy Dashboard",
-    icon: Building,
-    path: "/pharmacy/dashboard"
-  },
   {
     label: "Pharmacy Profile",
     icon: User,
@@ -93,11 +88,24 @@ const adminItems: MenuItem[] = [
 
 // Get menu items based on user role
 export const getMenuItemsByRole = (role?: string | null, isPharmacist?: boolean): MenuItem[] => {
-  // First, add common items that all users have
-  const items = [...commonItems];
+  const isPharm = isPharmacist || role === "pharmacist";
+  const items = commonItems.map((item) => {
+    if (item.label === "Notifications") {
+      if (isPharm) {
+        return {
+          ...item,
+          path: "/dashboard?view=pharmacy&section=notifications",
+        };
+      }
+      if (role === "doctor") {
+        return { ...item, path: "/dashboard?section=notifications" };
+      }
+    }
+    return item;
+  });
   
   // Then, add role-specific items
-  if (isPharmacist || role === "pharmacist") {
+  if (isPharm) {
     items.push(...pharmacistItems);
   } else if (role === "doctor") {
     items.push(...doctorItems);

@@ -8,7 +8,10 @@ import SearchHeader from '@/components/pharmacy/SearchHeader';
 import { useDoctorSearch } from '@/hooks/useDoctorSearch';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from '@/components/ui/use-toast';
-import { supabase } from '@/lib/supabase';
+import {
+  fetchDoctorPatientConnectionsApi,
+  requestDoctorConnectionAsPatientApi,
+} from "@/services/clinicalApi";
 import { useLocationSearch } from "@/hooks/useLocationSearch";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -47,15 +50,11 @@ const SearchDoctors = () => {
     enabled: !!profile?.id,
     queryFn: async () => {
       try {
-        const { data, error } = await supabase
-          .from('doctor_patient_connections')
-          .select('doctor_id, status')
-          .eq('patient_id', profile?.id)
-          .eq('status', 'accepted')
-          .maybeSingle();
-        
-        if (error && error.code !== 'PGRST116') throw error;
-        return data?.doctor_id || null;
+        const rows = await fetchDoctorPatientConnectionsApi();
+        const acc = rows.find(
+          (c) => c.status === "accepted" && c.patient_id === profile?.id,
+        );
+        return acc?.doctor_id ?? null;
       } catch (err) {
         console.error("Error fetching connected doctor:", err);
         return null;
@@ -104,25 +103,20 @@ const SearchDoctors = () => {
         return;
       }
 
-      // Connect to the doctor using the correct table
-      const { error } = await supabase
-        .from('doctor_patient_connections')
-        .insert({ 
-          doctor_id: doctorId, 
-          patient_id: profile.id,
-          status: 'pending'
-        });
-      
-      if (error) {
-        if (error.code === '23505') {
+      try {
+        await requestDoctorConnectionAsPatientApi(doctorId);
+      } catch (reqErr: unknown) {
+        const msg = reqErr instanceof Error ? reqErr.message : String(reqErr);
+        if (msg.includes("already exists") || msg.includes("409")) {
           toast({
             title: "Connection Request Already Exists",
-            description: "You have already sent a connection request to this doctor.",
-            variant: "destructive"
+            description:
+              "You have already sent a connection request to this doctor.",
+            variant: "destructive",
           });
           return;
         }
-        throw error;
+        throw reqErr;
       }
 
       // Send notification to doctor

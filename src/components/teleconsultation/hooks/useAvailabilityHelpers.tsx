@@ -1,6 +1,11 @@
 
 import { format } from "date-fns";
-import { BankHoliday, DoctorAvailability, Teleconsultation, AppointmentType } from "@/types/supabase";
+import type { Teleconsultation } from "@/types/clinical";
+import type {
+  BankHoliday,
+  DoctorAvailability,
+  AppointmentType,
+} from "@/types/domain";
 
 export const useAvailabilityHelpers = (
   doctorAvailability: DoctorAvailability[],

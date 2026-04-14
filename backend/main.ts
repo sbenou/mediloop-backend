@@ -20,7 +20,20 @@ import subscriptionRouter from "./modules/payments/routes/subscriptions.ts";
 import notificationRouter from "./modules/notifications/routes/notifications.ts";
 import { createWebSocketHandler } from "./modules/notifications/websocket/notificationHandler.ts";
 import { wearablesRoutes } from "./modules/wearables/routes/wearables.ts";
-import { clinicalRoutes } from "./modules/clinical/routes/clinical.ts";
+import {
+  clinicalRoutes,
+  servePlatformClinicalStats,
+} from "./modules/clinical/routes/clinical.ts";
+import { legacyClinicalAdminRoutes } from "./modules/admin/routes/legacyClinicalReview.ts";
+import { superadminPlatformRoutes } from "./modules/admin/routes/superadminPlatform.ts";
+import { professionalWorkspaceRoutes } from "./modules/professional/routes/professionalWorkspace.ts";
+import { catalogPublicRouter } from "./modules/catalog/routes/catalogPublic.ts";
+
+const publicClinicalRouter = new Router();
+publicClinicalRouter.get(
+  "/api/clinical/platform-stats",
+  servePlatformClinicalStats,
+);
 
 const app = new Application();
 
@@ -43,7 +56,7 @@ app.use(async (ctx, next) => {
 app.use(
   oakCors({
     origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: [
       "Content-Type",
       "Authorization",
@@ -77,6 +90,14 @@ app.use(oauthRoutes.allowedMethods());
 
 app.use(luxtrustRoutes.routes());
 app.use(luxtrustRoutes.allowedMethods());
+
+// Public clinical aggregate stats (no JWT) — must run before authMiddleware
+app.use(publicClinicalRouter.routes());
+app.use(publicClinicalRouter.allowedMethods());
+
+// Marketplace catalog tree (Neon) — public read, replaces Supabase categories REST
+app.use(catalogPublicRouter.routes());
+app.use(catalogPublicRouter.allowedMethods());
 
 // Authentication + Option C acting context (membership revalidation per request)
 app.use(authMiddleware);
@@ -125,6 +146,15 @@ app.use(wearablesRoutes.allowedMethods());
 
 app.use(clinicalRoutes.routes());
 app.use(clinicalRoutes.allowedMethods());
+
+app.use(legacyClinicalAdminRoutes.routes());
+app.use(legacyClinicalAdminRoutes.allowedMethods());
+
+app.use(superadminPlatformRoutes.routes());
+app.use(superadminPlatformRoutes.allowedMethods());
+
+app.use(professionalWorkspaceRoutes.routes());
+app.use(professionalWorkspaceRoutes.allowedMethods());
 
 // ✅ WebSocket endpoint using handler
 const wsHandler = createWebSocketHandler();

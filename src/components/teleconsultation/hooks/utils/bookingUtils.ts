@@ -1,7 +1,5 @@
-
-import { format, parse, addHours } from "date-fns";
-import { supabase } from "@/lib/supabase";
-import { toast } from "@/components/ui/use-toast";
+import { format } from "date-fns";
+import { createTeleconsultationApi } from "@/services/clinicalApi";
 import { BookingFormValues } from "../types/bookingTypes";
 import { createNotification } from "@/utils/notifications";
 
@@ -29,35 +27,26 @@ export const formatBookingDates = (date: string, startTime: string, endTime: str
 // Create teleconsultation in the database
 export const createTeleconsultation = async (
   values: BookingFormValues,
-  doctorId: string,
+  _doctorId: string,
   roomId: string,
-  patients: Array<{ id: string; name: string }>,
+  _patients: Array<{ id: string; name: string }>,
 ) => {
+  void _doctorId;
+  void _patients;
   const { startDateTime, endDateTime } = formatBookingDates(
-    values.date, 
-    values.startTime, 
-    values.endTime
+    values.date,
+    values.startTime,
+    values.endTime,
   );
-  
-  const { data, error } = await supabase
-    .from('teleconsultations')
-    .insert({
-      patient_id: values.patientId,
-      doctor_id: doctorId,
-      start_time: startDateTime.toISOString(),
-      end_time: endDateTime.toISOString(),
-      status: 'confirmed',
-      reason: values.title,
-      room_id: roomId
-    })
-    .select()
-    .single();
-    
-  if (error) {
-    throw error;
-  }
-  
-  return data;
+
+  return await createTeleconsultationApi({
+    patient_id: values.patientId,
+    start_time: startDateTime.toISOString(),
+    end_time: endDateTime.toISOString(),
+    status: "confirmed",
+    reason: values.title,
+    room_id: roomId,
+  });
 };
 
 // Create notifications for doctor and patient

@@ -10,7 +10,7 @@ import DoctorConnectionsList from "@/components/teleconsultation/DoctorConnectio
 import DoctorAvailabilityCalendar from "@/components/teleconsultation/DoctorAvailabilityCalendar";
 import TeleconsultationExplanation from "@/components/teleconsultation/TeleconsultationExplanation";
 import AvailabilityWeeklyCalendar from "@/components/teleconsultation/AvailabilityWeeklyCalendar";
-import { Teleconsultation } from "@/types/supabase";
+import type { Teleconsultation } from "@/types/clinical";
 
 interface TeleconsultationsViewProps {
   userRole: string | null;

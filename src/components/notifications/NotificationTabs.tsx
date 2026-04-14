@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Notification } from "@/types/supabase"; // Adjust the import path as needed
+import { Notification } from "@/types/domain"; // Adjust the import path as needed
 import NotificationList from "./NotificationList";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";

@@ -1,10 +1,9 @@
-
 import { useInView } from "react-intersection-observer";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
 import { LocalCache } from "@/lib/cache";
+import { fetchPlatformClinicalStatsApi } from "@/services/clinicalApi";
 
 interface PlatformStats {
   ordersCount: number;
@@ -48,34 +47,14 @@ export const StatsSection = ({ stats }: { stats?: PlatformStats }) => {
 
       try {
         setLoading(true);
-        console.log('Fetching platform stats from database...');
-        
-        // Fetch real statistics from various tables
-        const [
-          { count: ordersCount, error: ordersError }, 
-          { count: pharmaciesCount, error: pharmaciesError }, 
-          { count: doctorsCount, error: doctorsError }, 
-          { count: prescriptionsCount, error: prescriptionsError },
-          { count: connectionsCount, error: connectionsError }
-        ] = await Promise.all([
-          supabase.from('orders').select('*', { count: 'exact', head: true }),
-          // Only count endorsed pharmacies (those who have paid for a subscription)
-          supabase.from('pharmacies').select('*', { count: 'exact', head: true }).eq('endorsed', true),
-          supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'doctor'),
-          supabase.from('prescriptions').select('*', { count: 'exact', head: true }),
-          supabase.from('doctor_patient_connections').select('*', { count: 'exact', head: true }),
-        ]);
-
-        if (ordersError || pharmaciesError || doctorsError || prescriptionsError || connectionsError) {
-          throw new Error('Error fetching stats');
-        }
+        const api = await fetchPlatformClinicalStatsApi();
 
         const fetchedStats = {
-          ordersCount: ordersCount || 0,
-          pharmaciesCount: pharmaciesCount || 0,
-          doctorsCount: doctorsCount || 0,
-          prescriptionsCount: prescriptionsCount || 0,
-          connectionsCount: connectionsCount || 0
+          ordersCount: api.orders_count ?? 0,
+          pharmaciesCount: api.pharmacies_count ?? 0,
+          doctorsCount: api.doctors_count ?? 0,
+          prescriptionsCount: api.prescriptions_count ?? 0,
+          connectionsCount: api.connections_count ?? 0,
         };
         
         console.log('Fetched stats:', fetchedStats);

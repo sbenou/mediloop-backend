@@ -5,7 +5,7 @@ import PharmacistLayout from "@/components/layout/PharmacistLayout";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { fetchPrescriptionsApi } from "@/services/clinicalApi";
 
 interface Prescription {
   id: string;
@@ -26,39 +26,16 @@ const PrescriptionsPage = () => {
     const fetchPrescriptions = async () => {
       try {
         setLoading(true);
-        // First, get basic prescription data
-        const { data, error } = await supabase
-          .from('prescriptions')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        
-        // Now fetch the patient and doctor names separately
-        const prescriptionsWithNames = await Promise.all(
-          (data || []).map(async (prescription) => {
-            // Get patient name
-            const { data: patientData, error: patientError } = await supabase
-              .from('profiles')
-              .select('full_name')
-              .eq('id', prescription.patient_id)
-              .single();
-
-            // Get doctor name
-            const { data: doctorData, error: doctorError } = await supabase
-              .from('profiles')
-              .select('full_name')
-              .eq('id', prescription.doctor_id)
-              .single();
-
-            return {
-              ...prescription,
-              patient_name: patientError ? 'Unknown Patient' : patientData?.full_name,
-              doctor_name: doctorError ? 'Unknown Doctor' : doctorData?.full_name,
-            };
-          })
-        );
-        
+        const data = await fetchPrescriptionsApi();
+        const prescriptionsWithNames = data.map((p) => ({
+          id: p.id,
+          patient_id: String(p.patient_id ?? ""),
+          doctor_id: String(p.doctor_id ?? ""),
+          medication_name: p.medication_name,
+          created_at: p.created_at,
+          patient_name: p.patient_full_name ?? "Unknown Patient",
+          doctor_name: p.doctor_full_name ?? "Unknown Doctor",
+        }));
         setPrescriptions(prescriptionsWithNames);
       } catch (error) {
         console.error('Error fetching prescriptions:', error);

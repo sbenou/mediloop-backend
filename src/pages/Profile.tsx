@@ -4,20 +4,15 @@ import PatientLayout from "@/components/layout/PatientLayout";
 import ProfileComponent from "@/components/settings/Profile";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
+import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
 
 const Profile = () => {
   const { profile, isLoading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Redirect superadmin users back to their dashboard
-    if (!isLoading && profile?.role === 'superadmin') {
-      navigate('/superadmin/dashboard');
-    }
-    
-    // Redirect pharmacist users back to their dashboard
-    if (!isLoading && profile?.role === 'pharmacist') {
-      navigate('/pharmacy/dashboard');
+    if (!isLoading && (profile?.role === 'superadmin' || profile?.role === 'pharmacist')) {
+      navigate(getDashboardRouteByRole(profile.role));
     }
   }, [profile, isLoading, navigate]);
 

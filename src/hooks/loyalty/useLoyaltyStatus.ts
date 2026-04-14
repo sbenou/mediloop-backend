@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { supabase } from '@/lib/supabase';
+import { hasV2SessionStorage } from '@/lib/auth/bootstrapV2Profile';
 
 export interface LoyaltyStatus {
   points: number;
@@ -46,12 +47,16 @@ const DEFAULT_STATUS: LoyaltyStatus = {
 };
 
 export const useLoyaltyStatus = (): LoyaltyStatus => {
-  const { user } = useAuth();
+  const { user, isPharmacist } = useAuth();
   const [loyaltyStatus, setLoyaltyStatus] = useState<LoyaltyStatus>(DEFAULT_STATUS);
 
   useEffect(() => {
     const fetchLoyaltyStatus = async () => {
       if (!user?.id) return;
+      if (hasV2SessionStorage() || isPharmacist) {
+        setLoyaltyStatus(DEFAULT_STATUS);
+        return;
+      }
 
       try {
         const { data, error } = await supabase
@@ -83,7 +88,7 @@ export const useLoyaltyStatus = (): LoyaltyStatus => {
     };
 
     fetchLoyaltyStatus();
-  }, [user?.id]);
+  }, [user?.id, isPharmacist]);
 
   return loyaltyStatus;
 };

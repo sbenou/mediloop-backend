@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Notification } from "@/types/supabase";
+import { Notification } from "@/types/domain";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Bell, Check } from "lucide-react";
 

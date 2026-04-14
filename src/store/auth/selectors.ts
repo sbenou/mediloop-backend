@@ -15,8 +15,9 @@ export const userRoleSelector = selector({
   key: 'userRole',
   get: ({ get }) => {
     const auth = get(authState);
-    // Return role even during loading if we have it
-    return auth.profile?.role || null;
+    const r = auth.profile?.role;
+    if (r == null || r === '') return null;
+    return String(r).toLowerCase();
   },
 });
 

@@ -92,8 +92,30 @@ const DashboardSidebarContent = () => {
 
   const navigateToView = (view: string, tab?: string) => {
     console.log(`Navigate to dashboard with view: ${view}${tab ? ` and tab: ${tab}` : ''}`);
-    // Using navigate instead of direct link to prevent page refresh
-    navigate(`/dashboard?view=${view}${tab ? `&${view}Tab=${tab}` : ''}`);
+    if (userRole === "pharmacist") {
+      const p = new URLSearchParams();
+      p.set("view", "pharmacy");
+      if (view === "profile") {
+        p.set("section", "profile");
+        if (tab) p.set("profileTab", tab);
+      } else if (view === "settings") {
+        p.set("section", "settings");
+      } else if (view === "orders") {
+        p.set("section", "orders");
+        if (tab) p.set("ordersTab", tab);
+      } else if (view === "prescriptions") {
+        p.set("section", "prescriptions");
+      } else if (view === "patients") {
+        p.set("section", "patients");
+      } else if (view === "notifications") {
+        p.set("section", "notifications");
+      } else {
+        p.set("section", "dashboard");
+      }
+      navigate(`/dashboard?${p.toString()}`);
+      return;
+    }
+    navigate(`/dashboard?view=${view}${tab ? `&${view}Tab=${tab}` : ""}`);
   };
 
   const handleLogout = async () => {

@@ -21,7 +21,8 @@ const DoctorPlatformSection = ({
   const searchParams = new URLSearchParams(location.search);
   const section = searchParams.get("section") || "dashboard";
   const ordersTab = searchParams.get("ordersTab") || "orders";
-  
+  const onNewDoctorHome = location.pathname === "/doctor/doctor-dashboard";
+
   const {
     isOrdersOpen,
     setIsOrdersOpen,
@@ -42,8 +43,8 @@ const DoctorPlatformSection = ({
         <SidebarItem
           icon={<Home className="w-5 h-5 mr-3" />}
           label="Dashboard"
-          isActive={section === "dashboard"}
-          onClick={() => navigateToLink("?section=dashboard")}
+          isActive={onNewDoctorHome || (location.pathname === "/dashboard" && section === "dashboard")}
+          onClick={() => navigateToLink("/doctor/doctor-dashboard")}
         />
         
         <SidebarItem

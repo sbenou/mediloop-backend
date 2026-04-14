@@ -2,7 +2,7 @@ import React, { Dispatch, SetStateAction, useState, useEffect } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
-import { supabase } from '@/lib/supabase';
+import { updateDoctorWorkspaceApi } from '@/services/professionalWorkspaceApi';
 import { WeekHours, defaultHours } from '@/types/pharmacy/hours';
 import { parseStringHours, formatHoursDisplay } from '@/utils/pharmacy/hoursFormatters';
 import { HoursEditor } from '@/components/pharmacy/hours/HoursEditor';
@@ -12,13 +12,15 @@ interface DoctorHoursProps {
   doctorId: string;
   isEditing?: boolean;
   setIsEditing?: Dispatch<SetStateAction<boolean>>;
+  onSaved?: () => void;
 }
 
 const DoctorHours: React.FC<DoctorHoursProps> = ({ 
   hours, 
   doctorId, 
   isEditing = false,
-  setIsEditing
+  setIsEditing,
+  onSaved,
 }) => {
   const [hoursText, setHoursText] = useState(hours || '');
   const [weekHours, setWeekHours] = useState<WeekHours | null>(null);
@@ -66,17 +68,8 @@ const DoctorHours: React.FC<DoctorHoursProps> = ({
     try {
       setIsSaving(true);
       
-      // Save as text format
-      const { error } = await supabase
-        .from('doctor_metadata')
-        .upsert({ 
-          doctor_id: doctorId,
-          hours: hoursText,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'doctor_id' });
-      
-      if (error) throw error;
-      
+      await updateDoctorWorkspaceApi({ hours: hoursText });
+
       toast({
         title: "Success",
         description: "Opening hours updated successfully",
@@ -88,6 +81,7 @@ const DoctorHours: React.FC<DoctorHoursProps> = ({
       const parsedHours = parseStringHours(hoursText);
       setWeekHours(parsedHours);
       setFormattedHours(formatHoursDisplay(parsedHours));
+      onSaved?.();
     } catch (error) {
       console.error('Error updating hours:', error);
       toast({
@@ -106,19 +100,10 @@ const DoctorHours: React.FC<DoctorHoursProps> = ({
     try {
       setIsSaving(true);
       
-      // Save as JSON format
       const hoursData = JSON.stringify(weekHours);
-      
-      const { error } = await supabase
-        .from('doctor_metadata')
-        .upsert({ 
-          doctor_id: doctorId,
-          hours: hoursData,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'doctor_id' });
-      
-      if (error) throw error;
-      
+
+      await updateDoctorWorkspaceApi({ hours: hoursData });
+
       toast({
         title: "Success",
         description: "Opening hours updated successfully",
@@ -127,6 +112,7 @@ const DoctorHours: React.FC<DoctorHoursProps> = ({
       if (setIsEditing) setIsEditing(false);
       setIsStructuredFormat(true);
       setFormattedHours(formatHoursDisplay(weekHours));
+      onSaved?.();
     } catch (error) {
       console.error('Error updating hours:', error);
       toast({

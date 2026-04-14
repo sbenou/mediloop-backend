@@ -12,6 +12,13 @@ export default defineConfig(({ mode }) => ({
     // Add these settings to ensure proper serving of the React app
     open: true, // Opens the browser automatically
     strictPort: true, // Ensures the specified port is used
+    /** SPA dev server: forward /api to Deno (default PORT 8000). Start backend separately. */
+    proxy: {
+      "/api": {
+        target: process.env.VITE_DEV_API_PROXY ?? "http://localhost:8000",
+        changeOrigin: true,
+      },
+    },
   },
   plugins: [
     react(),
@@ -22,6 +29,10 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  /** Easier on Windows: less parallel resolve work during dep pre-bundle (reduces esbuild "service was stopped"). */
+  optimizeDeps: {
+    holdUntilCrawlEnd: true,
   },
   build: {
     rollupOptions: {

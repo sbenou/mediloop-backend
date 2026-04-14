@@ -16,6 +16,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useWorkspaceContext } from "@/hooks/auth/useWorkspaceContext";
+import {
+  getPreferredDashboardMode,
+  setPreferredDashboardMode,
+} from "@/utils/dashboard/dashboardMode";
 
 const Dashboard = () => {
   const { isAuthenticated, isLoading, userRole, profile } = useAuth();
@@ -26,6 +30,7 @@ const Dashboard = () => {
 
   const togglePatientDashboardMode = () => {
     const next = new URLSearchParams(searchParams);
+    const nextMode = patientModeParam ? "role" : "patient";
     if (patientModeParam) {
       next.delete("mode");
     } else {
@@ -34,6 +39,7 @@ const Dashboard = () => {
         next.set("view", "home");
       }
     }
+    setPreferredDashboardMode(userRole, nextMode);
     setSearchParams(next, { replace: true });
   };
 
@@ -49,7 +55,6 @@ const Dashboard = () => {
   useEffect(() => {
     // Only perform redirect once and only if needed
     if (!isLoading && !isAuthenticated && !redirectedRef.current) {
-      console.warn("🔒 Not authenticated — redirecting to login");
       redirectedRef.current = true;
       navigate("/login", { replace: true });
       return; // Early return to prevent further rendering
@@ -59,26 +64,60 @@ const Dashboard = () => {
     if (!hasInitializedRef.current) {
       hasInitializedRef.current = true;
       
-      console.log("✅ Dashboard initialized", { 
-        isAuthenticated, 
-        userRole, 
-        profileRole: profile?.role,
-        isPharmacist: profile?.role === 'pharmacist',
-        pathname: window.location.pathname,
-        search: window.location.search
-      });
     }
   }, [isAuthenticated, navigate, isLoading, userRole, profile]);
+
+  useEffect(() => {
+    if (userRole !== "doctor" && userRole !== "pharmacist") return;
+    if (searchParams.get("mode")) return;
+    // Pharmacists: do not auto-open patient marketplace from localStorage — it hijacks
+    // `section=prescriptions|patients|…` routing. Use the in-dashboard toggle only.
+    if (userRole === "pharmacist") return;
+
+    const preferredMode = getPreferredDashboardMode(userRole);
+    if (preferredMode !== "patient") return;
+
+    const next = new URLSearchParams(searchParams);
+    next.set("mode", "patient");
+    if (!next.get("view")) {
+      next.set("view", "home");
+    }
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams, userRole]);
+
+  const dashboardModeParam = searchParams.get("mode");
+  const dashboardSectionParam = searchParams.get("section");
+
+  // Doctors: default /dashboard and /dashboard?section=dashboard still mount the legacy HomeView.
+  // Send role-mode doctors to the new doctor home (patient marketplace mode stays on /dashboard).
+  useEffect(() => {
+    if (isLoading || !isAuthenticated) return;
+    if (userRole !== "doctor") return;
+    if (dashboardModeParam === "patient") return;
+    // Same tick as patient-mode hydration: URL may not have mode=patient yet.
+    if (getPreferredDashboardMode("doctor") === "patient") return;
+    if (
+      dashboardSectionParam != null &&
+      dashboardSectionParam !== "" &&
+      dashboardSectionParam !== "dashboard"
+    ) {
+      return;
+    }
+    navigate("/doctor/doctor-dashboard", { replace: true });
+  }, [
+    isLoading,
+    isAuthenticated,
+    userRole,
+    dashboardModeParam,
+    dashboardSectionParam,
+    navigate,
+  ]);
   
   // Force recalculation of chart dimensions when drawer state changes
   useEffect(() => {
     window.dispatchEvent(new Event('resize'));
   }, [isDrawerOpen]);
 
-  // Prevent unnecessary re-renderings by memoizing the search params
-  const paramsObj = Object.fromEntries(searchParams.entries());
-  console.log("Dashboard rendering with params:", paramsObj);
-  
   if (isLoading) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-background">
@@ -92,7 +131,6 @@ const Dashboard = () => {
 
   // Check authentication again for safety
   if (!isAuthenticated && !isLoading) {
-    console.log("🔒 Dashboard - User not authenticated, waiting for redirect");
     return null;
   }
 
@@ -165,8 +203,6 @@ const Dashboard = () => {
   );
 
   if (isAuthenticated && userRole) {
-    console.log("🔓 Access granted to role:", userRole);
-    
     // Always use PatientLayout for patient role
     if (userRole === "patient") {
       return (

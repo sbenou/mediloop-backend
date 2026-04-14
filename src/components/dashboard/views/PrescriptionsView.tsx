@@ -44,7 +44,10 @@ const PrescriptionsView: React.FC<PrescriptionsViewProps> = ({ userRole }) => {
 
   useEffect(() => {
     const fetchPrescriptions = async () => {
-      if (!profile?.id) return;
+      if (!profile?.id) {
+        setLoading(!profile);
+        return;
+      }
 
       try {
         setLoading(true);
@@ -108,7 +111,7 @@ const PrescriptionsView: React.FC<PrescriptionsViewProps> = ({ userRole }) => {
     if (userRole === 'patient') {
       navigate(`/my-prescriptions/${id}`);
     } else if (userRole === 'pharmacist') {
-      navigate(`/pharmacy/prescriptions/${id}`);
+      navigate(`/prescriptions/${id}`);
     } else {
       navigate(`/prescriptions/${id}`);
     }

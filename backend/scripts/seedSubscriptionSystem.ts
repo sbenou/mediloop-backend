@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run --allow-env --allow-net --allow-read
+#!/usr/bin/env -S deno run -A
 
 /**
  * Complete Subscription System Seeding Script
@@ -8,24 +8,31 @@
  * - 32 professional services (healthcare-specific)
  * - 3 standard subscription plans (Starter, Professional, Enterprise)
  *
- * Database target (important):
- * - `TEST_DATABASE_URL` overrides Vault (see `shared/config/env.ts`).
- * - This file loads repo-root `.env.test` **before** importing DB code so `TEST_DATABASE_URL`
- *   applies. If you migrated only your **test** Neon branch, keep `TEST_DATABASE_URL` there
- *   and re-run this script — otherwise it uses Vault `DATABASE_URL_DEV` and you may still
- *   see `column "key" does not exist` on an unmigrated dev database.
- * - To seed **dev** instead, ensure `TEST_DATABASE_URL` is unset and run migrations on that dev DB.
+ * Database targets (both when configured):
+ * - **TEST_DATABASE_URL** from repo-root `.env.test`
+ * - **DATABASE_URL_DEV** or **DATABASE_URL** from `backend/.env.development`
+ * - If both URLs exist and differ, runs one subprocess per database (see `MEDILOOP_SUBSCRIPTION_SEED_CHILD`).
+ * - Dev runs use `MEDILOOP_IGNORE_TEST_DATABASE_URL=1` so `.env.test` cannot override the dev URL
+ *   (`shared/config/env.ts`).
  *
- * Run: deno run --allow-env --allow-net --allow-read backend/scripts/seedSubscriptionSystem.ts
+ * Run: deno run -A backend/scripts/seedSubscriptionSystem.ts
  */
 
 import { load } from "@std/dotenv";
-import { fromFileUrl } from "https://deno.land/std@0.208.0/path/mod.ts";
+import { dirname, fromFileUrl, join } from "https://deno.land/std@0.208.0/path/mod.ts";
 import {
   FeatureCategory,
   ServiceCategory,
   PlanStatus,
 } from "../shared/types/index.ts";
+
+const isChildProcess =
+  Deno.env.get("MEDILOOP_SUBSCRIPTION_SEED_CHILD") === "1";
+
+function trimUrl(v: string | undefined): string | undefined {
+  const t = v?.trim();
+  return t && t.length > 0 ? t : undefined;
+}
 
 /** Same merge rule as envLoader: do not override existing process env. */
 function mergeIntoEnv(record: Record<string, string>) {
@@ -33,6 +40,90 @@ function mergeIntoEnv(record: Record<string, string>) {
     if (value !== undefined && !Deno.env.get(key)) {
       Deno.env.set(key, value);
     }
+  }
+}
+
+const scriptDir = dirname(fromFileUrl(import.meta.url));
+const backendDir = join(scriptDir, "..");
+
+if (!isChildProcess) {
+  const devPath = join(backendDir, ".env.development");
+  const testPath = fromFileUrl(new URL("../../.env.test", import.meta.url));
+  const devVars = (await load({ envPath: devPath }).catch(() => ({}))) as Record<
+    string,
+    string
+  >;
+  const testVars = (await load({ envPath: testPath }).catch(() => ({}))) as Record<
+    string,
+    string
+  >;
+
+  const testUrl = trimUrl(testVars["TEST_DATABASE_URL"]);
+  const devUrl =
+    trimUrl(devVars["DATABASE_URL_DEV"]) || trimUrl(devVars["DATABASE_URL"]);
+
+  type Target = { label: string; kind: "test" | "dev" };
+  const targets: Target[] = [];
+  if (testUrl) {
+    targets.push({
+      label: "test (.env.test → TEST_DATABASE_URL)",
+      kind: "test",
+    });
+  }
+  if (devUrl && devUrl !== testUrl) {
+    targets.push({
+      label: "development (.env.development → DATABASE_URL_DEV / DATABASE_URL)",
+      kind: "dev",
+    });
+  }
+
+  if (targets.length === 0) {
+    console.error(
+      "No database URL found. Set TEST_DATABASE_URL in .env.test and/or DATABASE_URL_DEV (or DATABASE_URL) in backend/.env.development",
+    );
+    Deno.exit(1);
+  }
+
+  if (targets.length > 1) {
+    for (const t of targets) {
+      const base = Deno.env.toObject();
+      const childEnv: Record<string, string> = {
+        ...base,
+        MEDILOOP_SUBSCRIPTION_SEED_CHILD: "1",
+      };
+      if (t.kind === "test") {
+        childEnv["TEST_DATABASE_URL"] = testUrl!;
+        delete childEnv["MEDILOOP_IGNORE_TEST_DATABASE_URL"];
+      } else {
+        childEnv["MEDILOOP_IGNORE_TEST_DATABASE_URL"] = "1";
+        delete childEnv["TEST_DATABASE_URL"];
+        childEnv["DATABASE_URL_DEV"] = devUrl!;
+        childEnv["DATABASE_URL"] = devUrl!;
+      }
+      console.log(
+        `\n${"=".repeat(60)}\n▶ Subscription seed: ${t.label}\n${"=".repeat(60)}\n`,
+      );
+      const st = await new Deno.Command(Deno.execPath(), {
+        args: ["run", "-A", fromFileUrl(import.meta.url)],
+        cwd: backendDir,
+        env: childEnv,
+        stdout: "inherit",
+        stderr: "inherit",
+      }).output();
+      if (!st.success) Deno.exit(st.code ?? 1);
+    }
+    console.log("\n✅ Subscription catalog seeded on all configured databases.\n");
+    Deno.exit(0);
+  }
+
+  if (targets[0]!.kind === "dev") {
+    Deno.env.set("MEDILOOP_IGNORE_TEST_DATABASE_URL", "1");
+    Deno.env.delete("TEST_DATABASE_URL");
+    Deno.env.set("DATABASE_URL_DEV", devUrl!);
+    Deno.env.set("DATABASE_URL", devUrl!);
+  } else {
+    Deno.env.delete("MEDILOOP_IGNORE_TEST_DATABASE_URL");
+    Deno.env.set("TEST_DATABASE_URL", testUrl!);
   }
 }
 
@@ -47,14 +138,19 @@ try {
     string
   >;
   mergeIntoEnv(testVars);
-  // For this script only: repo-root `.env.test` wins for TEST_DATABASE_URL (cwd `.env` must not block test Neon)
   const testDbUrl = testVars["TEST_DATABASE_URL"];
-  if (typeof testDbUrl === "string" && testDbUrl.length > 0) {
+  if (
+    typeof testDbUrl === "string" &&
+    testDbUrl.length > 0 &&
+    Deno.env.get("MEDILOOP_IGNORE_TEST_DATABASE_URL") !== "1"
+  ) {
     Deno.env.set("TEST_DATABASE_URL", testDbUrl);
   }
-  console.log(
-    "✅ Loaded repository .env.test (TEST_DATABASE_URL applied for this seed run if present)",
-  );
+  if (Deno.env.get("MEDILOOP_IGNORE_TEST_DATABASE_URL") !== "1") {
+    console.log(
+      "✅ Loaded repository .env.test (TEST_DATABASE_URL applied for this seed run if present)",
+    );
+  }
 } catch {
   // No repo-root .env.test — OK
 }

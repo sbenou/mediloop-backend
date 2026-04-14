@@ -4,14 +4,47 @@ import { useEffect, useState } from "react";
 import PharmacistLayout from "@/components/layout/PharmacistLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabase } from "@/lib/supabase";
 import { UserProfile } from "@/types/user";
-import { Address } from "@/types/supabase";
+import { Address } from "@/types/domain";
+import { fetchPharmacyPatientByIdApi } from "@/services/clinicalApi";
+
+function patientApiToUserProfile(row: {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  created_at: string;
+}): UserProfile {
+  return {
+    id: row.id,
+    role: "patient",
+    role_id: null,
+    full_name: row.full_name,
+    email: row.email,
+    avatar_url: null,
+    date_of_birth: null,
+    city: null,
+    auth_method: null,
+    is_blocked: false,
+    doctor_stamp_url: null,
+    doctor_signature_url: null,
+    pharmacist_stamp_url: null,
+    pharmacist_signature_url: null,
+    cns_card_front: null,
+    cns_card_back: null,
+    cns_number: null,
+    deleted_at: null,
+    created_at: row.created_at,
+    updated_at: row.created_at,
+    license_number: null,
+    phone_number: null,
+    address: null,
+  };
+}
 
 const PatientDetail = () => {
   const { id } = useParams<{ id: string }>();
   const [patient, setPatient] = useState<UserProfile | null>(null);
-  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [addresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,38 +53,11 @@ const PatientDetail = () => {
 
       setLoading(true);
       try {
-        // Fetch patient profile
-        const { data: patientData, error: patientError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', id)
-          .single();
-
-        if (patientError) throw patientError;
-        
-        // Ensure the profile data has all required properties
-        const completePatient: UserProfile = {
-          ...(patientData as any),
-          pharmacist_stamp_url: patientData.pharmacist_stamp_url || null,
-          pharmacist_signature_url: patientData.pharmacist_signature_url || null
-        };
-        
-        setPatient(completePatient);
-
-        // Fetch patient addresses
-        const { data: addressData, error: addressError } = await supabase
-          .from('addresses')
-          .select('*')
-          .eq('user_id', id)
-          .order('is_default', { ascending: false });
-
-        if (addressError) throw addressError;
-        setAddresses(addressData || []);
-
-        // In a real implementation, you would fetch doctor connections here
-
+        const row = await fetchPharmacyPatientByIdApi(id);
+        setPatient(patientApiToUserProfile(row));
       } catch (error) {
-        console.error('Error fetching patient data:', error);
+        console.error("Error fetching patient data:", error);
+        setPatient(null);
       } finally {
         setLoading(false);
       }
@@ -101,7 +107,7 @@ const PatientDetail = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Personal Details</CardTitle>
-                <CardDescription>Patient's personal information</CardDescription>
+                <CardDescription>Patient&apos;s personal information</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -134,7 +140,7 @@ const PatientDetail = () => {
             {addresses.length === 0 ? (
               <Card>
                 <CardContent className="pt-6">
-                  <p>No addresses found for this patient.</p>
+                  <p>No addresses on file for this patient (Neon clinical profile).</p>
                 </CardContent>
               </Card>
             ) : (

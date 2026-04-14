@@ -4,9 +4,13 @@ import PharmacistSidebar from "@/components/sidebar/PharmacistSidebar";
 import { Button } from "@/components/ui/button";
 import { Menu, X, AlertTriangle, SidebarClose, SidebarOpen } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
 import UnifiedHeader from "./UnifiedHeader";
+import { useAuth } from "@/hooks/auth/useAuth";
+import {
+  hasV2SessionStorage,
+} from "@/lib/auth/bootstrapV2Profile";
+import { clearV2SessionStorageKeys } from "@/lib/auth/v2SessionStorage";
 import { useLocation } from "react-router-dom";
 import { ActivityFeed } from "@/components/activity/ActivityFeed";
 import { Advertisements } from "@/components/activity/Advertisements";
@@ -20,6 +24,7 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [sessionCheckFailed, setSessionCheckFailed] = useState(false);
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const location = useLocation();
   const { state } = location;
 
@@ -31,27 +36,12 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
   const showSidebar = state?.keepSidebar !== false; // Default to showing sidebar unless explicitly set to false
 
   useEffect(() => {
-    // Verify session directly with Supabase to ensure we have a valid session
-    const verifySession = async () => {
-      try {
-        const { data, error } = await supabase.auth.getSession();
-        
-        if (error || !data.session) {
-          console.error("PharmacistLayout: Session verification failed:", error);
-          setSessionCheckFailed(true);
-          return;
-        }
-        
-        console.log("PharmacistLayout: Session verification successful");
-        setSessionCheckFailed(false);
-      } catch (error) {
-        console.error("PharmacistLayout: Session check error:", error);
-        setSessionCheckFailed(true);
-      }
-    };
-    
-    verifySession();
-  }, []);
+    if (authLoading) {
+      return;
+    }
+    const ok = hasV2SessionStorage() || isAuthenticated;
+    setSessionCheckFailed(!ok);
+  }, [isAuthenticated, authLoading]);
 
   useEffect(() => {
     setIsMobile(window.innerWidth < 768);
@@ -78,11 +68,12 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
         title: "Reconnecting...",
         description: "Attempting to reconnect your session",
       });
-      
-      // Force sign out first to clear any bad state
-      await supabase.auth.signOut({ scope: 'local' });
-      
-      // Redirect to login
+
+      clearV2SessionStorageKeys();
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("mediloop_session_sync");
+      localStorage.removeItem("mediloop_v2_user");
+
       window.location.href = "/login";
     } catch (error) {
       console.error("Error during session recovery:", error);

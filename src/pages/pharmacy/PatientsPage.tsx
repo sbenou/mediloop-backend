@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Eye, Loader } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
+import { fetchPharmacyPatientsApi } from "@/services/clinicalApi";
 
 interface Patient {
   id: string;
@@ -28,20 +28,15 @@ const PatientsPage = () => {
         setError(null);
         console.log("Fetching patients for pharmacy view");
         
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id, full_name, email, created_at, city')
-          .eq('role', 'user')
-          .limit(50); // Limit to prevent large data sets that might cause freezing
-
-        if (error) {
-          console.error('Error fetching patients:', error);
-          setError(error.message);
-          return;
-        }
-        
-        console.log("Fetched patients:", data?.length);
-        setPatients(data || []);
+        const rows = await fetchPharmacyPatientsApi();
+        const mapped: Patient[] = rows.slice(0, 200).map((r) => ({
+          id: r.id,
+          full_name: r.full_name ?? "",
+          email: r.email ?? "",
+          created_at: r.created_at,
+          city: undefined,
+        }));
+        setPatients(mapped);
       } catch (error) {
         console.error('Error fetching patients:', error);
         setError('Failed to load patients');

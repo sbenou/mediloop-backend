@@ -1,9 +1,33 @@
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Notification } from '@/types/supabase';
-import { toast } from '@/components/ui/use-toast';
-import { useAuth } from '@/hooks/auth/useAuth';
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Notification } from "@/types/domain";
+import { toast } from "@/components/ui/use-toast";
+import { useAuth } from "@/hooks/auth/useAuth";
+import {
+  fetchNotificationHistoryApi,
+  markNotificationReadApi,
+  type ApiNotificationRow,
+  type NotificationInboxScope,
+} from "@/services/notificationsApi";
+
+function mapApiRow(row: ApiNotificationRow, userId: string): Notification {
+  const data =
+    row.data != null && typeof row.data === "object" && !Array.isArray(row.data)
+      ? (row.data as Record<string, unknown>)
+      : {};
+  const type =
+    typeof data.type === "string" && data.type.length > 0 ? data.type : "general";
+  return {
+    id: row.id,
+    user_id: userId,
+    type,
+    title: row.title,
+    message: row.body,
+    read: row.read_at != null,
+    created_at: row.sent_at || "",
+    meta: data,
+  };
+}
 
 export interface NotificationHookReturn {
   notifications: Notification[];
@@ -15,197 +39,89 @@ export interface NotificationHookReturn {
   setupRealtimeSubscription: () => (() => void) | null;
 }
 
-export const useNotifications = (): NotificationHookReturn => {
+/** Optional `inbox` scopes fetch + mark-read to the same surface as the backend (e.g. professional_personal). */
+export const useNotifications = (inbox?: NotificationInboxScope): NotificationHookReturn => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
-  
-  // Use refs to prevent multiple subscriptions
-  const subscriptionRef = useRef<any>(null);
-  const hasSetupSubscription = useRef(false);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Calculate unread count whenever notifications change
   useEffect(() => {
-    const count = notifications.filter(notification => !notification.read).length;
+    const count = notifications.filter((n) => !n.read).length;
     setUnreadCount(count);
   }, [notifications]);
 
   const fetchNotifications = useCallback(async () => {
-    if (!user?.id) {
-      console.log('No user ID available for fetching notifications');
-      return;
-    }
+    if (!user?.id) return;
 
     try {
       setIsLoading(true);
-      console.log('Fetching notifications for user:', user.id);
-      
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (error) {
-        console.error('Error fetching notifications:', error);
-        throw error;
-      }
-
-      console.log('Fetched notifications:', data?.length || 0);
-      
-      // Transform the data to match the Notification interface
-      const transformedNotifications: Notification[] = (data || []).map(item => ({
-        ...item,
-        meta: item.meta as Record<string, any> || {}
-      }));
-      
-      setNotifications(transformedNotifications);
+      const rows = await fetchNotificationHistoryApi(user.id, 50, inbox);
+      setNotifications(rows.map((r) => mapApiRow(r, user.id)));
     } catch (error) {
-      console.error('Error in fetchNotifications:', error);
+      console.error("Error in fetchNotifications:", error);
       toast({
-        title: 'Error loading notifications',
-        description: 'Could not load your notifications',
-        variant: 'destructive',
+        title: "Error loading notifications",
+        description: "Could not load your notifications",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, inbox]);
 
   const markAsRead = useCallback(async (id: string): Promise<boolean> => {
     try {
-      const { error } = await supabase
-        .from('notifications')
-        .update({ read: true })
-        .eq('id', id);
-
-      if (error) throw error;
-
-      // Update local state
-      setNotifications(prev =>
-        prev.map(notification =>
-          notification.id === id ? { ...notification, read: true } : notification
-        )
+      await markNotificationReadApi(id, inbox);
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
       );
-      
       return true;
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      console.error("Error marking notification as read:", error);
       return false;
     }
-  }, []);
+  }, [inbox]);
 
   const markAllAsRead = useCallback(async (): Promise<boolean> => {
     if (!user?.id) return false;
-    
+
+    const unreadIds = notifications.filter((n) => !n.read).map((n) => n.id);
+    if (unreadIds.length === 0) return false;
+
     try {
-      const unreadNotificationIds = notifications
-        .filter(notification => !notification.read)
-        .map(notification => notification.id);
-      
-      if (unreadNotificationIds.length === 0) return false;
-      
-      const { error } = await supabase
-        .from('notifications')
-        .update({ read: true })
-        .in('id', unreadNotificationIds);
-
-      if (error) throw error;
-
-      // Update local state
-      setNotifications(prev =>
-        prev.map(notification => ({ ...notification, read: true }))
-      );
-      
-      toast({
-        title: 'All notifications marked as read',
-        variant: 'default',
-      });
-      
+      await Promise.all(unreadIds.map((id) => markNotificationReadApi(id, inbox)));
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      toast({ title: "All notifications marked as read", variant: "default" });
       return true;
     } catch (error) {
-      console.error('Error marking all notifications as read:', error);
+      console.error("Error marking all notifications as read:", error);
       toast({
-        title: 'Error',
-        description: 'Could not mark notifications as read',
-        variant: 'destructive',
+        title: "Error",
+        description: "Could not mark notifications as read",
+        variant: "destructive",
       });
       return false;
     }
-  }, [user?.id, notifications]);
+  }, [user?.id, notifications, inbox]);
 
-  const setupRealtimeSubscription = useCallback(() => {
-    if (!user?.id || hasSetupSubscription.current) {
-      console.log('Skipping subscription setup - no user or already setup');
-      return null;
+  /** Poll API; Supabase Realtime removed (Neon has no equivalent channel here). */
+  const setupRealtimeSubscription = useCallback((): (() => void) | null => {
+    if (!user?.id) return null;
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
     }
-
-    console.log('Setting up realtime subscription for notifications');
-    hasSetupSubscription.current = true;
-
-    try {
-      const channel = supabase
-        .channel(`notifications:${user.id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'notifications',
-            filter: `user_id=eq.${user.id}`,
-          },
-          (payload) => {
-            console.log('Realtime notification update:', payload);
-            
-            if (payload.eventType === 'INSERT') {
-              const newNotification = {
-                ...payload.new,
-                meta: payload.new.meta as Record<string, any> || {}
-              } as Notification;
-              setNotifications(prev => [newNotification, ...prev]);
-              
-              toast({
-                title: newNotification.title,
-                description: newNotification.message,
-                variant: 'default',
-              });
-            } else if (payload.eventType === 'UPDATE') {
-              const updatedNotification = {
-                ...payload.new,
-                meta: payload.new.meta as Record<string, any> || {}
-              } as Notification;
-              setNotifications(prev =>
-                prev.map(notification =>
-                  notification.id === updatedNotification.id ? updatedNotification : notification
-                )
-              );
-            } else if (payload.eventType === 'DELETE') {
-              const deletedId = payload.old.id;
-              setNotifications(prev => prev.filter(notification => notification.id !== deletedId));
-            }
-          }
-        )
-        .subscribe();
-
-      subscriptionRef.current = channel;
-
-      // Return cleanup function
-      return () => {
-        console.log('Cleaning up notification subscription');
-        if (subscriptionRef.current) {
-          supabase.removeChannel(subscriptionRef.current);
-          subscriptionRef.current = null;
-        }
-        hasSetupSubscription.current = false;
-      };
-    } catch (error) {
-      console.error('Error setting up realtime subscription:', error);
-      hasSetupSubscription.current = false;
-      return null;
-    }
-  }, [user?.id]);
+    pollRef.current = setInterval(() => {
+      fetchNotifications();
+    }, 60_000);
+    return () => {
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+    };
+  }, [user?.id, fetchNotifications]);
 
   return {
     notifications,
@@ -214,6 +130,6 @@ export const useNotifications = (): NotificationHookReturn => {
     fetchNotifications,
     markAsRead,
     markAllAsRead,
-    setupRealtimeSubscription
+    setupRealtimeSubscription,
   };
 };

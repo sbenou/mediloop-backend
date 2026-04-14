@@ -1,12 +1,13 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { supabase } from "@/lib/supabase";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useRecoilState } from "recoil";
 import { pharmacyLogoUrlState } from "@/store/images/atoms";
+import {
+  fetchPharmacyWorkspaceApi,
+} from "@/services/professionalWorkspaceApi";
 
-// Import our new components
 import PharmacyHeader from "./profile/PharmacyHeader";
 import PharmacyTabs from "./profile/PharmacyTabs";
 import PharmacyProfileContent from "./profile/PharmacyProfileContent";
@@ -22,119 +23,54 @@ interface PharmacyData {
   phone: string | null;
   hours: string | null;
   logo_url?: string | null;
+  email?: string | null;
 }
 
 const PharmacyProfile = () => {
   const { profile } = useAuth();
   const [activeTab, setActiveTab] = useState("profile");
   const [pharmacyData, setPharmacyData] = useState<PharmacyData | null>(null);
-  // Get the setter function for the Recoil state
-  const [pharmacyLogoUrl, setPharmacyLogoUrl] = useRecoilState(pharmacyLogoUrlState);
-  
-  useEffect(() => {
-    fetchPharmacyData();
-  }, [profile]);
+  const [, setPharmacyLogoUrl] = useRecoilState(pharmacyLogoUrlState);
 
-  const fetchPharmacyData = async () => {
+  const load = useCallback(async () => {
     if (!profile?.id) return;
-
     try {
-      console.log("Fetching pharmacy data for user:", profile.id);
-      
-      // Fetch the pharmacy associated with this pharmacist
-      const { data: pharmacyRelation, error: relationError } = await supabase
-        .from('user_pharmacies')
-        .select('pharmacy_id')
-        .eq('user_id', profile.id)
-        .single();
-
-      if (relationError || !pharmacyRelation) {
-        console.error('Error fetching pharmacy relation:', relationError);
-        return;
-      }
-
-      console.log("Found pharmacy relation with pharmacy_id:", pharmacyRelation.pharmacy_id);
-
-      // Now fetch the pharmacy details
-      const { data: pharmacy, error: pharmacyError } = await supabase
-        .from('pharmacies')
-        .select('*')
-        .eq('id', pharmacyRelation.pharmacy_id)
-        .single();
-
-      if (pharmacyError) {
-        console.error('Error fetching pharmacy:', pharmacyError);
-        return;
-      }
-
-      console.log("Fetched pharmacy data:", pharmacy);
-
-      // Check if pharmacy metadata exists with logo_url
-      const { data: pharmacyMetadata, error: metadataError } = await supabase
-        .from('pharmacy_metadata')
-        .select('logo_url')
-        .eq('pharmacy_id', pharmacy.id)
-        .maybeSingle();
-
-      let logoUrl = null;
-      if (!metadataError && pharmacyMetadata?.logo_url) {
-        logoUrl = pharmacyMetadata.logo_url;
-        
-        // Set the pharmacy logo in Recoil state when fetched
-        console.log("Setting pharmacy logo from metadata:", logoUrl);
-        setPharmacyLogoUrl(logoUrl);
-      } else {
-        // If no logo in metadata, check if it's in the profile
-        if (profile?.pharmacy_logo_url) {
-          logoUrl = profile.pharmacy_logo_url;
-          console.log("Using pharmacy logo from profile:", logoUrl);
-          setPharmacyLogoUrl(logoUrl);
-          
-          // Also update metadata if we have a logo in the profile
-          if (logoUrl) {
-            console.log("Updating pharmacy_metadata with logo from profile");
-            await supabase
-              .from('pharmacy_metadata')
-              .upsert({ 
-                pharmacy_id: pharmacy.id, 
-                logo_url: logoUrl 
-              });
-          }
-        }
-      }
-
+      const p = await fetchPharmacyWorkspaceApi();
+      const logoUrl = p.logo_url ?? null;
+      if (logoUrl) setPharmacyLogoUrl(logoUrl);
       setPharmacyData({
-        ...pharmacy,
-        logo_url: logoUrl
+        id: p.id,
+        name: p.name,
+        address: p.address,
+        city: p.city,
+        postal_code: p.postal_code,
+        phone: p.phone,
+        hours: p.hours,
+        logo_url: logoUrl,
+        email: p.email ?? undefined,
       });
-      
-      // Update profile with pharmacy name and logo for sidebar display
-      if (pharmacy?.name) {
-        await supabase
-          .from('profiles')
-          .update({ 
-            pharmacy_name: pharmacy.name,
-            pharmacy_logo_url: logoUrl
-          })
-          .eq('id', profile.id);
-      }
-    } catch (error) {
-      console.error('Error fetching pharmacy data:', error);
+    } catch (e) {
+      console.error("Error fetching pharmacy data:", e);
+      setPharmacyData(null);
     }
-  };
+  }, [profile?.id, setPharmacyLogoUrl]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
   };
 
   const handleLogoUpdate = (newLogoUrl: string) => {
-    // Update local state
     if (pharmacyData) {
       setPharmacyData({
         ...pharmacyData,
-        logo_url: newLogoUrl
+        logo_url: newLogoUrl,
       });
     }
+    setPharmacyLogoUrl(newLogoUrl);
   };
 
   if (!pharmacyData) {
@@ -147,31 +83,27 @@ const PharmacyProfile = () => {
 
   return (
     <div className="space-y-6">
-      {/* Centered Header Section */}
-      <PharmacyHeader 
+      <PharmacyHeader
         title="Pharmacy Profile"
         description="Manage your pharmacy information, opening hours, and staff."
       />
 
-      {/* Centered Tabs Navigation */}
       <Tabs defaultValue="profile" value={activeTab} onValueChange={handleTabChange} className="w-full">
         <PharmacyTabs activeTab={activeTab} onTabChange={handleTabChange} />
-        
-        {/* Profile Tab Content - Full Width */}
+
         <TabsContent value="profile" className="mt-6 space-y-6">
-          <PharmacyProfileContent 
-            pharmacyData={pharmacyData} 
+          <PharmacyProfileContent
+            pharmacyData={pharmacyData}
             userId={profile?.id}
             onLogoUpdate={handleLogoUpdate}
+            onSaved={load}
           />
         </TabsContent>
-        
-        {/* Team Tab Content */}
+
         <TabsContent value="team" className="mt-6">
           <PharmacyTeamContent pharmacyId={pharmacyData.id} />
         </TabsContent>
-          
-        {/* Staff Management Tab Content */}
+
         <TabsContent value="staff" className="mt-6">
           <PharmacyStaffContent pharmacyId={pharmacyData.id} />
         </TabsContent>

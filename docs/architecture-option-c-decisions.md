@@ -133,6 +133,8 @@ Optional: `created_by_user_id` where useful for reporting.
 
 **Matrix (TC-070, TC-071):** Unattributed rows are not fully trusted professional rows until quarantined path or backfill.
 
+**Locked Phase 4 policy (lists, updates, `attribution_status`, backfill execution):** [`docs/architecture-option-c-phase4-design.md`](architecture-option-c-phase4-design.md).
+
 ---
 
 ### 7. Patient-facing reads vs creation context
@@ -140,6 +142,8 @@ Optional: `created_by_user_id` where useful for reporting.
 **Decision:** Authoritative creation context stays `professional_tenant_id` = issuing workspace. Patient dashboard reads professional-origin records through a **patient-authorized projection / service**, without rewriting operational or creation ownership.
 
 **Matrix:** Patient-facing read model without rewriting authority (TC-040, TC-054).
+
+**Locked patient projection rules:** [`docs/architecture-option-c-phase4-design.md`](architecture-option-c-phase4-design.md) §2.
 
 ---
 
@@ -155,8 +159,14 @@ Optional: `created_by_user_id` where useful for reporting.
 |-------|--------|
 | **1** | `tenant_type` on `public.tenants`; `public.personal_health_tenants`; `public.tenant_invitations`; extend `public.user_tenants`; `public.audit_events` |
 | **2** | Identity-only JWT; context headers; membership revalidation per request; audit denied/switch events |
-| **3** | `professional_tenant_id` + `created_by_membership_id` on prescriptions, teleconsultations, and other professional-origin tables — apply [`migration_020_option_c_phase3_clinical_attribution.sql`](../backend/migrations/migration_020_option_c_phase3_clinical_attribution.sql); list APIs scope doctor/pharmacist by active tenant (NULL = legacy) |
-| **4** | Legacy backfill/quarantine rules; wire P0 matrix to real routes; optional CSV/Jira tracker |
+| **3** | `professional_tenant_id` + `created_by_membership_id` on prescriptions, teleconsultations, and other professional-origin tables — apply [`migration_020`](../backend/migrations/migration_020_option_c_phase3_clinical_attribution.sql) and [`migration_021`](../backend/migrations/migration_021_teleconsultation_status_confirmed.sql); see Neon runbook [`docs/runbooks/neon-clinical-option-c-migrations.md`](runbooks/neon-clinical-option-c-migrations.md); list APIs scope doctor/pharmacist by active tenant (NULL = legacy); writes set attribution from active context; CI: `.github/workflows/backend-ci.yml` (`test-backend` + optional phase3 with `TEST_DATABASE_URL`) |
+| **4** | Legacy backfill/quarantine rules; patient read contract; wire P0 matrix to real routes — **locked design:** [`docs/architecture-option-c-phase4-design.md`](architecture-option-c-phase4-design.md) |
+
+### Frontend dashboard routing note
+
+- Canonical application dashboard route is `/dashboard` for patient, doctor, and pharmacist entrypoints.
+- Role-specific legacy routes (`/doctor/dashboard`, `/pharmacy/dashboard`) are retained as compatibility redirects only and must resolve to canonical dashboard routing behavior.
+- Mode persistence (role dashboard vs patient dashboard view for doctor/pharmacist) is handled through frontend state, then resolved by dashboard navigation helpers.
 
 ### Phase 1 — apply on database (manual)
 
@@ -207,3 +217,9 @@ Section,Decision,Implementation Direction
 §2 Legacy,No full trust without attribution,Quarantine or deterministic backfill
 §2 Patient read,Read via authorized projection,Do not rewrite authoritative creation tenant
 ```
+
+---
+
+## See also
+
+- In-app notification storage, `tenant_id`, and **event type catalog**: [architecture-notifications.md](./architecture-notifications.md)

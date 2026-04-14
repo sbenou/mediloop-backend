@@ -2,7 +2,7 @@
 import React from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Teleconsultation } from "@/types/supabase";
+import type { Teleconsultation } from "@/types/clinical";
 import { useConsultations } from "./hooks/useConsultations";
 import TabContent from "./TabContent";
 import EmptyState from "./EmptyState";
@@ -27,7 +27,8 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({
     upcomingConsultations,
     pastConsultations,
     pendingConsultations,
-    cancelledConsultations
+    cancelledConsultations,
+    refetch,
   } = useConsultations(profile?.id, filterRole);
   
   if (isLoading) {
@@ -93,6 +94,7 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({
         cancelledConsultations={cancelledConsultations}
         profile={profile}
         onJoinMeeting={onJoinMeeting}
+        onConsultationsChanged={refetch}
       />
     </div>
   );

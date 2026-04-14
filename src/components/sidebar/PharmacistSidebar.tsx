@@ -7,6 +7,7 @@ import SidebarUserMenu from "./SidebarUserMenu";
 import { useSidebarLogout } from "./hooks/useSidebarLogout";
 import { useSidebarUserProfile } from "./hooks/useSidebarUserProfile";
 import PharmacistNavigation from "./pharmacy/PharmacistNavigation";
+import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
 
 interface PharmacistSidebarProps {
   canViewProducts?: boolean;
@@ -38,7 +39,6 @@ const PharmacistSidebar = ({
   
   // Direct navigation functions
   const navigateToPharmacyProfile = () => {
-    console.log("Navigating to pharmacy profile");
     navigate('/pharmacy/profile', { 
       state: { preserveAuth: true },
       replace: false 
@@ -46,8 +46,7 @@ const PharmacistSidebar = ({
   };
 
   const navigateToPharmacyDashboard = () => {
-    console.log("Navigating to pharmacy dashboard");
-    navigate('/pharmacy/dashboard', { 
+    navigate(getDashboardRouteByRole("pharmacist"), {
       state: { preserveAuth: true },
       replace: false 
     });
@@ -73,6 +72,16 @@ const PharmacistSidebar = ({
       replace: false 
     });
   };
+
+  const navigateToReferral = () => {
+    navigate("/referral", {
+      state: { preserveAuth: true },
+      replace: false,
+    });
+  };
+
+  /** Same destination as “Pharmacy profile”; fills the generic “Profile” slot in the user menu. */
+  const navigateToProfile = navigateToPharmacyProfile;
   
   return (
     <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
@@ -95,11 +104,12 @@ const PharmacistSidebar = ({
         getUserInitials={getUserInitials}
         handleLogout={handleLogout}
         handleFileChange={handleFileChange}
+        navigateToProfile={navigateToProfile}
         navigateToAccount={navigateToAccount}
         navigateToPharmacyDashboard={navigateToPharmacyDashboard}
-        navigateToPharmacyProfile={navigateToPharmacyProfile}
         navigateToBilling={navigateToBilling}
         navigateToUpgrade={navigateToUpgrade}
+        navigateToReferral={navigateToReferral}
       />
     </aside>
   );

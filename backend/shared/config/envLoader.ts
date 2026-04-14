@@ -1,7 +1,32 @@
 import { load } from "https://deno.land/std@0.208.0/dotenv/mod.ts";
+import { resolveEnvTestPath } from "./resolveEnvTestPath.ts";
 
 export async function loadEnvironment() {
   const environment = Deno.env.get("NODE_ENV") || "development";
+
+  // Same discovery as tests/utils/testDb.ts and backend/test-server.ts: repo-root
+  // `.env.test` fills gaps (e.g. TEST_DATABASE_URL) without clobbering env vars
+  // already set in the shell or CI. Never merge in production deploys.
+  if (environment !== "production") {
+    const envTestPath = await resolveEnvTestPath();
+    if (envTestPath) {
+      try {
+        const testEnv = await load({
+          envPath: envTestPath,
+          allowEmptyValues: true,
+        });
+        for (const [key, value] of Object.entries(testEnv)) {
+          if (!Deno.env.get(key)) {
+            Deno.env.set(key, value);
+          }
+        }
+        console.log(`🔧 Merged unset keys from .env.test (${envTestPath})`);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.warn(`⚠️ Could not load .env.test:`, errorMessage);
+      }
+    }
+  }
 
   let envFile: string;
 

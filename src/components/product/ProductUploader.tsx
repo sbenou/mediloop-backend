@@ -1,4 +1,4 @@
-
+/** Reads categories/subcategories via Supabase; consider Neon admin APIs when uploads move off Supabase. */
 import React from 'react';
 import { supabase } from "@/lib/supabase";
 import FileUpload from "../FileUpload";

@@ -1,15 +1,19 @@
 
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
-import { 
-  BankHoliday, 
-  DoctorAvailability, 
-  Teleconsultation, 
-  TimeSlot, 
-  SupportedCountry, 
-  isTimeSlot, 
-  AppointmentType 
-} from "@/types/supabase";
+import {
+  fetchDoctorAvailabilityApi,
+  fetchTeleconsultationsApi,
+} from "@/services/clinicalApi";
+import type { Teleconsultation } from "@/types/clinical";
+import type {
+  BankHoliday,
+  DoctorAvailability,
+  TimeSlot,
+  SupportedCountry,
+  AppointmentType,
+} from "@/types/domain";
+import { isTimeSlot } from "@/types/domain";
 
 /**
  * Processes time slots from a doctor availability item
@@ -73,7 +77,7 @@ const extractEntityData = (entity: any, defaultName: string) => {
 };
 
 /**
- * Fetches doctor availability data from Supabase
+ * Fetches doctor availability from the Deno API (Neon).
  */
 export const fetchDoctorAvailability = async (
   doctorId: string | undefined,
@@ -84,25 +88,8 @@ export const fetchDoctorAvailability = async (
   }
   
   try {
-    const query = supabase
-      .from('doctor_availability')
-      .select('*')
-      .eq('doctor_id', doctorId);
+    const data = await fetchDoctorAvailabilityApi(doctorId, appointmentType);
 
-    // Filter by appointment type if specified
-    if (appointmentType === 'teleconsultation') {
-      query.or('appointment_type.eq.teleconsultation,appointment_type.eq.both,appointment_type.is.null');
-    } else if (appointmentType === 'in-person') {
-      query.or('appointment_type.eq.in-person,appointment_type.eq.both,appointment_type.is.null');
-    }
-    
-    const { data, error } = await query;
-    
-    if (error) {
-      throw error;
-    }
-    
-    // Process data and return
     const processedData = data.map(item => {
       const timeSlots = processTimeSlots(item);
       
@@ -134,70 +121,60 @@ export const fetchDoctorAvailability = async (
 };
 
 /**
- * Fetches teleconsultations data from Supabase
+ * Fetches teleconsultations for a doctor from the Mediloop API (Neon-backed).
+ * Uses the authenticated user's session; rows are limited to what the API returns for that role
+ * (doctor: own consultations). `doctorId` must match the signed-in doctor when using the calendar as that doctor.
  */
 export const fetchTeleconsultations = async (
   doctorId: string | undefined,
-  appointmentType: AppointmentType = 'teleconsultation'
+  appointmentType: AppointmentType = "teleconsultation",
 ): Promise<Teleconsultation[]> => {
   if (!doctorId) {
     return [];
   }
-  
-  try {
-    const query = supabase
-      .from('teleconsultations')
-      .select('*, patient:patient_id(id, full_name, email), doctor:doctor_id(id, full_name, email)')
-      .eq('doctor_id', doctorId)
-      .eq('status', 'confirmed');
 
-    // Add filtering for appointment type
-    if (appointmentType === 'teleconsultation') {
-      query.or('meta->is_teleconsultation.eq.true,meta->appointment_type.eq.teleconsultation,reason.ilike.%teleconsultation%');
-    } else if (appointmentType === 'in-person') {
-      query.or('meta->is_in_person.eq.true,meta->appointment_type.eq.in-person,reason.ilike.%in-person%,reason.ilike.%in person%');
+  try {
+    const data = await fetchTeleconsultationsApi(doctorId);
+    let rows = data.filter(
+      (t) => t.doctor_id === doctorId && t.status === "confirmed",
+    );
+
+    if (appointmentType === "teleconsultation") {
+      rows = rows.filter((t) => {
+        const meta = (t.meta || {}) as Record<string, unknown>;
+        const reason = (t.reason || "").toLowerCase();
+        return (
+          meta.is_teleconsultation === true ||
+          meta.appointment_type === "teleconsultation" ||
+          reason.includes("teleconsultation")
+        );
+      });
+    } else if (appointmentType === "in-person") {
+      rows = rows.filter((t) => {
+        const meta = (t.meta || {}) as Record<string, unknown>;
+        const reason = (t.reason || "").toLowerCase();
+        return (
+          meta.is_in_person === true ||
+          meta.appointment_type === "in-person" ||
+          reason.includes("in-person") ||
+          reason.includes("in person")
+        );
+      });
     }
-    
-    const { data, error } = await query;
-    
-    if (error) {
-      throw error;
-    }
-    
-    if (!data) {
-      return [];
-    }
-    
-    // Process the data to ensure it matches the Teleconsultation type
-    const processedData: Teleconsultation[] = data.map(item => {
-      // Extract patient and doctor data safely
-      const patientData = extractEntityData(item.patient, 'Unknown Patient');
-      const doctorData = extractEntityData(item.doctor, 'Unknown Doctor');
-      
-      // Initialize metaData as an empty object if it doesn't exist in the item
-      const metaData = (item as any).meta || {};
-      
-      // Type assertion to handle conversion properly
+
+    return rows.map((item) => {
+      const patientData = extractEntityData(item.patient, "Unknown Patient");
+      const doctorData = extractEntityData(item.doctor, "Unknown Doctor");
+      const metaData = item.meta || {};
       return {
-        id: item.id,
-        patient_id: item.patient_id,
-        doctor_id: item.doctor_id,
-        start_time: item.start_time,
-        end_time: item.end_time,
-        status: item.status,
-        reason: item.reason,
-        room_id: item.room_id,
-        created_at: item.created_at,
-        updated_at: item.updated_at,
+        ...item,
         patient: patientData,
         doctor: doctorData,
-        meta: metaData
-      } as Teleconsultation;
+        meta: metaData,
+      };
     });
-    
-    return processedData;
   } catch (error) {
-    console.error('Error fetching teleconsultations:', error);
+    console.error("Error fetching teleconsultations:", error);
     return [];
   }
 };

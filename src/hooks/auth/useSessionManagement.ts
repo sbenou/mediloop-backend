@@ -8,6 +8,10 @@ import {
 } from "./useProfileFetch";
 import type { Session, User } from "@supabase/supabase-js";
 import { V2_SESSION_STORAGE_KEYS, clearV2SessionStorageKeys } from "@/lib/auth/v2SessionStorage";
+import {
+  hasV2SessionStorage,
+  readBootstrapProfileFromV2Storage,
+} from "@/lib/auth/bootstrapV2Profile";
 
 export const useSessionManagement = () => {
   const setAuth = useSetRecoilState(authState);
@@ -23,6 +27,24 @@ export const useSessionManagement = () => {
       userId,
       timestamp: new Date().toISOString()
     });
+
+    if (typeof window !== "undefined" && session && hasV2SessionStorage()) {
+      const v2Uid = localStorage.getItem(V2_SESSION_STORAGE_KEYS.USER_ID);
+      if (v2Uid) {
+        const boot = readBootstrapProfileFromV2Storage(v2Uid);
+        if (boot) {
+          setAuth({ ...boot, isLoading: false });
+        } else {
+          setAuth((prev) => ({ ...prev, isLoading: false }));
+        }
+      } else {
+        setAuth((prev) => ({ ...prev, isLoading: false }));
+      }
+      console.log(
+        "[SessionManagement] Ignored Supabase session sync; V2 JWT active (cleared loading)",
+      );
+      return;
+    }
 
     // Prevent concurrent updates for the same user
     if (isUpdatingRef.current && lastUserIdRef.current === userId) {
@@ -129,6 +151,19 @@ export const useSessionManagement = () => {
       return false;
     }
     if (outcome.status === "failed") {
+      const boot = readBootstrapProfileFromV2Storage(userId);
+      if (boot) {
+        setAuth({
+          user: boot.user,
+          profile: boot.profile,
+          permissions: boot.permissions,
+          isLoading: false,
+        });
+        console.warn(
+          "[SessionManagement] V2 profile API unavailable; bootstrapped from mediloop_v2_user",
+        );
+        return true;
+      }
       return false;
     }
 

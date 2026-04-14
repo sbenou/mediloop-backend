@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useActivities } from "@/hooks/activity";
 import { useNotifications } from "@/hooks/useNotifications";
 import { ActivityType } from "@/components/activity/ActivityItem";
-import { Notification } from "@/types/supabase";
+import { Notification } from "@/types/domain";
 import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
 import { 
   filterAndSortActivities, 

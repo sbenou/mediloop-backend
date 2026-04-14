@@ -2,10 +2,10 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import { FilterCategory } from "./filters/FilterCategory";
 import { Product, Subcategory } from "./product/types/product";
+import { fetchCatalogTree } from "@/services/catalogApi";
 import { Button } from "@/components/ui/button";
 import { FilterX } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -15,6 +15,41 @@ interface Category {
   name: string;
   type: 'medication' | 'parapharmacy';
   subcategories: Subcategory[];
+}
+
+function mapNeonCatalogToCategories(tree: Awaited<ReturnType<typeof fetchCatalogTree>>): Category[] {
+  const productType = (t: string): Product["type"] =>
+    t === "parapharmacy" ? "parapharmacy" : "medication";
+  const categoryType = (t: string): Category["type"] =>
+    t === "parapharmacy" ? "parapharmacy" : "medication";
+
+  return tree.map((c) => ({
+    id: c.id,
+    name: c.name,
+    type: categoryType(c.type),
+    subcategories: (c.subcategories || []).map(
+      (s): Subcategory => ({
+        id: s.id,
+        name: s.name,
+        category_id: c.id,
+        products: (s.products || []).map(
+          (p): Product => ({
+            id: p.id,
+            name: p.name,
+            description: p.description ?? "",
+            price: p.price,
+            image_url: p.image_url,
+            type: productType(p.type),
+            requires_prescription: p.requires_prescription,
+            category_id: p.category_id,
+            subcategory_id: p.subcategory_id,
+            pharmacy_id: p.pharmacy_id,
+            created_at: p.created_at || "",
+          }),
+        ),
+      }),
+    ),
+  }));
 }
 
 export const ProductFilters = ({ 
@@ -28,38 +63,23 @@ export const ProductFilters = ({
   const [activeFilters, setActiveFilters] = useState<boolean>(false);
 
   const { data: categories } = useQuery({
-    queryKey: ['categories'],
+    queryKey: ['categories', 'product-filters', 'neon'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('categories')
-        .select(`
-          id,
-          name,
-          type,
-          subcategories (
-            id,
-            name,
-            products (
-              id,
-              name,
-              description,
-              price,
-              image_url,
-              type,
-              requires_prescription,
-              category_id,
-              subcategory_id,
-              pharmacy_id,
-              created_at
-            )
-          )
-        `)
-        .order('name');
-      
-      if (error) throw error;
-      console.log('Categories data with products:', data);
-      return data as Category[];
+      try {
+        const tree = await fetchCatalogTree();
+        const mapped = mapNeonCatalogToCategories(tree);
+        console.log('Categories data with products (Neon):', mapped);
+        return mapped;
+      } catch (e) {
+        console.warn(
+          '[ProductFilters] Catalog API unavailable (backend /api/catalog/tree, migration_029):',
+          e,
+        );
+        return [];
+      }
     },
+    retry: 0,
+    staleTime: 1000 * 60 * 10,
   });
 
   useEffect(() => {

@@ -30,12 +30,14 @@ interface PharmacyProfileContentProps {
   pharmacyData: ProfileData;
   userId?: string;
   onLogoUpdate: (newLogoUrl: string) => void;
+  onSaved?: () => void;
 }
 
 const PharmacyProfileContent: React.FC<PharmacyProfileContentProps> = ({
   pharmacyData,
   userId,
-  onLogoUpdate
+  onLogoUpdate,
+  onSaved,
 }) => {
   const [isEditingInfo, setIsEditingInfo] = useState(false);
   const [isEditingHours, setIsEditingHours] = useState(false);
@@ -115,6 +117,7 @@ const PharmacyProfileContent: React.FC<PharmacyProfileContentProps> = ({
               pharmacyId={pharmacyData.id}
               isEditing={isEditingHours}
               setIsEditing={setIsEditingHours}
+              onSaved={onSaved}
             />
           </CardContent>
         </Card>

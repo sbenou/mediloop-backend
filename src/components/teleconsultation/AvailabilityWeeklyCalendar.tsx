@@ -6,7 +6,7 @@ import {
   Loader2,
   Plus
 } from "lucide-react";
-import { SupportedCountry, AppointmentType } from "@/types/supabase";
+import { SupportedCountry, AppointmentType } from "@/types/domain";
 import { useAuth } from "@/hooks/auth/useAuth";
 import TeleconsultationBookingDialog from "./TeleconsultationBookingDialog";
 import { useDoctorPatients } from "@/hooks/teleconsultation/useDoctorPatients";

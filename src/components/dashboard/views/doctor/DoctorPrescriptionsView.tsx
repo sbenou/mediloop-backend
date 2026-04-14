@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { supabase } from "@/lib/supabase";
+import { deletePrescriptionApi, fetchPrescriptionsApi } from "@/services/clinicalApi";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -34,26 +34,13 @@ const DoctorPrescriptionsView = () => {
       try {
         setLoading(true);
         
-        // Fetch prescriptions created by this doctor
-        const { data, error } = await supabase
-          .from('prescriptions')
-          .select(`
-            *,
-            patient:patient_id(full_name)
-          `)
-          .eq('doctor_id', profile?.id)
-          .order('created_at', { ascending: false });
-        
-        if (error) {
-          throw error;
-        }
-        
-        // Transform data to include patient_name
-        const formattedData = data.map((prescription: any) => ({
+        const data = await fetchPrescriptionsApi();
+
+        const formattedData = data.map((prescription) => ({
           ...prescription,
-          patient_name: prescription.patient?.full_name || "Unknown Patient",
-          // For demo purposes - in real app this would be a separate field in the table
-          sent_to_pharmacy: prescription.status === 'sent' || Math.random() > 0.5
+          patient_name: prescription.patient_full_name || "Unknown Patient",
+          doctor_name: prescription.doctor_full_name ?? undefined,
+          sent_to_pharmacy: false,
         }));
         
         setPrescriptions(formattedData);
@@ -105,27 +92,18 @@ const DoctorPrescriptionsView = () => {
     }
 
     try {
-      const { error } = await supabase
-        .from('prescriptions')
-        .delete()
-        .eq('id', id)
-        .eq('doctor_id', profile?.id); // Ensure only the doctor who created it can delete it
-      
-      if (error) throw error;
-      
-      // Remove from local state
-      setPrescriptions(prescriptions.filter(p => p.id !== id));
-      
+      await deletePrescriptionApi(id);
+      setPrescriptions(prescriptions.filter((p) => p.id !== id));
       toast({
         title: "Prescription deleted",
-        description: "The prescription has been successfully deleted.",
+        description: "The prescription has been removed.",
       });
     } catch (error) {
       console.error("Error deleting prescription:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to delete prescription. Please try again.",
+        description: "Failed to delete prescription. Try again.",
       });
     }
   };

@@ -1,7 +1,8 @@
 
 import React from 'react';
 import { format, isSameDay } from 'date-fns';
-import { BankHoliday, DoctorAvailability, Teleconsultation } from '@/types/supabase';
+import type { Teleconsultation } from "@/types/clinical";
+import type { BankHoliday, DoctorAvailability } from "@/types/domain";
 import { Badge } from '@/components/ui/badge';
 
 interface TimeSlotGridProps {

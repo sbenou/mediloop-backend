@@ -1,0 +1,6 @@
+{
+  "tasks": {
+    "seed-subscription-system": "deno run -A backend/scripts/seedSubscriptionSystem.ts",
+    "seed-subscription-plans-xlsx": "deno run -A backend/scripts/seedSubscriptionPlansFromXlsx.ts"
+  }
+}

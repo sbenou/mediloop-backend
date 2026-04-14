@@ -4,7 +4,8 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { StatisticsCharts } from "@/components/dashboard/StatisticsCharts";
 import { usePharmacyDashboardStats } from "@/hooks/admin/useDashboardStats";
-import { supabase } from "@/lib/supabase";
+import { fetchPharmacyPatientsApi } from "@/services/clinicalApi";
+import NotificationsView from "./NotificationsView";
 import PrescriptionsView from "./PrescriptionsView";
 import OrdersView from "./OrdersView";
 import ProfileView from "./ProfileView";
@@ -48,24 +49,30 @@ const PharmacyView: React.FC<PharmacyViewProps> = ({ userRole, section = "dashbo
   const ordersTab = searchParams.get("ordersTab") || "pending";
 
   useEffect(() => {
-    const fetchPatients = async () => {
+    let cancelled = false;
+    const load = async () => {
       try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id, full_name, avatar_url, created_at')
-          .eq('role', 'patient')
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        setPatients(data || []);
+        const rows = await fetchPharmacyPatientsApi();
+        if (cancelled) return;
+        setPatients(
+          rows.map((r) => ({
+            id: r.id,
+            full_name: r.full_name || "Unknown",
+            avatar_url: null,
+            created_at: r.created_at,
+          })),
+        );
       } catch (error) {
-        console.error('Error fetching patients:', error);
+        console.error("Error fetching pharmacy patients:", error);
+        if (!cancelled) setPatients([]);
       } finally {
-        setIsLoadingPatients(false);
+        if (!cancelled) setIsLoadingPatients(false);
       }
     };
-
-    fetchPatients();
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const navigateToPharmacyPage = (path: string) => {
@@ -74,9 +81,16 @@ const PharmacyView: React.FC<PharmacyViewProps> = ({ userRole, section = "dashbo
   };
 
   const viewPatient = (patientId: string) => {
-    // Navigate within the new dashboard structure
-    setSearchParams({ view: 'pharmacy', section: 'patients', id: patientId });
+    navigate(`/pharmacy/patients/${patientId}`);
   };
+
+  if (section === "notifications") {
+    return (
+      <div className="space-y-6">
+        <NotificationsView userRole="pharmacist" />
+      </div>
+    );
+  }
 
   // Render prescriptions section
   if (section === "prescriptions") {
