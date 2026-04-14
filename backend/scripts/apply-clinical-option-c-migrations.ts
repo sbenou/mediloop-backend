@@ -23,6 +23,7 @@ const MIGRATIONS = [
   "migration_025_auth_users_status.sql",
   "migration_030_doctor_availability.sql",
   "migration_031_plan_marketing_items.sql",
+  "migration_032_role_dashboard_access.sql",
 ] as const;
 
 const scriptDir = dirname(fromFileUrl(import.meta.url));
@@ -55,5 +56,5 @@ for (const name of MIGRATIONS) {
   await runPsql(path);
 }
 console.log(
-  "Applied clinical Option C migrations (includes doctor_availability 030 and plan_marketing_items 031).",
+  "Applied clinical Option C migrations (includes doctor_availability 030, plan_marketing_items 031, and role dashboard access 032).",
 );

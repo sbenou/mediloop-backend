@@ -5,8 +5,110 @@
 
 import { Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 import { stripeService } from "../services/stripeService.ts";
+import { PlanService } from "../services/planService.ts";
+import type { PlanWithFeatures } from "../../../shared/types/index.ts";
 
 const router = new Router();
+const planService = new PlanService();
+
+type DisplayPlanResponse = {
+  id: string;
+  key: string;
+  name: string;
+  description: string | null;
+  monthly_price_cents: number | null;
+  annual_price_cents: number | null;
+  status: string;
+  is_public: boolean;
+  display_order: number;
+  target_role: string | null;
+  metadata: Record<string, unknown> | null;
+  displayFeatures: string[];
+  displayServices: string[];
+  technicalFeatures: Array<{
+    key: string;
+    name: string;
+    category: string;
+    value_type: string;
+    value: string;
+  }>;
+};
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback;
+}
+
+function toDisplayPlan(plan: PlanWithFeatures): DisplayPlanResponse {
+  const items = plan.marketing_items ?? [];
+  const displayFeatures = items
+    .filter((item) => item.kind === "feature" && item.visibility !== "comparison_only")
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((item) => item.label);
+  const displayServices = items
+    .filter((item) => item.kind === "service" && item.visibility !== "comparison_only")
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((item) => item.label);
+
+  return {
+    id: plan.id,
+    key: plan.key,
+    name: plan.name,
+    description: plan.description,
+    monthly_price_cents: plan.monthly_price_cents,
+    annual_price_cents: plan.annual_price_cents,
+    status: String(plan.status),
+    is_public: plan.is_public,
+    display_order: plan.display_order,
+    target_role: (plan.metadata?.target_role as string | undefined) ?? null,
+    metadata: plan.metadata,
+    displayFeatures,
+    displayServices,
+    technicalFeatures: plan.features.map((feature) => ({
+      key: feature.key,
+      name: feature.name,
+      category: String(feature.category),
+      value_type: feature.value_type,
+      value: feature.pivot_value,
+    })),
+  };
+}
+
+/**
+ * List subscription plans with display-ready marketing + technical data.
+ * GET /api/subscriptions/plans?role=doctor
+ */
+router.get("/api/subscriptions/plans", async (ctx) => {
+  try {
+    const role = ctx.request.url.searchParams.get("role")?.trim().toLowerCase();
+    const plans = await planService.getPlans({ is_public: true, status: "active" });
+    const filtered = role
+      ? plans.filter((p) => {
+        const targetRole = (p.metadata?.target_role as string | undefined)?.toLowerCase();
+        return targetRole === role;
+      })
+      : plans;
+
+    const displayPlans: DisplayPlanResponse[] = [];
+    for (const plan of filtered) {
+      const withRelations = await planService.getPlanByIdWithRelations(plan.id);
+      displayPlans.push(toDisplayPlan(withRelations));
+    }
+
+    ctx.response.status = 200;
+    ctx.response.body = {
+      success: true,
+      role: role ?? null,
+      plans: displayPlans.sort((a, b) => a.display_order - b.display_order),
+    };
+  } catch (error) {
+    console.error("❌ Error listing plans:", error);
+    ctx.response.status = 500;
+    ctx.response.body = {
+      success: false,
+      error: getErrorMessage(error, "Failed to list plans"),
+    };
+  }
+});
 
 // Middleware to verify JWT (you should already have this)
 // Import your existing authMiddleware
@@ -77,7 +179,7 @@ router.post("/api/subscriptions/pharmacy", async (ctx) => {
 
     ctx.response.status = 500;
     ctx.response.body = {
-      error: error.message || "Failed to create subscription",
+      error: getErrorMessage(error, "Failed to create subscription"),
     };
   }
 });
@@ -115,7 +217,7 @@ router.post("/api/subscriptions/pharmacy/cancel", async (ctx) => {
 
     ctx.response.status = 500;
     ctx.response.body = {
-      error: error.message || "Failed to cancel subscription",
+      error: getErrorMessage(error, "Failed to cancel subscription"),
     };
   }
 });

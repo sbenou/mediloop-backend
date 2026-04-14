@@ -155,20 +155,60 @@ export class DatabaseService {
 
     try {
       // Neon Option C: session profile from auth.users only.
-      const uResult = await client.queryObject<{
+      type SessionUserRow = {
         id: string;
         email: string;
         full_name: string;
         role: string;
         role_id: string | null;
+        has_dashboard: boolean | null;
+        dashboard_route: string | null;
         email_verified?: boolean;
         created_at?: string;
         updated_at?: string;
-      }>(
-        `SELECT id, email, full_name, role, role_id, email_verified, created_at, updated_at
-         FROM auth.users WHERE id = $1 LIMIT 1`,
-        [userId],
-      );
+      };
+      let uResult: { rows: SessionUserRow[] };
+      try {
+        uResult = await client.queryObject<SessionUserRow>(
+          `SELECT
+             u.id,
+             u.email,
+             u.full_name,
+             u.role,
+             u.role_id,
+             COALESCE(r.has_dashboard, false) AS has_dashboard,
+             r.dashboard_route,
+             u.email_verified,
+             u.created_at,
+             u.updated_at
+           FROM auth.users u
+           LEFT JOIN public.roles r
+             ON r.id = u.role_id OR LOWER(r.name) = LOWER(u.role)
+           WHERE u.id = $1
+           LIMIT 1`,
+          [userId],
+        );
+      } catch {
+        // Backward compatibility for databases where role dashboard columns
+        // are not migrated yet.
+        uResult = await client.queryObject<SessionUserRow>(
+          `SELECT
+             id,
+             email,
+             full_name,
+             role,
+             role_id,
+             false AS has_dashboard,
+             NULL::text AS dashboard_route,
+             email_verified,
+             created_at,
+             updated_at
+           FROM auth.users
+           WHERE id = $1
+           LIMIT 1`,
+          [userId],
+        );
+      }
       if (uResult.rows.length === 0) {
         throw new Error("User not found");
       }
@@ -198,6 +238,8 @@ export class DatabaseService {
         updated_at: u.updated_at ?? null,
         pharmacy_name: null,
         pharmacy_logo_url: null,
+        has_dashboard: Boolean(u.has_dashboard),
+        dashboard_route: u.dashboard_route ?? null,
       };
 
       let permissions: string[] = [];

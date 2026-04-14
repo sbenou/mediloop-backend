@@ -25,6 +25,7 @@ const PUBLIC_ROUTES = [
   "/api/oauth",
   "/api/luxtrust",
   "/api/clinical/platform-stats",
+  "/api/subscriptions/plans",
 ];
 
 export const authMiddleware = async (ctx: Context, next: Next) => {
