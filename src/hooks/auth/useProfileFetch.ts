@@ -85,6 +85,9 @@ function profileFromApiPayload(
     pharmacy_logo_url: (p.pharmacy_logo_url as string | null) ?? null,
     email_verified:
       typeof p.email_verified === 'boolean' ? p.email_verified : null,
+    has_dashboard:
+      typeof p.has_dashboard === 'boolean' ? p.has_dashboard : null,
+    dashboard_route: (p.dashboard_route as string | null) ?? null,
   };
 }
 
@@ -166,6 +169,8 @@ function minimalProfile(userId: string): UserProfile {
     pharmacy_id: null,
     pharmacy_name: null,
     pharmacy_logo_url: null,
+    has_dashboard: null,
+    dashboard_route: null,
   };
 }
 

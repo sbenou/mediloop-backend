@@ -50,6 +50,9 @@ export interface UserProfile {
   pharmacy_logo_url?: string | null;
   /** From auth.users via API profile endpoint */
   email_verified?: boolean | null;
+  /** From public.roles via API profile endpoint */
+  has_dashboard?: boolean | null;
+  dashboard_route?: string | null;
 }
 
 export interface AuthUser {

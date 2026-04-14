@@ -1,11 +1,10 @@
 
-import ProtectedRoute from '@/components/routing/ProtectedRoute';
 import Dashboard from '@/pages/Dashboard';
-import { useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/auth/useAuth';
 
 const ProtectedDashboard = () => {
-  const { userRole, isLoading, isAuthenticated } = useAuth();
+  const { isLoading, isAuthenticated, profile } = useAuth();
   
   // Handle initial loading state when auth is being determined
   if (isLoading) {
@@ -19,12 +18,17 @@ const ProtectedDashboard = () => {
     );
   }
   
-  // If not authenticated, ProtectedRoute will handle redirection
-  return (
-    <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>
-      <Dashboard />
-    </ProtectedRoute>
-  );
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Dashboard access is role-driven from DB (public.roles.has_dashboard),
+  // avoiding hardcoded role lists in frontend guards.
+  if (!profile?.has_dashboard) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  return <Dashboard />;
 };
 
 export default ProtectedDashboard;
